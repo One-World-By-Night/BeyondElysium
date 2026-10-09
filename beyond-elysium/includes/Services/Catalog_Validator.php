@@ -22,7 +22,7 @@ class Catalog_Validator {
 	/**
 	 * Record kinds a catalog file may carry (format).
 	 */
-	private const KINDS = [ 'block', 'stack', 'template', 'preset' ];
+	private const KINDS = [ 'block', 'stack', 'template', 'preset', 'item_catalog' ];
 
 	/**
 	 * Template types, the second half of a template's `<stack>.<type>` slug (format).
@@ -60,6 +60,11 @@ class Catalog_Validator {
 		if ( $slug !== $stem ) {
 			$errors[] = sprintf( '`slug` is "%s" but the file is named "%s.json" - they must match', $slug, $stem );
 		}
+
+		if ( $kind === 'item_catalog' ) {
+			return array_merge( $errors, self::validate_item_catalog( $data ) );
+		}
+
 		$definition = $data['definition'] ?? null;
 		if ( ! is_array( $definition ) || $definition === [] ) {
 			$errors[] = '`definition` must be a non-empty object or list';
@@ -98,6 +103,9 @@ class Catalog_Validator {
 		foreach ( $definition['sections'] as $section ) {
 			if ( is_array( $section ) && is_string( $section['block_slug'] ?? null ) ) {
 				$section_slugs[] = $section['block_slug'];
+			}
+			if ( is_array( $section ) && is_string( $section['negative_block_slug'] ?? null ) ) {
+				$section_slugs[] = $section['negative_block_slug'];
 			}
 		}
 
@@ -624,6 +632,25 @@ class Catalog_Validator {
 					$errors[] = sprintf( 'pool "%s" states both `buy_down` and `free_dots` - a buy-down pool has nothing free to raise past', $name );
 				}
 			}
+
+			if ( array_key_exists( 'raised_by', $pool ) ) {
+				$raised_by = is_array( $pool['raised_by'] ) ? $pool['raised_by'] : null;
+				if ( $raised_by === null ) {
+					$errors[] = sprintf( 'pool "%s" has a `raised_by` that is not an object: `{from, temporary}`', $name );
+					continue;
+				}
+				$from  = is_string( $raised_by['from'] ?? null ) ? $raised_by['from'] : '';
+				$parts = $from === '' ? [] : explode( '.', $from, 2 );
+				if ( count( $parts ) !== 2 || $parts[0] === '' || $parts[1] === '' ) {
+					$errors[] = sprintf( 'pool "%s" `raised_by.from` must be "block_slug.Pool Name" - the pool whose temporary points pay for the raise', $name );
+				}
+				if ( ! is_int( $raised_by['temporary'] ?? null ) || $raised_by['temporary'] < 1 ) {
+					$errors[] = sprintf( 'pool "%s" `raised_by.temporary` must be a positive integer - how many temporary points one raise costs', $name );
+				}
+				if ( isset( $pool['cost_per_dot'] ) ) {
+					$errors[] = sprintf( 'pool "%s" states both `raised_by` and `cost_per_dot` - a pool is raised by XP or by conversion, never both', $name );
+				}
+			}
 		}
 		return $errors;
 	}
@@ -638,6 +665,9 @@ class Catalog_Validator {
 		$errors = [];
 		if ( array_key_exists( 'print_rings', $definition ) && ! is_bool( $definition['print_rings'] ) ) {
 			$errors[] = '`print_rings` must be true or false';
+		}
+		if ( array_key_exists( 'unpriced', $definition ) && ! is_bool( $definition['unpriced'] ) ) {
+			$errors[] = '`unpriced` must be true or false';
 		}
 		if ( array_key_exists( 'paid_from', $definition['_meta'] ?? [] ) ) {
 			$paid_from = $definition['_meta']['paid_from'];
@@ -662,6 +692,9 @@ class Catalog_Validator {
 			}
 			if ( array_key_exists( 'cost', $item ) && $item['cost'] !== null && ! is_string( $item['cost'] ) ) {
 				$errors[] = sprintf( '%s ("%s") has a non-string `cost` - a cost is free text ("1 or 3", "1-7"), not a number', $at, (string) ( $item['name'] ?? '?' ) );
+			}
+			if ( ( $definition['unpriced'] ?? false ) === true && ( $item['cost'] ?? null ) !== null && $item['cost'] !== '' ) {
+				$errors[] = sprintf( '%s is declared `unpriced` but "%s" carries a `cost`', $at, (string) ( $item['name'] ?? '?' ) );
 			}
 		}
 
@@ -801,6 +834,7 @@ class Catalog_Validator {
 		}
 
 		$errors = array_merge( $errors, self::validate_modifiers( $meta, $ranks ) );
+		$errors = array_merge( $errors, self::validate_spent_from( $meta, $ranks, (array) $definition['powers'] ) );
 
 		$ladder = (array) ( $meta['ladder'] ?? [] );
 		foreach ( array_keys( $ladder ) as $rank ) {
@@ -855,6 +889,64 @@ class Catalog_Validator {
 					$errors[] = sprintf( '`_meta.%s.%s` is %s - a modifier is +N, -N or ×N', $side, (string) $rank, is_scalar( $expression ) ? '"' . (string) $expression . '"' : gettype( $expression ) );
 				}
 			}
+		}
+		return $errors;
+	}
+
+	/**
+	 * `_meta.spent_from`: a tiered_power block whose purchases spend a named resource_pool's unspent dots in place,
+	 * at a fixed cost per rank, rather than ever charging XP.
+	 *
+	 * @param array<string,mixed> $meta
+	 * @param string[]            $ranks
+	 * @param array<int,mixed>    $powers
+	 * @return string[]
+	 */
+	private static function validate_spent_from( array $meta, array $ranks, array $powers ): array {
+		$errors = [];
+		if ( ! isset( $meta['spent_from'] ) ) {
+			return $errors;
+		}
+		$spent_from = is_array( $meta['spent_from'] ) ? $meta['spent_from'] : null;
+		if ( $spent_from === null ) {
+			$errors[] = '`_meta.spent_from` must be an object: `{pool_block, by_family_field, rank_cost}`';
+			return $errors;
+		}
+		if ( ( $spent_from['pool_block'] ?? '' ) === '' || ! is_string( $spent_from['pool_block'] ) ) {
+			$errors[] = '`_meta.spent_from.pool_block` must name the resource_pool block a purchase spends from';
+		}
+		if ( ( $spent_from['by_family_field'] ?? '' ) === '' || ! is_string( $spent_from['by_family_field'] ) ) {
+			$errors[] = '`_meta.spent_from.by_family_field` must name the field on each family that says which pool to spend from';
+		}
+		$rank_cost = is_array( $spent_from['rank_cost'] ?? null ) ? $spent_from['rank_cost'] : null;
+		if ( $rank_cost === null ) {
+			$errors[] = '`_meta.spent_from.rank_cost` must be a map from rank to the number of dots it costs';
+			return $errors;
+		}
+		foreach ( $ranks as $rank ) {
+			if ( ! array_key_exists( $rank, $rank_cost ) || ! is_int( $rank_cost[ $rank ] ) || $rank_cost[ $rank ] < 1 ) {
+				$errors[] = sprintf( '`_meta.spent_from.rank_cost` has no positive integer for rank "%s"', $rank );
+			}
+		}
+		$field = is_string( $spent_from['by_family_field'] ?? null ) ? $spent_from['by_family_field'] : null;
+		$any_creed_restricted = false;
+		if ( $field !== null ) {
+			foreach ( $powers as $power ) {
+				$name = is_array( $power ) ? (string) ( $power['name'] ?? '' ) : '';
+				if ( is_array( $power ) && ( ! isset( $power[ $field ] ) || ! is_string( $power[ $field ] ) || $power[ $field ] === '' ) ) {
+					$errors[] = sprintf( '"%s" has no string `%s` - `_meta.spent_from.by_family_field` names a field every family must carry', $name, $field );
+				}
+				if ( is_array( $power ) && array_key_exists( 'creed_restricted_to', $power ) ) {
+					$any_creed_restricted = true;
+					$list = $power['creed_restricted_to'];
+					if ( ! is_array( $list ) || $list === [] || ! array_is_list( $list ) ) {
+						$errors[] = sprintf( '"%s" has a `creed_restricted_to` that is not a non-empty list of creed names', $name );
+					}
+				}
+			}
+		}
+		if ( $any_creed_restricted && ( ( $spent_from['creed_check'] ?? '' ) === '' || ! is_string( $spent_from['creed_check'] ) ) ) {
+			$errors[] = '`_meta.spent_from.creed_check` must name "block_slug.Field" - at least one family declares `creed_restricted_to`, which needs it to check against';
 		}
 		return $errors;
 	}
@@ -1214,7 +1306,7 @@ class Catalog_Validator {
 					if ( $rate !== 'value' && ! is_int( $rate ) ) {
 						$errors[] = sprintf( '%s.sources[%s].rate must be a whole number or "value"', $at, (string) $j );
 					}
-					if ( ! is_int( $source['max'] ?? null ) || $source['max'] < 1 ) {
+					if ( array_key_exists( 'max', $source ) && ( ! is_int( $source['max'] ) || $source['max'] < 1 ) ) {
 						$errors[] = sprintf( '%s.sources[%s].max must be a whole number from 1', $at, (string) $j );
 					}
 				}
@@ -1245,14 +1337,16 @@ class Catalog_Validator {
 					$ceiling = $step['ceiling'];
 					if ( is_string( $ceiling ) ) {
 						if ( ! self::is_field( $ceiling ) ) {
-							$errors[] = "{$at}.ceiling must be \"block.Name\" or {\"named_by\": \"block.Field\"}";
+							$errors[] = "{$at}.ceiling must be \"block.Name\", {\"named_by\": \"block.Field\"}, or {\"map\": \"block.key\", \"by\": [...]}";
 						}
+					} elseif ( is_array( $ceiling ) && array_key_exists( 'map', $ceiling ) ) {
+						$errors = array_merge( $errors, self::validate_map_ref( $ceiling, "{$at}.ceiling" ) );
 					} elseif ( is_array( $ceiling ) ) {
 						if ( ! self::is_field( $ceiling['named_by'] ?? null ) ) {
 							$errors[] = "{$at}.ceiling.named_by must be \"block.Field\"";
 						}
 					} else {
-						$errors[] = "{$at}.ceiling must be \"block.Name\" or {\"named_by\": \"block.Field\"}";
+						$errors[] = "{$at}.ceiling must be \"block.Name\", {\"named_by\": \"block.Field\"}, or {\"map\": \"block.key\", \"by\": [...]}";
 					}
 				}
 				break;
@@ -1322,6 +1416,7 @@ class Catalog_Validator {
 
 	/**
 	 * @param mixed $max_rating A number, or `{base, plus?, cap?}`.
+	 * @return string[]
 	 */
 	private static function validate_max_rating( $max_rating, string $at ): array {
 		if ( is_numeric( $max_rating ) ) {
@@ -1342,6 +1437,7 @@ class Catalog_Validator {
 
 	/**
 	 * @param mixed $ref `{map: "block.key", by: [...]}`.
+	 * @return string[]
 	 */
 	private static function validate_map_ref( $ref, string $at ): array {
 		if ( ! is_array( $ref ) || ! self::is_field( $ref['map'] ?? null ) ) {
@@ -1420,7 +1516,7 @@ class Catalog_Validator {
 					$errors = array_merge( $errors, self::in_type_refs( [ $quota['test'] ], $at, $blocks_by_slug ) );
 				}
 			}
-			foreach ( [ $step['lookup'] ?? null, $step['from'] ?? null ] as $ref ) {
+			foreach ( [ $step['lookup'] ?? null, $step['from'] ?? null, $step['ceiling'] ?? null ] as $ref ) {
 				if ( is_array( $ref ) && is_string( $ref['map'] ?? null ) ) {
 					[ $slug, $key ] = array_pad( explode( '.', $ref['map'], 2 ), 2, '' );
 					if ( ! is_array( $blocks_by_slug[ $slug ]['definition'][ $key ] ?? null ) ) {
@@ -1438,5 +1534,82 @@ class Catalog_Validator {
 	 */
 	private static function as_list( $value ): array {
 		return is_array( $value ) ? array_values( $value ) : [];
+	}
+
+	/**
+	 * Validates a book's own item catalog file: every entry against `world-object-schemas.php`'s shape for its own
+	 * `object_type` (unknown property, wrong type, missing source), and that no `key` repeats within the file.
+	 *
+	 * @param array<string,mixed> $data
+	 * @return string[]
+	 */
+	private static function validate_item_catalog( array $data ): array {
+		$errors = [];
+		$items  = $data['items'] ?? null;
+		if ( ! is_array( $items ) || $items === [] || ! array_is_list( $items ) ) {
+			return [ '`items` must be a non-empty list' ];
+		}
+
+		$schemas = require __DIR__ . '/world-object-schemas.php';
+		$seen    = [];
+
+		foreach ( $items as $i => $item ) {
+			$at = sprintf( 'items[%s]', (string) $i );
+			if ( ! is_array( $item ) ) {
+				$errors[] = "{$at} must be an object";
+				continue;
+			}
+
+			$key = $item['key'] ?? null;
+			if ( ! is_string( $key ) || $key === '' ) {
+				$errors[] = "{$at} has no non-empty `key`";
+			} elseif ( isset( $seen[ $key ] ) ) {
+				$errors[] = sprintf( '%s `key` "%s" repeats item [%d] in this file', $at, $key, $seen[ $key ] );
+			} else {
+				$seen[ $key ] = $i;
+			}
+
+			if ( ! is_string( $item['name'] ?? null ) || $item['name'] === '' ) {
+				$errors[] = "{$at} has no non-empty `name`";
+			}
+
+			$object_type = (string) ( $item['object_type'] ?? '' );
+			$schema      = $schemas[ $object_type ] ?? null;
+			if ( $schema === null ) {
+				$errors[] = sprintf( '%s `object_type` "%s" is not a known world-object type', $at, $object_type );
+			}
+
+			$source = $item['source'] ?? null;
+			if ( ! is_array( $source ) || ! is_string( $source['book'] ?? null ) || $source['book'] === ''
+				|| ! is_string( $source['code'] ?? null ) || $source['code'] === ''
+				|| ! is_int( $source['page'] ?? null ) ) {
+				$errors[] = "{$at} needs a `source` naming `book`, `code`, and an integer `page`";
+			}
+
+			if ( $schema === null ) {
+				continue;
+			}
+			$properties = $item['properties'] ?? [];
+			if ( ! is_array( $properties ) ) {
+				$errors[] = "{$at} `properties` must be an object";
+				continue;
+			}
+			foreach ( $properties as $prop_key => $value ) {
+				if ( ! array_key_exists( $prop_key, $schema ) ) {
+					$errors[] = sprintf( '%s `properties.%s` is not a valid property of "%s"', $at, $prop_key, $object_type );
+					continue;
+				}
+				$type = $schema[ $prop_key ];
+				if ( $type === 'int' && $value !== null && ! is_int( $value ) ) {
+					$errors[] = sprintf( '%s `properties.%s` must be a whole number', $at, $prop_key );
+				} elseif ( $type === 'trait_list' && ! is_array( $value ) ) {
+					$errors[] = sprintf( '%s `properties.%s` must be a list of traits', $at, $prop_key );
+				} elseif ( in_array( $type, [ 'string', 'text' ], true ) && ! is_string( $value ) ) {
+					$errors[] = sprintf( '%s `properties.%s` must be a string', $at, $prop_key );
+				}
+			}
+		}
+
+		return $errors;
 	}
 }

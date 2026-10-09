@@ -61,7 +61,7 @@ class InvitePlayerWorkflowTest extends WP_UnitTestCase {
 		$this->assertSame( 200, $mine->get_status() );
 		$this->assertSame( [ 'Imported One', 'Imported Two' ], array_values( array_map( static fn( $c ) => $c->name, (array) $mine->get_data() ) ) );
 
-		// Nothing waits any more.
+		// Nothing is waiting.
 		$this->assertSame( [], $this->dispatch( $storyteller, 'GET', '/players/invites' )->get_data() );
 		$this->assertSame( [], Player_Invites::sites_for( 'returning.player@example.test' ) );
 	}

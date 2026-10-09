@@ -104,23 +104,23 @@ return [
 	],
 
 	'kueijin' => [
-		'Status'      => [ 'outcome' => 'preserve_as_note' ],
-		'Guanxi'      => [ 'outcome' => 'preserve_as_note' ],
+		// `backfill`: the upgrade fills the block from a character's import record, where earlier imports kept this list.
+		'Status'      => [ 'outcome' => 'sheet_block', 'block_slug' => 'kueijin-status', 'backfill' => true ],
+		'Guanxi'      => [ 'outcome' => 'sheet_block', 'block_slug' => 'kueijin-guanxi', 'backfill' => true ],
 		'Disciplines' => [ 'outcome' => 'sheet_block', 'block_slug' => 'kueijin-disciplines' ],
 		'Rites'       => [ 'outcome' => 'preserve_as_note' ],
 	],
 
 	'various' => [
-		'Tempers' => [ 'outcome' => 'preserve_as_note' ],
-		'Powers'  => [ 'outcome' => 'preserve_as_note' ],
-		// VariousClass is GV's generic template character.
-		'_unresolved_note' => 'gvRaceVarious has no corresponding BE creature stack yet',
+		'Tempers' => [ 'outcome' => 'sheet_block', 'block_slug' => 'various-tempers' ],
+		'Powers'  => [ 'outcome' => 'sheet_block', 'block_slug' => 'various-powers' ],
+		// Various has no Merits or Flaws section at all - overrides the shared default of met-merits/met-flaws.
+		'Merits'  => [ 'outcome' => 'preserve_as_note' ],
+		'Flaws'   => [ 'outcome' => 'preserve_as_note' ],
 	],
 
 	'hunter' => [
-		'Derangements' => [ 'outcome' => 'sheet_block', 'block_slug' => 'met-derangements' ],
-		'Edges'        => [ 'outcome' => 'preserve_as_note' ],
-		'_unresolved_note' => 'gvRaceHunter has no corresponding BE creature stack yet',
+		'Edges' => [ 'outcome' => 'sheet_block', 'block_slug' => 'hunter-edges' ],
 	],
 
 	'demon' => [

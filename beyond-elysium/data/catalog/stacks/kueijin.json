@@ -85,6 +85,18 @@
         "required": true
       },
       {
+        "block_slug": "kueijin-status",
+        "label": "Status",
+        "display_order": 83,
+        "required": false
+      },
+      {
+        "block_slug": "kueijin-guanxi",
+        "label": "Guanxi",
+        "display_order": 84,
+        "required": false
+      },
+      {
         "block_slug": "kueijin-health",
         "label": "Health",
         "display_order": 82,

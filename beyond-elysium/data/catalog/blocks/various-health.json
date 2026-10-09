@@ -1,0 +1,31 @@
+{
+  "format": 1,
+  "slug": "various-health",
+  "name": "Health",
+  "kind": "block",
+  "section_type": "trait_list",
+  "provenance": {
+    "sources": [
+      "The standard MET Health track every stack's own Health block carries (D92): Healthy, Bruised x3, Wounded x2, Incapacitated, Mortally Wounded. Various has no book of its own, so the universal track stands unmodified."
+    ],
+    "tool": "read directly, 2026-10-04"
+  },
+  "definition": {
+    "allow_custom": false,
+    "allow_multiples": false,
+    "items": [
+      { "name": "Healthy", "cost": null, "tier": null, "group": null, "subgroup": null },
+      { "name": "Bruised", "cost": null, "tier": null, "group": null, "subgroup": null },
+      { "name": "Wounded", "cost": null, "tier": null, "group": null, "subgroup": null },
+      { "name": "Incapacitated", "cost": null, "tier": null, "group": null, "subgroup": null },
+      { "name": "Mortally Wounded", "cost": null, "tier": null, "group": null, "subgroup": null }
+    ],
+    "default_held": [
+      { "name": "Healthy", "count": 1 },
+      { "name": "Bruised", "count": 3 },
+      { "name": "Wounded", "count": 2 },
+      { "name": "Incapacitated", "count": 1 },
+      { "name": "Mortally Wounded", "count": 1 }
+    ]
+  }
+}

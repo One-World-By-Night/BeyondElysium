@@ -25,6 +25,11 @@ class Field_Registry {
 	const INVENTORIES_FILE = __DIR__ . '/query-inventories.php';
 
 	/**
+	 * Fields that are real Beyond Elysium storage with no qkdata.gvd key of their own.
+	 */
+	const EXTRAS_FILE = __DIR__ . '/field-registry-extras.php';
+
+	/**
 	 * The inventories the query builder actually offers.
 	 */
 	const QUERYABLE_INVENTORIES = [ 'char', 'item', 'loc', 'rote' ];
@@ -32,10 +37,14 @@ class Field_Registry {
 	/** @var array<string,array{key:string,title:string,type:string,inventories:string[]}>|null */
 	private static ?array $rows = null;
 
-	/** @var array<string,array>|null */
+	/**
+	 * @var array<string,array<string,mixed>>|null
+	 */
 	private static ?array $map = null;
 
-	/** @var array<string,array>|null */
+	/**
+	 * @var array<string,array<string,mixed>>|null
+	 */
 	private static ?array $inventories = null;
 
 	/**
@@ -46,6 +55,17 @@ class Field_Registry {
 	public static function all(): array {
 		if ( self::$rows === null ) {
 			self::$rows = self::parse();
+			foreach ( require self::EXTRAS_FILE as $extra ) {
+				$existing = self::$rows[ $extra['key'] ] ?? null;
+				if ( $existing === null ) {
+					self::$rows[ $extra['key'] ] = $extra;
+					continue;
+				}
+				$existing['inventories'] = array_values( array_unique(
+					array_merge( $existing['inventories'], $extra['inventories'] )
+				) );
+				self::$rows[ $extra['key'] ] = $existing;
+			}
 		}
 		return self::$rows;
 	}
@@ -54,7 +74,7 @@ class Field_Registry {
 	 * Returns the subset of registry rows that apply to a given inventory.
 	 *
 	 * @param string $inventory One of: char, player, item, loc, rote, plot, rumor, action.
-	 * @return array<string,array>
+	 * @return array<string,array<string,mixed>>
 	 */
 	public static function for_inventory( string $inventory ): array {
 		return array_filter(
@@ -115,7 +135,7 @@ class Field_Registry {
 
 	/**
 	 * Returns the value type to validate and resolve a key against for a given inventory: the map entry's own `type`
-	 * override when it declares one (only `item.powers` does today).
+	 * override when it declares one (only `item.powers` does).
 	 *
 	 * @param string $key
 	 * @param string $inventory One of Field_Registry::QUERYABLE_INVENTORIES.
@@ -132,7 +152,7 @@ class Field_Registry {
 	 * "field-map.php").
 	 *
 	 * @param string $inventory
-	 * @return array{storage:string,object_type?:string,result_columns:string[],fields:array|null}|null
+	 * @return array{storage:string,object_type?:string,result_columns:string[],fields:array<string,mixed>|null}|null
 	 */
 	public static function inventory( string $inventory ): ?array {
 		if ( self::$inventories === null ) {

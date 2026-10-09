@@ -45,6 +45,27 @@ class SchemaBlocksControllerTest extends WP_UnitTestCase {
 		), 'no block appears on both pages' );
 	}
 
+	public function test_a_single_block_read_with_a_game_slug_resolves_the_inherited_global_definition(): void {
+		$request = new WP_REST_Request( 'GET', '/be/v1/schema-blocks/vampire-merits' );
+		$request->set_query_params( [ 'game_slug' => 'thread-blocks-game' ] );
+		$response = $this->dispatch( $request );
+
+		$this->assertSame( 200, $response->get_status(), 'an unforked block still resolves, via its global definition' );
+		$this->assertSame( 'vampire-merits', $response->get_data()->slug );
+	}
+
+	public function test_a_single_block_read_with_a_game_slug_resolves_the_chronicles_own_fork(): void {
+		\BeyondElysium\Models\Schema_Block::find_or_create_fork_for_game( 'vampire-merits', 'thread-blocks-game' );
+		\BeyondElysium\Models\Schema_Block::update( 'vampire-merits', [ 'name' => 'Forked Merits' ], 'thread-blocks-game' );
+
+		$request = new WP_REST_Request( 'GET', '/be/v1/schema-blocks/vampire-merits' );
+		$request->set_query_params( [ 'game_slug' => 'thread-blocks-game' ] );
+		$response = $this->dispatch( $request );
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( 'Forked Merits', $response->get_data()->name );
+	}
+
 	public function test_creating_a_trait_list_block_with_a_real_json_body_succeeds(): void {
 		$request = new WP_REST_Request( 'POST', '/be/v1/thread-blocks-game/schema-blocks' );
 		$request->set_header( 'Content-Type', 'application/json' );

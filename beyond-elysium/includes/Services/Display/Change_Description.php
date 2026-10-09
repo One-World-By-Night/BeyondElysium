@@ -22,6 +22,17 @@ class Change_Description {
 			case 'add_trait':
 				$trait = (array) ( $change_data['trait'] ?? [] );
 				$name  = $trait['name'] ?? __( 'Unknown', 'beyond-elysium' );
+				if ( ! empty( $trait['spent_rank'] ) && isset( $trait['spent_cost'] ) ) {
+					$rank = ucfirst( (string) $trait['spent_rank'] );
+					/* translators: 1: edge name, 2: edge rank (Touched, Gifted, Devoted, Inspired, Exalted), 3: how many dots it spends, 4: the pool it spends from */
+					return sprintf(
+						__( 'Added %1$s: %2$s Edge, %3$s %4$s Trait(s) spent', 'beyond-elysium' ),
+						$trait['power_name'] ?? $name,
+						$rank,
+						$trait['spent_cost'],
+						$trait['spent_pool'] ?? ''
+					);
+				}
 				if ( isset( $trait['level'] ) ) {
 					/* translators: 1: trait or power name, 2: level */
 					return sprintf( __( 'Added %1$s %2$s', 'beyond-elysium' ), $name, $trait['level'] );
@@ -37,7 +48,7 @@ class Change_Description {
 			case 'remove_trait':
 				$trait = (array) ( $change_data['trait'] ?? [] );
 				/* translators: %s: trait name */
-				return sprintf( __( 'Removed %s', 'beyond-elysium' ), $trait['name'] ?? __( 'Unknown', 'beyond-elysium' ) );
+				return sprintf( __( 'Removed %s', 'beyond-elysium' ), $trait['power_name'] ?? ( $trait['name'] ?? __( 'Unknown', 'beyond-elysium' ) ) );
 
 			case 'modify_trait':
 				$trait    = (array) ( $change_data['trait'] ?? [] );
@@ -68,6 +79,16 @@ class Change_Description {
 				}
 				$pool  = array_key_first( $values );
 				$value = (array) $values[ $pool ];
+				if ( isset( $value['raised_cost'] ) ) {
+					/* translators: 1: pool being raised (e.g. Mercy), 2: its new permanent rating, 3: how many temporary points it cost, 4: the pool those temporary points came from (e.g. Conviction) */
+					return sprintf(
+						__( '%1$s raised to %2$s for %3$s %4$s', 'beyond-elysium' ),
+						$pool,
+						$value['permanent'] ?? '?',
+						$value['raised_cost'],
+						$value['raised_from'] ?? ''
+					);
+				}
 				/* translators: 1: resource pool name, 2: permanent value, 3: temporary value */
 				return sprintf( __( '%1$s: %2$s perm / %3$s temp', 'beyond-elysium' ), $pool, $value['permanent'] ?? '?', $value['temporary'] ?? '?' );
 
@@ -115,6 +136,7 @@ class Change_Description {
 				$moved     = (int) ( $counts['moved_rows'] ?? 0 );
 				$matched   = (int) ( $counts['rekeyed'] ?? 0 );
 				$respelled = (int) ( $counts['respelled'] ?? 0 );
+				$dropped   = (int) ( $counts['dropped'] ?? 0 );
 				$parts     = [];
 				if ( $moved > 0 ) {
 					/* translators: %d: how many rows the catalog update moved to their new section */
@@ -127,6 +149,10 @@ class Change_Description {
 				if ( $respelled > 0 ) {
 					/* translators: %d: how many catalog names the catalog update respelled to the spelling the catalog now uses */
 					$parts[] = sprintf( _n( '%d name spelled to match the catalog', '%d names spelled to match the catalog', $respelled, 'beyond-elysium' ), $respelled );
+				}
+				if ( $dropped > 0 ) {
+					/* translators: %d: how many rows the catalog update dropped because the sheet already held them */
+					$parts[] = sprintf( _n( '%d repeated row dropped', '%d repeated rows dropped', $dropped, 'beyond-elysium' ), $dropped );
 				}
 				if ( $parts === [] ) {
 					return __( 'Catalog update', 'beyond-elysium' );
@@ -153,6 +179,45 @@ class Change_Description {
 					__( 'Proposed %1$s: %2$s', 'beyond-elysium' ),
 					$change_data['faction_type'] ?? __( 'group', 'beyond-elysium' ),
 					$change_data['name'] ?? __( 'Unknown', 'beyond-elysium' )
+				);
+
+			case 'log_knowledge':
+				/* translators: %s: the title of what the character claims to have learned */
+				return sprintf(
+					__( 'Logged knowledge: %s', 'beyond-elysium' ),
+					$change_data['title'] ?? __( 'Unknown', 'beyond-elysium' )
+				);
+
+			case 'pass_secret':
+				/* translators: 1: the telling character, 2: the recipient, 3: the secret's title */
+				return sprintf(
+					__( '%1$s wants to tell %2$s: %3$s', 'beyond-elysium' ),
+					$change_data['from_name'] ?? __( 'A character', 'beyond-elysium' ),
+					$change_data['to_name'] ?? __( 'another character', 'beyond-elysium' ),
+					$change_data['secret_title'] ?? __( 'a secret', 'beyond-elysium' )
+				);
+
+			case 'visit_note':
+				/* translators: %s: the host chronicle's note about a visiting character */
+				return sprintf(
+					__( 'Note from the host chronicle: %s', 'beyond-elysium' ),
+					$change_data['note'] ?? ''
+				);
+
+			case 'visit_pairing':
+				$host_name = $change_data['host_chronicle'] ?? __( 'A host chronicle', 'beyond-elysium' );
+				if ( ! empty( $change_data['host_site'] ) ) {
+					/* translators: 1: the host chronicle's own name, 2: the host site's address */
+					return sprintf(
+						__( '%1$s (%2$s) asks to keep this character current.', 'beyond-elysium' ),
+						$host_name,
+						$change_data['host_site']
+					);
+				}
+				/* translators: %s: the host chronicle's own name */
+				return sprintf(
+					__( '%s asks to keep this character current.', 'beyond-elysium' ),
+					$host_name
 				);
 
 			case 'player_link':

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""The precedence resolver, generalised from Fera's `_extractor/resolve.py`.
+"""The precedence resolver.
 
 The rule: **OWBN packet > MET > tabletop. Newest wins within a tier. Only ever compare
 sources from the same line and era.**

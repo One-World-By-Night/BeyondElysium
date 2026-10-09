@@ -6,6 +6,7 @@ use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Connection;
 use BeyondElysium\Models\Game;
 use BeyondElysium\Models\World_Object;
+use BeyondElysium\Services\Item_Catalog;
 use WP_REST_Request;
 use WP_UnitTestCase;
 
@@ -63,7 +64,7 @@ class WorldObjectWritesThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Found writing the test above: rarity is a 20-character column behind a free-text box.
+	 * Rarity is a 20-character column behind a free-text box.
 	 */
 	public function test_a_rarity_longer_than_its_column_is_refused_by_name_not_as_a_server_error(): void {
 		$response = $this->send( 'POST', '/world-objects', [ 'object_type' => 'item', 'name' => 'Relic', 'rarity' => 'Legendary artifact (unique)' ] );
@@ -111,7 +112,7 @@ class WorldObjectWritesThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * (rich-text world-object fields).
+	 * A text property is sanitized as HTML and a string property as plain text.
 	 */
 	public function test_a_text_property_is_sanitized_as_html_and_a_string_one_as_plain_text(): void {
 		$unsafe  = [ 'powers' => 'Bites. <script>alert(1)</script> <strong>Bold.</strong>', 'concealability' => 'Easy <script>alert(2)</script>' ];
@@ -128,5 +129,70 @@ class WorldObjectWritesThreadTest extends WP_UnitTestCase {
 		$restored = World_Object::find( $id )->properties;
 		$this->assertStringNotContainsString( '<script', $restored['powers'] );
 		$this->assertSame( 'Easy', $restored['concealability'] );
+	}
+
+	public function test_a_dark_epics_club_saves_as_the_chronicles_own_item_with_a_book_ref(): void {
+		$entry = Item_Catalog::find( 'dark-epics:club-stake' );
+		$this->assertNotNull( $entry, 'the real shipped Dark Epics catalog must have a "club" entry' );
+
+		$response = $this->send( 'POST', '/world-objects', [
+			'object_type' => 'item',
+			'name'        => $entry['name'],
+			'description' => $entry['description'] ?? '',
+			'properties'  => array_merge( $entry['properties'], [ 'book_ref' => $entry['book_ref'] ] ),
+		] );
+
+		$this->assertSame( 201, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		$id    = (int) $response->get_data()->id;
+		$saved = World_Object::find( $id );
+
+		$this->assertSame( $this->game_id, (int) $saved->game_id, 'it belongs to this chronicle, not the book' );
+		$this->assertSame( 'dark-epics:club-stake', $saved->properties['book_ref'] );
+		$this->assertSame( $entry['properties']['bonus'], $saved->properties['bonus'] );
+	}
+
+	public function test_editing_a_book_started_copy_leaves_the_book_itself_untouched(): void {
+		$before = Item_Catalog::find( 'dark-epics:club-stake' );
+
+		$created = $this->send( 'POST', '/world-objects', [
+			'object_type' => 'item',
+			'name'        => $before['name'],
+			'properties'  => array_merge( $before['properties'], [ 'book_ref' => $before['book_ref'] ] ),
+		] );
+		$id = (int) $created->get_data()->id;
+
+		$this->send( 'PUT', "/world-objects/{$id}", [
+			'name'       => 'Nail-Studded Club',
+			'properties' => [ 'bonus' => 9 ],
+		] );
+
+		Item_Catalog::reset_cache();
+		$after = Item_Catalog::find( 'dark-epics:club-stake' );
+
+		$this->assertSame( $before['name'], $after['name'] );
+		$this->assertSame( $before['properties']['bonus'], $after['properties']['bonus'] );
+		$this->assertSame( 'Nail-Studded Club', World_Object::find( $id )->name, 'the chronicle\'s own copy did change' );
+	}
+
+	public function test_a_fetishs_gnosis_is_a_temper_and_its_cost_the_level(): void {
+		$entry = Item_Catalog::find( 'changing-breeds-1:coyotes-fang' );
+		$this->assertNotNull( $entry, 'the real shipped Changing Breeds catalog must have a "coyotes-fang" entry' );
+
+		$response = $this->send( 'POST', '/world-objects', [
+			'object_type' => 'item',
+			'name'        => $entry['name'],
+			'properties'  => array_merge( $entry['properties'], [ 'book_ref' => $entry['book_ref'] ] ),
+		] );
+
+		$this->assertSame( 201, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		$saved = World_Object::find( (int) $response->get_data()->id );
+
+		$this->assertSame( 'Fetish', $saved->properties['item_type'] );
+		$this->assertSame( 3, $saved->properties['level'], 'Fetish Trait Cost becomes properties.level' );
+		$this->assertSame(
+			[ [ 'name' => 'Gnosis', 'count' => 4 ] ],
+			$saved->properties['tempers'],
+			'Gnosis becomes a tempers entry'
+		);
 	}
 }

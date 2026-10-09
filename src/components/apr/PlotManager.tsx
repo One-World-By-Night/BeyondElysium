@@ -11,6 +11,7 @@ import { PlotThread } from './PlotThread';
 import { ConnectionManager } from './ConnectionManager';
 import { ActionAllocator } from './ActionAllocator';
 import { RumorPanel } from './RumorPanel';
+import { DraftPlotPanel } from './DraftPlotPanel';
 import Modal from '../shared/Modal';
 import HelpButton from '../shared/HelpButton';
 import './PlotManager.css';
@@ -31,7 +32,7 @@ export interface PlotManagerProps {
 /**
  * Which standalone tool is open in a modal, if any.
  */
-type Tool = 'allocate' | 'rumors' | 'connect' | null;
+type Tool = 'allocate' | 'rumors' | 'connect' | 'draft' | null;
 
 /**
  * Renders the Storyteller Toolkit: an overview grid of every plot.
@@ -125,6 +126,13 @@ export function PlotManager( {
 						>
 							{ __( 'Generate rumors', 'beyond-elysium' ) }
 						</button>
+						<button
+							type="button"
+							className="be-st-button be-st-button--quiet"
+							onClick={ () => setTool( 'draft' ) }
+						>
+							{ __( 'Draft from a premise', 'beyond-elysium' ) }
+						</button>
 					</div>
 				) }
 			</header>
@@ -147,6 +155,10 @@ export function PlotManager( {
 						onSelectChild={ setSelectedPlot }
 						expandedEnabled={ expandedEnabled }
 						onOpenTool={ setTool }
+						emailLogEnabled={ canIn(
+							'be_manage_characters',
+							capabilities
+						) }
 					/>
 				</div>
 			) }
@@ -172,6 +184,25 @@ export function PlotManager( {
 					<RumorPanel
 						gameSlug={ gameSlug }
 						defaultParentPlotId={ selectedPlot ?? undefined }
+					/>
+				</Modal>
+			) }
+
+			{ tool === 'draft' && (
+				<Modal
+					title={ __(
+						'Draft a plot from a premise',
+						'beyond-elysium'
+					) }
+					onClose={ closeToolAndRefresh }
+				>
+					<DraftPlotPanel
+						gameSlug={ gameSlug }
+						onCreated={ ( plotId ) => {
+							setTool( null );
+							setRefreshKey( ( k ) => k + 1 );
+							setSelectedPlot( plotId );
+						} }
 					/>
 				</Modal>
 			) }

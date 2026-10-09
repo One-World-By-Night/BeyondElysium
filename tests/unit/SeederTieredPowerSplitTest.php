@@ -139,7 +139,8 @@ class SeederTieredPowerSplitTest extends TestCase {
 	}
 
 	public function test_out_of_type_is_an_expression_per_rank_not_a_number(): void {
-		// The two cases a scalar broke on, and the exemption it made unnecessary.
+		// Mage scales by rank; Wraith's in-type expressions exempt Innate (+0) and discount the Guild's own Arcanos
+		// (-1).
 		$mage = $this->meta( 'mage-spheres', [] );
 		$this->assertSame( [ 'basic' => '+1', 'intermediate' => '+2', 'advanced' => '+3' ], $mage['out_of_type'], 'Mage scales' );
 

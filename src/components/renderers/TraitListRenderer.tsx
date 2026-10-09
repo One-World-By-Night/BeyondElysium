@@ -4,6 +4,7 @@
 import { __ } from '@wordpress/i18n';
 import {
 	displayTrait,
+	withoutCircles,
 	type Trait,
 	type DisplayType,
 } from '../../lib/displayTrait';
@@ -54,6 +55,19 @@ export function resolveTraitListMode(
 		return resolveDisplay( sectionDisplay, definition.display );
 	}
 	return showCost === false ? 'note_only' : 'cost_xp';
+}
+
+/**
+ * Resolves the display mode a trait_list section renders at on screen: `resolveTraitListMode()`, except that a list
+ * declaring `print_rings` false draws numbers where the mode would draw circles.
+ */
+export function resolveScreenMode(
+	definition: TraitListDefinition,
+	sectionDisplay: DisplayType | null,
+	showCost?: boolean
+): DisplayType {
+	const mode = resolveTraitListMode( definition, sectionDisplay, showCost );
+	return definition.print_rings === false ? withoutCircles( mode ) : mode;
 }
 
 /**
@@ -153,7 +167,7 @@ export function TraitListRenderer( {
 	display,
 	showCost,
 }: TraitListRendererProps ) {
-	const mode = resolveTraitListMode( definition, display, showCost );
+	const mode = resolveScreenMode( definition, display, showCost );
 	const nested = groupsAndSorts( definition )
 		? groupTraitsByField( data, definition )
 		: null;

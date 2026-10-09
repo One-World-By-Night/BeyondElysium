@@ -78,8 +78,11 @@ on the same page - see [Query Tool](query-tool.md).
 
 - **Without a signing certificate, every one still prints** - stamped UNSIGNED on every page,
   with the file name ending `-unsigned.pdf`. See [Signed Sheets](signed-sheets.md).
-- **Cards print several to a page.** Item, Location, and Rote Cards use the same card layout
-  a player would print for their own items, generated for the whole catalog at once.
+- **Cards print four to a page**, landscape, two by two, at a real 5in by 3in card size -
+  Item, Location, and Rote Cards all share the same layout. A card carrying a picture (an
+  item's or a location's first attached file) prints it at the left; a card whose text won't
+  fit one face continues on a second card printed beside it, labelled as the back, and that
+  pair takes the whole row so the two fold down the middle into one card.
 - **Item Cards can be scoped to one character.** That's the character sheet's own "Print My
   Items" button, not a control on this screen - see [Character Sheet](character-sheet.md).
 - **Rote Cards works differently for a mage than for a Storyteller.** A Storyteller running it
@@ -89,9 +92,7 @@ on the same page - see [Query Tool](query-tool.md).
   straight from the catalog's name/note/source instead. Only a character whose stack actually
   has a rote-holding block (mages, today) can use it at all; My Chronicle hides the tab for
   anyone else's character.
-- **Game Calendar always renders empty right now, on this screen or on My Chronicle.** Beyond
-  Elysium doesn't yet model a chronicle's own game-date schedule, so this one is an honest
-  placeholder everywhere it appears, not broken or guessed at.
+- **Game Calendar lists the chronicle's game nights.** Every night on the Game Nights calendar appears, soonest first, with its date, start time, place and notes, in the PDF and on My Chronicle's Reports tab. A chronicle with none gets a short note saying so. A Storyteller's `[ST]` text in the notes is removed for players. See [Game Nights](game-nights.md).
 - **House Rules has no Grapevine counterpart**, and is the only one that can also live on a
   front-end page instead of being generated on demand - see [House Rules](house-rules.md).
 - **The action ones read the plot record as it actually happened.** A budget line's Total,

@@ -10,7 +10,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * Trace 7: a Storyteller copies Silver Dagger for a character (restricted, "Based on Silver Dagger").
+ * A Storyteller copies Silver Dagger for a character (restricted, "Based on Silver Dagger"), the player uses it,
+ * another character steals it, and the old printed card and a reprint verify differently.
  */
 class ItemLifeWorkflowTest extends WP_UnitTestCase {
 
@@ -30,10 +31,8 @@ class ItemLifeWorkflowTest extends WP_UnitTestCase {
 		$data     = (array) $response->get_data();
 
 		foreach ( $data['cards'] as $card ) {
-			foreach ( $card as [ $label, $value ] ) {
-				if ( $label === 'Verify' ) {
-					return $value;
-				}
+			if ( ! empty( $card['verify'] ) ) {
+				return $card['verify'];
 			}
 		}
 		return null;

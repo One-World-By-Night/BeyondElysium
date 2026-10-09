@@ -12,7 +12,7 @@ use WP_UnitTestCase;
 
 /**
  * A player buys a merit, a Storyteller opens the approval queue, the player changes their mind and resubmits a bigger
- * purchase, and the Storyteller.
+ * purchase, and the Storyteller can approve only the version they were shown.
  */
 class ChangeReviewWorkflowTest extends WP_UnitTestCase {
 

@@ -112,12 +112,11 @@ class Schema_Blocks_Controller extends Base_Controller {
 	 * @return \WP_REST_Response|\WP_Error
 	 */
 	public function get_item( $request ) {
-		$game_slug = $this->scope( $request );
-		if ( is_wp_error( $game_slug ) ) {
-			return $game_slug;
-		}
-		$block = Schema_Block::find_for_game( $request['slug'], $game_slug );
-		if ( ! $block || (string) $block->game_slug !== $game_slug ) {
+		// A read resolves the chronicle's own fork, falling back to the global definition; game_slug is a plain query
+		// param.
+		$game_slug = (string) ( $request->get_param( 'game_slug' ) ?? '' );
+		$block     = Schema_Block::find_for_game( $request['slug'], $game_slug );
+		if ( ! $block ) {
 			return $this->error( 'not_found', __( 'Schema block not found.', 'beyond-elysium' ), 404 );
 		}
 		return $this->success( $block );
@@ -295,7 +294,7 @@ class Schema_Blocks_Controller extends Base_Controller {
 	 * Defines the query parameters accepted by the schema block collection endpoint: section_type/is_system/search
 	 * filters, orderby/order sort controls, and page/per_page pagination.
 	 *
-	 * @return array
+	 * @return array<string,array<string,mixed>>
 	 */
 	public function get_collection_params(): array {
 		return [
@@ -340,7 +339,7 @@ class Schema_Blocks_Controller extends Base_Controller {
 	 * Defines the request parameters accepted when creating a schema block: the required slug, name, and section_type,
 	 * plus an optional definition object.
 	 *
-	 * @return array
+	 * @return array<string,array<string,mixed>>
 	 */
 	private function get_create_params(): array {
 		return [
@@ -457,7 +456,7 @@ class Schema_Blocks_Controller extends Base_Controller {
 	 * explicit definition.
 	 *
 	 * @param string $section_type
-	 * @return array
+	 * @return array<string,array<int,mixed>>
 	 */
 	private function default_definition( string $section_type ): array {
 		$defaults = [

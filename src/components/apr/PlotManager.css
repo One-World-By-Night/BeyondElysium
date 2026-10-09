@@ -1,10 +1,9 @@
-/* Storyteller Toolkit design tokens, declared once on the shell and inherited by every child component. */
-
+/*
+ * Storyteller Toolkit design tokens, declared once on the shell and inherited by every child component.
+ * --be-st-accent/--be-st-border-strong/--be-st-muted are in the theme; .be-st-button is in ConnectionManager.css.
+ */
 :root {
-	--be-st-accent: var(--be-red-1);
 	--be-st-border: var(--be-gray-20);
-	--be-st-border-strong: var(--be-gray-16);
-	--be-st-muted: var(--be-gray-6);
 	--be-st-faint: var(--be-gray-10);
 	--be-st-surface: var(--be-gray-29);
 	--be-st-surface-alt: var(--be-gray-27);
@@ -70,46 +69,6 @@
 	display: flex;
 	gap: 0.5rem;
 	flex-wrap: wrap;
-}
-
-/* The shared button look: flat, bordered, accent text on transparent, filling solid on hover. */
-.be-st-button.be-st-button,
-button.be-st-button.be-st-button {
-	display: inline-block;
-	padding: 0.4rem 0.9rem;
-	border: 1px solid var(--be-st-accent);
-	border-radius: 3px;
-	background: transparent;
-	color: var(--be-st-accent);
-	font-size: 0.85rem;
-	line-height: 1.4;
-	text-decoration: none;
-	cursor: pointer;
-}
-
-.be-st-button.be-st-button:hover:not(:disabled),
-button.be-st-button.be-st-button:hover:not(:disabled) {
-	background: var(--be-st-accent);
-	color: var(--be-gray-29);
-}
-
-.be-st-button.be-st-button:disabled,
-button.be-st-button.be-st-button:disabled {
-	opacity: 0.5;
-	cursor: default;
-}
-
-.be-st-button--quiet.be-st-button--quiet,
-button.be-st-button--quiet.be-st-button--quiet {
-	border-color: var(--be-st-border-strong);
-	color: var(--be-st-muted);
-}
-
-.be-st-button--quiet.be-st-button--quiet:hover:not(:disabled),
-button.be-st-button--quiet.be-st-button--quiet:hover:not(:disabled) {
-	background: var(--be-st-muted);
-	border-color: var(--be-st-muted);
-	color: var(--be-gray-29);
 }
 
 /* --- Overview: the card grid ------------------------------------------------ */
@@ -296,7 +255,7 @@ button.be-st-button--quiet.be-st-button--quiet:hover:not(:disabled) {
 @media ( max-width: 768px ) {
 
 	.be-plot-manager__grid {
-		grid-template-columns: 1fr;
+		grid-template-columns: minmax(0, 1fr);
 	}
 
 	.be-plot-manager__actions {

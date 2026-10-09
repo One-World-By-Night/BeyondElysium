@@ -6,6 +6,8 @@ import { __ } from '@wordpress/i18n';
 import api from '../../api/client';
 import Modal from './Modal';
 import HelpButton from './HelpButton';
+import { AiDemoModal } from './AiDemoNotice';
+import { useIsDemo } from './useIsDemo';
 import './AiAssistButton.css';
 
 export interface AiAssistButtonProps {
@@ -43,6 +45,7 @@ export function AiAssistButton( {
 	const [ suggestion, setSuggestion ] = useState< string | null >( null );
 	const [ loading, setLoading ] = useState( false );
 	const [ error, setError ] = useState< string | null >( null );
+	const isDemo = useIsDemo( gameSlug );
 
 	const canUse = !! window.beyondElysium?.capabilities?.[ capability ];
 	if ( ! canUse ) {
@@ -61,6 +64,9 @@ export function AiAssistButton( {
 	}
 
 	async function generate() {
+		if ( isDemo ) {
+			return;
+		}
 		setLoading( true );
 		setError( null );
 		try {
@@ -104,7 +110,13 @@ export function AiAssistButton( {
 				{ __( 'AI Assist', 'beyond-elysium' ) }
 			</button>
 			<HelpButton helpKey="writing-assist" />
-			{ isOpen && (
+			{ isOpen && isDemo && (
+				<AiDemoModal
+					title={ __( 'AI Assist', 'beyond-elysium' ) }
+					onClose={ () => setIsOpen( false ) }
+				/>
+			) }
+			{ isOpen && ! isDemo && (
 				<Modal
 					title={ __( 'AI Assist', 'beyond-elysium' ) }
 					onClose={ () => setIsOpen( false ) }

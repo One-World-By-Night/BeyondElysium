@@ -181,8 +181,8 @@ class Catalog_Translator {
 	/**
 	 * The exact inverse of decorate(): removes every PT_KEYS key, at any depth, from an array|object definition.
 	 *
-	 * @param array|object $definition
-	 * @return array|object The same type it was given.
+	 * @param array<string,mixed>|object $definition
+	 * @return array<string,mixed>|object The same type it was given.
 	 */
 	public static function strip( array|object $definition ): array|object {
 		if ( is_object( $definition ) ) {

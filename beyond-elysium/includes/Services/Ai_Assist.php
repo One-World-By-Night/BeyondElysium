@@ -38,19 +38,18 @@ class Ai_Assist {
 	const DEFAULT_CLAUDE_URL = 'https://api.anthropic.com/v1/messages';
 
 	/**
-	 * Revisit as provider model lineups change.
+	 * The default model for each provider.
 	 */
 	const OPENAI_MODEL = 'gpt-4o-mini';
 	const CLAUDE_MODEL = 'claude-haiku-4-5-20251001';
 
 	/**
-	 * A generous but bounded ceiling on how much of a field's own current text is ever sent upstream, protecting the
-	 * HST's own API spend from one runaway field.
+	 * The ceiling on how much of a field's own current text is sent upstream.
 	 */
 	const MAX_INPUT_CHARS = 8000;
 
 	/**
-	 * The same protection for the short direction typed when a field is empty.
+	 * The same ceiling for the short direction typed when a field is empty.
 	 */
 	const MAX_INSTRUCTION_CHARS = 1000;
 
@@ -66,6 +65,7 @@ class Ai_Assist {
 		'character_biography'      => "a Mind's Eye Theatre character's biography",
 		'character_notes'          => "freeform notes about a Mind's Eye Theatre character",
 		'npc_roleplaying_notes'    => 'Storyteller-only roleplaying guidance for a non-player character (voice, mannerisms, or plot hooks)',
+		'npc_public_description'   => 'a public-facing description of a non-player character, visible to players',
 		'plot_description'         => 'a Storyteller plot description for a Mind\'s Eye Theatre LARP chronicle',
 		'plot_cliffhanger'         => 'a short cliffhanger teaser for an ongoing plot',
 		'plot_st_notes'            => 'Storyteller-only planning notes on a plot, never seen by a player',
@@ -81,6 +81,97 @@ class Ai_Assist {
 		'chronicle_description'    => 'a short public description of a LARP chronicle',
 		'credits_text'             => 'a short credits statement for a LARP character-management plugin',
 	];
+
+	/**
+	 * Short framing and the exact JSON keys expected back, for each structured draft context. `required_keys` is
+	 * validated on the decoded reply before anything is written or returned to a caller.
+	 */
+	const DRAFT_CONTEXTS = [
+		'npc_roleplaying_draft' => [
+			'description'    => "a non-player character's Storyteller-only roleplaying notes",
+			'required_keys'  => [ 'Wants', 'Knows', 'Will Do If Unopposed', 'Voice & Tone', 'Emotional Range', 'Posture & Movement', 'Public Behavior', 'Private Behavior', 'Combat Style', 'Philosophy & Beliefs', 'Theme Statement', 'Motivations', 'Appearance' ],
+			'schema_hint'     => 'a JSON object with exactly these string keys: "Wants", "Knows", "Will Do If Unopposed", "Voice & Tone", "Emotional Range", "Posture & Movement", "Public Behavior", "Private Behavior", "Combat Style", "Philosophy & Beliefs", "Theme Statement", "Motivations", "Appearance" - fill only the ones named as empty below, and leave every other key as an empty string',
+		],
+		'plot_draft'            => [
+			'description'   => 'a new Storyteller plot drafted from a one-line premise',
+			'required_keys' => [ 'title', 'description', 'st_notes', 'cliffhanger', 'notes', 'rumors' ],
+			'schema_hint'   => 'a JSON object: "title" (string), "description" (string), "st_notes" (string, Storyteller-only planning detail), "cliffhanger" (string), "notes" (an array of 3 to 5 short strings, each one Storyteller-only plot beat), "rumors" (an array of 2 or 3 short strings, each one in-character rumor)',
+		],
+		'session_recap_draft'   => [
+			'description'   => "a Storyteller's own recap of a game night",
+			'required_keys' => [ 'key_events', 'player_decisions', 'npcs_involved', 'cliffhanger', 'prep' ],
+			'schema_hint'   => 'a JSON object: "key_events" (string), "player_decisions" (string), "npcs_involved" (an array of objects, each `{"name": string, "status": one of "alive", "injured", "dead", "unknown"}`), "cliffhanger" (string), "prep" (string, prep notes for next time)',
+		],
+	];
+
+	/**
+	 * Generates a structured draft for one of DRAFT_CONTEXTS, from real chronicle data rather than a single
+	 * field's own current text. The reply is parsed as JSON and checked for every `required_keys` entry before
+	 * anything is returned; a provider error or an invalid reply never reaches the caller as data.
+	 *
+	 * @param string               $draft_context One of the DRAFT_CONTEXTS keys.
+	 * @param array<string,mixed>  $context_data  The real data the draft is grounded in - never another
+	 *                                            entity's own Storyteller-only text.
+	 * @param string               $instruction   An optional short extra direction.
+	 * @param string|null          $game_slug
+	 * @return array{ok:bool,data?:array<string,mixed>,code?:string,message?:string}
+	 */
+	public static function generate_structured( string $draft_context, array $context_data, string $instruction, ?string $game_slug ): array {
+		if ( ! isset( self::DRAFT_CONTEXTS[ $draft_context ] ) ) {
+			return [ 'ok' => false, 'code' => 'unknown_field_context', 'message' => __( 'Unknown field.', 'beyond-elysium' ) ];
+		}
+
+		$resolved = self::resolve_key( $game_slug );
+		if ( $resolved === null ) {
+			return [ 'ok' => false, 'code' => 'ai_not_configured', 'message' => __( 'AI assist is not configured yet - ask whoever manages this chronicle (or the site) to add an API key.', 'beyond-elysium' ) ];
+		}
+
+		$context = self::DRAFT_CONTEXTS[ $draft_context ];
+		$system  = sprintf(
+			'You help a tabletop LARP Storyteller draft %s. Match the setting\'s tone. Reply with ONLY a single JSON object, no prose, no markdown code fence, matching this exact shape: %s.',
+			$context['description'],
+			$context['schema_hint']
+		);
+
+		$payload = wp_json_encode( $context_data );
+		$user_message = 'Draft this from the following real chronicle data (JSON): ' . self::truncate( (string) $payload );
+		if ( trim( $instruction ) !== '' ) {
+			$user_message .= "\n\nAdditional direction: " . self::truncate( trim( $instruction ), self::MAX_INSTRUCTION_CHARS );
+		}
+
+		$result = self::dispatch( $resolved, $system, $user_message, 2000 );
+		if ( ! $result['ok'] ) {
+			return $result;
+		}
+
+		$decoded = self::decode_json_reply( (string) ( $result['suggestion'] ?? '' ) );
+		if ( $decoded === null ) {
+			return [ 'ok' => false, 'code' => 'ai_invalid_reply', 'message' => __( 'The AI provider replied, but not with the expected structure. Try again.', 'beyond-elysium' ) ];
+		}
+		foreach ( $context['required_keys'] as $key ) {
+			if ( ! array_key_exists( $key, $decoded ) ) {
+				return [ 'ok' => false, 'code' => 'ai_invalid_reply', 'message' => __( 'The AI provider replied, but not with the expected structure. Try again.', 'beyond-elysium' ) ];
+			}
+		}
+
+		return [ 'ok' => true, 'data' => $decoded ];
+	}
+
+	/**
+	 * Decodes a provider's own reply text as a JSON object, tolerating a markdown code fence around it.
+	 *
+	 * @return array<string,mixed>|null null on anything that isn't a decodable JSON object.
+	 */
+	private static function decode_json_reply( string $text ): ?array {
+		$text = trim( $text );
+		if ( str_starts_with( $text, '```' ) ) {
+			$text = preg_replace( '/^```[a-z]*\n?/i', '', $text );
+			$text = preg_replace( '/```$/', '', trim( (string) $text ) );
+			$text = trim( (string) $text );
+		}
+		$decoded = json_decode( $text, true );
+		return is_array( $decoded ) ? $decoded : null;
+	}
 
 	/**
 	 * Generates a suggestion for one field.
@@ -150,14 +241,15 @@ class Ai_Assist {
 	 * @param array{provider:string,key:string,base_url:string,model:string,scope?:string} $resolved
 	 * @param string $system
 	 * @param string $user_message
+	 * @param int    $max_tokens
 	 * @return array{ok:bool,suggestion?:string,code?:string,message?:string}
 	 */
-	private static function dispatch( array $resolved, string $system, string $user_message ): array {
+	private static function dispatch( array $resolved, string $system, string $user_message, int $max_tokens = 1000 ): array {
 		$safe = ( $resolved['scope'] ?? 'site' ) === 'chronicle';
 		if ( $resolved['provider'] === 'claude' ) {
-			return self::call_claude( $resolved['key'], $system, $user_message, $resolved['base_url'], $resolved['model'], $safe );
+			return self::call_claude( $resolved['key'], $system, $user_message, $resolved['base_url'], $resolved['model'], $safe, $max_tokens );
 		}
-		return self::call_openai( $resolved['key'], $system, $user_message, $resolved['base_url'], $resolved['model'], $safe );
+		return self::call_openai( $resolved['key'], $system, $user_message, $resolved['base_url'], $resolved['model'], $safe, $max_tokens );
 	}
 
 	/**
@@ -341,10 +433,11 @@ class Ai_Assist {
 	 * @param string $user_message
 	 * @param string $base_url Empty string uses DEFAULT_OPENAI_URL.
 	 * @param string $model    Empty string uses OPENAI_MODEL.
-	 * @param bool   $safe     Request only public addresses (a chronicle's own endpoint - see dispatch()).
+	 * @param bool   $safe       Request only public addresses (a chronicle's own endpoint - see dispatch()).
+	 * @param int    $max_tokens
 	 * @return array{ok:bool,suggestion?:string,code?:string,message?:string}
 	 */
-	private static function call_openai( string $key, string $system, string $user_message, string $base_url = '', string $model = '', bool $safe = false ): array {
+	private static function call_openai( string $key, string $system, string $user_message, string $base_url = '', string $model = '', bool $safe = false, int $max_tokens = 1000 ): array {
 		$post     = $safe ? 'wp_safe_remote_post' : 'wp_remote_post';
 		$response = $post( $base_url !== '' ? $base_url : self::DEFAULT_OPENAI_URL, [
 			'timeout' => 30,
@@ -358,7 +451,7 @@ class Ai_Assist {
 					[ 'role' => 'system', 'content' => $system ],
 					[ 'role' => 'user', 'content' => $user_message ],
 				],
-				'max_tokens'  => 1000,
+				'max_tokens'  => $max_tokens,
 				'temperature' => 0.8,
 			] ),
 		] );
@@ -376,10 +469,11 @@ class Ai_Assist {
 	 * @param string $user_message
 	 * @param string $base_url Empty string uses DEFAULT_CLAUDE_URL.
 	 * @param string $model    Empty string uses CLAUDE_MODEL.
-	 * @param bool   $safe     Request only public addresses (a chronicle's own endpoint - see dispatch()).
+	 * @param bool   $safe       Request only public addresses (a chronicle's own endpoint - see dispatch()).
+	 * @param int    $max_tokens
 	 * @return array{ok:bool,suggestion?:string,code?:string,message?:string}
 	 */
-	private static function call_claude( string $key, string $system, string $user_message, string $base_url = '', string $model = '', bool $safe = false ): array {
+	private static function call_claude( string $key, string $system, string $user_message, string $base_url = '', string $model = '', bool $safe = false, int $max_tokens = 1000 ): array {
 		$post     = $safe ? 'wp_safe_remote_post' : 'wp_remote_post';
 		$response = $post( $base_url !== '' ? $base_url : self::DEFAULT_CLAUDE_URL, [
 			'timeout' => 30,
@@ -394,7 +488,7 @@ class Ai_Assist {
 				'messages'   => [
 					[ 'role' => 'user', 'content' => $user_message ],
 				],
-				'max_tokens' => 1000,
+				'max_tokens' => $max_tokens,
 			] ),
 		] );
 
@@ -407,8 +501,8 @@ class Ai_Assist {
 	 * Shared response handling for both providers: a WP_Error (network failure), a non-2xx HTTP status, or an unparseable
 	 * body all become the same `ai_provider_error` code.
 	 *
-	 * @param \WP_Error|array $response      wp_remote_post()'s own return shape.
-	 * @param callable        $extract_text  (array $decoded_body): ?string
+	 * @param \WP_Error|array<string,mixed> $response      wp_remote_post()'s own return shape.
+	 * @param callable                      $extract_text  (array $decoded_body): ?string
 	 * @return array{ok:bool,suggestion?:string,code?:string,message?:string}
 	 */
 	private static function parse_response( $response, callable $extract_text ): array {

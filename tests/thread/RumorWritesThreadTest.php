@@ -12,7 +12,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * (found triaging).
+ * A rumor write that fails leaves nothing behind: rumors whose tags did not save are not kept or announced, a failed
+ * rumor keeps none of its date, and a second generation waits while the first writes the date.
  */
 class RumorWritesThreadTest extends WP_UnitTestCase {
 
@@ -52,7 +53,7 @@ class RumorWritesThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Fails inserts into one table after the first `$spared`, as a lost connection or lock timeout would.
+	 * Fails inserts into one table after the first `$spared`.
 	 */
 	public function break_inserts( string $query ): string {
 		global $wpdb;

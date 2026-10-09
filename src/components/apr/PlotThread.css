@@ -195,3 +195,9 @@
 		width: 100%;
 	}
 }
+
+.be-plot-thread__email-log {
+	display: inline-block;
+	margin-top: 0.4rem;
+	font-size: 0.85em;
+}

@@ -1,0 +1,21 @@
+{
+  "format": 1,
+  "slug": "various.npc_quick",
+  "name": "Various NPC Sheet (Quick)",
+  "kind": "template",
+  "provenance": {
+    "sources": [
+      "Grapevine 3.01's own `VariousClass` (GV-SOURCEMAP.md): the generic character class for a creature type Grapevine has no dedicated support for."
+    ],
+    "tool": "read directly, 2026-10-04"
+  },
+  "definition": {
+    "columns": 2,
+    "version": 1,
+    "sections": [
+      { "order": 1, "title": null, "width": "half", "column": 1, "display": null, "collapsed": false, "block_slug": "various-identity" },
+      { "order": 2, "title": "Quick Stats", "width": "half", "column": 1, "display": null, "collapsed": false, "block_slug": "npc-quick-stats" },
+      { "order": 1, "title": "Roleplaying Notes", "width": "half", "column": 2, "display": null, "collapsed": false, "block_slug": "npc-roleplaying-notes" }
+    ]
+  }
+}

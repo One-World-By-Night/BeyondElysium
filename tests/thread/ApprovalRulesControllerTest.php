@@ -2,6 +2,7 @@
 
 namespace BeyondElysium\Tests\Thread;
 
+use BeyondElysium\Models\Creature_Stack;
 use BeyondElysium\Models\Game_Member;
 use BeyondElysium\Models\Schema_Block;
 use WP_REST_Request;
@@ -83,6 +84,30 @@ class ApprovalRulesControllerTest extends WP_UnitTestCase {
 				[ 'name' => 'Clan', 'field_type' => 'select', 'required' => true, 'options' => [ 'Brujah', 'Ravnos', 'Antediluvian' ] ],
 			] ],
 			'is_system'    => 0,
+		] );
+
+		Schema_Block::create( [
+			'slug'         => 'ar-test-gifts',
+			'name'         => 'AR Test Gifts',
+			'section_type' => 'tiered_power',
+			'definition'   => [ 'powers' => [
+				[ 'name' => 'Sense Wyrm', 'levels' => [ [ 'level' => 1, 'tier' => 'basic', 'power_name' => 'Sense Wyrm' ] ] ],
+			] ],
+			'is_system'    => 0,
+		] );
+
+		Creature_Stack::create_for_game( 'approval-rules-test', [
+			'slug'             => 'ar-test-vampire',
+			'name'             => 'AR Test Vampire',
+			'stack_definition' => [ 'sections' => [
+				[
+					'block_slug'    => 'ar-test-disciplines',
+					'label'         => 'Disciplines',
+					'display_order' => 1,
+					'required'      => false,
+					'in_type'       => [ [ 'kind' => 'names', 'values' => [ 'constant' => [ 'Thaumaturgy' ] ] ] ],
+				],
+			] ],
 		] );
 	}
 
@@ -236,6 +261,104 @@ class ApprovalRulesControllerTest extends WP_UnitTestCase {
 		$level5 = current( array_filter( $power->levels, fn( $l ) => $l->level === 5 ) );
 		$this->assertEmpty( $level1->reason ?? null, 'a rule on one level must not leak onto another level of the same power' );
 		$this->assertSame( 'Tremere Coordinator Approval', $level5->reason );
+	}
+
+	// --- block_default / block_in_type targets (block-level rules) ---
+
+	public function test_a_block_default_rule_makes_every_purchase_in_the_block_wait(): void {
+		wp_set_current_user( $this->admin_id );
+		$response = $this->create_rule( [
+			'block_slug' => 'ar-test-merits', 'target_type' => 'block_default', 'approval' => 'st',
+		] );
+
+		$this->assertSame( 201, $response->get_status() );
+		$this->assertSame( 'st', $response->get_data()['approval'] );
+
+		$fork = Schema_Block::find_for_game( 'ar-test-merits', 'approval-rules-test' );
+		$this->assertSame( 'st', $fork->definition->approval_rules->default );
+	}
+
+	public function test_a_block_in_type_rule_writes_both_keys_into_the_chronicles_copy(): void {
+		wp_set_current_user( $this->admin_id );
+		$response = $this->create_rule( [
+			'block_slug' => 'ar-test-disciplines', 'target_type' => 'block_in_type',
+			'in_type' => 'auto', 'out_of_type' => 'st',
+		] );
+
+		$this->assertSame( 201, $response->get_status() );
+		$this->assertSame( [ 'auto', 'st' ], $response->get_data()['extra'] );
+
+		$fork = Schema_Block::find_for_game( 'ar-test-disciplines', 'approval-rules-test' );
+		$this->assertSame( 'auto', $fork->definition->approval_rules->in_type );
+		$this->assertSame( 'st', $fork->definition->approval_rules->out_of_type );
+	}
+
+	public function test_a_block_with_no_in_type_test_is_refused(): void {
+		wp_set_current_user( $this->admin_id );
+		$response = $this->create_rule( [
+			'block_slug' => 'ar-test-gifts', 'target_type' => 'block_in_type',
+			'in_type' => 'auto', 'out_of_type' => 'st',
+		] );
+
+		$this->assertSame( 400, $response->get_status() );
+		$this->assertSame( 'no_in_type_test', $response->get_data()['code'] );
+		$this->assertSame( '', Schema_Block::find_for_game( 'ar-test-gifts', 'approval-rules-test' )->game_slug, 'a refused rule must not fork the block' );
+	}
+
+	public function test_a_block_in_type_rule_against_a_trait_list_block_is_rejected(): void {
+		wp_set_current_user( $this->admin_id );
+		$response = $this->create_rule( [
+			'block_slug' => 'ar-test-merits', 'target_type' => 'block_in_type',
+			'in_type' => 'auto', 'out_of_type' => 'st',
+		] );
+
+		$this->assertSame( 400, $response->get_status() );
+		$this->assertSame( 'invalid_target', $response->get_data()['code'] );
+	}
+
+	public function test_sending_only_one_level_for_block_in_type_is_rejected(): void {
+		wp_set_current_user( $this->admin_id );
+		$response = $this->create_rule( [
+			'block_slug' => 'ar-test-disciplines', 'target_type' => 'block_in_type', 'in_type' => 'auto',
+		] );
+
+		$this->assertSame( 400, $response->get_status() );
+		$this->assertSame( 'invalid_param', $response->get_data()['code'] );
+	}
+
+	public function test_deleting_a_block_in_type_rule_removes_both_keys(): void {
+		wp_set_current_user( $this->admin_id );
+		$created = $this->create_rule( [
+			'block_slug' => 'ar-test-disciplines', 'target_type' => 'block_in_type',
+			'in_type' => 'auto', 'out_of_type' => 'st',
+		] );
+		$id = $created->get_data()['id'];
+
+		$request = new WP_REST_Request( 'DELETE', "/be/v1/approval-rules-test/approval-rules/{$id}" );
+		$request->set_url_params( [ 'game_slug' => 'approval-rules-test', 'id' => $id ] );
+		$response = $this->dispatch( $request );
+
+		$this->assertSame( 204, $response->get_status() );
+		$fork = Schema_Block::find_for_game( 'ar-test-disciplines', 'approval-rules-test' );
+		$this->assertObjectNotHasProperty( 'in_type', $fork->definition->approval_rules );
+		$this->assertObjectNotHasProperty( 'out_of_type', $fork->definition->approval_rules );
+	}
+
+	public function test_listing_shows_a_block_default_rule_set_outside_the_screen(): void {
+		$fork = Schema_Block::find_or_create_fork_for_game( 'ar-test-merits', 'approval-rules-test' );
+		$definition                          = $fork->definition;
+		$definition->approval_rules          = new \stdClass();
+		$definition->approval_rules->default = 'st';
+		Schema_Block::update( 'ar-test-merits', [ 'definition' => $definition ], 'approval-rules-test' );
+
+		wp_set_current_user( $this->admin_id );
+		$request = new WP_REST_Request( 'GET', '/be/v1/approval-rules-test/approval-rules' );
+		$request->set_url_params( [ 'game_slug' => 'approval-rules-test' ] );
+		$response = $this->dispatch( $request );
+
+		$found = current( array_filter( $response->get_data(), fn( $r ) => $r['target_type'] === 'block_default' && $r['block_slug'] === 'ar-test-merits' ) );
+		$this->assertNotFalse( $found );
+		$this->assertSame( 'st', $found['approval'] );
 	}
 
 	// --- item_range target (trait_list per-value schedule) ---

@@ -11,7 +11,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * Trace 5: a player proposes a coterie.
+ * A player proposes a coterie.
  */
 class CoterieWorkflowTest extends WP_UnitTestCase {
 

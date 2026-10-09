@@ -25,6 +25,7 @@ function previewOf( parts: Partial< ImportPreview > ): ImportPreview {
 		unresolved: [],
 		duplicates: [],
 		world_object_duplicates: [],
+		refused: [],
 		warnings: [],
 		...parts,
 	} as ImportPreview;
@@ -137,14 +138,15 @@ describe( 'importDecisions', () => {
 } );
 
 /**
- * The game-file wizard counted its own way: every unmatched trait blocked even once kept as written, and any choice
- * at all resolved a character in another chronicle.
+ * `blockingCount` counts an unmatched trait as blocking only until it is kept as written, and a choice resolves only
+ * the character it was made for, in the chronicle it was made on.
  */
 describe( 'blockingCount', () => {
 	const unmatched = {
 		character: 'Ian Kincaid II',
 		block: 'vampire-merits',
 		raw: 'A Merit Nobody Catalogued',
+		allow_custom: true,
 	};
 
 	it( 'stops counting an unmatched trait once it is kept as written', () => {

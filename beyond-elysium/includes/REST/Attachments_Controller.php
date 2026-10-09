@@ -97,7 +97,10 @@ class Attachments_Controller extends Base_Controller {
 		}
 		$uploaded = reset( $files );
 
-		$stored = Attachment_Storage::store( $uploaded );
+		$stored = Attachment_Storage::store(
+			$uploaded,
+			$entity_type === 'character' ? Attachment_Storage::IMAGE_MIME_TYPES : null
+		);
 		if ( is_wp_error( $stored ) ) {
 			return $stored;
 		}
@@ -239,11 +242,37 @@ class Attachments_Controller extends Base_Controller {
 		}
 
 		$can_manage = Authorization::check_request( $this->manage_capability_for( $attachment->entity_type ), $request );
+
+		if ( $attachment->entity_type === 'character' ) {
+			if ( $can_manage || (int) $entity->wp_user_id === get_current_user_id() ) {
+				return [ $entity, $attachment ];
+			}
+			if ( ! Audience::can_see( self::character_profile_projection( $entity ), 'pc', get_current_user_id(), $request['game_slug'], false ) ) {
+				return $this->error( 'not_found', __( 'File not found.', 'beyond-elysium' ), 404 );
+			}
+			return [ $entity, $attachment ];
+		}
+
 		if ( ! $can_manage && ! Audience::can_see( $entity, $attachment->entity_type, get_current_user_id(), $request['game_slug'], false ) ) {
 			return $this->error( 'not_found', __( 'File not found.', 'beyond-elysium' ), 404 );
 		}
 
 		return [ $entity, $attachment ];
+	}
+
+	/**
+	 * The projection Audience::can_see() reads for a 'pc' entity: {id, audience, audience_rules}, built from a
+	 * character's own profile_audience and profile_audience_rules columns.
+	 *
+	 * @param object $character
+	 * @return object
+	 */
+	private static function character_profile_projection( object $character ): object {
+		return (object) [
+			'id'             => (int) $character->id,
+			'audience'       => $character->profile_audience ?? 'storytellers',
+			'audience_rules' => $character->profile_audience_rules ?? null,
+		];
 	}
 
 	/**
@@ -264,6 +293,15 @@ class Attachments_Controller extends Base_Controller {
 			return $plot;
 		}
 
+		if ( $entity_type === 'character' ) {
+			$character = Character::find( $entity_id );
+			$game      = Game::find( $game_id );
+			if ( ! $character || ! $game || $character->owner_slug !== $game->slug ) {
+				return $this->error( 'entity_not_found', __( 'Character not found in this game.', 'beyond-elysium' ), 404 );
+			}
+			return $character;
+		}
+
 		$object = World_Object::find( $entity_id );
 		if ( ! $object || (int) $object->game_id !== $game_id || $object->object_type !== $entity_type ) {
 			return $this->error( 'entity_not_found', __( 'World object not found in this game.', 'beyond-elysium' ), 404 );
@@ -278,7 +316,13 @@ class Attachments_Controller extends Base_Controller {
 	 * @return string
 	 */
 	private function manage_capability_for( string $entity_type ): string {
-		return $entity_type === 'plot' ? 'be_manage_plots' : 'be_manage_world_objects';
+		if ( $entity_type === 'plot' ) {
+			return 'be_manage_plots';
+		}
+		if ( $entity_type === 'character' ) {
+			return 'be_manage_characters';
+		}
+		return 'be_manage_world_objects';
 	}
 
 	/**
@@ -291,6 +335,9 @@ class Attachments_Controller extends Base_Controller {
 	private function may_manage_attachments( string $entity_type, object $entity ): bool {
 		if ( Authorization::can( $this->manage_capability_for( $entity_type ) ) ) {
 			return true;
+		}
+		if ( $entity_type === 'character' ) {
+			return (int) $entity->wp_user_id === get_current_user_id();
 		}
 		if ( $entity_type !== 'plot' ) {
 			return false;

@@ -223,8 +223,17 @@ export function pickOptionsFor(
 			.map( ( row ) => `${ row.name }\0${ row.power_name }` )
 	);
 
+	// A family with no regular ladder at all can never become held by buying a rung first, so its
+	// picks are offered from the start, not only once the family is already held.
+	const eligibleFamilies = new Set( heldFamilies );
+	for ( const power of definition.powers ) {
+		if ( power.elder && power.levels.length === 0 ) {
+			eligibleFamilies.add( power.name );
+		}
+	}
+
 	const options: PickOption[] = [];
-	for ( const familyName of heldFamilies ) {
+	for ( const familyName of eligibleFamilies ) {
 		const power = definition.powers.find( ( p ) => p.name === familyName );
 		if ( ! power?.elder ) {
 			continue;

@@ -9,8 +9,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * The Approval Rules form opens with its level "(unset)", and a value-range rule saved that way was created as
- * auto-approve.
+ * The Approval Rules form opens with its level "(unset)", and a value-range rule saved with no level requires a
+ * Storyteller.
  */
 class ApprovalRuleDefaultsThreadTest extends WP_UnitTestCase {
 

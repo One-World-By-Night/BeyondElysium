@@ -18,7 +18,7 @@ class Catalog_Reader {
 	/**
 	 * Per-request cache, keyed by root path.
 	 *
-	 * @var array<string,array>
+	 * @var array<string,array<string,mixed>>
 	 */
 	private static array $cache = [];
 
@@ -52,7 +52,7 @@ class Catalog_Reader {
 	/**
 	 * Decodes and validates every file under $root, grouped by `kind`.
 	 *
-	 * @return array{blocks:array<string,array>,stacks:array<string,array>,templates:array<string,array>,presets:array<string,array>,errors:string[]}
+	 * @return array{blocks:array<string,array<string,mixed>>,stacks:array<string,array<string,mixed>>,templates:array<string,array<string,mixed>>,presets:array<string,array<string,mixed>>,errors:string[]}
 	 */
 	public static function load( string $root = self::DEFAULT_ROOT ): array {
 		if ( isset( self::$cache[ $root ] ) ) {
@@ -155,7 +155,7 @@ class Catalog_Reader {
 	 * its own file's content, what it adds to its base or all it replaces it with, under a `_variant` descriptor naming
 	 * the base, its id, label and mode.
 	 *
-	 * @return array<string,array{slug:string,name:string,section_type:string,definition:array,is_system:int,created_by:int}>
+	 * @return array<string,array{slug:string,name:string,section_type:string,definition:array<string,mixed>,is_system:int,created_by:int}>
 	 */
 	public static function blocks_to_seed( string $root = self::DEFAULT_ROOT ): array {
 		$catalog = self::load( $root );
@@ -292,8 +292,8 @@ class Catalog_Reader {
 	}
 
 	/**
-	 * Defaults a definition's flags the same way `make_tiered_power_block()`/ `make_trait_list_block()` already do for a
-	 * block built from the GVM.
+	 * Defaults a definition's flags: a tiered_power block is sequential and allows custom entries, and a trait_list
+	 * block allows custom entries but not multiples.
 	 *
 	 * @param array<string,mixed> $definition
 	 * @return array<string,mixed>
@@ -319,7 +319,7 @@ class Catalog_Reader {
 	/**
 	 * Every declared stack file as a `Creature_Stack`-ready array keyed by slug.
 	 *
-	 * @return array<string,array>
+	 * @return array<string,array<string,mixed>>
 	 */
 	public static function stacks_to_seed( string $root = self::DEFAULT_ROOT ): array {
 		$catalog = self::load( $root );
@@ -333,10 +333,15 @@ class Catalog_Reader {
 				'name'             => (string) ( $data['name'] ?? $slug ),
 				'game_line'        => (string) ( $definition['game_line'] ?? 'met' ),
 				'is_system'        => 1,
-				'stack_definition' => [
-					'sections'            => self::strip_replaces( (array) ( $definition['sections'] ?? [] ) ),
-					'display_preferences' => $definition['display_preferences'] ?? [],
-				],
+				'stack_definition' => array_merge(
+					[
+						'sections'            => self::strip_replaces( (array) ( $definition['sections'] ?? [] ) ),
+						'display_preferences' => $definition['display_preferences'] ?? [],
+					],
+					isset( $definition['default_enabled'] ) ? [ 'default_enabled' => (bool) $definition['default_enabled'] ] : [],
+					! empty( $definition['storyteller_only'] ) ? [ 'storyteller_only' => true ] : [],
+					! empty( $definition['any_block'] ) ? [ 'any_block' => true ] : []
+				),
 				'creation_rules'   => $definition['creation_rules'] ?? [],
 			];
 		}
@@ -407,7 +412,7 @@ class Catalog_Reader {
 	/**
 	 * Every declared template file as a `Template`-ready array keyed by its `<stack>.<type>` slug.
 	 *
-	 * @return array<string,array>
+	 * @return array<string,array<string,mixed>>
 	 */
 	public static function templates_to_seed( string $root = self::DEFAULT_ROOT ): array {
 		$catalog   = self::load( $root );

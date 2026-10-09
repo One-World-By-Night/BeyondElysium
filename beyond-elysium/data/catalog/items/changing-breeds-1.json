@@ -1,0 +1,246 @@
+{
+  "format": 1,
+  "kind": "item_catalog",
+  "slug": "changing-breeds-1",
+  "name": "Mind's Eye Theatre: Changing Breeds",
+  "book": "Mind's Eye Theatre: Changing Breeds",
+  "code": "WW05019",
+  "provenance": {
+    "sources": [
+      "Mind's Eye Theatre: Changing Breeds (WW05019), the fetish/talen section of each breed's own chapter: Nuwisha's \"Fetishes\" (pp.48-49), Corax's \"Toys\" (pp.100-101), Bastet's \"Trinkets\"/\"Hakarrs\" (pp.214-216) - the only three breeds this book covers in full; the others (Ananasi, Gurahl, Kitsune, Mokole, Nagah, Ratkin, Rokea) are in its sequel volumes.",
+      "Every entry read directly from the book's own page images (not OCR), per reference-wod-scan-ocr-lessons."
+    ],
+    "tool": "read directly, 2026-10-04"
+  },
+  "notes": [
+    "Fetish Trait Cost -> properties.level, Gnosis -> properties.tempers (one entry, {name:\"Gnosis\",count:N}), Spirit Affinity -> properties.item_subtype, Melee Bonus Traits (weapon-shaped fetishes only) -> properties.bonus, the full prose description -> properties.powers, per the design's own fetish mapping rules. A Gnosis of \"N/A\" (Lotus Petals) carries no tempers entry at all, since the book states there is none to record.",
+    "A talen's uses_max defaults to 1 per the design, but a book's own stated use count wins when it prints one - Powder of Kishijoten explicitly holds enough for three uses.",
+    "Silver Hakarr prints no Spirit Affinity line at all, unlike every other entry here - its own text names only a generic \"War-spirit\" rather than a specific named spirit, kept as item_subtype \"War\" to match."
+  ],
+  "items": [
+    {
+      "key": "coyotes-fang",
+      "name": "Coyote's Fang",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "item_subtype": "Coyote (only)",
+        "level": 3,
+        "tempers": [ { "name": "Gnosis", "count": 4 } ],
+        "bonus": 2,
+        "powers": "These fearsome daggers are said to be formed from one of Coyote's own teeth, and when activated they inflict aggravated damage against all opponents. In addition, a Fang allows the bearer to attack opponents on both sides of the Gauntlet simultaneously (provided the Nuwisha can see or otherwise sense opponents there). No spirit is immune to the fang's power, no matter what Realm they might be in. These fetishes only work for Nuwisha and function as nothing more than a normal dagger in the hands of anyone else."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds", "code": "WW05019", "page": 48 }
+    },
+    {
+      "key": "powder-of-kishijoten",
+      "name": "Powder of Kishijoten",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Talen",
+        "item_subtype": "Healing, Calm",
+        "level": 3,
+        "tempers": [ { "name": "Gnosis", "count": 4 } ],
+        "uses_max": 3,
+        "powers": "This potent powder automatically heals any wound that is not fatal, causing even aggravated wounds to disappear without a scar. Mortal wounds, while not healed, bleed much less freely than normal, and poisons are slowed without causing any additional damage. Most bags contain enough of the fine green powder for three uses."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds", "code": "WW05019", "page": 48 }
+    },
+    {
+      "key": "the-ball-of-death",
+      "name": "The Ball of Death",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "item_subtype": "Coyote, Raven, Desire",
+        "level": 4,
+        "tempers": [ { "name": "Gnosis", "count": 6 } ],
+        "powers": "A black rubber sphere about the size of a soccer ball, decorated in dull white paint with a large skull and crossbones and the name of the fetish. When activated, it becomes a subtle but powerful tool for causing dissension - those other than the Nuwisha who actually touch the ball must immediately make a Willpower Test against the ball's Gnosis rating or desire nothing else but to possess it, bounce it and play with it for the rest of the scene. They resist having it taken away with any means at their disposal, including violence if necessary. As soon as the ball is activated, all nearby characters with supernatural senses of any kind immediately detect a surge of powerful, mysterious magic emanating from it, which grows stronger as they approach."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds", "code": "WW05019", "page": 48 }
+    },
+    {
+      "key": "pipes-of-kokopelli",
+      "name": "Pipes of Kokopelli",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "item_subtype": "Illusion, Trickery, Rat",
+        "level": 4,
+        "tempers": [ { "name": "Gnosis", "count": 6 } ],
+        "powers": "With this fetish, the Nuwisha may play a tune and attempt to lead any Banes in the area either into or out of the Umbra. In addition to normal activation costs, this fetish requires a Social Challenge with the Performance Ability against the Bane's Willpower rating; in the case of multiple Banes, use the normal rules for group challenges. Success means that the Banes can do nothing but follow the Nuwisha for as long as the music is playing. Only Nuwisha may use these fetishes; to all others they are normal pipes."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds", "code": "WW05019", "page": 49 }
+    },
+    {
+      "key": "mirror-of-ti-malice",
+      "name": "Mirror of Ti Malice",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "item_subtype": "Fear, Rage, Ancestor",
+        "level": 4,
+        "tempers": [ { "name": "Gnosis", "count": 6 } ],
+        "powers": "A unique fetish, missing since the second War of Rage, the mirror is a small silver disk that allows the Nuwisha to turn the tables on his enemies; once activated, it causes all who view the Nuwisha to suffer the Delirium as if they were mortal, even supernatural foes and other skinchangers. Activating the mirror costs a Gnosis Trait in addition to normal activation costs."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds", "code": "WW05019", "page": 49 }
+    },
+    {
+      "key": "eye-of-ptah",
+      "name": "Eye of Ptah",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "item_subtype": "Ptah (only)",
+        "level": 5,
+        "tempers": [ { "name": "Gnosis", "count": 7 } ],
+        "powers": "This small black crystal allows the Nuwisha to look on her surroundings and know the truth about anything in the area - disguises are immediately transparent, invisible characters detected, nearby spirits revealed, even concealed weapons become partially visible. Hidden items are not made visible, only the results of what the item will be. The Nuwisha must hold the crystal to her eye and spend a Gnosis Trait as part of the activation process."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds", "code": "WW05019", "page": 49 }
+    },
+    {
+      "key": "sliver-of-helios",
+      "name": "Sliver of Helios",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "item_subtype": "Helios (duh)",
+        "level": 1,
+        "tempers": [ { "name": "Gnosis", "count": 3 } ],
+        "powers": "This handy little fetish is nothing less than a dagger-shaped slice of sunlight itself; when activated, it fills a 10 foot by 10 foot square with true sunlight. All vampires within that radius suffer normal damage from such exposure. If the owner attempts to wield the sliver like a dagger, it shatters and the light goes out immediately. Additionally, the light from the sliver cannot be dimmed in any way."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds", "code": "WW05019", "page": 100 }
+    },
+    {
+      "key": "silver-claws",
+      "name": "Silver Claws",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "item_subtype": "War, Ancestor",
+        "level": 1,
+        "tempers": [ { "name": "Gnosis", "count": 5 } ],
+        "powers": "These very dangerous fetishes are typically only carried when combat with another changer seems unavoidable. They fasten over the wielder's normal combat form claws. A drop of the Corax's blood and the usual Gnosis Test activates the fetish, which then transforms from stainless steel (its usual state) into pure silver, with the usual advantages this offers against some werecreatures."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds", "code": "WW05019", "page": 100 }
+    },
+    {
+      "key": "corvids-favor",
+      "name": "Corvid's Favor",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "item_subtype": "Raven, Ancestor",
+        "level": 1,
+        "tempers": [ { "name": "Gnosis", "count": 2 } ],
+        "powers": "This simple but handy fetish is a simple feather wrapped with the wearer's hair. When activated, it allows the Corax to use Corvid-form-only Gifts while in Homid form. While the Corax still cannot fly in this form, it does make some tricks a little easier to perform."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds", "code": "WW05019", "page": 100 }
+    },
+    {
+      "key": "ravens-face",
+      "name": "Raven's Face",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "item_subtype": "Raven, Helios, Wisdom",
+        "level": 3,
+        "tempers": [ { "name": "Gnosis", "count": 3 } ],
+        "powers": "This rare fetish is nothing less than a massive wooden totem pole that acts as a Gnosis battery for Corax fortunate enough to have access to it. Typically found only in the Pacific Northwest, these fetishes can hold any amount of Gnosis Traits - to transfer Gnosis Traits into the pole, the Corax need only perch on top of it and make the usual activation test. Withdrawing stored Gnosis requires the same process in reverse. Other Changing Breeds cannot access the Gnosis stored in these fetishes - wolves, cats and sharks don't do the whole perching routine very well."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds", "code": "WW05019", "page": 100 }
+    },
+    {
+      "key": "counterfeit",
+      "name": "Counterfeit",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "item_subtype": "Coyote, Illusion, Raven",
+        "level": 2,
+        "tempers": [ { "name": "Gnosis", "count": 3 } ],
+        "powers": "A handy prop for those Corax who simply cannot control their natural urge to make off with the objects of others, this fetish takes on the shape of any small item that it is touching upon proper activation and the expenditure of a Gnosis Trait. Only the item's appearance is assumed - a counterfeit gun won't fire, for example, nor will a duplicated cell phone dial or receive messages. When the owner attempts to use the item, it reverts to its original appearance - a small clay tablet with the Raven's sigil on it."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds", "code": "WW05019", "page": 101 }
+    },
+    {
+      "key": "helios-mirror",
+      "name": "Helios' Mirror",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "item_subtype": "Helios (see above)",
+        "level": 5,
+        "tempers": [ { "name": "Gnosis", "count": 4 } ],
+        "powers": "Precious few of these fetishes exist, and those that do are closely guarded by their owners; with the typical size of a mirror being over a foot tall, they aren't portable either and thus usually fixed in a Corax's home or secure Umbral hideout. Upon activating the mirror, the Corax may observe anyone who's currently on the sunlit side of the world, and he may continue to scry on them for as long as he likes or until he is overtaken by night. The mirror can be used at any hour of the day or night, but cannot observe anyone on the night side of the planet or in the Umbra. This fetish can only be used once per day, and abuse or overuse tends to shatter these fragile fetishes."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds", "code": "WW05019", "page": 101 }
+    },
+    {
+      "key": "devils-deck",
+      "name": "Devil's Deck",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "item_subtype": "Faerie, Trickery, Illusion",
+        "level": 1,
+        "tempers": [ { "name": "Gnosis", "count": 5 } ],
+        "powers": "This simple but effective trinket deals the Bastet whatever card she needs, allowing her to manipulate games of chance to her benefit. All that's required is to blow on the cards and request good luck (as well as the standard Gnosis Test); if successful, the Bastet may take the deck and choose whatever cards she wants, if an actual deck of cards is used. If a real deck is not being used, the Bastet is two Traits up on all tests related to gambling with the deck and receives a free retest on all such tests as well."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds", "code": "WW05019", "page": 214 }
+    },
+    {
+      "key": "lotus-petals",
+      "name": "Lotus Petals",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Talen",
+        "item_subtype": "Seline",
+        "level": 2,
+        "uses_max": 1,
+        "powers": "Not actually full-fledged trinkets but talens, or one-use mystic items, Lotus Petals are taken from special 1000-year lotuses that grow in the Court of Luna. Wise cats who make the journey to the moon and back are sometimes allowed to take up to five petals as a sign of Seline's love; some kuasha leave them to kits as a sign of affection. What the petals do is entirely up to Storyteller, but some \"common\" effects include: the power to dissolve any poison, the ability to cure any disease, the power to increase the potency of Moon Rites, or the seed to ensure the birth of a Bastet kitten."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds", "code": "WW05019", "page": 215 }
+    },
+    {
+      "key": "grandmothers-stones",
+      "name": "Grandmother's Stones",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "item_subtype": "Seline, Wisdom",
+        "level": 2,
+        "tempers": [ { "name": "Gnosis", "count": 5 } ],
+        "powers": "These brilliant blue gems are said to have originated from the aftermath of the great flood of long ago and allow female Bastet to increase their Gnosis rating while the light of Seline shines. To use this trinket, the Bastet must make a series of Simple Tests against the Gnosis rating of the stone, one test for each permanent Gnosis Trait she possesses. For each success, she gains an extra temporary Gnosis Trait while the moon is shining. These extra Traits can be spent like any other Gnosis Traits but cannot be replenished until the stone is reactivated once more. This trinket may only be activated once per lunar cycle and only on the full moon."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds", "code": "WW05019", "page": 215 }
+    },
+    {
+      "key": "truth-speaker-stick",
+      "name": "Truth-Speaker Stick",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "item_subtype": "Honor, Leadership, Tiger",
+        "level": 3,
+        "tempers": [ { "name": "Gnosis", "count": 5 } ],
+        "powers": "This handy trinket allows the owner to determine if someone is telling the truth. Once activated, the trinket is typically passed around at a gathering such as a taghairm; protocol at such occasions typically demands that only those holding the stick may speak. If the person holding it attempts to speak a lie, this trinket automatically leaps into the air and whaps them repeatedly on the head; no damage is inflicted, but the point is certainly clear to all! Once the liar has been exposed, the stick floats back to its owner's hands."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds", "code": "WW05019", "page": 215 }
+    },
+    {
+      "key": "silver-hakarr",
+      "name": "Silver Hakarr",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "item_subtype": "War",
+        "level": 3,
+        "tempers": [ { "name": "Gnosis", "count": 6 } ],
+        "bonus": 3,
+        "powers": "Like the klaives of the Garou, these silver hunga-mungas are dangerous to make and deadly to use, reserved only for the most terrible grudge battles. Crafted from raw silver and imbued with War-spirits, these weapons are considered valuable in their native lands of Africa and legendary in the Americas. A hakarr's owner suffers a one-Gnosis penalty from her usual total. Hakarrs inflict aggravated damage, plus the usual penalties of silver if the target is a shapeshifter. These weapons are heavy - thick cutting blades project out from the handle in every direction - and only a strong combatant can carry one, much less attempt to throw it in combat."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds", "code": "WW05019", "page": 216 }
+    }
+  ]
+}

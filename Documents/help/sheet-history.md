@@ -1,18 +1,14 @@
 # Change History
 
-The full record of every change ever submitted for a character - approved, rejected, and
-still pending - newest first.
+The full record of every change ever submitted for a character - approved, rejected, and still pending - newest first.
 
 ## Who can use this
 
-Anyone who can open the character's sheet - a player for their own character, Storytellers
-(HST and AST) for any character in the chronicle.
+Anyone who can open the character's sheet - a player for their own character, Storytellers (HST and AST) for any character in the chronicle.
 
 ## How to get there
 
-Character Sheet → pick **View history** in the actions list and click **Go**. The same content
-also appears inline on the sheet whenever **XP History** is checked in the **Print / Export**
-panel - see [Print / Export](sheet-print-export.md).
+Character Sheet → pick **View history** in the actions list and click **Go**. The same content also appears inline on the sheet whenever **XP History** is checked in the **Print / Export** panel - see [Print / Export](sheet-print-export.md).
 
 ## The screen
 
@@ -21,13 +17,8 @@ panel - see [Print / Export](sheet-print-export.md).
   - **Status** - Pending, Approved, or Rejected.
   - A plain description of the change, such as "Celerity 2 → 3," "Added Underworld Lore," or
     "+5 XP (session attendance)."
-  - Its **XP** cost, when the change has one. A homebrew purchase still waiting for a price
-    reads **Price set on approval**.
-  - A **Catalog update** line, one per character, when an upgrade moves a site onto each
-    creature type's own lists. Open **Matched entries** under it to see each custom entry
-    that became a catalog item, as "what it was → what it is". See [Moving an Older Site to
-    the Per-Creature
-    Lists](../admin-guide.md#moving-an-older-site-to-the-per-creature-lists).
+  - Its **XP** cost, when the change has one. A homebrew purchase still waiting for a price reads **Price set on approval**.
+  - A **Catalog update** line, one per character, when an upgrade moves a site onto each creature type's own lists. Open **Matched entries** under it to see each custom entry that became a catalog item, as "what it was → what it is". An upgrade that moves a Blood Magic pick out of Disciplines says how many repeated rows it dropped because the sheet already held them, and lists each one, with any pick it kept that disagrees with a held row on level. See [Moving an Older Site to the Per-Creature Lists](../admin-guide.md#moving-an-older-site-to-the-per-creature-lists).
   - When it was submitted, and, once reviewed, when.
   - The submitter's own note, if there is one.
   - The Storyteller's note, labeled "Storyteller: ...," if there is one - kept separate from
@@ -40,8 +31,7 @@ panel - see [Print / Export](sheet-print-export.md).
 
 1. Open the character's Sheet.
 2. Pick **View history** and click **Go**.
-3. Find the change - **Pending** means it's still waiting on a Storyteller; **Approved** or
-   **Rejected** means it's been decided.
+3. Find the change - **Pending** means it's still waiting on a Storyteller; **Approved** or **Rejected** means it's been decided.
 
 ### Read a Storyteller's note on a change
 
@@ -54,22 +44,16 @@ panel - see [Print / Export](sheet-print-export.md).
 
 ## Things to know
 
-- This is the complete record - approved and rejected changes stay here, not just pending
-  ones.
+- This is the complete record - approved and rejected changes stay here, not just pending ones.
 - A rejected change never touched the sheet, so rejecting it undoes nothing.
-- This list shows what happened to a change, not why it needed Storyteller review in the
-  first place - a Storyteller sees that reasoning while it's still in the
-  [Approval Queue](approval-queue.md).
-- The submitter's note and a Storyteller's reviewing note are always kept separate here, even
-  on the same change.
+- This list shows what happened to a change, not why it needed Storyteller review in the first place - a Storyteller sees that reasoning while it's still in the [Approval Queue](approval-queue.md).
+- The submitter's note and a Storyteller's reviewing note are always kept separate here, even on the same change.
 
 ## Troubleshooting
 
-- **"No changes yet," even though I've made edits.** Nothing has been submitted for this
-  character yet, or you're looking at a different character than you expected.
+- **"No changes yet," even though I've made edits.** Nothing has been submitted for this character yet, or you're looking at a different character than you expected.
 - **"Failed to load change history."** Refresh the page.
-- **A change I remember submitting isn't here.** Each character keeps its own separate
-  history - make sure you're on the right one.
+- **A change I remember submitting isn't here.** Each character keeps its own separate history - make sure you're on the right one.
 
 ## Related
 

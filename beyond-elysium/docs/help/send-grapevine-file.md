@@ -15,7 +15,7 @@ My Chronicle → **Send a Grapevine file** (beside **+ New Character** on the Ch
 - **Chronicle** - every chronicle on the site, grouped into **Your chronicles** and **Other chronicles**. A link from a Storyteller starts you on their chronicle already.
 - **Grapevine file** - pick a `.gex` file. Nothing is sent yet - this just reads it.
 - Once read: the character it holds (or, for a file with several, a list to pick yours from), each with a reason if it can't be sent to this chronicle.
-- **Are you joining or visiting?** - **Joining** the chronicle for good, or **Visiting for a game** (with an optional **Home chronicle** to tell the Storyteller where you're from).
+- **Are you joining or visiting?** - **Joining** the chronicle for good, or **Visiting for a game** (with an optional **Home chronicle** to tell the Storyteller where you're from, and a **Keep this current with my home chronicle** checkbox).
 - **Send**.
 - **Your sent files** - every chronicle you've sent a file to, its status, and **Withdraw** on one still waiting.
 
@@ -27,7 +27,7 @@ My Chronicle → **Send a Grapevine file** (beside **+ New Character** on the Ch
 2. Pick the chronicle.
 3. Pick your `.gex` file.
 4. If the file holds more than one character, pick yours.
-5. Choose **Joining** or **Visiting for a game**.
+5. Choose **Joining** or **Visiting for a game** - visiting, you can also check **Keep this current with my home chronicle**.
 6. Click **Send**.
 
 ### Pick yours from a file with several characters
@@ -47,6 +47,7 @@ My Chronicle → **Send a Grapevine file** (beside **+ New Character** on the Ch
 - **Nothing is added until a Storyteller accepts.** Sending starts a review, not a membership.
 - **Accepting makes you a player there.** Once accepted, the character is yours in that chronicle - active immediately, since a Storyteller's acceptance is itself the approval.
 - **A verification code travels with the file, if it has one.** A `.gex` exported from Beyond Elysium with its verification code included lets the Storyteller see whether it still matches what was exported.
+- **"Keep this current" only applies to a visit, and only really works with a verified file.** It asks the host, once it accepts you, to try pairing the character with its real home so the two copies stay in sync - that only succeeds if the file carries a verification code pointing at a real, reachable home chronicle. Without one, the request is recorded but nothing can actually be paired.
 - **An unanswered file expires after 60 days.**
 
 ## Troubleshooting

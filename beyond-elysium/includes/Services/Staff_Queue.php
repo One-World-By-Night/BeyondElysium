@@ -19,7 +19,7 @@ class Staff_Queue {
 	 *
 	 * @param int $wp_user_id
 	 * @param int $game_id
-	 * @return array[] Downtime_Window::unanswered_assigned_to()'s own row shape.
+	 * @return array<int,array<string,mixed>> Downtime_Window::unanswered_assigned_to()'s own row shape.
 	 */
 	public static function downtime( int $wp_user_id, int $game_id ): array {
 		return Downtime_Window::unanswered_assigned_to( $wp_user_id, $game_id );
@@ -31,7 +31,7 @@ class Staff_Queue {
 	 *
 	 * @param int $wp_user_id
 	 * @param int $game_id
-	 * @return array[] Each: plot_id, title, newest_player_post_at, newest_staff_post_at.
+	 * @return array<int,array<string,mixed>> Each: plot_id, title, newest_player_post_at, newest_staff_post_at.
 	 */
 	public static function plots( int $wp_user_id, int $game_id ): array {
 		$rows = [];

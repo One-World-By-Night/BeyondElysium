@@ -35,14 +35,18 @@ export const STORYTELLER_TABS = {
 	dashboard: 'dashboard',
 	myQueue: 'my-queue',
 	approvalQueue: 'approval-queue',
+	characters: 'characters',
 	players: 'players',
 	plots: 'plots',
+	secrets: 'secrets',
 	boonLedger: 'boon-ledger',
 	worldObjects: 'world-objects',
 	gameNights: 'game-nights',
 	releases: 'releases',
 	downtime: 'downtime',
 	factions: 'factions',
+	relationships: 'relationships',
+	emailLog: 'email-log',
 } as const;
 
 /**
@@ -98,12 +102,24 @@ export function characterEditorUrl(
 }
 
 /**
- * The character creation URL for one chronicle.
+ * The character creation URL for one chronicle, optionally opening with the NPC box ticked.
  */
-export function newCharacterUrl( gameSlug: string ): string {
+export function newCharacterUrl(
+	gameSlug: string,
+	options: { npc?: boolean } = {}
+): string {
 	return `${ playerTabUrl(
 		PLAYER_TABS.edit
-	) }&game_slug=${ encodeURIComponent( gameSlug ) }`;
+	) }&game_slug=${ encodeURIComponent( gameSlug ) }${
+		options.npc ? '&npc=1' : ''
+	}`;
+}
+
+/**
+ * Whether the page was opened to create an NPC (`npc=1`).
+ */
+export function readNewNpcFromUrl(): boolean {
+	return new URLSearchParams( window.location.search ).get( 'npc' ) === '1';
 }
 
 /**
@@ -113,6 +129,16 @@ export function sendFileLinkUrl( gameSlug: string ): string {
 	return `${ playerTabUrl(
 		PLAYER_TABS.sendFile
 	) }&game_slug=${ encodeURIComponent( gameSlug ) }`;
+}
+
+/**
+ * The public link that opens the Join panel for one chronicle on My Chronicle. Carries `join_slug`, not
+ * `game_slug`, so a signed-in account with no membership there never feeds the chronicle switcher's own state.
+ */
+export function joinLinkUrl( gameSlug: string ): string {
+	return `${ playerTabUrl(
+		PLAYER_TABS.dashboard
+	) }&join_slug=${ encodeURIComponent( gameSlug ) }&join=1`;
 }
 
 /**

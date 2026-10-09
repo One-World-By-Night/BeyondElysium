@@ -12,8 +12,9 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * An NPC's public profile (Who's Who): a manager sets it, a player sees only the NPCs whose audience reaches them, the
- * projection never includes sheet or status fields, and a denied player gets a 404.
+ * A character's public profile (Who's Who): a manager sets an NPC's, a player sets their own character's, a player
+ * sees only the NPCs whose audience reaches them, the projection never includes sheet or status fields, and a denied
+ * player gets a 404.
  */
 class NpcProfileThreadTest extends WP_UnitTestCase {
 
@@ -65,7 +66,7 @@ class NpcProfileThreadTest extends WP_UnitTestCase {
 	}
 
 	// -------------------------------------------------------------------------
-	// Updating the profile: manager-only, NPC-only.
+	// Updating the profile: a manager on any character, or a player on their own.
 	// -------------------------------------------------------------------------
 
 	public function test_a_manager_can_set_an_npcs_public_profile(): void {
@@ -83,14 +84,71 @@ class NpcProfileThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 'Runs the bar, sees everything.', $response->get_data()['public_description'] );
 	}
 
-	public function test_setting_a_profile_on_a_pc_is_rejected(): void {
-		wp_set_current_user( $this->storyteller_id );
+	public function test_a_player_can_set_their_own_characters_profile_visibility(): void {
+		wp_set_current_user( $this->player_id );
 		$request = new WP_REST_Request( 'PUT', "/be/v1/{$this->game_slug}/characters/{$this->player_character_id}/profile" );
-		$request->set_param( 'public_name', 'Not an NPC' );
+		$request->set_param( 'profile_audience', 'everyone' );
+		$request->set_param( 'profile_show_player', true );
+		$response = $this->dispatch( $request );
+
+		$this->assertSame( 200, $response->get_status() );
+
+		$character = Character::find( $this->player_character_id );
+		$this->assertSame( 'everyone', $character->profile_audience );
+		$this->assertTrue( $character->profile_show_player );
+	}
+
+	public function test_a_player_cannot_set_a_restricted_audience_on_their_own_character(): void {
+		wp_set_current_user( $this->player_id );
+		$request = new WP_REST_Request( 'PUT', "/be/v1/{$this->game_slug}/characters/{$this->player_character_id}/profile" );
+		$request->set_param( 'profile_audience', 'restricted' );
 		$response = $this->dispatch( $request );
 
 		$this->assertSame( 400, $response->get_status() );
-		$this->assertSame( 'not_an_npc', $response->get_data()['code'] );
+		$this->assertSame( 'audience_not_allowed', $response->get_data()['code'] );
+	}
+
+	public function test_a_player_can_set_their_own_characters_public_name_and_description(): void {
+		wp_set_current_user( $this->player_id );
+		$request = new WP_REST_Request( 'PUT', "/be/v1/{$this->game_slug}/characters/{$this->player_character_id}/profile" );
+		$request->set_param( 'public_name', 'The Wanderer' );
+		$request->set_param( 'public_description', 'Keeps to the shadows.' );
+		$response = $this->dispatch( $request );
+
+		$this->assertSame( 200, $response->get_status() );
+
+		$character = Character::find( $this->player_character_id );
+		$this->assertSame( 'The Wanderer', $character->public_name );
+		$this->assertSame( 'Keeps to the shadows.', $character->public_description );
+	}
+
+	public function test_a_player_cannot_set_their_own_characters_public_image(): void {
+		$attachment_id = self::factory()->attachment->create( [ 'post_author' => $this->storyteller_id, 'post_mime_type' => 'image/png' ] );
+
+		wp_set_current_user( $this->player_id );
+		$request = new WP_REST_Request( 'PUT', "/be/v1/{$this->game_slug}/characters/{$this->player_character_id}/profile" );
+		$request->set_param( 'public_image_id', $attachment_id );
+		$response = $this->dispatch( $request );
+
+		$this->assertSame( 403, $response->get_status() );
+		$this->assertEmpty( Character::find( $this->player_character_id )->public_image_id );
+	}
+
+	public function test_a_player_cannot_edit_another_players_character_profile(): void {
+		$other_player_id = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+		Game_Member::set_role( $this->game_id, $other_player_id, 'player' );
+		$other_character_id = (int) Character::create( [
+			'name' => 'Someone Else', 'stack_slug' => 'vampire', 'owner_type' => 'chronicle',
+			'owner_slug' => $this->game_slug, 'wp_user_id' => $other_player_id, 'status' => 'active', 'created_by' => 1,
+		] );
+
+		wp_set_current_user( $this->player_id );
+		$request = new WP_REST_Request( 'PUT', "/be/v1/{$this->game_slug}/characters/{$other_character_id}/profile" );
+		$request->set_param( 'profile_audience', 'everyone' );
+		$response = $this->dispatch( $request );
+
+		$this->assertSame( 403, $response->get_status() );
+		$this->assertSame( 'ownership_denied', $response->get_data()['code'] );
 	}
 
 	public function test_a_player_cannot_set_an_npcs_profile(): void {
@@ -239,6 +297,23 @@ class NpcProfileThreadTest extends WP_UnitTestCase {
 
 		$this->assertSame( [], $data['titles'] );
 		$this->assertSame( [], $data['factions'] );
+	}
+
+	public function test_a_hidden_membership_in_a_public_faction_is_hidden_from_a_player_but_not_a_manager(): void {
+		$id = $this->make_npc();
+		$this->set_profile( $id, [ 'profile_audience' => 'everyone' ] );
+		$camarilla = (int) Faction::create( [ 'game_id' => $this->game_id, 'name' => 'The Camarilla', 'faction_type' => 'sect', 'audience' => 'everyone', 'created_by' => $this->storyteller_id ] );
+		$sabbat    = (int) Faction::create( [ 'game_id' => $this->game_id, 'name' => 'The Sabbat', 'faction_type' => 'sect', 'audience' => 'everyone', 'created_by' => $this->storyteller_id ] );
+		Faction_Member::add( $camarilla, $id, $this->storyteller_id );
+		Faction_Member::add( $sabbat, $id, $this->storyteller_id, false, null, false );
+
+		wp_set_current_user( $this->player_id );
+		$as_player = $this->dispatch( new WP_REST_Request( 'GET', "/be/v1/{$this->game_slug}/npcs/{$id}" ) )->get_data();
+		wp_set_current_user( $this->storyteller_id );
+		$as_manager = $this->dispatch( new WP_REST_Request( 'GET', "/be/v1/{$this->game_slug}/npcs/{$id}" ) )->get_data();
+
+		$this->assertSame( [ 'The Camarilla' ], $as_player['factions'] );
+		$this->assertEqualsCanonicalizing( [ 'The Camarilla', 'The Sabbat' ], $as_manager['factions'] );
 	}
 
 	public function test_a_public_title_and_an_everyone_faction_reach_a_player(): void {

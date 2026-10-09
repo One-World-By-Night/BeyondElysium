@@ -16,9 +16,9 @@ class Cost_Engine {
 	/**
 	 * Prices one proposed change against a character's current state.
 	 *
-	 * @param object $character Character row with decoded (array) `sheet_data` and a
+	 * @param object              $character Character row with decoded (array) `sheet_data` and a
 	 *                           `stack_slug`.
-	 * @param array  $change    Shape: `change_type`, `change_data` (with `block_slug` plus
+	 * @param array<string,mixed> $change    Shape: `change_type`, `change_data` (with `block_slug` plus
 	 *                           `trait` / `values` / `fields`), matching `ChangeRequest`.
 	 * @return int Signed XP delta - positive costs, negative refunds.
 	 */
@@ -34,9 +34,9 @@ class Cost_Engine {
 	/**
 	 * `cost_for_change()` plus whether the figure is a price.
 	 *
-	 * @param object $character  As `cost_for_change()`.
-	 * @param array  $change     As `cost_for_change()`.
-	 * @param bool   $by_manager Whether the submitter is a Storyteller. Only a Storyteller's own
+	 * @param object              $character  As `cost_for_change()`.
+	 * @param array<string,mixed> $change     As `cost_for_change()`.
+	 * @param bool                $by_manager Whether the submitter is a Storyteller. Only a Storyteller's own
 	 *                           `chosen_cost` on a custom trait is read as its price; a player never
 	 *                           prices their own homebrew.
 	 * @return array{xp:int,priced:bool,unpriced_reason:?string}
@@ -68,7 +68,7 @@ class Cost_Engine {
 				return self::quote_tiered_power_change( $sheet_data, $block->definition, $change_type, $change_data, $in_type, $by_manager );
 
 			case 'resource_pool':
-				return self::quoted( self::price_resource_pool_change( $sheet_data, $block->definition, $block_slug, $change_data ) );
+				return self::quoted( $by_manager ? 0 : self::price_resource_pool_change( $sheet_data, $block->definition, $block_slug, $change_data ) );
 
 			default:
 				// identity_field changes carry no XP cost.
@@ -78,6 +78,8 @@ class Cost_Engine {
 
 	/**
 	 * Resolves whether a trait is in-type for the character.
+	 *
+	 * @param object $character
 	 */
 	public static function is_in_type( $character, string $block_slug, string $trait_name ): bool {
 		return ( self::in_type_check( $character, $block_slug ) )( $trait_name );
@@ -88,6 +90,7 @@ class Cost_Engine {
 	 *
 	 * @param object|null          $stack  The character's creature stack, when already loaded.
 	 * @param array<string,object> $blocks The character's chronicle's blocks by slug, fork-aware, when already loaded.
+	 * @param object               $character
 	 * @return callable(string):bool
 	 */
 	public static function in_type_check( $character, string $block_slug, ?object $stack = null, array $blocks = [] ): callable {
@@ -99,6 +102,7 @@ class Cost_Engine {
 	 *
 	 * @param array<string,mixed> $sheet_data
 	 * @param array<string,mixed> $change_data
+	 * @param object $definition
 	 * @return array{xp:int,priced:bool,unpriced_reason:?string}
 	 */
 	public static function quote_trait_list_change(
@@ -115,8 +119,13 @@ class Cost_Engine {
 			return self::quoted( 0 );
 		}
 
+		// A list declared unpriced is never bought with XP: every add and raise quotes nothing.
+		if ( ! empty( $definition->unpriced ) ) {
+			return self::quoted( 0 );
+		}
+
 		if ( empty( $trait['custom'] ) && self::find_item( $definition, $name ) !== null ) {
-			return self::quoted( self::price_trait_list_change( $sheet_data, $definition, $block_slug, $change_type, $change_data ) );
+			return self::quoted( $by_manager ? 0 : self::price_trait_list_change( $sheet_data, $definition, $block_slug, $change_type, $change_data ) );
 		}
 
 		$sign = ! empty( $definition->negative ) ? -1 : 1;
@@ -154,6 +163,7 @@ class Cost_Engine {
 	 *
 	 * @param array<string,mixed> $sheet_data
 	 * @param array<string,mixed> $change_data
+	 * @param object $definition
 	 * @return array{xp:int,priced:bool,unpriced_reason:?string}
 	 */
 	public static function quote_tiered_power_change(
@@ -171,7 +181,7 @@ class Cost_Engine {
 		}
 
 		if ( empty( $trait['custom'] ) && ! self::is_unpriceable_power( $definition, $trait ) ) {
-			return self::quoted( self::price_tiered_power_change( $sheet_data, $definition, $change_type, $change_data, $in_type ) );
+			return self::quoted( $by_manager ? 0 : self::price_tiered_power_change( $sheet_data, $definition, $change_type, $change_data, $in_type ) );
 		}
 
 		if ( 'add_trait' === $change_type ) {
@@ -188,6 +198,7 @@ class Cost_Engine {
 	 *
 	 * @param array<string,mixed> $sheet_data
 	 * @param array<string,mixed> $change_data
+	 * @param object $definition
 	 * @return array{per:string,units:int}
 	 */
 	public static function price_units( array $sheet_data, $definition, string $block_slug, string $change_type, array $change_data ): array {
@@ -220,6 +231,7 @@ class Cost_Engine {
 	 *
 	 * @param array<string,mixed> $sheet_data
 	 * @param array<string,mixed> $change_data
+	 * @param object $definition
 	 * @return array{change_data:array<string,mixed>,xp:int}
 	 */
 	public static function apply_set_price( array $sheet_data, $definition, string $block_slug, string $change_type, array $change_data, int $set_cost ): array {
@@ -256,6 +268,8 @@ class Cost_Engine {
 
 	/**
 	 * A whole number from 0 to `MAX_CUSTOM_PRICE`, or null: what a price is allowed to be.
+	 *
+	 * @param mixed $value
 	 */
 	private static function usable_price( $value ): ?int {
 		if ( $value === null || ! is_numeric( $value ) || (float) $value !== (float) (int) $value ) {
@@ -267,6 +281,9 @@ class Cost_Engine {
 
 	/**
 	 * Whether a tiered change names a family, or a pick under one, that the catalog does not carry.
+	 *
+	 * @param object $definition
+	 * @param array<string,mixed> $trait
 	 */
 	private static function is_unpriceable_power( $definition, array $trait ): bool {
 		$power = self::find_power( $definition, (string) ( $trait['name'] ?? '' ) );
@@ -279,6 +296,9 @@ class Cost_Engine {
 
 	/**
 	 * Whether a tiered `modify_trait` raises the level the character holds.
+	 *
+	 * @param array<string,mixed> $sheet_data
+	 * @param array<string,mixed> $trait
 	 */
 	private static function raises_a_power( array $sheet_data, string $block_slug, array $trait ): bool {
 		if ( ! array_key_exists( 'level', $trait ) ) {
@@ -290,6 +310,10 @@ class Cost_Engine {
 
 	/**
 	 * Prices an `add_trait`, `remove_trait`, or `modify_trait` change against a trait_list block.
+	 *
+	 * @param array<string,mixed> $sheet_data
+	 * @param object $definition
+	 * @param array<string,mixed> $change_data
 	 */
 	public static function price_trait_list_change(
 		array $sheet_data,
@@ -354,6 +378,10 @@ class Cost_Engine {
 
 	/**
 	 * Prices an `add_trait` / `remove_trait` / `modify_trait` change against a tiered_power block.
+	 *
+	 * @param array<string,mixed> $sheet_data
+	 * @param object $definition
+	 * @param array<string,mixed> $change_data
 	 */
 	public static function price_tiered_power_change(
 		array $sheet_data,
@@ -371,6 +399,11 @@ class Cost_Engine {
 
 		$power = self::find_power( $definition, $name );
 		if ( ! $power ) {
+			return 0;
+		}
+
+		// A `spent_from` block never charges XP - its purchases spend a named resource pool's unspent dots instead.
+		if ( isset( $definition->_meta->spent_from ) ) {
 			return 0;
 		}
 
@@ -417,6 +450,10 @@ class Cost_Engine {
 
 	/**
 	 * Prices a `modify_resource` change against a resource_pool block.
+	 *
+	 * @param array<string,mixed> $sheet_data
+	 * @param object $definition
+	 * @param array<string,mixed> $change_data
 	 */
 	public static function price_resource_pool_change( array $sheet_data, $definition, string $block_slug, array $change_data ): int {
 		$values = (array) ( $change_data['values'] ?? [] );
@@ -432,6 +469,11 @@ class Cost_Engine {
 			$old_permanent = self::pool_permanent_value( $old_value, (int) ( $pool_def->default_start ?? 0 ) );
 			$new_permanent = self::pool_permanent_value( $new_value, $old_permanent );
 
+			// A `raised_by` pool is never raised with XP - it converts another pool's temporary points instead.
+			if ( isset( $pool_def->raised_by ) && $new_permanent > $old_permanent ) {
+				continue;
+			}
+
 			$old_cost = self::pool_rating_cost( $pool_def, $old_permanent );
 			$new_cost = self::pool_rating_cost( $pool_def, $new_permanent );
 			if ( $old_cost === null || $new_cost === null ) {
@@ -445,6 +487,8 @@ class Cost_Engine {
 
 	/**
 	 * Reads a resource pool's permanent rating from its stored value.
+	 *
+	 * @param mixed $value
 	 */
 	private static function pool_permanent_value( $value, int $default ): int {
 		if ( is_array( $value ) ) {
@@ -455,6 +499,9 @@ class Cost_Engine {
 
 	/**
 	 * Finds a pool definition by name within a resource_pool block definition.
+	 *
+	 * @param object $definition
+	 * @return object|null
 	 */
 	private static function find_pool( $definition, string $name ) {
 		foreach ( ( $definition->pools ?? [] ) as $pool ) {
@@ -470,9 +517,11 @@ class Cost_Engine {
 	/**
 	 * Prices one held `trait_list` entry.
 	 *
-	 * @param array                 $held       One entry from `sheet_data[block_slug]`: `name`, `count?`, `chosen_cost?`, `custom?`.
-	 * @param string $block_slug The slug this row is held under (`` cross-block alias routing - omit to skip it).
-	 * @param array<string,object>  $blocks     The character's other blocks, keyed by slug, for `moved_from` resolution - `Point_Audit`'s own already-loaded set.
+	 * @param array<string,mixed>  $held       One entry from `sheet_data[block_slug]`: `name`, `count?`, `chosen_cost?`, `custom?`.
+	 * @param string               $block_slug The slug this row is held under, for cross-block alias routing; omit to
+	 *                                         skip it.
+	 * @param array<string,object> $blocks     The character's other blocks, keyed by slug, for `moved_from` resolution - `Point_Audit`'s own already-loaded set.
+	 * @param object               $definition
 	 * @return array{xp:?int,basis:string,unpriced_reason:?string}
 	 */
 	public static function price_held_trait_list_item( $definition, array $held, string $block_slug = '', array $blocks = [] ): array {
@@ -526,10 +575,12 @@ class Cost_Engine {
 	/**
 	 * Prices one held `tiered_power` entry.
 	 *
-	 * @param array                $held       One entry from `sheet_data[block_slug]`: `name`, `level?`, `power_name?`, `custom?`/`keep_custom?`, `chosen_cost?`.
+	 * @param array<string,mixed>  $held       One entry from `sheet_data[block_slug]`: `name`, `level?`, `power_name?`, `custom?`/`keep_custom?`, `chosen_cost?`.
 	 * @param bool|null            $in_type    Whether the family is in-type for the character, or null to price it with no rank modifier.
-	 * @param string $block_slug The slug this row is held under (cross-block alias routing - omit to skip it).
+	 * @param string               $block_slug The slug this row is held under, for cross-block alias routing; omit to
+	 *                                         skip it.
 	 * @param array<string,object> $blocks     The character's other blocks, keyed by slug, for `moved_from` resolution - `Point_Audit`'s own already-loaded set.
+	 * @param object               $definition
 	 * @return array{xp:?int,basis:string,unpriced_reason:?string}
 	 */
 	public static function price_held_tiered_power( $definition, array $held, ?bool $in_type, string $block_slug = '', array $blocks = [] ): array {
@@ -606,6 +657,8 @@ class Cost_Engine {
 	 * The above-ceiling case: the full declared ladder plus `(level - ceiling)` unnamed picks, each priced at the first
 	 * rank above the ladder with that rank's modifier; unpriced when the block declares no rank past its ladder.
 	 *
+	 * @param object $definition
+	 * @param object $power
 	 * @return array{xp:?int,basis:string,unpriced_reason:?string}
 	 */
 	private static function price_above_ceiling_total( $definition, $power, int $ceiling, int $level, ?bool $in_type ): array {
@@ -624,6 +677,9 @@ class Cost_Engine {
 	 * Prices a held custom/keep_custom tiered_power entry: a catalog pick's own cost with its rank's modifier, or the
 	 * Storyteller's price.
 	 *
+	 * @param object $definition
+	 * @param object|null $power
+	 * @param array<string,mixed> $held
 	 * @return array{xp:?int,basis:string,unpriced_reason:?string}
 	 */
 	private static function price_held_custom_pick( $definition, $power, array $held, ?bool $in_type ): array {
@@ -649,6 +705,7 @@ class Cost_Engine {
 	 * Prices one held `resource_pool` rating.
 	 *
 	 * @param mixed $value Raw `sheet_data[block_slug][pool_name]` value - `{permanent,temporary}` or a bare int.
+	 * @param object $definition
 	 * @return array{xp:?int,basis:string,unpriced_reason:?string}
 	 */
 	public static function price_held_resource_pool( $definition, string $pool, $value ): array {
@@ -666,6 +723,9 @@ class Cost_Engine {
 
 	/**
 	 * Finds a tiered_power level entry by its exact numbered `level`.
+	 *
+	 * @param object $power
+	 * @return object|null
 	 */
 	private static function find_power_level( $power, int $level ) {
 		foreach ( Power_Levels::ladder( $power ) as $power_level ) {
@@ -678,6 +738,9 @@ class Cost_Engine {
 
 	/**
 	 * True when a numbered rank is a real, purchasable position in this power's ladder.
+	 *
+	 * @param object $definition
+	 * @param object $power
 	 */
 	private static function rank_is_valid_for_power( $definition, $power, int $level ): bool {
 		if ( self::untiered_cost_per_level( $definition ) !== null ) {
@@ -702,6 +765,8 @@ class Cost_Engine {
 	/**
 	 * Maps a numbered rank (1=basic, 2=intermediate,...) to its tier name, using `TIER_COSTS`' own key order (`innate`
 	 * excluded - never a numbered rank).
+	 *
+	 * @param object|array<string,mixed> $definition
 	 */
 	public static function tier_for_rank( $definition, int $rank ): ?string {
 		return self::ladder_tiers( $definition )[ $rank - 1 ] ?? null;
@@ -710,7 +775,7 @@ class Cost_Engine {
 	/**
 	 * The block's ladder expanded to one tier name per rung.
 	 *
-	 * @param object|array $definition
+	 * @param object|array<string,mixed> $definition
 	 * @return string[]
 	 */
 	private static function ladder_tiers( $definition ): array {
@@ -745,6 +810,9 @@ class Cost_Engine {
 
 	/**
 	 * Finds a tiered_power level entry by its Elder-and-above `power_name`.
+	 *
+	 * @param object $power
+	 * @return object|null
 	 */
 	private static function find_power_level_by_name( $power, string $power_name ) {
 		return Trait_Alias_Resolver::find_level_by_name( Power_Levels::all( $power ), $power_name );
@@ -753,7 +821,7 @@ class Cost_Engine {
 	/**
 	 * The block's declared rank vocabulary (`_meta.ranks`), in book order.
 	 *
-	 * @param object|array $definition
+	 * @param object|array<string,mixed> $definition
 	 * @return string[]|null
 	 */
 	public static function meta_ranks( $definition ): ?array {
@@ -768,6 +836,8 @@ class Cost_Engine {
 
 	/**
 	 * The first rank above the declared ladder.
+	 *
+	 * @param object|array<string,mixed> $definition
 	 */
 	private static function first_pick_rank( $definition ): ?string {
 		$ranks = self::meta_ranks( $definition );
@@ -794,6 +864,9 @@ class Cost_Engine {
 	/**
 	 * Computes the cost of moving a sequential power between two levels as the sum of every step's cost in between, each
 	 * with its own rank's modifier: raising level 2 to 4 costs the level-3 step plus the level-4 step.
+	 *
+	 * @param object $definition
+	 * @param object $power
 	 */
 	private static function sequential_step_cost( $definition, $power, int $old_level, int $new_level, ?bool $in_type ): int {
 		if ( $new_level === $old_level ) {
@@ -812,6 +885,9 @@ class Cost_Engine {
 
 	/**
 	 * The cost of one level of a tiered power with its rank's modifier applied.
+	 *
+	 * @param object $definition
+	 * @param object $power
 	 */
 	private static function level_cost( $definition, $power, int $level, ?bool $in_type ): int {
 		return self::apply_modifier( self::level_base_cost( $definition, $power, $level ), self::rank_modifier( $definition, self::tier_for_rank( $definition, $level ), $in_type ) );
@@ -819,6 +895,9 @@ class Cost_Engine {
 
 	/**
 	 * Looks up the base cost of one level of a tiered power.
+	 *
+	 * @param object $definition
+	 * @param object $power
 	 */
 	private static function level_base_cost( $definition, $power, int $level ): int {
 		$per_level = self::untiered_cost_per_level( $definition );
@@ -842,7 +921,7 @@ class Cost_Engine {
 	/**
 	 * Whether this block declares its own ladder (`_meta.ladder`).
 	 *
-	 * @param object|array $definition
+	 * @param object|array<string,mixed> $definition
 	 */
 	private static function declares_ladder( $definition ): bool {
 		if ( is_object( $definition ) ) {
@@ -853,6 +932,9 @@ class Cost_Engine {
 
 	/**
 	 * Derives a block's real per-tier cost ladder from its own seeded data.
+	 *
+	 * @param object $definition
+	 * @return array<string,int>
 	 */
 	private static function block_tier_costs( $definition ): array {
 		static $cache = null;
@@ -892,7 +974,7 @@ class Cost_Engine {
 	/**
 	 * The block's declared ladder (`_meta.ladder`).
 	 *
-	 * @param object|array $definition
+	 * @param object|array<string,mixed> $definition
 	 * @return array<string,int>
 	 */
 	private static function meta_ladder( $definition ): array {
@@ -908,7 +990,7 @@ class Cost_Engine {
 	/**
 	 * The block's own declared per-rank costs (`_meta.costs`).
 	 *
-	 * @param object|array $definition
+	 * @param object|array<string,mixed> $definition
 	 * @return array<string,int>|null
 	 */
 	private static function meta_costs( $definition ): ?array {
@@ -953,6 +1035,8 @@ class Cost_Engine {
 
 	/**
 	 * Resolves a unit cost from a `cost` string plus the player's chosen value for a variable-cost item.
+	 *
+	 * @param mixed $chosen
 	 */
 	public static function price_item_cost( string $cost_string, $chosen ): int {
 		$rule = self::parse_cost_rule( $cost_string );
@@ -980,6 +1064,8 @@ class Cost_Engine {
 
 	/**
 	 * Whether each row of a trait_list block is one purchase, priced once whatever its count.
+	 *
+	 * @param object $definition
 	 */
 	public static function rows_are_purchases( $definition ): bool {
 		return ! empty( $definition->atomic );
@@ -988,6 +1074,8 @@ class Cost_Engine {
 	/**
 	 * How many units a trait_list row of `$count` is priced as: one on a block whose rows are single purchases, its
 	 * count otherwise.
+	 *
+	 * @param object $definition
 	 */
 	private static function row_units( $definition, int $count ): int {
 		return self::rows_are_purchases( $definition ) ? 1 : max( 1, $count );
@@ -1045,6 +1133,9 @@ class Cost_Engine {
 
 	/**
 	 * Finds a catalog item by name within a trait_list block definition.
+	 *
+	 * @param object $definition
+	 * @return object|null
 	 */
 	private static function find_item( $definition, string $name ) {
 		return Trait_Alias_Resolver::find_item_by_name( (array) ( $definition->items ?? [] ), $name );
@@ -1052,6 +1143,9 @@ class Cost_Engine {
 
 	/**
 	 * Finds a power by name within a tiered_power block definition.
+	 *
+	 * @param object $definition
+	 * @return object|null
 	 */
 	private static function find_power( $definition, string $name ) {
 		return Trait_Alias_Resolver::find_power_by_name( (array) ( $definition->powers ?? [] ), $name );
@@ -1061,11 +1155,11 @@ class Cost_Engine {
 	 * Finds the held row a change actually names, and returns its count and chosen cost, or null when the character holds
 	 * no such row.
 	 *
-	 * @param array       $sheet_data
-	 * @param string      $block_slug
-	 * @param object|null $definition The block definition the caller already resolved.
-	 * @param array       $trait      The change's own trait payload.
-	 * @param array|null  $previous   The change's `previous` snapshot, which names the row a relabel addresses.
+	 * @param array<string,mixed>      $sheet_data
+	 * @param string                   $block_slug
+	 * @param object|null              $definition The block definition the caller already resolved.
+	 * @param array<string,mixed>      $trait      The change's own trait payload.
+	 * @param array<string,mixed>|null $previous   The change's `previous` snapshot, which names the row a relabel addresses.
 	 * @return array{count: int, chosen_cost: int|null}|null
 	 */
 	private static function find_held_trait( array $sheet_data, string $block_slug, $definition, array $trait, ?array $previous = null ): ?array {
@@ -1088,6 +1182,7 @@ class Cost_Engine {
 	/**
 	 * Finds a character's currently held instance of a power within a block.
 	 *
+	 * @param array<string,mixed> $sheet_data
 	 * @return array{level: int, power_name: ?string, chosen_cost: ?int}|null
 	 */
 	private static function find_held_power( array $sheet_data, string $block_slug, string $name, ?string $power_name = null ): ?array {
@@ -1126,6 +1221,8 @@ class Cost_Engine {
 
 	/**
 	 * The base cost of one pick: its own `cost`, or its tier's cost on the MET ladder.
+	 *
+	 * @param object $power_level
 	 */
 	private static function pick_base_cost( $power_level ): int {
 		if ( isset( $power_level->cost ) ) {
@@ -1137,6 +1234,9 @@ class Cost_Engine {
 	/**
 	 * What one pick of a family costs, by power name or alias, with its rank's modifier applied; 0 when the family has
 	 * no such pick.
+	 *
+	 * @param object $definition
+	 * @param object $power
 	 */
 	private static function pick_cost( $definition, $power, string $power_name, ?bool $in_type ): int {
 		$power_level = self::find_power_level_by_name( $power, $power_name );
@@ -1177,6 +1277,8 @@ class Cost_Engine {
 	/**
 	 * The modifier a block declares for one rank on one side: `_meta.in_type` for an in-type purchase, `_meta.out_of_type`
 	 * for an out-of-type one; none for no rank, or when the side is not asked for.
+	 *
+	 * @param object|array<string,mixed> $definition
 	 */
 	private static function rank_modifier( $definition, ?string $rank, ?bool $in_type ): ?string {
 		if ( $rank === null || $in_type === null ) {
@@ -1189,7 +1291,7 @@ class Cost_Engine {
 	/**
 	 * One key of a block's `_meta`, an object read as an array; null when the block has no such key.
 	 *
-	 * @param object|array $definition
+	 * @param object|array<string,mixed> $definition
 	 * @return mixed
 	 */
 	private static function meta_value( $definition, string $key ) {
@@ -1206,7 +1308,7 @@ class Cost_Engine {
 	 * What one level of an untiered track costs (`_meta.untiered.cost_per_level`), or null for a ranked block or one whose
 	 * costs derive from another block.
 	 *
-	 * @param object|array $definition
+	 * @param object|array<string,mixed> $definition
 	 */
 	private static function untiered_cost_per_level( $definition ): ?int {
 		$untiered = self::meta_value( $definition, 'untiered' );
@@ -1216,6 +1318,9 @@ class Cost_Engine {
 	/**
 	 * A trait_list item's cost expression: its own `cost`, or on a block whose `_meta.untiered` derives its costs from
 	 * another block, `per_level` for each level the item's prerequisites in that block name; null when neither gives one.
+	 *
+	 * @param object $definition
+	 * @param object $item
 	 */
 	private static function item_cost( $definition, $item ): ?string {
 		if ( isset( $item->cost ) && (string) $item->cost !== '' ) {
@@ -1238,6 +1343,8 @@ class Cost_Engine {
 	/**
 	 * What a pool's rating costs above its free dots: `cost_per_dot` for each dot, or with a `sliding_cost` that
 	 * `equals_level`, each dot's own level; null when the pool states neither.
+	 *
+	 * @param object $pool_def
 	 */
 	private static function pool_rating_cost( $pool_def, int $rating ): ?int {
 		if ( ! empty( $pool_def->buy_down ) ) {

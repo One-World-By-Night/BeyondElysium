@@ -20,14 +20,12 @@ class Character_Exporter {
 	/**
 	 * Exports one character.
 	 *
-	 * @param int   $character_id
-	 * @param array $options `hide_st` (bool, default false), `verify` (bool, default false),
-	 *                       `as_transfer` (bool, default false) - a transfer document
-	 *                       always carries verification (the receiving chronicle's callback
-	 *                       has nothing to check without it) and its `<verification>` element
-	 *                       additionally carries `character_uuid`, which `GEX_Xml_Parser`
-	 *                       reads back on the receiving side to identify a returning
-	 *                       or already-known character with certainty rather than by name.
+	 * @param int                 $character_id
+	 * @param array<string,mixed> $options `hide_st` (bool, default false), `verify` (bool, default false),
+	 *                                     `as_transfer` (bool, default false) - a transfer document always carries
+	 *                                     verification and its `<verification>` element additionally carries
+	 *                                     `character_uuid`, which `GEX_Xml_Parser` reads back on the receiving side to
+	 *                                     identify a returning or already-known character.
 	 * @return array{xml:string,warnings:array<int,string>,transliterations:array<int,string>,attestation_id?:int,short_code?:string} A verified or transfer export also carries the attestation it issued.
 	 * @throws \RuntimeException If the character does not exist.
 	 * @throws Not_Exportable_Exception If its creature type has no Grapevine equivalent.
@@ -50,7 +48,7 @@ class Character_Exporter {
 		$canonical   = self::build( $character, false, null, null );
 		$sheet_hash  = hash( 'sha256', $canonical['xml'] );
 
-		// A redacted export hands over different bytes than the unredacted one sheet_hash covers.
+		// The hash of the redacted document, when one is handed over.
 		$document_hash = $hide_st ? hash( 'sha256', self::build( $character, true, null, null )['xml'] ) : null;
 
 		// A transfer's code lasts as long as its offer may wait.
@@ -223,10 +221,10 @@ class Character_Exporter {
 	 * `characters` row), plus this stack's own identity/resource fields inverted mechanically from
 	 * `gex-identity-map.php`.
 	 *
-	 * @param object $character
-	 * @param string $map_slug
-	 * @param string $game_slug
-	 * @param array  $sheet
+	 * @param object              $character
+	 * @param string              $map_slug
+	 * @param string              $game_slug
+	 * @param array<string,mixed> $sheet
 	 * @return array<string,mixed>
 	 */
 	private static function build_raw_scalars( object $character, string $map_slug, string $game_slug, array $sheet ): array {
@@ -248,7 +246,7 @@ class Character_Exporter {
 		$identity_map = require __DIR__ . '/gex-identity-map.php';
 		$stack_map    = $identity_map[ $map_slug ] ?? null;
 		if ( $stack_map === null ) {
-			return $raw; // No BE creature stack for this race (hunter/various) - universal fields only.
+			return $raw; // No BE creature stack for this race (various) - universal fields only.
 		}
 
 		if ( isset( $stack_map['identity'] ) ) {
@@ -385,15 +383,15 @@ class Character_Exporter {
 	/**
 	 * Routes one GV trait list to its real export source, via `Trait_Mapper::classify_list()`.
 	 *
-	 * @param GEX_Xml_Writer $writer
-	 * @param array          $spec `gv-exchange-shape.php`'s own trait_lists row: name/abc/neg/atomic/display.
-	 * @param string         $map_slug
-	 * @param string         $game_slug
-	 * @param array          $sheet
-	 * @param object         $character
-	 * @param bool           $hide_st
-	 * @param object|null    $game
-	 * @param array          $warnings
+	 * @param GEX_Xml_Writer      $writer
+	 * @param array<string,mixed> $spec `gv-exchange-shape.php`'s own trait_lists row: name/abc/neg/atomic/display.
+	 * @param string              $map_slug
+	 * @param string              $game_slug
+	 * @param array<string,mixed> $sheet
+	 * @param object              $character
+	 * @param bool                $hide_st
+	 * @param object|null         $game
+	 * @param array<int,string>   $warnings
 	 */
 	private static function write_trait_list(
 		GEX_Xml_Writer $writer, array $spec, string $map_slug,
@@ -445,13 +443,13 @@ class Character_Exporter {
 	}
 
 	/**
-	 * @param GEX_Xml_Writer $writer
-	 * @param array          $classification
-	 * @param string         $gv_list_name
-	 * @param array          $sheet
-	 * @param string         $game_slug
-	 * @param bool           $hide_st
-	 * @param mixed          $settings
+	 * @param GEX_Xml_Writer      $writer
+	 * @param array<string,mixed> $classification
+	 * @param string              $gv_list_name
+	 * @param array<string,mixed> $sheet
+	 * @param string              $game_slug
+	 * @param bool                $hide_st
+	 * @param mixed               $settings
 	 */
 	private static function write_sheet_block_traits( GEX_Xml_Writer $writer, array $classification, string $gv_list_name, array $sheet, string $game_slug, bool $hide_st, $settings ): void {
 		$block_slug = $classification['block_slug'];
@@ -624,10 +622,10 @@ class Character_Exporter {
 	}
 
 	/**
-	 * @param array  $sheet
-	 * @param string $block_slug
-	 * @param string $name
-	 * @return array{name:string,alphabetized:bool,atomic:bool,negative:bool,display:int,traits:array<int,array>}
+	 * @param array<string,mixed> $sheet
+	 * @param string              $block_slug
+	 * @param string              $name
+	 * @return array{name:string,alphabetized:bool,atomic:bool,negative:bool,display:int,traits:array<int,array<string,mixed>>}
 	 */
 	private static function list_or_empty( array $sheet, string $block_slug, string $name ): array {
 		$held = array_values( (array) ( $sheet[ $block_slug ] ?? [] ) );

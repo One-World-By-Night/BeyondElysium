@@ -346,7 +346,7 @@ class CostEngineHeldPricingTest extends TestCase {
 			[ 'mage-resources',       'Willpower', 3, 5 ],
 			[ 'changeling-resources', 'Glamour',   3, 4 ],
 			[ 'changeling-resources', 'Willpower', 3, 3 ],
-			// Banality was unpriced under the GVM path.
+			// Banality costs 2 per dot and has no free dots.
 			[ 'changeling-resources', 'Banality',  2, null ],
 		];
 
@@ -477,7 +477,7 @@ class CostEngineHeldPricingTest extends TestCase {
 	}
 
 	public function test_the_full_ladder_total_is_unchanged_by_key_order(): void {
-		// The total was always right.
+		// The full ladder total does not depend on key order.
 		$result = Cost_Engine::price_held_tiered_power( self::out_of_order_block(), [ 'name' => 'Animalism', 'level' => 5 ], true );
 
 		$this->assertSame( 27, $result['xp'] );

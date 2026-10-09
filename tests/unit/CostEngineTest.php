@@ -212,6 +212,80 @@ class CostEngineTest extends TestCase {
 		);
 	}
 
+	// -----------------------------------------------------------------------
+	// price_tiered_power_change: a `spent_from` block never charges XP
+	// -----------------------------------------------------------------------
+
+	private function spent_from_power_block() {
+		return self::definition( [
+			'_meta'  => [
+				'ranks'      => [ 'touched', 'gifted' ],
+				'ladder'     => [],
+				'spent_from' => [
+					'pool_block'      => 'hunter-virtues',
+					'by_family_field' => 'virtue',
+					'rank_cost'       => [ 'touched' => 1, 'gifted' => 2 ],
+				],
+			],
+			'powers' => [
+				[
+					'name'   => 'Innocence Path',
+					'virtue' => 'Mercy',
+					'levels' => [],
+					'elder'  => [ 'touched' => [ [ 'level' => null, 'tier' => 'touched', 'power_name' => 'Hide' ] ] ],
+				],
+			],
+		] );
+	}
+
+	public function test_buying_a_spent_from_pick_costs_no_xp(): void {
+		$definition  = $this->spent_from_power_block();
+		$change_data = [ 'block_slug' => 'hunter-edges', 'trait' => [ 'name' => 'Innocence Path', 'power_name' => 'Hide' ] ];
+
+		$this->assertSame( 0, Cost_Engine::price_tiered_power_change( [], $definition, 'add_trait', $change_data, true ) );
+	}
+
+	public function test_removing_a_spent_from_pick_also_costs_no_xp(): void {
+		$definition  = $this->spent_from_power_block();
+		$sheet       = [ 'hunter-edges' => [ [ 'name' => 'Innocence Path', 'power_name' => 'Hide' ] ] ];
+		$change_data = [ 'block_slug' => 'hunter-edges', 'trait' => [ 'name' => 'Innocence Path', 'power_name' => 'Hide' ] ];
+
+		$this->assertSame( 0, Cost_Engine::price_tiered_power_change( $sheet, $definition, 'remove_trait', $change_data, true ) );
+	}
+
+	// -----------------------------------------------------------------------
+	// price_resource_pool_change: a `raised_by` pool never charges XP to raise
+	// -----------------------------------------------------------------------
+
+	public function test_raising_a_raised_by_pool_costs_no_xp(): void {
+		$definition = self::definition( [
+			'pools' => [
+				[
+					'name' => 'Mercy', 'value_type' => 'integer', 'default_start' => 0, 'max' => 10,
+					'raised_by' => [ 'from' => 'hunter-resources.Conviction', 'temporary' => 10 ],
+				],
+			],
+		] );
+		$sheet = [ 'hunter-virtues' => [ 'Mercy' => 2 ] ];
+
+		$cost = Cost_Engine::price_resource_pool_change( $sheet, $definition, 'hunter-virtues', [ 'values' => [ 'Mercy' => 3 ] ] );
+
+		$this->assertSame( 0, $cost );
+	}
+
+	public function test_an_ordinary_pool_without_raised_by_still_charges_xp(): void {
+		$definition = self::definition( [
+			'pools' => [
+				[ 'name' => 'Willpower', 'value_type' => 'integer', 'default_start' => 2, 'max' => 10, 'cost_per_dot' => 3 ],
+			],
+		] );
+		$sheet = [ 'hunter-resources' => [ 'Willpower' => 2 ] ];
+
+		$cost = Cost_Engine::price_resource_pool_change( $sheet, $definition, 'hunter-resources', [ 'values' => [ 'Willpower' => 3 ] ] );
+
+		$this->assertSame( 3, $cost );
+	}
+
 	public function test_non_sequential_power_prices_a_flat_delta(): void {
 		$definition = self::definition(
 			[
@@ -313,9 +387,8 @@ class CostEngineTest extends TestCase {
 	}
 
 	/**
-	 * innate/basic/intermediate/advanced/elder/master are each confirmed directly against a real priced met-mechanics.csv
-	 * row. ascended/methuselah continue the same +3-per-tier progression but have no priced catalog example to confirm
-	 * independently.
+	 * Tier costs for innate through master match priced met-mechanics.csv rows; ascended and methuselah continue the
+	 * +3-per-tier progression.
 	 */
 	public function tierLadderProvider(): array {
 		return [
@@ -345,7 +418,7 @@ class CostEngineTest extends TestCase {
 	}
 
 	/**
-	 * A family can hold several distinct Elder-and-above picks at once ("you can have multiple powers at those levels").
+	 * A family can hold several distinct Elder-and-above picks at once.
 	 */
 	public function test_removing_one_elder_pick_does_not_affect_a_sibling_pick_in_the_same_family(): void {
 		$definition = $this->elder_power_block( [

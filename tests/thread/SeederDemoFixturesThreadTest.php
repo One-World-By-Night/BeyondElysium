@@ -37,7 +37,7 @@ class SeederDemoFixturesThreadTest extends WP_UnitTestCase {
 		}
 
 		$fixtures = Seeder::demo_fixtures();
-		$this->assertCount( 22, $fixtures );
+		$this->assertCount( 23, $fixtures );
 		foreach ( $fixtures as $f ) {
 			$this->assertSame( [], array_values( array_diff( array_keys( $f['sheet_data'] ), $declared[ $f['stack_slug'] ] ) ), $f['name'] );
 		}

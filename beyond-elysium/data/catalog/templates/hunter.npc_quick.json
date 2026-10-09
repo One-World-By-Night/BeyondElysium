@@ -1,0 +1,21 @@
+{
+  "format": 1,
+  "slug": "hunter.npc_quick",
+  "name": "Hunter NPC Sheet (Quick)",
+  "kind": "template",
+  "provenance": {
+    "sources": [
+      "Mind's Eye Theatre: Laws of the Reckoning (WW05037)'s own Quick Character Creation Process (p.85), in the order it lists them: Identity, Attributes, Abilities, Backgrounds, Virtues, Willpower and Conviction, Edges, Negative Traits, Merits and Flaws, a Derangement."
+    ],
+    "tool": "read directly, 2026-10-04"
+  },
+  "definition": {
+    "columns": 2,
+    "version": 1,
+    "sections": [
+      { "order": 1, "title": null, "width": "half", "column": 1, "display": null, "collapsed": false, "block_slug": "hunter-identity" },
+      { "order": 2, "title": "Quick Stats", "width": "half", "column": 1, "display": null, "collapsed": false, "block_slug": "npc-quick-stats" },
+      { "order": 1, "title": "Roleplaying Notes", "width": "half", "column": 2, "display": null, "collapsed": false, "block_slug": "npc-roleplaying-notes" }
+    ]
+  }
+}

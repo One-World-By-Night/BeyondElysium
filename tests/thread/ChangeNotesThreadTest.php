@@ -12,7 +12,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * Character_changes had one `notes` column for two people.
+ * A change keeps the player's note and the reviewer's note in separate columns.
  */
 class ChangeNotesThreadTest extends WP_UnitTestCase {
 

@@ -8,7 +8,7 @@ use BeyondElysium\Models\Template;
 use WP_UnitTestCase;
 
 /**
- * (seeded side): a block a stack declares but no template shows never renders.
+ * After the repair, every system full sheet template shows every block its own stack declares.
  */
 class TemplateCompletenessThreadTest extends WP_UnitTestCase {
 
@@ -96,6 +96,35 @@ class TemplateCompletenessThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
+	 * A health section is full width, so the trio of trait sections declared right after it never crowds into
+	 * whatever row space a half or third width would have left over.
+	 */
+	public function test_every_health_section_is_full_width(): void {
+		Schema::complete_full_sheet_templates();
+
+		$template = Template::globals( [ 'stack_slug' => 'vampire', 'template_type' => 'sheet_full' ] )[0];
+		$layout   = $template->layout;
+		foreach ( $layout['sections'] as &$section ) {
+			if ( $section['block_slug'] === 'vampire-health' ) {
+				$section['width'] = 'half';
+			}
+		}
+		unset( $section );
+		Template::update( (int) $template->id, [ 'layout' => $layout ] );
+
+		Schema::correct_health_section_width();
+
+		$found = false;
+		foreach ( Template::find( (int) $template->id )->layout['sections'] as $section ) {
+			if ( $section['block_slug'] === 'vampire-health' ) {
+				$this->assertSame( 'full', $section['width'] );
+				$found = true;
+			}
+		}
+		$this->assertTrue( $found, 'vampire-health was not found on the template after the repair.' );
+	}
+
+	/**
 	 * A restored section carries a real width and a real title.
 	 */
 	public function test_a_restored_section_is_fully_formed(): void {
@@ -133,8 +162,7 @@ class TemplateCompletenessThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * `npc_quick` is exempt by design: all ten are identity + `npc-quick-stats` + `npc-roleplaying-notes`, a reference
-	 * card.
+	 * `npc_quick` is exempt: all ten are identity + `npc-quick-stats` + `npc-roleplaying-notes`, a reference card.
 	 */
 	public function test_npc_quick_templates_are_left_alone(): void {
 		$before = [];

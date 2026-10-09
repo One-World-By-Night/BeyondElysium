@@ -177,6 +177,41 @@ class FactionsThreadTest extends WP_UnitTestCase {
 		$this->assertTrue( (bool) Faction_Member::find_for( $faction_id, $member_character_id )->is_leader );
 	}
 
+	public function test_a_new_membership_is_public_by_default(): void {
+		[ , $member_character_id ] = $this->make_player();
+		$faction_id = $this->make_faction( [ 'audience' => 'everyone' ] );
+		Faction_Member::add( $faction_id, $member_character_id, $this->storyteller_id );
+
+		$this->assertTrue( Faction_Member::find_for( $faction_id, $member_character_id )->is_public );
+	}
+
+	public function test_a_manager_can_hide_a_membership_from_public_profiles(): void {
+		[ , $member_character_id ] = $this->make_player();
+		$faction_id = $this->make_faction( [ 'audience' => 'everyone' ] );
+		Faction_Member::add( $faction_id, $member_character_id, $this->storyteller_id );
+
+		wp_set_current_user( $this->storyteller_id );
+		$response = $this->send( 'PATCH', "/factions/{$faction_id}/members/{$member_character_id}", [ 'is_public' => false ] );
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertFalse( $response->get_data()['is_public'] );
+		$this->assertFalse( Faction_Member::find_for( $faction_id, $member_character_id )->is_public );
+	}
+
+	public function test_a_leader_cannot_hide_a_membership(): void {
+		[ $leader_id, $leader_character_id ] = $this->make_player();
+		[ , $member_character_id ] = $this->make_player();
+		$faction_id = $this->make_faction( [ 'audience' => 'everyone' ] );
+		Faction_Member::add( $faction_id, $leader_character_id, $this->storyteller_id, true );
+		Faction_Member::add( $faction_id, $member_character_id, $this->storyteller_id );
+
+		wp_set_current_user( $leader_id );
+		$response = $this->send( 'PATCH', "/factions/{$faction_id}/members/{$member_character_id}", [ 'is_public' => false ] );
+
+		$this->assertSame( 403, $response->get_status() );
+		$this->assertTrue( Faction_Member::find_for( $faction_id, $member_character_id )->is_public );
+	}
+
 	public function test_a_leader_cannot_remove_another_leader(): void {
 		[ $leader_id, $leader_character_id ] = $this->make_player();
 		[ , $other_leader_id ] = $this->make_player();

@@ -46,7 +46,7 @@ class CreatureStackInUseThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * A stack deleted before anything refused it, as it would be on a site that already did.
+	 * Deletes the stack row directly.
 	 */
 	private function remove_stack_row( string $stack_slug ): void {
 		global $wpdb;

@@ -26,7 +26,7 @@ class GexParserTest extends TestCase {
 	// -------------------------------------------------------------------------
 
 	/**
-	 * The first, and only, real character-bearing binary exchange file in this repo (added).
+	 * The only real character-bearing binary exchange file in this repo.
 	 */
 	public function test_sabbat_gex_parses_a_real_binary_vampire_with_all_20_trait_lists(): void {
 		$data = GEX_Parser::parse_file( $this->path( 'samples/data/Sabbat.gex' ) );

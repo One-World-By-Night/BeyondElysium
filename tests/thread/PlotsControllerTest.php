@@ -323,8 +323,8 @@ class PlotsControllerTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * A real leak found while building the Storyteller Toolkit's card grid: `get_item()` attached `children` via
-	 * `Plot::children()` (raw rows) without ever running them through `prepare_plot()`.
+	 * A plot's children are run through `prepare_plot()` like the plot itself, so a child's `st_notes` never reaches
+	 * a non-manager.
 	 */
 	public function test_a_childs_st_notes_are_stripped_for_a_non_manager(): void {
 		$st     = self::factory()->user->create( [ 'role' => 'administrator' ] );

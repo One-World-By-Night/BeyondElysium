@@ -11,8 +11,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * A player sends their own Grapevine file straight to a chronicle, with no Storyteller on the sending end at all
- * (review).
+ * A player sends their own Grapevine file straight to a chronicle, with no Storyteller on the sending end at all.
  */
 class PlayerSendsGrapevineFileWorkflowTest extends WP_UnitTestCase {
 
@@ -28,11 +27,19 @@ class PlayerSendsGrapevineFileWorkflowTest extends WP_UnitTestCase {
 	 * The verification check calls out to the issuing site's own /verify/{code} route.
 	 */
 	public function loopback( $preempt, $args, $url ) {
-		if ( strpos( $url, '/verify/' ) === false ) {
+		if ( strpos( $url, '/verify/' ) !== false ) {
+			$code     = rawurldecode( substr( $url, strrpos( $url, '/' ) + 1 ) );
+			$response = rest_get_server()->dispatch( new WP_REST_Request( 'GET', '/be/v1/verify/' . $code ) );
+		} elseif ( preg_match( '#/([a-z0-9\-]+)/transfers/([^/]+)/(from-host|from-home)#', $url, $m ) ) {
+			$body    = json_decode( (string) ( $args['body'] ?? '{}' ), true );
+			$request = new WP_REST_Request( 'POST', "/be/v1/{$m[1]}/transfers/{$m[2]}/{$m[3]}" );
+			foreach ( (array) $body as $key => $value ) {
+				$request->set_param( $key, $value );
+			}
+			$response = rest_get_server()->dispatch( $request );
+		} else {
 			return $preempt;
 		}
-		$code     = rawurldecode( substr( $url, strrpos( $url, '/' ) + 1 ) );
-		$response = rest_get_server()->dispatch( new WP_REST_Request( 'GET', '/be/v1/verify/' . $code ) );
 		return [
 			'response' => [ 'code' => $response->get_status(), 'message' => '' ],
 			'body'     => wp_json_encode( $response->get_data() ),
@@ -132,14 +139,14 @@ class PlayerSendsGrapevineFileWorkflowTest extends WP_UnitTestCase {
 		$this->assertNotNull( $transfer );
 		$this->assertSame( 'visiting', $transfer->state );
 		$badges = Transfer::open_states_for_game( $this->host );
-		$this->assertSame( 'visiting', $badges[ $character->uuid ]['state'] );
+		$this->assertSame( 'visiting', $badges[ $character->uuid ][0]['state'] );
 
 		$this->assertContains( 'grapevine-file-sender@example.test', array_column( $this->mail, 'to' ), 'the sender is told their sheet was accepted' );
 
 		// The HST sends the visitor home.
 		wp_set_current_user( $hst );
 		$sent_home = $this->post( "/be/v1/{$this->host}/transfers/{$transfer->id}/send-home" );
-		$this->assertSame( 'sent_home', $sent_home->get_data()->state );
+		$this->assertSame( 'ended', $sent_home->get_data()->state );
 
 		remove_filter( 'pre_http_request', [ $this, 'loopback' ], 10 );
 		remove_filter( 'pre_wp_mail', [ $this, 'capture_mail' ], 10 );

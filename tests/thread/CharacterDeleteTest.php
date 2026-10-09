@@ -91,7 +91,7 @@ class CharacterDeleteTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The real fix: before this, a delete left orphaned rows in every one of these four tables.
+	 * A delete leaves no orphaned rows in any of these four tables.
 	 */
 	public function test_deleting_a_character_cascades_to_connections_changes_snapshots_and_sheet_style(): void {
 		wp_set_current_user( $this->admin_id );

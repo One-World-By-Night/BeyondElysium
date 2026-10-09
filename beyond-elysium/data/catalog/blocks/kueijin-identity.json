@@ -8,9 +8,10 @@
     "sources": [
       "Grapevine Menus XML.gvm and met-mechanics.csv (tools/catalog/source/) as seeded into wp_be_schema_blocks, dumped by tools/catalog/dump_live.sh",
       "Balance: GVM menu(s) \"Balance\" (3 options)",
-      "Station: GVM menu(s) \"Station\" (7 options)"
+      "Station: GVM menu(s) \"Station\" (7 options)",
+      "P'o Archetype: Mind's Eye Theatre: Laws of the East (WW05016), pp.113-115, read directly from the book's own page images, per reference-wod-scan-ocr-lessons: Bandit, Barbarian, Deceiver, Demon, Fool, Legalist, Monkey, Slave."
     ],
-    "tool": "tools/catalog/emit_catalog.py",
+    "tool": "tools/catalog/emit_catalog.py; P'o Archetype added 2026-10-04, read directly",
     "notes": "Options from the Grapevine menus, with `allow_custom` on so held free-text values stay valid."
   },
   "definition": {
@@ -68,6 +69,23 @@
           "Thunder"
         ],
         "allow_custom": true
+      },
+      {
+        "name": "P'o Archetype",
+        "field_type": "select",
+        "required": false,
+        "options": [
+          "Bandit",
+          "Barbarian",
+          "Deceiver",
+          "Demon",
+          "Fool",
+          "Legalist",
+          "Monkey",
+          "Slave"
+        ],
+        "allow_custom": true,
+        "note": "Mind's Eye Theatre: Laws of the East (WW05016), pp.113-115, read directly: \"If none of these Archetypes seems appropriate, work with the Storyteller to design your own P'o.\""
       }
     ]
   }

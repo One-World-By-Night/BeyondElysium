@@ -44,6 +44,13 @@
 	max-width: 24rem;
 }
 
+.be-character-editor__checkbox-field {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	margin-bottom: 0.75rem;
+}
+
 .be-character-editor__section {
 	margin-bottom: 1.5rem;
 	padding-bottom: 1rem;
@@ -61,7 +68,7 @@
 @media ( max-width: 768px ) {
 
 	.be-character-editor__grid {
-		grid-template-columns: 1fr;
+		grid-template-columns: minmax(0, 1fr);
 	}
 
 	.be-character-editor__section {

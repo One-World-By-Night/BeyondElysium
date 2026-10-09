@@ -28,7 +28,7 @@ class OneTimeMigrationPartialRunThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Fails the update of one block row, the way a lock timeout or a dropped connection would.
+	 * Fails the update of one block row.
 	 */
 	public function break_one_block( string $query ): string {
 		return str_starts_with( $query, 'UPDATE' ) && str_contains( $query, 'be_schema_blocks' ) && preg_match( "/`id` = '?{$this->broken_id}'?(?!\\d)/", $query )

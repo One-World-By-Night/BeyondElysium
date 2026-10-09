@@ -16,7 +16,7 @@ This tab has two views: an overview grid of every plot, and a single plot's own 
 
 ### Plot overview (the default view)
 
-- **Allocate actions** / **Generate rumors** - open the matching tool in a panel over this screen. See [Allocate Actions](allocate-actions.md) and [Rumors](rumors.md).
+- **Allocate actions** / **Generate rumors** / **Draft from a premise** - open the matching tool in a panel over this screen. See [Allocate Actions](allocate-actions.md), [Rumors](rumors.md), and [Draft a Plot from a Premise](draft-plot.md).
 - **+ New plot** - opens a form: a title (required), a rich-text description (with an AI Assist button), and an optional cover image. If your chronicle has turned on [Plot Features](chronicle-setup.md), a **Category** dropdown also appears - **Ordinary plot** (the default) or **arc**, **subplot**, **season**, **episode**; choosing subplot or episode adds a required parent-plot dropdown, since those two only make sense nested under something. **Create plot** saves it; **Cancel** closes the form without saving.
 - Filters: **Status** (all, or `active`, `resolved`, `archived`), an initiator filter (defaults to showing both; narrow to `player` or `st`), a character filter (**All plots**, **Character plots only** - each character's own plot and its action rounds - or **Without character plots**), and a text search across title and description. Changing any of them starts again at page 1.
 - A grid of plot cards - cover image (or a blank placeholder), title, and badges for status, category (if Plot Features is on and one was set), and whether it's player- or Storyteller-initiated. Click a card to open it.
@@ -26,6 +26,7 @@ This tab has two views: an overview grid of every plot, and a single plot's own 
 
 - **All plots** - a link back to the grid.
 - Cover image, with **Add a cover image…** / **Change cover…** for you to set or replace it.
+- **Who was emailed about this plot** - a link under the cover button, for an HST or AST, to the [Email Log](email-log.md) narrowed to this plot: everyone who was emailed about a post on it, and everyone who wasn't, with the reason.
 - Title, then a status badge, whether it's player- or Storyteller-initiated, and a game date if the plot has one.
 - **Overview** - the plot's prose. **Edit overview** opens a rich-text box (with AI Assist); **Save** or **Cancel**.
 - **ST notes** - a rich-text box (with AI Assist) always available to you and to other Storytellers and Narrators, never to a player even one who can otherwise read the plot. Write, then **Save ST notes** - empty until someone writes something, same as Cliffhanger.
@@ -114,6 +115,7 @@ This tab has two views: an overview grid of every plot, and a single plot's own 
 - **A plot created from this screen always counts as Storyteller-initiated**, even one built from a Narrator's own idea.
 - **Closing the Allocate actions or Rumors panel reloads what you were looking at**, so anything you just committed appears right away.
 - **A plot or entry can be held for a later release** instead of going out the moment you write it - see [Releases](release-batches.md). A held plot or entry carries a "Draft" or "In a release batch" badge here until its batch releases; you and other managers always see it regardless, exactly as normal.
+- **A full game file's own plots and rumors land here too.** A `.gv3` import (see [Import](import.md)) brings in Grapevine's own plots Storyteller-only with their cast connected, and its rumors exactly as the rumor generator builds one - done ones delivered, open ones held for you to release. An imported action joins the character's own date-based plot the Downtime Queue already reads, like any other.
 - On a narrow screen this grid never scrolls sideways - it's already a stacking card layout.
 
 ## Troubleshooting
@@ -133,6 +135,7 @@ This tab has two views: an overview grid of every plot, and a single plot's own 
 - [My Plots & Rumors](my-plots.md)
 - [Allocate Actions](allocate-actions.md)
 - [Rumors](rumors.md)
+- [Draft a Plot from a Premise](draft-plot.md)
 - [Connections](connections.md)
 - [Background Uses](background-uses.md)
 - [Releases](release-batches.md)

@@ -2,6 +2,8 @@
 
 namespace BeyondElysium\Services;
 
+use BeyondElysium\Models\Attachment;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -15,8 +17,11 @@ class Report_Writer {
 	private const HEAD_SIZE  = 9;
 	private const BODY_SIZE  = 8;
 
-	private const CARD_WIDTH  = 127.0; // 5in
-	private const CARD_HEIGHT = 76.2;  // 3in
+	private const CARD_WIDTH    = 127.0; // 5in
+	private const CARD_HEIGHT   = 76.2;  // 3in
+	private const CARD_PAD      = 3.0;
+	private const CARD_PIC_SIZE = 38.0;
+	private const CARD_TITLE_H  = 6.5;
 
 	/**
 	 * @param array<string,mixed> $document  `Report_Document::build()`'s return value.
@@ -25,7 +30,8 @@ class Report_Writer {
 	 * @throws \RuntimeException When asked to sign and signing is not configured or its files are unreadable.
 	 */
 	public static function write( array $document, object $game, bool $signed = true, ?string $page_size = null ): string {
-		$pdf = new \TCPDF( 'P', 'mm', Pdf_Writer::tcpdf_format( $page_size ), true, 'UTF-8', false );
+		$orientation = ( $document['shape'] ?? '' ) === 'card' ? 'L' : 'P';
+		$pdf         = new \TCPDF( $orientation, 'mm', Pdf_Writer::tcpdf_format( $page_size ), true, 'UTF-8', false );
 		if ( $signed ) {
 			Pdf_Signer::configure( $pdf, $game );
 		}
@@ -84,8 +90,7 @@ class Report_Writer {
 	}
 
 	/**
-	 * A header row (repeated whenever a page break lands after it, via TCPDF's own `setAutoPageBreak` page-break check on
-	 * `Cell()`).
+	 * A header row, repeated whenever a page break lands after it.
 	 *
 	 * @param array<string,mixed> $document
 	 */
@@ -133,7 +138,9 @@ class Report_Writer {
 	}
 
 	/**
-	 * Draws the card grid at Grapevine's 5in×3in card size: one card per row, as many rows as fit the page.
+	 * Draws the card grid at Grapevine's 5in×3in card size: landscape pages, two cards to a row, as many rows as fit
+	 * the page. A card whose content doesn't fit one face continues on a second card printed beside it as its back
+	 * (the Verify line moves there too), so the pair always takes a full row and folds down the middle into one card.
 	 *
 	 * @param array<string,mixed> $document
 	 */
@@ -146,26 +153,153 @@ class Report_Writer {
 		}
 
 		$page_bottom = $pdf->getPageHeight() - self::MARGIN;
+		$grid_left   = ( $pdf->getPageWidth() - 2 * self::CARD_WIDTH ) / 2;
+		$column      = 0;
+		$row_top     = $pdf->GetY();
 
 		foreach ( $cards as $card ) {
-			if ( $pdf->GetY() + self::CARD_HEIGHT > $page_bottom ) {
+			$faces = self::split_card_faces( $pdf, $card );
+			$paired = count( $faces ) > 1;
+
+			if ( $paired && $column === 1 ) {
+				$column  = 0;
+				$row_top += self::CARD_HEIGHT + self::CARD_PAD;
+			}
+			if ( $row_top + self::CARD_HEIGHT > $page_bottom ) {
 				$pdf->AddPage();
+				$row_top = $pdf->GetY();
+				$column  = 0;
 			}
 
-			$x = self::MARGIN;
-			$y = $pdf->GetY();
-			$pdf->Rect( $x, $y, self::CARD_WIDTH, self::CARD_HEIGHT );
-
-			$pdf->setXY( $x + 3, $y + 3 );
-			$pdf->setFont( self::FONT, '', self::BODY_SIZE );
-			$lines = [];
-			foreach ( $card as [ $label, $value ] ) {
-				$lines[] = $label . ': ' . $value;
+			if ( $paired ) {
+				self::draw_one_card( $pdf, $card, $faces[0], $grid_left, $row_top, false, false );
+				self::draw_one_card( $pdf, $card, $faces[1], $grid_left + self::CARD_WIDTH, $row_top, true, true );
+				$column   = 0;
+				$row_top += self::CARD_HEIGHT + self::CARD_PAD;
+				continue;
 			}
-			$pdf->MultiCell( self::CARD_WIDTH - 6, 0, implode( "\n", $lines ), 0, 'L', false, 1, $x + 3, $y + 3 );
 
-			$pdf->setXY( $x, $y + self::CARD_HEIGHT + 4 );
+			$x = $grid_left + $column * self::CARD_WIDTH;
+			self::draw_one_card( $pdf, $card, $faces[0], $x, $row_top, true, false );
+			if ( $column === 1 ) {
+				$row_top += self::CARD_HEIGHT + self::CARD_PAD;
+			}
+			$column = 1 - $column;
 		}
+	}
+
+	/**
+	 * Splits a card's fields across one face, or two when they don't fit one. The first face always carries the
+	 * picture and the uses count/boxes; only the last face carries the Verify line.
+	 *
+	 * @param array<string,mixed> $card
+	 * @return array<int,array<string,mixed>> One element (a single face), or two (front, back).
+	 */
+	private static function split_card_faces( \TCPDF $pdf, array $card ): array {
+		$fields         = is_array( $card['fields'] ?? null ) ? $card['fields'] : [];
+		$has_picture    = ! empty( $card['picture'] );
+		$text_width     = self::CARD_WIDTH - 2 * self::CARD_PAD - ( $has_picture ? self::CARD_PIC_SIZE + self::CARD_PAD : 0 );
+		$available      = self::CARD_HEIGHT - self::CARD_TITLE_H - 2 * self::CARD_PAD;
+		$uses_height    = ( $card['uses_max'] ?? null ) !== null ? Pdf_Rings::RING_STEP * Pdf_Rings::rows( (int) $card['uses_max'], 5 ) + 2.0 : 0.0;
+
+		$pdf->setFont( self::FONT, '', self::BODY_SIZE );
+		$front  = [];
+		$back   = [];
+		$height = $uses_height;
+		$overflowed = false;
+
+		foreach ( $fields as $field ) {
+			$plain = $field['html'] ? wp_strip_all_tags( (string) $field['value'] ) : $field['label'] . ': ' . $field['value'];
+			$field_height = $pdf->getStringHeight( $text_width, $plain ) + 0.8;
+
+			if ( ! $overflowed && $height + $field_height <= $available ) {
+				$front[]  = $field;
+				$height  += $field_height;
+			} else {
+				$overflowed = true;
+				$back[]     = $field;
+			}
+		}
+
+		if ( $back === [] ) {
+			return [ array_merge( $card, [ 'fields' => $front ] ) ];
+		}
+
+		return [
+			array_merge( $card, [ 'fields' => $front, 'verify' => null ] ),
+			array_merge( $card, [ 'fields' => $back, 'picture' => null, 'uses_max' => null, 'uses_used' => 0 ] ),
+		];
+	}
+
+	/**
+	 * Draws one card face: its frame, a centered title ("(cont.)" on a back face), its picture (front only), its
+	 * fields (writeHTML for an HTML-kind one, bold-label/italic-value text otherwise), its uses count and boxes, and
+	 * the Verify line when this is the face carrying it.
+	 *
+	 * @param array<string,mixed> $card The whole card, for its name.
+	 * @param array<string,mixed> $face One face's own fields/picture/uses/verify.
+	 */
+	private static function draw_one_card( \TCPDF $pdf, array $card, array $face, float $x, float $y, bool $is_last_face, bool $is_back ): void {
+		$pdf->Rect( $x, $y, self::CARD_WIDTH, self::CARD_HEIGHT );
+
+		$title = (string) ( $card['name'] ?? '' );
+		if ( $is_back ) {
+			$title .= ' ' . __( '(cont.)', 'beyond-elysium' );
+		}
+		$pdf->setFont( self::FONT, 'B', self::HEAD_SIZE + 1 );
+		$pdf->MultiCell( self::CARD_WIDTH, self::CARD_TITLE_H, $title, 0, 'C', false, 1, $x, $y + self::CARD_PAD * 0.5 );
+
+		$content_top  = $y + self::CARD_TITLE_H + self::CARD_PAD * 0.5;
+		$text_x       = $x + self::CARD_PAD;
+		$picture_path = empty( $face['picture'] ) ? null : self::attachment_path( (int) $face['picture'] );
+
+		if ( $picture_path !== null ) {
+			$pdf->Image( $picture_path, $x + self::CARD_PAD, $content_top, self::CARD_PIC_SIZE, 0, '', '', '', false, 150, '', false, false, 0, true, false, false );
+			$text_x += self::CARD_PIC_SIZE + self::CARD_PAD;
+		}
+		$text_width = $x + self::CARD_WIDTH - self::CARD_PAD - $text_x;
+
+		$text_y = $content_top;
+		foreach ( (array) ( $face['fields'] ?? [] ) as $field ) {
+			if ( ! empty( $field['html'] ) ) {
+				$pdf->setFont( self::FONT, 'B', self::BODY_SIZE );
+				$pdf->setXY( $text_x, $text_y );
+				$pdf->Cell( $text_width, 4, (string) $field['label'] . ':', 0, 1 );
+				$text_y = $pdf->GetY();
+				$pdf->setFont( self::FONT, '', self::BODY_SIZE );
+				$pdf->writeHTMLCell( $text_width, 0, $text_x, $text_y, Rich_Text_Sanitizer::sanitize( (string) $field['value'] ), 0, 1, false, true, 'L' );
+				$text_y = $pdf->GetY();
+			} else {
+				$html = '<b>' . esc_html( (string) $field['label'] ) . ':</b> <i>' . esc_html( (string) $field['value'] ) . '</i>';
+				$pdf->writeHTMLCell( $text_width, 0, $text_x, $text_y, $html, 0, 1, false, true, 'L' );
+				$text_y = $pdf->GetY();
+			}
+		}
+
+		if ( ( $face['uses_max'] ?? null ) !== null ) {
+			$pdf->setFont( self::FONT, 'BI', self::BODY_SIZE );
+			$pdf->setXY( $text_x, $text_y );
+			$pdf->Cell( $text_width, 4, sprintf( __( 'Count: %d', 'beyond-elysium' ), (int) $face['uses_max'] ), 0, 1 );
+			Pdf_Rings::use_boxes( $pdf, (int) $face['uses_max'], (int) ( $face['uses_used'] ?? 0 ), $text_x, $pdf->GetY() + 0.5 );
+		}
+
+		if ( $is_last_face && ! empty( $card['verify'] ) ) {
+			$pdf->setFont( self::FONT, 'I', self::BODY_SIZE - 2 );
+			$pdf->MultiCell( self::CARD_WIDTH - 2 * self::CARD_PAD, 3, (string) $card['verify'], 0, 'L', false, 1, $x + self::CARD_PAD, $y + self::CARD_HEIGHT - 5 );
+		}
+	}
+
+	/**
+	 * Resolves an attachment id to a real filesystem path TCPDF can read directly, or null when the attachment row
+	 * or its file is gone.
+	 */
+	private static function attachment_path( int $attachment_id ): ?string {
+		$attachment = Attachment::find( $attachment_id );
+		if ( $attachment === null ) {
+			return null;
+		}
+		$path = Attachment_Storage::path_for( $attachment->stored_name, $attachment->original_name );
+		return file_exists( $path ) ? $path : null;
 	}
 
 	/**
@@ -227,13 +361,35 @@ class Report_Writer {
 	}
 
 	/**
-	 * Game Calendar: always the empty state.
+	 * Game Calendar: one entry per game night - its date and start time, then its place and notes - or the empty note.
 	 *
 	 * @param array<string,mixed> $document
 	 */
 	private static function draw_calendar( \TCPDF $pdf, array $document ): void {
-		$pdf->setFont( self::FONT, 'I', self::BODY_SIZE );
-		$pdf->MultiCell( 0, 0, (string) ( $document['note'] ?? '' ), 0, 'L' );
+		$rows = is_array( $document['rows'] ?? null ) ? $document['rows'] : [];
+		if ( empty( $rows ) ) {
+			$pdf->setFont( self::FONT, 'I', self::BODY_SIZE );
+			$pdf->MultiCell( 0, 0, (string) ( $document['note'] ?? '' ), 0, 'L' );
+			return;
+		}
+
+		foreach ( $rows as $raw_row ) {
+			$row = (array) $raw_row;
+
+			$pdf->setFont( self::FONT, 'B', self::HEAD_SIZE );
+			$pdf->Cell( 0, 6, trim( (string) ( $row['date'] ?? '' ) . ' ' . (string) ( $row['time'] ?? '' ) ), 0, 1 );
+
+			$pdf->setFont( self::FONT, '', self::BODY_SIZE );
+			$place = trim( (string) ( $row['place'] ?? '' ) );
+			if ( $place !== '' ) {
+				$pdf->MultiCell( 0, 0, $place, 0, 'L' );
+			}
+			$notes = trim( (string) ( $row['notes'] ?? '' ) );
+			if ( $notes !== '' ) {
+				$pdf->writeHTML( Rich_Text_Sanitizer::sanitize( $notes ), true, false, true, false, '' );
+			}
+			$pdf->Ln( 3 );
+		}
 	}
 
 	/**

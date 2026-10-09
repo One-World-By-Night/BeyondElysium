@@ -317,6 +317,8 @@ class GEX_Parser {
 	/**
 	 * Extracts a divider row's plain label with its em-dash wrapping stripped, for example `"——Blood Magic——"` becomes
 	 * `"Blood Magic"`.
+	 *
+	 * @param array<string,mixed> $trait
 	 */
 	public static function divider_label( array $trait ): string {
 		return trim( (string) preg_replace( '/^\x{2014}+|\x{2014}+$/u', '', trim( $trait['name'] ) ) );

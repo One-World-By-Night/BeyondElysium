@@ -25,6 +25,113 @@ const STAGES: { key: Stage; label: string }[] = [
 	{ key: 'commit', label: __( '5. Commit', 'beyond-elysium' ) },
 ];
 
+interface NarrativeSectionProps {
+	preview: GameImportPreview;
+	importPlots: boolean;
+	setImportPlots: ( value: boolean ) => void;
+	importRumors: boolean;
+	setImportRumors: ( value: boolean ) => void;
+	importActions: boolean;
+	setImportActions: ( value: boolean ) => void;
+}
+
+/**
+ * The Plots, Rumors & Actions checkbox section, shared by the Preview stage (no target chosen, every
+ * already-present count reads zero) and the Resolve stage (re-fetched against the real target).
+ */
+function NarrativeSection( {
+	preview,
+	importPlots,
+	setImportPlots,
+	importRumors,
+	setImportRumors,
+	importActions,
+	setImportActions,
+}: NarrativeSectionProps ) {
+	if (
+		preview.counts.plots === 0 &&
+		preview.counts.rumors === 0 &&
+		preview.counts.actions === 0
+	) {
+		return null;
+	}
+	return (
+		<div className="be-import-tool__narrative">
+			<h4>{ __( 'Plots, Rumors & Actions', 'beyond-elysium' ) }</h4>
+			{ preview.counts.plots > 0 && (
+				<label className="be-import-preview__keep-custom">
+					<input
+						type="checkbox"
+						checked={ importPlots }
+						onChange={ ( e ) => setImportPlots( e.target.checked ) }
+					/>{ ' ' }
+					{ sprintf(
+						/* translators: 1: total plots, 2: how many already exist in this chronicle */
+						__(
+							'Import %1$d plot(s) - %2$d already present will be skipped.',
+							'beyond-elysium'
+						),
+						preview.counts.plots,
+						preview.narrative.plots.already_present
+					) }
+				</label>
+			) }
+			{ preview.counts.rumors > 0 && (
+				<label className="be-import-preview__keep-custom">
+					<input
+						type="checkbox"
+						checked={ importRumors }
+						onChange={ ( e ) =>
+							setImportRumors( e.target.checked )
+						}
+					/>{ ' ' }
+					{ sprintf(
+						/* translators: 1: total rumors, 2: how many already exist in this chronicle */
+						__(
+							'Import %1$d rumor(s) - %2$d already present will be skipped.',
+							'beyond-elysium'
+						),
+						preview.counts.rumors,
+						preview.narrative.rumors.already_present
+					) }
+				</label>
+			) }
+			{ preview.counts.actions > 0 && (
+				<label className="be-import-preview__keep-custom">
+					<input
+						type="checkbox"
+						checked={ importActions }
+						onChange={ ( e ) =>
+							setImportActions( e.target.checked )
+						}
+					/>{ ' ' }
+					{ sprintf(
+						/* translators: 1: total actions, 2: how many already exist in this chronicle */
+						__(
+							'Import %1$d action(s) - %2$d already present will be skipped.',
+							'beyond-elysium'
+						),
+						preview.counts.actions,
+						preview.narrative.actions.already_present
+					) }
+				</label>
+			) }
+			{ preview.narrative.unmatched_names.length > 0 && (
+				<p className="be-import-tool__blocking-note">
+					{ sprintf(
+						/* translators: %s: comma-separated cast/action names matching no character */
+						__(
+							'Names matching no character, in this file or this chronicle: %s.',
+							'beyond-elysium'
+						),
+						preview.narrative.unmatched_names.join( ', ' )
+					) }
+				</p>
+			) }
+		</div>
+	);
+}
+
 /**
  * Renders the full game-file import wizard: upload a.gv3 file, preview the chronicle it carries, choose whether to
  * create a new chronicle or merge into an existing one, resolve anything that collides.
@@ -47,6 +154,10 @@ export function GameImportTool() {
 	>( '' );
 	const [ newChronicleName, setNewChronicleName ] = useState( '' );
 	const [ mergeGameSlug, setMergeGameSlug ] = useState( '' );
+
+	const [ importPlots, setImportPlots ] = useState( true );
+	const [ importRumors, setImportRumors ] = useState( true );
+	const [ importActions, setImportActions ] = useState( true );
 
 	// The chronicle the current preview was checked against ('' until a merge target is confirmed).
 	const [ previewTarget, setPreviewTarget ] = useState( '' );
@@ -138,6 +249,11 @@ export function GameImportTool() {
 				duplicates: duplicateActions,
 				world_objects: worldObjectActions,
 				traits: Object.values( traitResolutions ),
+				import_kinds: {
+					plots: importPlots,
+					rumors: importRumors,
+					actions: importActions,
+				},
 			};
 			const committed = await api
 				.gameImport()
@@ -228,6 +344,15 @@ export function GameImportTool() {
 						worldObjectActions={ worldObjectActions }
 						onWorldObjectActionChange={ onWorldObjectActionChange }
 					/>
+					<NarrativeSection
+						preview={ preview }
+						importPlots={ importPlots }
+						setImportPlots={ setImportPlots }
+						importRumors={ importRumors }
+						setImportRumors={ setImportRumors }
+						importActions={ importActions }
+						setImportActions={ setImportActions }
+					/>
 					<h4>
 						{ __( 'Not Imported by This Tool', 'beyond-elysium' ) }
 					</h4>
@@ -238,27 +363,6 @@ export function GameImportTool() {
 							'query',
 							'queries',
 							preview.skipped.queries,
-							'beyond-elysium'
-						) }
-						, { preview.skipped.actions }{ ' ' }
-						{ _n(
-							'action',
-							'actions',
-							preview.skipped.actions,
-							'beyond-elysium'
-						) }
-						, { preview.skipped.plots }{ ' ' }
-						{ _n(
-							'plot',
-							'plots',
-							preview.skipped.plots,
-							'beyond-elysium'
-						) }
-						, { preview.skipped.rumors }{ ' ' }
-						{ _n(
-							'rumor',
-							'rumors',
-							preview.skipped.rumors,
 							'beyond-elysium'
 						) }
 						, { preview.skipped.xp_awards }{ ' ' }
@@ -446,6 +550,15 @@ export function GameImportTool() {
 						worldObjectActions={ worldObjectActions }
 						onWorldObjectActionChange={ onWorldObjectActionChange }
 					/>
+					<NarrativeSection
+						preview={ preview }
+						importPlots={ importPlots }
+						setImportPlots={ setImportPlots }
+						importRumors={ importRumors }
+						setImportRumors={ setImportRumors }
+						importActions={ importActions }
+						setImportActions={ setImportActions }
+					/>
 					<div className="be-import-tool__nav-row">
 						<button
 							type="button"
@@ -587,7 +700,65 @@ export function GameImportTool() {
 								result.rotes.length
 							) }
 						</li>
+						{ !! result.plots && (
+							<li>
+								{ sprintf(
+									/* translators: %d: number of plots processed by the import */
+									_n(
+										'%d plot processed',
+										'%d plots processed',
+										result.plots,
+										'beyond-elysium'
+									),
+									result.plots
+								) }
+							</li>
+						) }
+						{ !! result.rumors && (
+							<li>
+								{ sprintf(
+									/* translators: %d: number of rumors processed by the import */
+									_n(
+										'%d rumor processed',
+										'%d rumors processed',
+										result.rumors,
+										'beyond-elysium'
+									),
+									result.rumors
+								) }
+							</li>
+						) }
+						{ !! result.actions && (
+							<li>
+								{ sprintf(
+									/* translators: %d: number of actions processed by the import */
+									_n(
+										'%d action processed',
+										'%d actions processed',
+										result.actions,
+										'beyond-elysium'
+									),
+									result.actions
+								) }
+							</li>
+						) }
 					</ul>
+					{ ( result.unmatched_cast?.length ||
+						result.unmatched_actors?.length ) && (
+						<p className="be-import-tool__blocking-note">
+							{ sprintf(
+								/* translators: %s: comma-separated names matching no character */
+								__(
+									'Names matching no character: %s.',
+									'beyond-elysium'
+								),
+								[
+									...( result.unmatched_cast ?? [] ),
+									...( result.unmatched_actors ?? [] ),
+								].join( ', ' )
+							) }
+						</p>
+					) }
 				</>
 			) }
 		</div>

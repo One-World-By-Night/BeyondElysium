@@ -5,6 +5,12 @@
 	--be-sheet-bg: transparent;
 	--be-sheet-text: inherit;
 	--be-sheet-bg-image: none;
+	--be-sheet-header-bg: var(--be-gray-27);
+	--be-sheet-surface: var(--be-gray-29);
+	--be-sheet-notice-bg: var(--be-gold-18);
+	--be-sheet-label: var(--be-gray-6);
+	--be-sheet-dot-filled: var(--be-gray-4);
+	--be-sheet-dot-line: var(--be-gray-12);
 
 	font-family: var(--be-sheet-font);
 	background-color: var(--be-sheet-bg);
@@ -115,7 +121,7 @@
 	padding: 0.6rem 0.75rem;
 	margin-bottom: 0.75rem;
 	border: 1px solid var(--be-gold-9);
-	background: var(--be-gold-18);
+	background: var(--be-sheet-notice-bg);
 	border-radius: 3px;
 	font-size: 0.9rem;
 }
@@ -129,7 +135,7 @@
 	padding: 0.35rem 0.5rem;
 	border: 1px solid var(--be-sheet-accent);
 	border-radius: 3px;
-	background: var(--be-gray-29);
+	background: var(--be-sheet-surface);
 	color: inherit;
 	font-size: 0.85rem;
 }
@@ -196,7 +202,7 @@
 	padding: 0.2rem 0.5rem;
 	border: 1px solid var(--be-sheet-accent);
 	border-radius: 3px;
-	background: var(--be-gray-29);
+	background: var(--be-sheet-surface);
 	color: inherit;
 	font-size: 0.85rem;
 }
@@ -236,14 +242,18 @@
 	margin-bottom: 1rem;
 	border: 1px solid var(--be-gray-16);
 	border-radius: 4px;
-	background: var(--be-gray-27);
+	background: var(--be-sheet-header-bg);
+}
+
+html.wp-dark-mode-active [data-be-widget] .be-character-sheet {
+	--be-sheet-header-bg: transparent;
 }
 
 .be-character-sheet__header dt {
 	font-weight: 600;
 	font-size: 0.75rem;
 	text-transform: uppercase;
-	color: var(--be-gray-6);
+	color: var(--be-sheet-label);
 }
 
 .be-character-sheet__header dd {
@@ -284,7 +294,7 @@
 @media ( max-width: 768px ) {
 
 	.be-character-sheet__grid {
-		grid-template-columns: 1fr;
+		grid-template-columns: minmax(0, 1fr);
 	}
 
 	.be-character-sheet__section {

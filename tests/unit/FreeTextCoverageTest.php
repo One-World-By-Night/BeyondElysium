@@ -41,6 +41,8 @@ class FreeTextCoverageTest extends TestCase {
 		'character_changes.reason'                  => 'filter_change',
 		'character_transfers.notes'                 => self::MANAGER_ONLY,
 		'character_transfers.payload'               => self::MANAGER_ONLY,
+		'character_transfers.update_log'             => self::STRUCTURED,
+		'character_changes.host_note'               => self::MANAGER_ONLY,
 		'character_submissions.parsed'              => self::STRUCTURED,
 		'character_submissions.verification_source' => self::STRUCTURED,
 		'character_submissions.answer_note'         => 'filter_submission',
@@ -73,6 +75,10 @@ class FreeTextCoverageTest extends TestCase {
 		// The Portuguese (or any locale's) translated name.
 		'translations.translation'                    => self::PUBLIC_TERM,
 		'translations.note'                           => self::MANAGER_ONLY,
+		'join_requests.message'                      => 'filter_join_request',
+		// Only ever read via GET .../players/join-requests, be_manage_characters-gated; GET .../join only ever
+		// returns a waiting row, before a note is ever written.
+		'join_requests.note'                          => self::MANAGER_ONLY,
 	];
 
 	public function test_every_free_text_column_in_the_schema_is_accounted_for(): void {

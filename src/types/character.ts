@@ -3,7 +3,8 @@
  */
 import type { ApprovalLevel } from './index';
 import type { AudienceRules, AudienceValue } from './plot';
-import type { TravellingStatus } from './transfer';
+import type { Visit, VisitingFrom } from './transfer';
+import type { Attachment } from './attachment';
 
 /**
  * A character's full set of sheet block values, keyed by block slug.
@@ -13,7 +14,7 @@ export type SheetData = Record< string, unknown >;
 /**
  * The lifecycle state of a submitted character change.
  */
-export type ChangeStatus = 'pending' | 'approved' | 'rejected';
+export type ChangeStatus = 'pending' | 'approved' | 'rejected' | 'forwarded';
 
 // ---------------------------------------------------------------------------
 // Character
@@ -79,6 +80,14 @@ export interface Character {
 	 */
 	profile_audience?: AudienceValue;
 	profile_audience_rules?: AudienceRules | null;
+	/**
+	 * Whether a player character's own profile names the account playing them.
+	 */
+	profile_show_player?: boolean;
+	/**
+	 * This character's own uploaded portrait, embedded on GET {game}/characters/{id}.
+	 */
+	attachments?: Attachment[];
 	narrator: string | null;
 	start_date: string | null;
 	xp_earned: number;
@@ -107,13 +116,33 @@ export interface Character {
 	 */
 	can_customize_sheet?: boolean;
 	/**
-	 * Set only while an open transfer, either direction, touches this character.
+	 * What a Storyteller should look at on this sheet: a path held under one tradition spelled two ways. Empty for
+	 * everyone else.
 	 */
-	travelling_status?: TravellingStatus | null;
+	sheet_warnings?: SheetWarning[];
+	/**
+	 * Every other chronicle this character is also currently active at, from its own outbound visits - empty while
+	 * none are open.
+	 */
+	visits?: Visit[];
+	/**
+	 * Set only while this character row is itself a visitor here, from an open inbound row.
+	 */
+	visiting_from?: VisitingFrom | null;
 	sheet_data: SheetData;
 	created_by: number;
 	created_at: string;
 	updated_at: string;
+}
+
+/**
+ * A path a sheet holds under one tradition spelled two ways, with the spellings and the level each copy carries.
+ */
+export interface SheetWarning {
+	block_slug: string;
+	name: string;
+	traditions: string[];
+	levels: Array< number | null >;
 }
 
 /**
@@ -192,7 +221,18 @@ export interface NpcProfile {
 }
 
 /**
- * Request body for updating an NPC's five public-profile fields.
+ * An NPC or player-character profile from GET /{game}/profiles.
+ */
+export interface CharacterProfile extends NpcProfile {
+	kind: 'npc' | 'pc';
+	played_by: string | null;
+	portrait_attachment_id: number | null;
+}
+
+/**
+ * Request body for updating a character's public-profile fields. A manager may set every field; a player editing
+ * their own non-NPC character may set all but `profile_audience_rules`, and `profile_audience` only to everyone or
+ * storytellers.
  */
 export interface UpdateNpcProfileRequest {
 	public_name?: string;
@@ -200,6 +240,7 @@ export interface UpdateNpcProfileRequest {
 	public_image_id?: number | null;
 	profile_audience?: AudienceValue;
 	profile_audience_rules?: AudienceRules | null;
+	profile_show_player?: boolean;
 }
 
 /**
@@ -264,7 +305,15 @@ export type ChangeType =
 	// A player proposing a coterie/pack/cabal/motley for their own character.
 	| 'propose_faction'
 	// A character linked to or unlinked from a player's account.
-	| 'player_link';
+	| 'player_link'
+	// A player logging what one of their own characters learned, for a Storyteller to tie to a secret.
+	| 'log_knowledge'
+	// A player telling another character a secret their own character already knows.
+	| 'pass_secret'
+	// A host chronicle's own note about a visiting character, with no sheet effect.
+	| 'visit_note'
+	// A host chronicle's own request to pair a player-submitted character with its real home.
+	| 'visit_pairing';
 
 /**
  * The data carried by a single character change.
@@ -299,6 +348,17 @@ export interface CharacterChange {
 	 * Citation naming the real-world approval authority, set at submission time.
 	 */
 	reason: string | null;
+	/**
+	 * Ties every change submitted together in one editor submission to each other.
+	 */
+	submission_id?: string | null;
+	/**
+	 * The host's own visit this arrived on, its chronicle's name, and its free-text note - only set on a change
+	 * forwarded here from a host chronicle.
+	 */
+	source_visit_id?: number | null;
+	host_chronicle?: string | null;
+	host_note?: string | null;
 }
 
 /**
@@ -327,6 +387,17 @@ export interface ChangeReviewRequest {
 	 * for a power.
 	 */
 	xp_cost?: number;
+	/**
+	 * Approving a `log_knowledge` change: an existing secret's id to tie it to.
+	 */
+	secret_id?: number;
+	/**
+	 * Approving a `log_knowledge` change with no existing secret: what to create one on.
+	 */
+	entity_type?: string;
+	entity_id?: number;
+	title?: string;
+	content?: string;
 }
 
 /**
@@ -369,6 +440,24 @@ export interface QueueChange extends CharacterChange {
 }
 
 /**
+ * One of a player's own changes across every chronicle on this site where they have a character - pending, or
+ * reviewed in the last 30 days.
+ */
+export interface MyChangeAcrossGames extends CharacterChange {
+	character_name: string | null;
+	game_slug: string;
+	game_name: string;
+	/**
+	 * A plain description of what the change does.
+	 */
+	description: string;
+	/**
+	 * `pending`, `approved`, `auto_approved`, or `refused`.
+	 */
+	display_status: 'pending' | 'approved' | 'auto_approved' | 'refused';
+}
+
+/**
  * What one price covers: each dot of a trait list, or a whole pick of a tiered power.
  */
 export type PriceUnit = 'dot' | 'pick';
@@ -402,6 +491,14 @@ export interface BatchApproveResponse {
 	 * Changes left alone because they are waiting for a price; each needs its own review.
 	 */
 	needs_cost?: number[];
+}
+
+/**
+ * Response from submitting a whole set of editor changes together.
+ */
+export interface SubmitSetResponse {
+	submission_id: string;
+	changes: CharacterChange[];
 }
 
 // ---------------------------------------------------------------------------

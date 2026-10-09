@@ -40,6 +40,10 @@ import type {
 	GameStats,
 	PlayerWithoutActiveCharacter,
 	SetupStatus,
+	DemoStatus,
+	JoinableChronicle,
+	MyJoinRequest,
+	ChronicleJoinRequest,
 } from '../types';
 import type {
 	Character,
@@ -63,7 +67,9 @@ import type {
 	PreviewChangesResponse,
 	QueueCollectionParams,
 	QueueChange,
+	MyChangeAcrossGames,
 	BatchApproveResponse,
+	SubmitSetResponse,
 	SheetStyle,
 	SheetStyleInput,
 	WpUserSummary,
@@ -72,6 +78,7 @@ import type {
 	PointAudit,
 	CreationTally,
 	NpcProfile,
+	CharacterProfile,
 	UpdateNpcProfileRequest,
 } from '../types/character';
 import type {
@@ -133,7 +140,10 @@ import type {
 	UpdateSecretRequest,
 	SecretReveal,
 	CreateSecretRevealRequest,
-	MySecretRow,
+	MySecretsResponse,
+	LogKnowledgeRequest,
+	PassSecretRequest,
+	SecretPerson,
 } from '../types/secret';
 import type {
 	Faction,
@@ -177,6 +187,8 @@ import type {
 	BoonLedgerParams,
 	LocationLink,
 	LocationLinkLabel,
+	CatalogItemEntry,
+	CatalogBookRef,
 } from '../types/world';
 import type {
 	ImportPreview,
@@ -187,6 +199,11 @@ import type {
 	GameImportCommitResult,
 } from '../types/import';
 import type { VerifyResponse } from '../types/verify';
+import type {
+	MailLogEntry,
+	MailLogOptions,
+	MailLogParams,
+} from '../types/mailLog';
 import type {
 	Transfer,
 	InitiateTransferResponse,
@@ -310,6 +327,21 @@ export const games = {
 	 */
 	contentCounts: ( slug: string ): Promise< ChronicleContentCounts > =>
 		apiFetch( { path: `${ BASE }/games/${ slug }/content` } ),
+
+	/**
+	 * Whether a chronicle is a demo, its cadence, and when it next resets.
+	 */
+	demoStatus: ( gameSlug: string ): Promise< DemoStatus > =>
+		apiFetch( { path: `${ BASE }/${ gameSlug }/demo` } ),
+
+	/**
+	 * Resets a demo chronicle to its declared content now.
+	 */
+	resetDemo: ( slug: string ): Promise< { reset: boolean } > =>
+		apiFetch( {
+			path: `${ BASE }/games/${ slug }/demo/reset`,
+			method: 'POST',
+		} ),
 
 	/**
 	 * Deletes a game/chronicle by slug.
@@ -465,16 +497,21 @@ export const creatureStacks = {
 
 	/**
 	 * Fetches a creature stack together with the real SchemaBlock record for every block its sections reference.
+	 * `characterId` adds the blocks that character holds beyond the stack's own sections, on a creature type that
+	 * allows any block.
 	 */
 	resolve: (
 		slug: string,
 		gameSlug?: string,
-		forCreation?: boolean
+		forCreation?: boolean,
+		characterId?: number
 	): Promise< ResolvedStack > =>
 		apiFetch( {
 			path: `${ BASE }/creature-stacks/${ slug }?resolve=true${
 				gameSlug ? `&game_slug=${ encodeURIComponent( gameSlug ) }` : ''
-			}${ forCreation ? '&for_creation=true' : '' }`,
+			}${ forCreation ? '&for_creation=true' : '' }${
+				characterId ? `&character_id=${ characterId }` : ''
+			}`,
 		} ),
 
 	/**
@@ -660,7 +697,14 @@ export const templates = ( gameSlug: string ) => ( {
 // ---------------------------------------------------------------------------
 
 export type ApprovalRuleTargetType =
-	'item' | 'power' | 'level' | 'item_range' | 'pool_range' | 'field_option';
+	| 'item'
+	| 'power'
+	| 'level'
+	| 'item_range'
+	| 'pool_range'
+	| 'field_option'
+	| 'block_default'
+	| 'block_in_type';
 
 export interface ApprovalRule {
 	id: string;
@@ -670,9 +714,10 @@ export interface ApprovalRule {
 	target_name: string;
 	level: number | null;
 	/**
-	 * item_range/pool_range: [from, to]. field_option: the option string.
+	 * item_range/pool_range: [from, to]. field_option: the option string. block_in_type: [in_type, out_of_type].
 	 */
-	extra: [ number, number ] | string | null;
+	extra:
+		[ number, number ] | [ string | null, string | null ] | string | null;
 	approval: string | null;
 	reason: string | null;
 }
@@ -680,6 +725,35 @@ export interface ApprovalRule {
 export interface ApprovalRuleOptions {
 	approval_levels: string[];
 	reason_presets: string[];
+}
+
+export interface BylawAttachment {
+	clause_id: number;
+	family: string;
+	name: string;
+	levels?: number[];
+	picks?: string[];
+}
+
+export interface BylawRule {
+	clause_id: number;
+	path: string;
+	subject: string;
+	pc: string | null;
+	npc: string | null;
+	coordinators: string[];
+	modified: string;
+	link: string;
+	attachments: BylawAttachment[];
+}
+
+export interface BylawRefreshResult {
+	rule_count: number;
+	attachment_count: number;
+	added: number;
+	removed: number;
+	changed: number;
+	generated_at: string;
 }
 
 export interface ApprovalRuleRequest {
@@ -699,6 +773,14 @@ export interface ApprovalRuleRequest {
 	 * Required for field_option targets.
 	 */
 	option?: string;
+	/**
+	 * Required for block_in_type targets, alongside out_of_type.
+	 */
+	in_type?: string;
+	/**
+	 * Required for block_in_type targets, alongside in_type.
+	 */
+	out_of_type?: string;
 	approval?: string;
 	reason?: string;
 }
@@ -720,21 +802,65 @@ export const approvalRules = ( gameSlug: string ) => ( {
 		apiFetch( { path: `${ BASE }/${ gameSlug }/approval-rules/options` } ),
 
 	/**
-	 * Fetches whether a change no rule has an opinion on is approved automatically.
+	 * Fetches whether a change no rule has an opinion on is approved automatically, whether a removal, a lower
+	 * rating, a relabel or a rename always waits, and whether the OWBN Character Bylaws switch is on.
 	 */
-	defaultPolicy: (): Promise< { auto_approve: boolean } > =>
+	defaultPolicy: (): Promise< {
+		auto_approve: boolean;
+		approval_on_removal: boolean;
+		owbn_bylaws: boolean;
+	} > =>
 		apiFetch( { path: `${ BASE }/${ gameSlug }/approval-rules/default` } ),
 
 	/**
-	 * Sets the chronicle's default approval policy.
+	 * Sets the chronicle's default approval policy, its removal/lowering switch, and/or its OWBN Character Bylaws
+	 * switch - any one, any combination.
 	 */
-	setDefaultPolicy: (
-		autoApprove: boolean
-	): Promise< { auto_approve: boolean } > =>
+	setDefaultPolicy: ( changes: {
+		auto_approve?: boolean;
+		approval_on_removal?: boolean;
+		owbn_bylaws?: boolean;
+	} ): Promise< {
+		auto_approve: boolean;
+		approval_on_removal: boolean;
+		owbn_bylaws: boolean;
+	} > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/approval-rules/default`,
 			method: 'PUT',
-			data: { auto_approve: autoApprove },
+			data: changes,
+		} ),
+
+	/**
+	 * The OWBN Character Bylaws reference list: every rule, each with its own attachments, filtered by search, tier
+	 * and attached status.
+	 */
+	bylaws: (
+		query: { search?: string; tier?: string; attached?: boolean } = {}
+	): Promise< BylawRule[] > => {
+		const params = new URLSearchParams( { per_page: '2000' } );
+		if ( query.search ) {
+			params.set( 'search', query.search );
+		}
+		if ( query.tier ) {
+			params.set( 'tier', query.tier );
+		}
+		if ( query.attached !== undefined ) {
+			params.set( 'attached', query.attached ? 'true' : 'false' );
+		}
+		return apiFetch( {
+			path: `${ BASE }/${ gameSlug }/bylaws?${ params.toString() }`,
+		} );
+	},
+
+	/**
+	 * Re-pulls every Character Bylaw rule from council.owbn.net, keeping this site's own attachments for every
+	 * clause that still exists.
+	 */
+	refreshBylaws: (): Promise< BylawRefreshResult > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/bylaws/refresh`,
+			method: 'POST',
 		} ),
 
 	/**
@@ -769,6 +895,23 @@ export const approvalRules = ( gameSlug: string ) => ( {
 			method: 'DELETE',
 		} ),
 } );
+
+/**
+ * Uploads an already-built OWBN Character Bylaws file (`tools/bylaws/build.php`'s own output), for a site that
+ * can't reach council.owbn.net directly. Site-wide, not per chronicle.
+ */
+export function uploadBylaws( file: File ): Promise< {
+	rule_count: number;
+	attachment_count: number;
+} > {
+	const body = new FormData();
+	body.append( 'file', file );
+	return apiFetch( {
+		path: `${ BASE }/bylaws/upload`,
+		method: 'POST',
+		body,
+	} );
+}
 
 // ---------------------------------------------------------------------------
 // AI Assist
@@ -962,7 +1105,57 @@ export const aiAssist = ( gameSlug: string ) => ( {
 			method: 'POST',
 			data,
 		} ),
+
+	draftNpc: ( data: {
+		character_id: number;
+		instruction?: string;
+	} ): Promise< { data: Record< string, string > } > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/ai-assist/npc-draft`,
+			method: 'POST',
+			data,
+		} ),
+
+	draftPlot: ( data: {
+		premise: string;
+		character_ids?: number[];
+		npc_ids?: number[];
+		faction_ids?: number[];
+		instruction?: string;
+	} ): Promise< { plot_id: number } > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/ai-assist/plot-draft`,
+			method: 'POST',
+			data,
+		} ),
+
+	draftRecap: ( data: {
+		session_id: number;
+		instruction?: string;
+	} ): Promise< { data: SessionRecap } > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/ai-assist/recap-draft`,
+			method: 'POST',
+			data,
+		} ),
 } );
+
+export interface SessionRecap {
+	key_events: string;
+	player_decisions: string;
+	npcs_involved: Array< {
+		name: string;
+		status: 'alive' | 'injured' | 'dead' | 'unknown';
+	} >;
+	cliffhanger: string;
+	prep: string;
+}
+
+export interface CharacterHook {
+	plot_id: number;
+	title: string;
+	latest_entry_date: string | null;
+}
 
 // ---------------------------------------------------------------------------
 // Characters (game-scoped)
@@ -999,6 +1192,16 @@ export const characters = ( gameSlug: string ) => ( {
 	 */
 	get: ( id: number ): Promise< Character > =>
 		apiFetch( { path: `${ BASE }/${ gameSlug }/characters/${ id }` } ),
+
+	/**
+	 * The plots a character is connected to, split into Open and Resolved.
+	 */
+	hooks: (
+		id: number
+	): Promise< { open: CharacterHook[]; resolved: CharacterHook[] } > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/characters/${ id }/hooks`,
+		} ),
 
 	/**
 	 * Saves a new held-entry order for a `player_order`-flagged block (Blood Magic, Rituals).
@@ -1123,6 +1326,16 @@ export const wpUsers = {
 		apiFetch( {
 			path: `${ BASE }/wp-users${ toQuery( {
 				search: search || undefined,
+			} ) }`,
+		} ),
+
+	/**
+	 * Resolves a known set of user ids to their display names, for seeding a picker that already holds a saved value.
+	 */
+	byIds: ( ids: number[] ): Promise< WpUserSummary[] > =>
+		apiFetch( {
+			path: `${ BASE }/wp-users${ toQuery( {
+				include: ids.join( ',' ),
 			} ) }`,
 		} ),
 
@@ -1255,7 +1468,72 @@ export const chroniclePlayers = ( gameSlug: string ) => ( {
 			path: `${ BASE }/${ gameSlug }/players/${ wpUserId }/characters/${ characterId }`,
 			method: 'DELETE',
 		} ),
+
+	/**
+	 * Every join request on this chronicle, waiting first.
+	 */
+	joinRequests: (): Promise< ChronicleJoinRequest[] > =>
+		apiFetch( { path: `${ BASE }/${ gameSlug }/players/join-requests` } ),
+
+	/**
+	 * Approves a waiting join request.
+	 */
+	approveJoinRequest: ( id: number ): Promise< ChronicleJoinRequest > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/players/join-requests/${ id }/approve`,
+			method: 'POST',
+		} ),
+
+	/**
+	 * Refuses a waiting join request, with an optional note.
+	 */
+	refuseJoinRequest: (
+		id: number,
+		note: string
+	): Promise< ChronicleJoinRequest > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/players/join-requests/${ id }/refuse`,
+			method: 'POST',
+			data: { note },
+		} ),
 } );
+
+/**
+ * REST client for the applicant's own side of joining a chronicle: the joinable list, asking, checking, and
+ * withdrawing a request.
+ */
+export const joinRequests = {
+	/**
+	 * Every chronicle on this site taking join requests that the caller isn't already a member of.
+	 */
+	joinable: (): Promise< JoinableChronicle[] > =>
+		apiFetch( { path: `${ BASE }/joinable` } ),
+
+	/**
+	 * Opens a join request on one chronicle.
+	 */
+	ask: ( gameSlug: string, message: string ): Promise< MyJoinRequest > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/join`,
+			method: 'POST',
+			data: { message },
+		} ),
+
+	/**
+	 * The caller's own waiting request on one chronicle, or null.
+	 */
+	mine: ( gameSlug: string ): Promise< MyJoinRequest | null > =>
+		apiFetch( { path: `${ BASE }/${ gameSlug }/join` } ),
+
+	/**
+	 * Withdraws the caller's own waiting request on one chronicle.
+	 */
+	withdraw: ( gameSlug: string ): Promise< null > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/join`,
+			method: 'DELETE',
+		} ),
+};
 
 /**
  * REST client for the plugin's site-wide authorization configuration: whether external access-control integration is
@@ -1324,19 +1602,60 @@ export const dataManagement = {
 /**
  * REST client for the plugin's built-in documentation pages shown in wp-admin.
  */
+export const itemsCatalog = {
+	/**
+	 * Lists the declared, read-only item catalog - any signed-in account, book data only - filtered by a name search,
+	 * a book slug, and an item type.
+	 */
+	list: (
+		options: {
+			search?: string;
+			book?: string;
+			itemType?: string;
+		} = {}
+	): Promise< { items: CatalogItemEntry[]; books: CatalogBookRef[] } > => {
+		const params = new URLSearchParams();
+		if ( options.search ) {
+			params.set( 'search', options.search );
+		}
+		if ( options.book ) {
+			params.set( 'book', options.book );
+		}
+		if ( options.itemType ) {
+			params.set( 'item_type', options.itemType );
+		}
+		const query = params.toString();
+		return apiFetch( {
+			path: `${ BASE }/items/catalog${ query ? `?${ query }` : '' }`,
+		} );
+	},
+};
+
+/**
+ * A documentation page's Markdown, the language it is in, and whether the viewer's own language had no translation
+ * of it.
+ */
+export interface DocContent {
+	content: string;
+	language: 'en' | 'pt_BR';
+	fallback: boolean;
+}
+
 export const docs = {
 	/**
-	 * Fetches the content of one built-in documentation page by its slug.
+	 * Fetches the content of one built-in documentation page by its slug, in the viewer's language when it is
+	 * translated.
 	 */
 	get: (
 		slug: 'st-guide' | 'admin-guide' | 'player-guide' | 'rest-api'
-	): Promise< { slug: string; content: string } > =>
+	): Promise< { slug: string } & DocContent > =>
 		apiFetch( { path: `${ BASE }/docs/${ slug }` } ),
 
 	/**
-	 * Fetches one screen's help page (`docs/help/{key}.md`), the Markdown a screen's `?` opens in the help panel.
+	 * Fetches one screen's help page (`docs/help/{key}.md`), the Markdown a screen's `?` opens in the help panel, in
+	 * the viewer's language when it is translated.
 	 */
-	help: ( key: string ): Promise< { key: string; content: string } > =>
+	help: ( key: string ): Promise< { key: string } & DocContent > =>
 		apiFetch( {
 			path: `${ BASE }/docs/help/${ encodeURIComponent( key ) }`,
 		} ),
@@ -1367,9 +1686,11 @@ export const credits = {
 		apiFetch( { path: `${ BASE }/credits` } ),
 
 	/**
-	 * Updates the credits text and/or in-memoriam list.
+	 * Updates the credits text. The in-memoriam list has no write path.
 	 */
-	update: ( data: Partial< CreditsResponse > ): Promise< CreditsResponse > =>
+	update: (
+		data: Partial< Pick< CreditsResponse, 'credits_text' > >
+	): Promise< CreditsResponse > =>
 		apiFetch( { path: `${ BASE }/credits`, method: 'PUT', data } ),
 };
 
@@ -1548,6 +1869,19 @@ export const changes = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
+	 * Submits a character's whole set of pending editor changes together, under one shared submission id.
+	 */
+	submitSet: (
+		characterId: number,
+		changeSet: ChangeRequest[]
+	): Promise< SubmitSetResponse > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/characters/${ characterId }/changes/submit`,
+			method: 'POST',
+			data: { changes: changeSet },
+		} ),
+
+	/**
 	 * Approves or rejects a pending change by id.
 	 */
 	review: (
@@ -1591,6 +1925,14 @@ export const changes = ( gameSlug: string ) => ( {
 	 */
 	myChanges: (): Promise< QueueChange[] > =>
 		apiFetch( { path: `${ BASE }/${ gameSlug }/my/changes` } ),
+} );
+
+/**
+ * REST client for the current player's own changes across every chronicle on this site where they have a character.
+ */
+export const myChangesAcrossGames = () => ( {
+	list: (): Promise< MyChangeAcrossGames[] > =>
+		apiFetch( { path: `${ BASE }/my/changes` } ),
 } );
 
 // ---------------------------------------------------------------------------
@@ -1788,6 +2130,12 @@ export const reports = ( gameSlug: string ) => ( {
 			statField?: string;
 			statType?: string;
 			characterId?: number;
+			objectId?: number;
+			conditions?: Array< {
+				field: string;
+				operator: string;
+				value?: unknown;
+			} >;
 		} = {}
 	): string => {
 		const params = new URLSearchParams();
@@ -1799,6 +2147,12 @@ export const reports = ( gameSlug: string ) => ( {
 		}
 		if ( options.characterId ) {
 			params.set( 'character_id', String( options.characterId ) );
+		}
+		if ( options.objectId ) {
+			params.set( 'object_id', String( options.objectId ) );
+		}
+		if ( options.conditions && options.conditions.length > 0 ) {
+			params.set( 'conditions', JSON.stringify( options.conditions ) );
 		}
 		params.set( '_wpnonce', window.beyondElysium?.nonce ?? '' );
 
@@ -2541,10 +2895,46 @@ export const secrets = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * "What I Know" - every secret revealed to one of the caller's own characters.
+	 * "What I Know" - every secret revealed to one of the caller's own characters, plus their own waiting logs and
+	 * passes.
 	 */
-	mine: (): Promise< MySecretRow[] > =>
+	mine: (): Promise< MySecretsResponse > =>
 		apiFetch( { path: `${ BASE }/${ gameSlug }/my/secrets` } ),
+
+	/**
+	 * Every secret in the chronicle, for the tie-to-an-existing-secret picker. be_manage_plots only.
+	 */
+	all: ( search?: string ): Promise< Secret[] > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/secrets/all${ toQuery( { search } ) }`,
+		} ),
+
+	/**
+	 * The characters the caller may name as the person who told them something: their Who's Who plus anyone their
+	 * characters are connected to, never their own characters.
+	 */
+	people: (): Promise< SecretPerson[] > =>
+		apiFetch( { path: `${ BASE }/${ gameSlug }/my/secrets/people` } ),
+
+	/**
+	 * Logs what one of the caller's own characters learned, for a Storyteller to tie to a secret.
+	 */
+	logKnowledge: ( data: LogKnowledgeRequest ): Promise< unknown > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/my/secrets/log`,
+			method: 'POST',
+			data,
+		} ),
+
+	/**
+	 * Tells another character a secret the caller's own character already knows.
+	 */
+	pass: ( secretId: number, data: PassSecretRequest ): Promise< unknown > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/secrets/${ secretId }/pass`,
+			method: 'POST',
+			data,
+		} ),
 
 	/**
 	 * Creates a secret. be_manage_plots only.
@@ -2688,12 +3078,16 @@ export const factions = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * Sets a member's rank and/or leader flag.
+	 * Sets a member's rank, leader flag and/or whether the membership shows on public profiles.
 	 */
 	updateMember: (
 		id: number,
 		characterId: number,
-		data: { rank?: string | null; is_leader?: boolean }
+		data: {
+			rank?: string | null;
+			is_leader?: boolean;
+			is_public?: boolean;
+		}
 	): Promise< FactionMember > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/factions/${ id }/members/${ characterId }`,
@@ -3159,7 +3553,13 @@ export const npcs = ( gameSlug: string ) => ( {
 		apiFetch( { path: `${ BASE }/${ gameSlug }/npcs/${ id }` } ),
 
 	/**
-	 * Updates an NPC's public-profile fields.
+	 * Every NPC and player-character profile the current viewer can see.
+	 */
+	profiles: (): Promise< CharacterProfile[] > =>
+		apiFetch( { path: `${ BASE }/${ gameSlug }/profiles` } ),
+
+	/**
+	 * Updates a character's public-profile fields.
 	 */
 	updateProfile: (
 		characterId: number,
@@ -3224,7 +3624,7 @@ export const releaseBatches = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * Lists a batch's held items: rumors, downtime answers, and (once ships) reveals.
+	 * Lists a batch's held items: rumors, downtime answers and reveals.
 	 */
 	getItems: ( id: number ): Promise< ReleaseBatchItems > =>
 		apiFetch( {
@@ -3443,15 +3843,6 @@ export const transfers = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
-	 * Home ST manually marks a still-pending transfer as received abroad.
-	 */
-	acknowledge: ( transferId: number ): Promise< Transfer > =>
-		apiFetch( {
-			path: `${ BASE }/${ gameSlug }/transfers/${ transferId }/acknowledge`,
-			method: 'POST',
-		} ),
-
-	/**
 	 * Home ST permanently gives the character up.
 	 */
 	release: ( transferId: number ): Promise< Transfer > =>
@@ -3516,6 +3907,35 @@ export const transfers = ( gameSlug: string ) => ( {
 			path: `${ BASE }/${ gameSlug }/transfers/${ transferId }/retain`,
 			method: 'POST',
 		} ),
+
+	/**
+	 * Either side turns keep-current on or off for an open visit.
+	 */
+	keepCurrent: ( transferId: number, on: boolean ): Promise< Transfer > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/transfers/${ transferId }/keep-current`,
+			method: 'POST',
+			data: { on },
+		} ),
+
+	/**
+	 * Host ST agrees to keep a visiting character current, after review.
+	 */
+	keepCurrentAccept: ( transferId: number ): Promise< Transfer > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/transfers/${ transferId }/keep-current/accept`,
+			method: 'POST',
+		} ),
+
+	/**
+	 * Host ST shares a free-text note about a visiting character with its real home.
+	 */
+	note: ( transferId: number, note: string ): Promise< { ok: boolean } > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/transfers/${ transferId }/note`,
+			method: 'POST',
+			data: { note },
+		} ),
 } );
 
 // ---------------------------------------------------------------------------
@@ -3552,7 +3972,11 @@ export const submissions = ( gameSlug: string ) => ( {
 	create: (
 		file: File,
 		arrival: 'joining' | 'visiting',
-		options?: { characterIndex?: number; homeChronicle?: string }
+		options?: {
+			characterIndex?: number;
+			homeChronicle?: string;
+			keepCurrent?: boolean;
+		}
 	): Promise< Submission > => {
 		const body = new FormData();
 		body.append( 'file', file );
@@ -3562,6 +3986,9 @@ export const submissions = ( gameSlug: string ) => ( {
 		}
 		if ( options?.homeChronicle ) {
 			body.append( 'home_chronicle', options.homeChronicle );
+		}
+		if ( options?.keepCurrent ) {
+			body.append( 'keep_current', '1' );
 		}
 		return apiFetch( {
 			path: `${ BASE }/${ gameSlug }/submissions`,
@@ -3827,8 +4254,7 @@ export const translations = {
 		} ),
 
 	/**
-	 * Builds the CSV export download URL for the current filters, matching `list()`'s own filter vocabulary exactly
-	 * ("honouring the same filters as the list").
+	 * Builds the CSV export download URL for the current filters, matching `list()`'s own filter vocabulary exactly.
 	 */
 	exportUrl: ( locale: string, filters: TranslationFilters = {} ): string => {
 		const params = new URLSearchParams( { locale } );
@@ -3886,6 +4312,37 @@ export const translations = {
 };
 
 // ---------------------------------------------------------------------------
+// Mail log (game-scoped)
+// ---------------------------------------------------------------------------
+
+/**
+ * REST client factory for a chronicle's mail log.
+ */
+export const mailLog = ( gameSlug: string ) => ( {
+	/**
+	 * One page of the chronicle's log, newest first, with its totals.
+	 */
+	list: (
+		params: MailLogParams = {}
+	): Promise< {
+		items: MailLogEntry[];
+		total: number;
+		totalPages: number;
+	} > =>
+		fetchPage< MailLogEntry >( {
+			path: `${ BASE }/${ gameSlug }/mail-log${ toQuery(
+				params as Record< string, unknown >
+			) }`,
+		} ),
+
+	/**
+	 * The kinds, results and periods the filters offer, and how many days rows are kept.
+	 */
+	options: (): Promise< MailLogOptions > =>
+		apiFetch( { path: `${ BASE }/${ gameSlug }/mail-log/options` } ),
+} );
+
+// ---------------------------------------------------------------------------
 // Default export: grouped API object
 // ---------------------------------------------------------------------------
 
@@ -3900,8 +4357,10 @@ const api = {
 	templates,
 	templatesGlobal,
 	approvalRules,
+	uploadBylaws,
 	characters,
 	changes,
+	myChangesAcrossGames,
 	snapshots,
 	sheetStyle,
 	sheets,
@@ -3915,6 +4374,7 @@ const api = {
 	queryFields,
 	query,
 	worldObjects,
+	itemsCatalog,
 	locations,
 	secrets,
 	factions,
@@ -3936,6 +4396,7 @@ const api = {
 	wpUsers,
 	gameMembers,
 	chroniclePlayers,
+	joinRequests,
 	authorizationSettings,
 	dataManagement,
 	gameStats,
@@ -3949,5 +4410,6 @@ const api = {
 	aiAssistSite,
 	signing,
 	translations,
+	mailLog,
 };
 export default api;

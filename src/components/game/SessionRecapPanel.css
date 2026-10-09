@@ -1,0 +1,54 @@
+.be-session-recap-panel {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	border: 1px solid var(--be-gray-18);
+	border-radius: 4px;
+	padding: 0.75rem;
+	background: var(--be-gray-28);
+}
+
+.be-session-recap-panel label {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+
+.be-session-recap-panel textarea {
+	width: 100%;
+}
+
+.be-session-recap-panel__error {
+	color: var(--be-red-7);
+}
+
+.be-session-recap-panel__saved {
+	color: var(--be-green-5);
+}
+
+.be-session-recap-panel__npcs {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	border: 1px solid var(--be-gray-21);
+	border-radius: 4px;
+	padding: 0.5rem;
+}
+
+.be-session-recap-panel__npc-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	align-items: center;
+}
+
+.be-session-recap-panel__preview {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
+.be-session-recap-panel__field strong {
+	display: block;
+	margin-bottom: 0.25rem;
+}

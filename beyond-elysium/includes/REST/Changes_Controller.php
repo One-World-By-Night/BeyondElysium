@@ -8,9 +8,12 @@ use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Game;
 use BeyondElysium\Models\Creature_Stack;
 use BeyondElysium\Models\Schema_Block;
+use BeyondElysium\Models\Secret;
+use BeyondElysium\Models\Transfer;
 use BeyondElysium\Services\Change_Engine;
 use BeyondElysium\Services\Change_Validator;
 use BeyondElysium\Services\Cost_Engine;
+use BeyondElysium\Services\Display\Change_Description;
 use BeyondElysium\Services\St_Visibility;
 
 defined( 'ABSPATH' ) || exit;
@@ -26,6 +29,16 @@ class Changes_Controller extends Base_Controller {
 	 * Registers the game-scoped change routes.
 	 */
 	public function register_routes(): void {
+		// The current user's own changes across every chronicle on this site where they have a character. Registered
+		// before the game-scoped routes below.
+		register_rest_route( $this->namespace, '/my/changes', [
+			[
+				'methods'             => 'GET',
+				'callback'            => [ $this, 'get_my_changes_across_games' ],
+				'permission_callback' => $this->permission( 'be_view_characters' ),
+			],
+		] );
+
 		// Lists and creates changes for one character.
 		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/characters/(?P<character_id>\d+)/changes', [
 			[
@@ -65,6 +78,15 @@ class Changes_Controller extends Base_Controller {
 				'methods'             => 'GET',
 				'callback'            => [ $this, 'get_my_changes' ],
 				'permission_callback' => $this->permission( 'be_view_characters' ),
+			],
+		] );
+
+		// Submits a character's whole set of editor changes together, under one shared submission id.
+		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/characters/(?P<character_id>\d+)/changes/submit', [
+			[
+				'methods'             => 'POST',
+				'callback'            => [ $this, 'submit_set' ],
+				'permission_callback' => $this->permission( 'be_edit_own_characters' ),
 			],
 		] );
 
@@ -110,11 +132,12 @@ class Changes_Controller extends Base_Controller {
 
 		$pagination = $this->get_pagination( $request );
 		$args       = [
-			'status'      => $request->get_param( 'status' ),
-			'change_type' => $request->get_param( 'change_type' ),
-			'order'       => $request->get_param( 'order' ) ?: 'DESC',
-			'per_page'    => $pagination['per_page'],
-			'offset'      => $pagination['offset'],
+			'status'             => $request->get_param( 'status' ),
+			'change_type'        => $request->get_param( 'change_type' ),
+			'exclude_staff_only' => ! \BeyondElysium\Core\Authorization::can( 'be_manage_characters' ),
+			'order'              => $request->get_param( 'order' ) ?: 'DESC',
+			'per_page'           => $pagination['per_page'],
+			'offset'             => $pagination['offset'],
 		];
 
 		$items    = Change::for_character( (int) $request['character_id'], $args );
@@ -141,30 +164,161 @@ class Changes_Controller extends Base_Controller {
 			return $character;
 		}
 
-		$change_type = $request->get_param( 'change_type' );
-		if ( empty( $change_type ) ) {
-			return $this->error( 'invalid_param', __( 'Missing required field: change_type.', 'beyond-elysium' ), 400 );
-		}
-
-		$category = $request->get_param( 'category' );
-		if ( empty( $category ) ) {
-			return $this->error( 'invalid_param', __( 'Missing required field: category.', 'beyond-elysium' ), 400 );
-		}
-
-		$change_data = $request->get_param( 'change_data' );
-		if ( empty( $change_data ) ) {
-			return $this->error( 'invalid_param', __( 'Missing required field: change_data.', 'beyond-elysium' ), 400 );
-		}
-
 		$is_manager = \BeyondElysium\Core\Authorization::can( 'be_manage_characters' );
-
-		// Ownership check: player can only submit for their own character.
 		if ( ! $is_manager && (int) $character->wp_user_id !== get_current_user_id() ) {
 			return $this->error( 'ownership_denied', __( 'You do not have permission to submit changes for this character.', 'beyond-elysium' ), 403 );
 		}
 
-		// Validates and normalizes the change against this character's own sections.
-		$stack      = Creature_Stack::resolve( (string) $character->stack_slug, (string) $character->owner_slug );
+		if ( ! $is_manager ) {
+			$refusal = $this->host_copy_edit_refusal( $character );
+			if ( $refusal !== null ) {
+				return $refusal;
+			}
+		}
+
+		$prepared = $this->prepare_one_change(
+			$character,
+			$is_manager,
+			$request->get_param( 'change_type' ),
+			$request->get_param( 'category' ),
+			$request->get_param( 'change_data' ),
+			$request->get_param( 'notes' )
+		);
+		if ( is_wp_error( $prepared ) ) {
+			return $prepared;
+		}
+
+		if ( ( $game->settings->approval_on_removal ?? false ) === true
+			&& Change_Engine::catches_removal_rule( $character, $prepared )
+		) {
+			$prepared['force_level']  = 'st';
+			$prepared['force_reason'] = __( 'Part of a change that removes, lowers or renames something.', 'beyond-elysium' );
+		}
+
+		$change_id = Change_Engine::submit( (int) $request['character_id'], $prepared, get_current_user_id() );
+
+		if ( ! $change_id ) {
+			return $this->error( 'submit_failed', __( 'Failed to submit change.', 'beyond-elysium' ), 500 );
+		}
+
+		$change = Change::find( $change_id );
+		if ( $change ) {
+			$this->redact_changes( [ $change ], $game );
+		}
+		return $this->success( $change, 201 );
+	}
+
+	/**
+	 * Submits a character's whole set of pending editor changes together, each sharing one submission id, in one
+	 * transaction. With the chronicle's removal/lowering switch on, any change in the set that `catches_removal_rule()`
+	 * catches makes every change in the set wait for a Storyteller, with a shared reason.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function submit_set( $request ) {
+		$game = $this->resolve_game( $request['game_slug'] );
+		if ( is_wp_error( $game ) ) {
+			return $game;
+		}
+
+		$character = $this->resolve_character( (int) $request['character_id'], $request['game_slug'] );
+		if ( is_wp_error( $character ) ) {
+			return $character;
+		}
+
+		$is_manager = \BeyondElysium\Core\Authorization::can( 'be_manage_characters' );
+		if ( ! $is_manager && (int) $character->wp_user_id !== get_current_user_id() ) {
+			return $this->error( 'ownership_denied', __( 'You do not have permission to submit changes for this character.', 'beyond-elysium' ), 403 );
+		}
+
+		if ( ! $is_manager ) {
+			$refusal = $this->host_copy_edit_refusal( $character );
+			if ( $refusal !== null ) {
+				return $refusal;
+			}
+		}
+
+		$changes = $request->get_param( 'changes' );
+		if ( ! is_array( $changes ) || empty( $changes ) ) {
+			return $this->error( 'invalid_param', __( 'Missing required field: changes.', 'beyond-elysium' ), 400 );
+		}
+
+		$prepared = [];
+		foreach ( $changes as $one ) {
+			$one      = (array) $one;
+			$result   = $this->prepare_one_change(
+				$character,
+				$is_manager,
+				$one['change_type'] ?? null,
+				$one['category'] ?? null,
+				$one['change_data'] ?? null,
+				$one['notes'] ?? null
+			);
+			if ( is_wp_error( $result ) ) {
+				return $result;
+			}
+			$prepared[] = $result;
+		}
+
+		$outcome = Change_Engine::submit_set( (int) $request['character_id'], $prepared, get_current_user_id() );
+		if ( empty( $outcome['change_ids'] ) ) {
+			return $this->error( 'submit_failed', __( 'Failed to submit the change set. Nothing was changed.', 'beyond-elysium' ), 500 );
+		}
+
+		$results = array_map( static fn( $id ) => Change::find( $id ), $outcome['change_ids'] );
+		$results = array_values( array_filter( $results ) );
+		$this->redact_changes( $results, $game );
+
+		return $this->success( [ 'submission_id' => $outcome['submission_id'], 'changes' => $results ], 201 );
+	}
+
+	/**
+	 * The blocks a character may be changed in beyond its creature type's own sections, for a creature type that allows
+	 * any block: every block it already holds, plus - for a Storyteller - each block a change names.
+	 *
+	 * @param object            $character
+	 * @param bool              $is_manager
+	 * @param array<int,mixed>  $requested   Block slugs the submitted changes name.
+	 * @return string[]
+	 */
+	private function blocks_in_play( $character, bool $is_manager, array $requested ): array {
+		$held = is_array( $character->sheet_data ) ? array_map( 'strval', array_keys( $character->sheet_data ) ) : [];
+		if ( ! $is_manager ) {
+			return $held;
+		}
+		$named = array_filter( $requested, static fn( $slug ): bool => is_string( $slug ) && $slug !== '' );
+		return array_values( array_unique( array_merge( $held, $named ) ) );
+	}
+
+	/**
+	 * Validates and server-prices one proposed change against a character's own sections, returning the shape
+	 * `Change_Engine::submit()` takes, or a `WP_Error` naming what's wrong.
+	 *
+	 * @param object      $character
+	 * @param bool        $is_manager
+	 * @param mixed       $change_type
+	 * @param mixed       $category
+	 * @param mixed       $change_data
+	 * @param mixed       $notes
+	 * @return array{change_type:string,category:string,change_data:array<string,mixed>,xp_cost:int,notes:?string}|\WP_Error
+	 */
+	private function prepare_one_change( $character, bool $is_manager, $change_type, $category, $change_data, $notes ) {
+		if ( empty( $change_type ) ) {
+			return $this->error( 'invalid_param', __( 'Missing required field: change_type.', 'beyond-elysium' ), 400 );
+		}
+		if ( empty( $category ) ) {
+			return $this->error( 'invalid_param', __( 'Missing required field: category.', 'beyond-elysium' ), 400 );
+		}
+		if ( empty( $change_data ) ) {
+			return $this->error( 'invalid_param', __( 'Missing required field: change_data.', 'beyond-elysium' ), 400 );
+		}
+
+		$stack      = Creature_Stack::resolve(
+			(string) $character->stack_slug,
+			(string) $character->owner_slug,
+			$this->blocks_in_play( $character, $is_manager, [ is_array( $change_data ) ? ( $change_data['block_slug'] ?? null ) : null ] )
+		);
 		$validation = Change_Validator::validate(
 			[ 'change_type' => $change_type, 'change_data' => $change_data ],
 			$stack['blocks'] ?? [],
@@ -178,7 +332,6 @@ class Changes_Controller extends Base_Controller {
 		}
 		$change_data = $validation['change_data'];
 
-		// Server-computed XP cost.
 		$quote   = Cost_Engine::quote_for_change(
 			$character,
 			[ 'change_type' => $change_type, 'change_data' => $change_data ],
@@ -196,27 +349,13 @@ class Changes_Controller extends Base_Controller {
 			);
 		}
 
-		$change_id = Change_Engine::submit(
-			(int) $request['character_id'],
-			[
-				'change_type' => $change_type,
-				'category'    => $category,
-				'change_data' => $change_data,
-				'xp_cost'     => $xp_cost,
-				'notes'       => $request->get_param( 'notes' ),
-			],
-			get_current_user_id()
-		);
-
-		if ( ! $change_id ) {
-			return $this->error( 'submit_failed', __( 'Failed to submit change.', 'beyond-elysium' ), 500 );
-		}
-
-		$change = Change::find( $change_id );
-		if ( $change ) {
-			$this->redact_changes( [ $change ], $game );
-		}
-		return $this->success( $change, 201 );
+		return [
+			'change_type' => $change_type,
+			'category'    => $category,
+			'change_data' => $change_data,
+			'xp_cost'     => $xp_cost,
+			'notes'       => $notes,
+		];
 	}
 
 	/**
@@ -265,6 +404,10 @@ class Changes_Controller extends Base_Controller {
 			if ( $faction_denied ) {
 				return $faction_denied;
 			}
+			$secret_denied = $this->secret_capability_denied( $change );
+			if ( $secret_denied ) {
+				return $secret_denied;
+			}
 			// A purchase waiting for a price is approved at the one the reviewer names, and only then.
 			$set_cost = null;
 			if ( ! empty( $change->change_data['cost_pending'] ) ) {
@@ -273,7 +416,15 @@ class Changes_Controller extends Base_Controller {
 					return $set_cost;
 				}
 			}
-			$result = Change_Engine::approve( (int) $request['id'], get_current_user_id(), $notes, $token, $set_cost );
+			// A logged knowledge claim is approved only once the reviewer names which secret it is.
+			$secret_choice = null;
+			if ( $change->change_type === 'log_knowledge' ) {
+				$secret_choice = $this->resolve_secret_choice( $request, (int) $game->id );
+				if ( is_wp_error( $secret_choice ) ) {
+					return $secret_choice;
+				}
+			}
+			$result = Change_Engine::approve( (int) $request['id'], get_current_user_id(), $notes, $token, $set_cost, $secret_choice );
 		} else {
 			$result = Change_Engine::reject( (int) $request['id'], get_current_user_id(), $notes, $token );
 		}
@@ -356,6 +507,7 @@ class Changes_Controller extends Base_Controller {
 	private function with_review_fields( array $items ): array {
 		$characters = [];
 		$submitters = [];
+		$visits     = [];
 		foreach ( $items as $item ) {
 			$item->review_token = Change::review_token( $item );
 			$id = (int) $item->character_id;
@@ -379,6 +531,15 @@ class Changes_Controller extends Base_Controller {
 				$submitters[ $submitter_id ] = $user ? $user->display_name : null;
 			}
 			$item->submitted_by_name = $submitters[ $submitter_id ];
+
+			$item->host_chronicle = null;
+			if ( ! empty( $item->source_visit_id ) ) {
+				$visit_id = (int) $item->source_visit_id;
+				if ( ! array_key_exists( $visit_id, $visits ) ) {
+					$visits[ $visit_id ] = Transfer::find( $visit_id );
+				}
+				$item->host_chronicle = $visits[ $visit_id ]->host_chronicle ?? null;
+			}
 		}
 		return $items;
 	}
@@ -418,9 +579,10 @@ class Changes_Controller extends Base_Controller {
 		}
 
 		$items = Change::for_game( $request['game_slug'], [
-			'status'     => 'pending',
-			'wp_user_id' => get_current_user_id(),
-			'order'      => 'DESC',
+			'status'             => 'pending',
+			'wp_user_id'         => get_current_user_id(),
+			'exclude_staff_only' => ! \BeyondElysium\Core\Authorization::can( 'be_manage_characters' ),
+			'order'              => 'DESC',
 		] );
 
 		$characters = [];
@@ -443,6 +605,54 @@ class Changes_Controller extends Base_Controller {
 
 		$this->redact_changes( $items, $game );
 		return $this->success( $items );
+	}
+
+	/**
+	 * Lists the current user's own changes across every chronicle on this site where they have a character: pending,
+	 * plus anything reviewed in the last 30 days, newest submission first.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @return \WP_REST_Response
+	 */
+	public function get_my_changes_across_games( $request ) {
+		$items = array_values( array_filter( Change::for_player_across_games( get_current_user_id() ) ) );
+
+		$games = [];
+		foreach ( $items as $item ) {
+			$slug = (string) $item->game_slug;
+			if ( ! array_key_exists( $slug, $games ) ) {
+				$games[ $slug ] = Game::find_by_slug( $slug );
+			}
+			$game = $games[ $slug ];
+			if ( $game ) {
+				// A player's own view of their own changes - always redacted, regardless of any other role held.
+				St_Visibility::filter_change( $item, $game, false );
+			}
+
+			$item->description = Change_Description::describe(
+				(string) $item->change_type,
+				is_array( $item->change_data ) ? $item->change_data : []
+			);
+			$item->display_status = $this->my_changes_status( $item );
+		}
+
+		return $this->success( $items );
+	}
+
+	/**
+	 * One of `pending`, `approved`, `auto_approved`, `refused`, for My changes across chronicles.
+	 *
+	 * @param object $item
+	 * @return string
+	 */
+	private function my_changes_status( object $item ): string {
+		if ( $item->status === 'pending' ) {
+			return 'pending';
+		}
+		if ( $item->status === 'rejected' ) {
+			return 'refused';
+		}
+		return ! empty( $item->auto_approved ) ? 'auto_approved' : 'approved';
 	}
 
 	/**
@@ -489,6 +699,77 @@ class Changes_Controller extends Base_Controller {
 	}
 
 	/**
+	 * The same shape as `catalog_capability_denied()`, for a `log_knowledge` or `pass_secret` change: approving either
+	 * writes or attaches a `be_secrets`/`be_secret_reveals` row, which needs secret-management rights.
+	 *
+	 * @param object $change
+	 * @return \WP_Error|null Null when approval may proceed.
+	 */
+	private function secret_capability_denied( $change ) {
+		if ( ! in_array( $change->change_type ?? '', [ 'log_knowledge', 'pass_secret' ], true ) ) {
+			return null;
+		}
+		if ( \BeyondElysium\Core\Authorization::can( 'be_manage_plots' ) ) {
+			return null;
+		}
+
+		return $this->error(
+			'secret_capability_denied',
+			__( 'Approving this writes or attaches a secret, which needs secret management rights. You can still reject it.', 'beyond-elysium' ),
+			403
+		);
+	}
+
+	/**
+	 * Reads the reviewer's choice of which secret a `log_knowledge` change belongs to: an existing secret's id, or a
+	 * new one's title/content, optionally naming a real entity. Confirms a named entity is real in this game.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @param int              $game_id
+	 * @return array{secret_id:int}|array{entity_type:?string,entity_id:?int,title:?string,content:?string}|\WP_Error
+	 */
+	private function resolve_secret_choice( $request, int $game_id ) {
+		$secret_id = $request->get_param( 'secret_id' );
+		if ( $secret_id ) {
+			$secret = Secret::find( (int) $secret_id );
+			if ( ! $secret || (int) $secret->game_id !== $game_id ) {
+				return $this->error( 'invalid_param', __( 'secret_id must be a real secret in this game.', 'beyond-elysium' ), 400 );
+			}
+			return [ 'secret_id' => (int) $secret_id ];
+		}
+
+		$entity_type = $request->get_param( 'entity_type' );
+		$entity_id   = $request->get_param( 'entity_id' );
+		if ( $entity_type && $entity_id ) {
+			if ( Secrets_Controller::resolve_entity( (string) $entity_type, (int) $entity_id, $game_id ) === null ) {
+				return $this->error( 'invalid_param', __( 'entity_type and entity_id must name a real entity in this game.', 'beyond-elysium' ), 400 );
+			}
+			return [
+				'entity_type' => (string) $entity_type,
+				'entity_id'   => (int) $entity_id,
+				'title'       => $request->get_param( 'title' ) ? sanitize_text_field( (string) $request->get_param( 'title' ) ) : null,
+				'content'     => $request->get_param( 'content' ) ? wp_kses_post( (string) $request->get_param( 'content' ) ) : null,
+			];
+		}
+
+		$title = $request->get_param( 'title' );
+		if ( $title ) {
+			return [
+				'entity_type' => null,
+				'entity_id'   => null,
+				'title'       => sanitize_text_field( (string) $title ),
+				'content'     => $request->get_param( 'content' ) ? wp_kses_post( (string) $request->get_param( 'content' ) ) : null,
+			];
+		}
+
+		return $this->error(
+			'invalid_param',
+			__( 'Approving a logged claim needs either an existing secret\'s id, or a new one\'s title - naming an entity is optional.', 'beyond-elysium' ),
+			400
+		);
+	}
+
+	/**
 	 * Strips `[ST]`-marked text from every change in a list for a non-manager.
 	 *
 	 * @param array<object> $changes
@@ -521,9 +802,12 @@ class Changes_Controller extends Base_Controller {
 		$approved   = [];
 		$skipped    = [];
 		$needs_cost = [];
+		$needs_secret_choice = [];
 		// Optional { change id: review token } for exactly what the reviewer saw.
 		$tokens = (array) ( $request->get_param( 'review_tokens' ) ?? [] );
 
+		// Screens every change first, same checks as a lone approval, without approving anything yet.
+		$eligible = [];
 		foreach ( $change_ids as $change_id ) {
 			$change_id = (int) $change_id;
 			$change    = $this->resolve_change( $change_id, $request['game_slug'] );
@@ -532,15 +816,62 @@ class Changes_Controller extends Base_Controller {
 				$skipped[] = $change_id;
 				continue;
 			}
-
 			if ( ! empty( $change->change_data['cost_pending'] ) ) {
 				$needs_cost[] = $change_id;
 				continue;
 			}
-
-			// A catalog-writing or faction-creating proposal in a batch is skipped.
-			if ( $this->catalog_capability_denied( $change ) || $this->faction_capability_denied( $change ) ) {
+			// A logged claim needs the reviewer to name which secret it belongs to; a batch can't supply that.
+			if ( $change->change_type === 'log_knowledge' ) {
+				$needs_secret_choice[] = $change_id;
+				continue;
+			}
+			// A catalog-writing, faction-creating, or secret-writing proposal in a batch is skipped if denied.
+			if ( $this->catalog_capability_denied( $change ) || $this->faction_capability_denied( $change ) || $this->secret_capability_denied( $change ) ) {
 				$skipped[] = $change_id;
+				continue;
+			}
+			$eligible[ $change_id ] = $change;
+		}
+
+		// Two or more eligible changes sharing a submission id, in this same batch, approve together, refunds first, all
+		// or nothing. A lone member of a submission in this batch, or one with none, approves on its own below.
+		$groups = [];
+		foreach ( $eligible as $change_id => $change ) {
+			$submission_id = $change->submission_id ?? null;
+			if ( $submission_id ) {
+				$groups[ $submission_id ][] = $change_id;
+			}
+		}
+
+		$grouped_ids = [];
+		foreach ( $groups as $submission_id => $ids ) {
+			if ( count( $ids ) < 2 ) {
+				continue;
+			}
+			$grouped_ids  = array_merge( $grouped_ids, $ids );
+			$group_tokens = [];
+			foreach ( $ids as $id ) {
+				if ( isset( $tokens[ (string) $id ] ) ) {
+					$group_tokens[ $id ] = (string) $tokens[ (string) $id ];
+				}
+			}
+			$ok = Change_Engine::approve_group( $ids, get_current_user_id(), $group_tokens );
+			foreach ( $ids as $id ) {
+				if ( $ok ) {
+					$approved[] = $id;
+					$approved_character = Character::find( (int) $eligible[ $id ]->character_id );
+					if ( $approved_character ) {
+						$eligible[ $id ]->status = 'approved';
+						Notifications::enqueue( $eligible[ $id ], $approved_character, get_current_user_id() );
+					}
+				} else {
+					$skipped[] = $id;
+				}
+			}
+		}
+
+		foreach ( $eligible as $change_id => $change ) {
+			if ( in_array( $change_id, $grouped_ids, true ) ) {
 				continue;
 			}
 
@@ -568,9 +899,10 @@ class Changes_Controller extends Base_Controller {
 
 		return $this->success(
 			[
-				'approved'   => $approved,
-				'skipped'    => $skipped,
-				'needs_cost' => $needs_cost,
+				'approved'            => $approved,
+				'skipped'             => $skipped,
+				'needs_cost'          => $needs_cost,
+				'needs_secret_choice' => $needs_secret_choice,
 			]
 		);
 	}
@@ -607,7 +939,15 @@ class Changes_Controller extends Base_Controller {
 		$results             = [];
 		$running_xp_unspent  = (int) $character->xp_unspent;
 		$is_manager          = \BeyondElysium\Core\Authorization::can( 'be_manage_characters' );
-		$stack               = Creature_Stack::resolve( (string) $character->stack_slug, (string) $character->owner_slug );
+		$stack               = Creature_Stack::resolve(
+			(string) $character->stack_slug,
+			(string) $character->owner_slug,
+			$this->blocks_in_play(
+				$character,
+				$is_manager,
+				array_map( static fn( $change ) => is_array( $change ) && is_array( $change['change_data'] ?? null ) ? ( $change['change_data']['block_slug'] ?? null ) : null, $changes )
+			)
+		);
 		$sheet_data          = is_array( $character->sheet_data ) ? $character->sheet_data : [];
 		$protected_fields    = Change_Validator::protected_fields( $stack['stack'] ?? null );
 		$closed_blocks       = Creature_Stack::closed_blocks( $stack['stack'] ?? null );
@@ -679,7 +1019,7 @@ class Changes_Controller extends Base_Controller {
 	/**
 	 * Turns a Change_Validator failure into a 400, translating the messages a player can meet.
 	 *
-	 * @param array $result A failed Change_Validator::validate() result.
+	 * @param array<string,mixed> $result A failed Change_Validator::validate() result.
 	 * @return \WP_Error
 	 */
 	private function validation_error( array $result ): \WP_Error {
@@ -781,7 +1121,7 @@ class Changes_Controller extends Base_Controller {
 	/**
 	 * Defines the query parameters accepted by the collection endpoints.
 	 *
-	 * @return array
+	 * @return array<string,array<string,mixed>>
 	 */
 	public function get_collection_params(): array {
 		return [

@@ -192,8 +192,7 @@ class ImportControllerThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Neither real sample `.gex` file in this repo carries a player record (confirmed while writing this test: both parse
-	 * to 0 players).
+	 * Neither sample `.gex` file in this repo carries a player record: both parse to 0 players.
 	 *
 	 * @param array<int,array{name:string,email:string}> $players
 	 * @return string

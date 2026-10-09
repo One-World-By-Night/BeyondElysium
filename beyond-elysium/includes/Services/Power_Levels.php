@@ -13,7 +13,7 @@ class Power_Levels {
 	/**
 	 * Every level in a family, ladder then picks then overflow.
 	 *
-	 * @param object|array $power
+	 * @param object|array<string,mixed> $power
 	 * @return array<int,object>
 	 */
 	public static function all( $power ): array {
@@ -34,7 +34,7 @@ class Power_Levels {
 	/**
 	 * The declared ladder alone.
 	 *
-	 * @param object|array $power
+	 * @param object|array<string,mixed> $power
 	 * @return array<int,object>
 	 */
 	public static function ladder( $power ): array {
@@ -48,8 +48,8 @@ class Power_Levels {
 	 * One container off a family, accepting either the object shape a decoded definition carries or the array shape the
 	 * seeder builds.
 	 *
-	 * @param object|array $power
-	 * @param string       $key
+	 * @param object|array<string,mixed> $power
+	 * @param string                     $key
 	 * @return array<int|string,mixed>
 	 */
 	private static function container( $power, string $key ): array {

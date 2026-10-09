@@ -8,14 +8,14 @@ Everything below lives under one top-level **Beyond Elysium** menu in wp-admin. 
 
 | Submenu | Tabs (each its own capability) | Covered in this guide |
 |---|---|---|
-| Characters | — (single page; the NPC/player toggle replaces the old separate NPC Roster page) | — the staff-facing character roster across every chronicle, plus "+ New Character" and NPC flagging, below |
-| Plots | — (single page) | — the same plot/action/rumor tooling as the Storyteller Toolkit page, from wp-admin |
-| Items & Locations | — (single page) | — the catalog of world objects a character can be connected to |
-| Query Tool | Query Tool (`be_run_queries`), Reports (`be_view_reports`) | — the same query builder as the front-end Query Tool, plus the 20-report/cards/batch-output layer |
-| Import | — (single page) | Import, below |
+| Characters | - (single page; the NPC/player toggle replaces the old separate NPC Roster page) | - the staff-facing character roster across every chronicle, plus "+ New Character" and NPC flagging, below |
+| Plots | - (single page) | - the same plot/action/rumor tooling as the Storyteller Toolkit page, from wp-admin |
+| Items & Locations | - (single page) | - the catalog of world objects a character can be connected to |
+| Query Tool | Query Tool (`be_run_queries`), Reports (`be_view_reports`) | - the same query builder as the front-end Query Tool, plus the 20-report/cards/batch-output layer |
+| Import | - (single page) | Import, below |
 | Chronicle Setup | Chronicle Setup (`be_manage_chronicle_setup`), Chronicle Access (`be_manage_games`), Action & Rumor Settings and AI Assist (`be_manage_apr`) - staff only: the page needs `be_manage_chronicle_setup`, so a player never sees it | Chronicle-Scoped Access, below; Chronicle Setup itself is a live checklist for a chronicle's own setup, see the [Storyteller Guide](st-guide.md) |
 | System Config | Games (`be_manage_games`), Schema Blocks (`be_manage_schemas` - view-only for the book, chronicle-scoped to edit), Creature Stacks (`be_manage_games` to view the book; `be_manage_schemas`, scoped to a chronicle, to build or edit one), Templates (`be_manage_templates` - view-only for the book, chronicle-scoped to edit), Approval Rules (`be_manage_approval_rules`), Translations (`be_manage_translations`) | Schema Blocks and Creature Stacks, Templates, Descriptions and Approval Schedules, Approval Rules, and Catalog Term Translation, all below |
-| Docs | — (single page, `be_view_characters`) | — this guide and its three siblings, rendered in-plugin |
+| Docs | - (single page, `be_view_characters`) | - this guide and its three siblings, rendered in-plugin |
 
 Two related pages live on the front end instead, not in wp-admin at all: the **Game Dashboard** (roster stats, roster health, upcoming plots) is the Dashboard tab on both the Storyteller Toolkit page (staff) and My Chronicle (players, their own stats only), and **Notifications** is a per-chronicle on/off switch on Chronicle Setup → Chronicle Access, with each player able to opt out individually on their own WordPress Profile page. The landing dashboard's own "What's where" reference links to both.
 
@@ -27,8 +27,8 @@ The Characters page's "+ New Character" button opens the same character-creation
 
 Beyond Elysium never has creature-specific code. Every character sheet is assembled at render time from two kinds of catalog entries:
 
-- **Schema blocks** — one reusable building block: a trait list (Merits, Backgrounds), a tiered power (Disciplines, Gifts, Spheres), a resource pool (Blood, Willpower, Gnosis), or an identity field (Nature, Demeanor, Tribe).
-- **Creature stacks** — an ordered assembly of blocks that makes up one creature type's complete sheet.
+- **Schema blocks** - one reusable building block: a trait list (Merits, Backgrounds), a tiered power (Disciplines, Gifts, Spheres), a resource pool (Blood, Willpower, Gnosis), or an identity field (Nature, Demeanor, Tribe).
+- **Creature stacks** - an ordered assembly of blocks that makes up one creature type's complete sheet.
 
 Under **Beyond Elysium → System Config → Schema Blocks**, each block shows its section type, whether it's a system block (part of the shipped catalog) or a chronicle's own fork, and its full definition. A system block can be forked per-chronicle from the Storyteller side (see the Storyteller Guide) without ever touching the shared version every other chronicle uses. The copy keeps what the chronicle changed - values, approval rules, entries it added or removed - and takes everything else from the shared block, both when the plugin updates and when you save the shared block here.
 
@@ -54,17 +54,17 @@ A character's own live progress against its type's creation rules - what each st
 
 ## Descriptions and Approval Schedules on Catalog Items
 
-Beyond its basic name/cost/approval, any catalog entry — a trait list item, a tiered power level, a tiered power family, a resource pool, or an identity field — can carry a **Description** and a finer-grained **approval schedule**, both edited from the same **Beyond Elysium → System Config → Schema Blocks** screen the item already lives on.
+Beyond its basic name/cost/approval, any catalog entry - a trait list item, a tiered power level, a tiered power family, a resource pool, or an identity field - can carry a **Description** and a finer-grained **approval schedule**, both edited from the same **Beyond Elysium → System Config → Schema Blocks** screen the item already lives on.
 
 ### Description
 
 A **Description** button next to an item, power level, or power family opens a small editor with three separate rich-text sections:
 
-- **Reference** — a page or document citation.
-- **Description** — a general note or house rule.
-- **Source** — where this ruling came from (a separate idea from the item's own printed sourcebook citation, which is a plain field elsewhere on the same row).
+- **Reference** - a page or document citation.
+- **Description** - a general note or house rule.
+- **Source** - where this ruling came from (a separate idea from the item's own printed sourcebook citation, which is a plain field elsewhere on the same row).
 
-Each section keeps formatting, lists, and tables; images and anything else are stripped when saved. This is a **site-wide** field, not per-chronicle — a chronicle can still fork the block to write its own note, but an edit made here (with no chronicle selected) is visible to every chronicle immediately. It also survives every future plugin update: a system block's catalog data (cost, sphere requirements, and so on) refreshes from the shipped source on every version bump, but a description an admin has written is carried forward untouched.
+Each section keeps formatting, lists, and tables; images and anything else are stripped when saved. This is a **site-wide** field, not per-chronicle - a chronicle can still fork the block to write its own note, but an edit made here (with no chronicle selected) is visible to every chronicle immediately. It also survives every future plugin update: a system block's catalog data (cost, sphere requirements, and so on) refreshes from the shipped source on every version bump, but a description an admin has written is carried forward untouched.
 
 The same holds for every other setting only an admin makes on a shared system block: approval levels and reasons, approval-by-value and approval-by-option schedules, a power family's approval override, the block's own approval rules, and any item, power, level, pool, or field an admin added. A section added to a system creature stack is kept too. What an update does refresh is what ships with the plugin - names, costs, notes, translations, a stack's own name and sections - so changing one of those on a system block lasts only until the next update; fork the block for your chronicle to change it for good.
 
@@ -72,9 +72,9 @@ The same holds for every other setting only an admin makes on a shared system bl
 
 An item's flat approval setting ("this whole item needs Storyteller approval") can be sharpened to depend on what a player is actually raising it to:
 
-- **Trait list items and resource pools** — an **Approval by value** button opens a small table of ranges (`From` / `To` / `Approval` / `Reason`), for example Occult 1-3 auto-approved, 4-5 needing Storyteller review. This resolves against the value a player is submitting, never a comparison against what they held before — reaching level 4 needs review however the character got there. A resource pool's schedule checks its **permanent** rating only; spending or regaining points in play never triggers it.
-- **Tiered power levels** (Disciplines, Gifts, Spheres, …) — each level is already its own row, so it gets a plain **Approval** dropdown directly, with no range to configure.
-- **Identity fields** (Nature, Clan, Generation, …) — an **Approval by option** button lists every option the field offers with its own approval dropdown, for example requiring Storyteller approval to pick "Antediluvian" while every other option is automatic. A multiselect field checks every value a player picks and the strictest requirement applies.
+- **Trait list items and resource pools** - an **Approval by value** button opens a small table of ranges (`From` / `To` / `Approval` / `Reason`), for example Occult 1-3 auto-approved, 4-5 needing Storyteller review. This resolves against the value a player is submitting, never a comparison against what they held before - reaching level 4 needs review however the character got there. A resource pool's schedule checks its **permanent** rating only; spending or regaining points in play never triggers it.
+- **Tiered power levels** (Disciplines, Gifts, Spheres, …) - each level is already its own row, so it gets a plain **Approval** dropdown directly, with no range to configure.
+- **Identity fields** (Nature, Clan, Generation, …) - an **Approval by option** button lists every option the field offers with its own approval dropdown, for example requiring Storyteller approval to pick "Antediluvian" while every other option is automatic. A multiselect field checks every value a player picks and the strictest requirement applies.
 
 A value or option with no schedule entry falls back to the item's own flat `approval` setting, which in turn falls back to the block's overall default, which in turn falls back to the chronicle's own **default approval policy** - see [Approval Rules](#approval-rules) below - and see the [Storyteller Guide's approval section](st-guide.md#4-running-the-approval-queue) for how a resolved approval level reaches the queue.
 
@@ -84,7 +84,9 @@ A **Prerequisites** button appears instead, on an item whose cost is derived fro
 
 Under **Beyond Elysium → System Config → Approval Rules**, one page lists every approval override currently set anywhere in a chronicle's catalog - the exact same underlying data the Schema Blocks screen's own Description/Approval editors write, just gathered into one flat, addressable list instead of scattered across whichever block each rule happens to live on. Anything set here shows up there too, and vice versa; edit whichever is more convenient for the moment - in context while already editing a block's other fields, or here for a quick scan of everything a chronicle currently requires review for.
 
-Picking a block offers the matching target picker for its section type:
+Picking a block offers a **Scope**: a specific item, power, pool or field (below), **the whole block** (its flat `approval_rules.default`), or - only on a tiered power block with a real in-type test declared on some creature type in this chronicle - **in-type / out-of-type** (`approval_rules.in_type`/`out_of_type`, two separate levels; a block with no such test refuses this scope with `400 no_in_type_test`).
+
+Picking "a specific item, power, pool or field" offers the matching target picker for its section type:
 
 - **Trait list** (Merits, Backgrounds, …) - an item, then a choice between "the whole item" (its flat approval) or "a specific value range" (an `Approval by value` entry, addressed by its exact `From`/`To` bounds).
 - **Tiered power** (Disciplines, Gifts, Spheres, …) - a power, then a choice between "the whole power" (its `approval_override`) or "one level only" (that level's own `reason` - see the note above about why a level's flat approval is set on its own catalog row instead, not duplicated here).
@@ -96,6 +98,16 @@ Picking a block offers the matching target picker for its section type:
 The same page also carries the chronicle's own baseline: **Pending by default** (today's long-standing behavior - everything needs Storyteller review unless a rule below says `auto`) or **Auto-approve by default** (the reverse - everything is waved through unless a rule below says `st`). A granular rule can ask for either level regardless of which way the chronicle's own default is set. (There is no coordinator level: a rule whose reason names a coordinator's approval is a Storyteller rule, and the Storyteller gets that approval.)
 
 A granular rule **always** wins over this default, in either direction - the default only ever applies when nothing more specific (an item, a power, a level, a value range, a field option, or the owning block's own `approval_rules.default`) had an opinion at all. This matters concretely: switching a chronicle from Pending to Auto-approve never silently approves something a Storyteller had explicitly flagged as needing review, even a flag with no reason text attached to it.
+
+### Removals, lower ratings, relabels and renames
+
+A separate checkbox beside the Default Approval Policy, off by default: `settings.approval_on_removal`. On, a removal, a lower rating, a relabel or a rename always waits for a Storyteller, wins over every rule and the default alike, and is decided from the character's own held sheet, never from what the client's own request claims - so a crafted "addition" that actually lowers a held count or level is caught the same way. A player's editor submits its whole set of queued changes together, under one shared submission id; once any one change in that set is caught, the whole set waits together, with the reason "Part of a change that removes, lowers or renames something." The Approval Queue shows two or more such changes as one "Submitted together" card with its own Approve all / Refuse all.
+
+### OWBN Character Bylaws
+
+A third checkbox beside the other two, `settings.owbn_bylaws`, off by default. Nothing is written into the catalog: the bylaws are a shipped file (`data/bylaws/owbn-character-bylaws.json`, built from a hand-checked mapping kept in the repository) read at approval time, indexed by entry family and name (a block slug with its creature prefix dropped, so `merits` reaches every creature's own copy of the list). `Change_Engine::resolve_rule_level()` reads it as its own step, after the block's own rules and before the chronicle's default: every attachment matching the purchase adds its own reason, the PC one or the NPC one by whether the character is an NPC, with no fallback between the two - a clause reading "NPC: Unregulated" adds nothing for an NPC even if its PC tier requires Coordinator Approval. A chronicle's own reason, if a rule above already set one, comes first; each bylaw's own reason follows, one per line, each ending in a citation that links to the real clause on council.owbn.net.
+
+Below the checkbox, a **Refresh from council.owbn.net** button re-pulls every Character Bylaw clause live and writes the result as a site option that wins over the shipped file from then on - a clause that's still live keeps its existing attachment, one council has removed loses its reason, and a brand new clause lists unattached for a future curated pass. **Upload a file** takes an already-built file instead (the same shape `tools/bylaws/build.php` writes), for a site that can't reach council.owbn.net directly - a WordPress administrator's own action (`be_manage_games`), not a Storyteller's. Both refuse a malformed source outright and change nothing. The same section lists every rule - clause, subject, PC/NPC tier, coordinator(s), and what it's attached to, if anything - filtered by search, tier, and attached status, so the full set stays readable even where most of it isn't attached to anything yet.
 
 ## Catalog Term Translation
 
@@ -140,26 +152,32 @@ XP is never touched. A character nothing applies to is left alone, and running t
 
 ## Adding a Creature Type Without Code
 
-This is the point of the schema-driven design: a new creature type is configuration, every time, not a code change. Every shipped creature type is read-only, everywhere, for everyone — a site administrator included — so a wholly new one is built the same way a chronicle changes anything else about its own catalog: scoped to that chronicle, from Chronicle Setup.
+This is the point of the schema-driven design: a new creature type is configuration, every time, not a code change. Every shipped creature type is read-only, everywhere, for everyone - a site administrator included - so a wholly new one is built the same way a chronicle changes anything else about its own catalog: scoped to that chronicle, from Chronicle Setup.
 
-1. **Build or reuse schema blocks.** If the new type needs traits nothing else uses yet (its own power list, its own resource pool), create those blocks first from the chronicle's own [Chronicle Setup](help/chronicle-setup.md) → Catalog customisation — the new block belongs to that chronicle alone. The shared catalog itself is read-only to everyone, a site administrator included; there is no way to add to it directly.
-2. **Build the creature stack.** From [Chronicle Setup](help/chronicle-setup.md), find **Creature types**, and follow its link to Creature Stacks — this opens the screen already scoped to that chronicle. Click **+ New Creature Stack**, give it a slug and name, and assemble it from existing and new blocks with **+ Add section**, setting each one's label and display order. The type belongs to that chronicle alone; no other chronicle can see or use it.
-3. **Enable it.** Building the stack doesn't make it available on its own — back on [Chronicle Setup](help/chronicle-setup.md)'s **Creature types** row, enable the new type so a character can actually be created on it.
-4. **Creation rules**, stored on the stack alongside its section list, are a real, enforced rules engine — prioritized attribute allocation, budgeted purchases with in-type/out-of-type pricing, starting resource-pool values, and the rest of the grammar `CATALOG-JSON-FORMAT.md` documents. A new type with none declared simply prices its whole starting sheet as ordinary build XP, exactly as it always has.
+1. **Build or reuse schema blocks.** If the new type needs traits nothing else uses yet (its own power list, its own resource pool), create those blocks first from the chronicle's own [Chronicle Setup](help/chronicle-setup.md) → Catalog customisation - the new block belongs to that chronicle alone. The shared catalog itself is read-only to everyone, a site administrator included; there is no way to add to it directly.
+2. **Build the creature stack.** From [Chronicle Setup](help/chronicle-setup.md), find **Creature types**, and follow its link to Creature Stacks - this opens the screen already scoped to that chronicle. Click **+ New Creature Stack**, give it a slug and name, and assemble it from existing and new blocks with **+ Add section**, setting each one's label and display order. The type belongs to that chronicle alone; no other chronicle can see or use it.
+3. **Enable it.** Building the stack doesn't make it available on its own - back on [Chronicle Setup](help/chronicle-setup.md)'s **Creature types** row, enable the new type so a character can actually be created on it.
+4. **Creation rules**, stored on the stack alongside its section list, are a real, enforced rules engine - prioritized attribute allocation, budgeted purchases with in-type/out-of-type pricing, starting resource-pool values, and the rest of the grammar `CATALOG-JSON-FORMAT.md` documents. A new type with none declared simply prices its whole starting sheet as ordinary build XP, exactly as it always has.
 5. **A Template is optional, not required.** A creature type with no authored [Template](help/templates.md) still renders a sheet, generated from its own sections in a sensible default layout; build one when a chronicle wants it arranged differently.
-6. The new type is then available everywhere a creature stack is selectable for that chronicle — character creation, the roster filter, query building — with no further wiring.
+6. The new type is then available everywhere a creature stack is selectable for that chronicle - character creation, the roster filter, query building - with no further wiring.
 
 A chronicle's own creature type can be deleted only once no character anywhere is that type - a character can't change its type, and one whose type is gone would have no sheet to show, print, or audit.
 
 One thing a new type can't do: leave the site. Export to Grapevine and chronicle-to-chronicle transfers travel as Grapevine exchange files, and Grapevine has no race for a type you made up, so exporting or transferring one of its characters is refused with a message saying so. The shipped types all travel; Bête goes as the Fera it shares every block with and comes back as a Bête in Beyond Elysium.
 
-Every one of the plugin's front-end widgets (character sheet, editor, roster, approval queue, dashboard, and the rest — fifteen in total, `src/index.tsx`'s widget registry) reads the same schema-block/creature-stack definitions at render time. There is nowhere else in the plugin a creature type needs to be registered.
+Every one of the plugin's front-end widgets (character sheet, editor, roster, approval queue, dashboard, and the rest - fifteen in total, `src/index.tsx`'s widget registry) reads the same schema-block/creature-stack definitions at render time. There is nowhere else in the plugin a creature type needs to be registered.
+
+## Demo Chronicles
+
+**Beyond Elysium → System Config → Games → Edit → Demo chronicle.** A site administrator can flag any chronicle so it resets itself to a declared starting point on a schedule (1, 3, 6, 12, or 24 hours, defaulting to 6), as the Storyteller account, with every email suppressed. A reset keeps the chronicle's own id, slug and settings - only its content is replaced - and removes any member who isn't one of the two accounts chosen for it. Flagging it also creates a second, companion chronicle at `{slug}-companion`, with the storyteller account as its only member, for seeing what joining a chronicle looks like from outside it; the companion resets and locks alongside the primary one.
+
+A demo chronicle refuses to be deleted or renamed, to send a character to another site, or to accept an inbound transfer offer, while the flag is on; AI drafting is switched off on it, and every AI button still shows and explains so when clicked. Every viewer sees a banner naming when it next resets, and the chronicle switcher labels it. See [Demo Chronicle](help/demo-chronicle.md) for the full screen walkthrough. This is unrelated to the `be-demo` chronicle the plugin seeds once on a fresh install - that is a fixed, one-time set of sample characters with no reset mechanism of its own.
 
 ## Templates
 
-A **template** controls how a creature stack's blocks are laid out on the rendered sheet — which blocks go in which column, in what order, and under what section heading. Every creature stack gets a sensible default template automatically; templates only need editing when a chronicle wants a different visual arrangement than the default.
+A **template** controls how a creature stack's blocks are laid out on the rendered sheet - which blocks go in which column, in what order, and under what section heading. Every creature stack gets a sensible default template automatically; templates only need editing when a chronicle wants a different visual arrangement than the default.
 
-Under **Beyond Elysium → System Config → Templates**, a template names a creature stack, a set of section groupings, and per-block column/width/title overrides. A template can also reference another block's field for cross-block display (`title_refs`) or resolve a display name through a lookup block (`name_lookup`) — both used for cases like showing a power's governing Sphere or Discipline name inline rather than just its raw slug.
+Under **Beyond Elysium → System Config → Templates**, a template names a creature stack, a set of section groupings, and per-block column/width/title overrides. A template can also reference another block's field for cross-block display (`title_refs`) or resolve a display name through a lookup block (`name_lookup`) - both used for cases like showing a power's governing Sphere or Discipline name inline rather than just its raw slug.
 
 Templates ship with the same system-vs-fork distinction as schema blocks: the default is shared, and a chronicle that wants its own layout forks it without affecting anyone else's. The shared template itself is read-only, for everyone, a site administrator included - it's always **View** here; **Customize for this chronicle**, scoped to a chronicle, is the only way to change a layout.
 
@@ -168,28 +186,28 @@ Templates ship with the same system-vs-fork distinction as schema blocks: the de
 Under **Beyond Elysium → Chronicle Setup → Chronicle Access**, an admin controls:
 
 - The site-wide accessSchema toggle (on/off), and whether a real accessSchema client is actually detected on this install.
-- Each chronicle's `asc_role_path` — its accessSchema path prefix.
-- Chronicle membership and role for every user — **five** roles, not four: **HST**, **AST**, **Narrator**, **Boons** (a Harpy — runs the boon ledger only, no Storyteller powers over characters or plots), and **Player**.
-- The per-chronicle notification toggle.
+- Each chronicle's `asc_role_path` - its accessSchema path prefix.
+- Chronicle membership and role for every user - **five** roles, not four: **HST**, **AST**, **Narrator**, **Boons** (a Harpy - runs the boon ledger only, no Storyteller powers over characters or plots), and **Player**.
+- The per-chronicle notification toggle. What it suppresses, and every other email the chronicle sends or skips, is recorded in that chronicle's [Email Log](help/email-log.md), which only its HST and AST can read.
 - **Data Management** (site-wide, not per-chronicle): whether uninstalling the plugin also deletes its data, and a one-click full JSON export of every plugin table for a backup or a migration.
 
-If accessSchema is off, not installed, or unreachable for a given request, every permission check falls back to this membership table automatically — a chronicle can run entirely on plain WordPress capabilities with no OWBN plugin stack present at all.
+If accessSchema is off, not installed, or unreachable for a given request, every permission check falls back to this membership table automatically - a chronicle can run entirely on plain WordPress capabilities with no OWBN plugin stack present at all.
 
-On a chronicle linked to accessSchema (accessSchema on for the site, and an `asc_role_path` on the chronicle), the HST and AST add and remove **players** themselves from the Storyteller Toolkit's **Players** tab; staff roles stay here. Adding a player there also grants `{asc_role_path}/player` through the owbn-core accessSchema client, and removing one revokes it. A chronicle that isn't linked has no Players tab and its players routes answer 404, so its members are managed here alone. The accessSchema server only accepts a grant sent with its read-write API key, so the key owbn-core holds on this site must be that one; with the read-only key, the player is still added here and the Storyteller is told OWbN refused the grant.
+On every chronicle, the HST and AST add and remove **players** themselves from the Storyteller Toolkit's **Players** tab, including reviewing join requests from its own **Join requests** section; staff roles stay here. On a chronicle linked to accessSchema (accessSchema on for the site, and an `asc_role_path` on the chronicle), adding a player there also grants `{asc_role_path}/player` through the owbn-core accessSchema client, and removing one revokes it; an unlinked chronicle's Players tab works the same way with no accessSchema call attempted. The accessSchema server only accepts a grant sent with its read-write API key, so the key owbn-core holds on this site must be that one; with the read-only key, the player is still added here and the Storyteller is told OWbN refused the grant.
 
 ## What an HST Can and Cannot Do
 
-An HST is a WordPress `editor`, not an `administrator`, and three pages stay administrator-only regardless of chronicle role: **Games** (create a chronicle, rename or delete one), **Chronicle Access** (assign HST/AST/Narrator/Boons/Player), and any settings scoped to `be_manage_games`. This is deliberate — `game-roles.php` excludes `be_manage_games` from every chronicle role by name, so no HST can appoint their own AST even for their own chronicle.
+An HST is a WordPress `editor`, not an `administrator`, and three pages stay administrator-only regardless of chronicle role: **Games** (create a chronicle, rename or delete one), **Chronicle Access** (assign HST/AST/Narrator/Boons/Player), and any settings scoped to `be_manage_games`. This is deliberate - `game-roles.php` excludes `be_manage_games` from every chronicle role by name, so no HST can appoint their own AST even for their own chronicle.
 
-An HST *can* now (as of `v0.99.16`) reach **System Config**'s **Schema Blocks** and **Templates** for their own chronicle's own customization — forking a block or a template for a chronicle they hold `hst` membership in. This needs both of two things to be true: the site-wide capability (`be_manage_schemas`/`be_manage_templates`, granted to `editor` since `v0.99.16`) and a real membership row in that specific chronicle. Holding the capability alone, with no membership row, still gets a `403` — it is not a bare site-wide grant, the same two-layer check every chronicle-scoped route in this plugin uses. As of `v1.0.0` (below), both **Schema Blocks** and **Templates** are an HST's alone; an AST holds neither for their own chronicle.
+An HST can reach **System Config**'s **Schema Blocks** and **Templates** for their own chronicle's own customization - forking a block or a template for a chronicle they hold `hst` membership in. This needs both of two things to be true: the site-wide capability (`be_manage_schemas`/`be_manage_templates`, granted to `editor`) and a real membership row in that specific chronicle. Holding the capability alone, with no membership row, still gets a `403` - it is not a bare site-wide grant, the same two-layer check every chronicle-scoped route in this plugin uses. Both **Schema Blocks** and **Templates** are an HST's alone; an AST holds neither for their own chronicle.
 
-**Narrower as of `v1.0.0`** (owner ruling, 2026-09-15): an AST no longer holds `be_manage_approval_rules`, `be_manage_schemas`, `be_manage_templates`, or the new `be_delete_characters` for their own chronicle — Approval Rules, catalog and template customization (forking a Schema Block or a Template), and permanently deleting a character are an HST's alone. An AST keeps everything else the two roles used to share equally: import, transfers, editing characters, and the bulk XP/status/reset operations. Conversely, an HST gained real write access to three Chronicle Setup settings that used to be `be_manage_games`-only (a site administrator, no exceptions): **Creature types**, **Sub-Faction Restrictions**, and **New-character approval** — the new `be_manage_chronicle_setup` capability, chronicle-scoped the same two-layer way as everything else. Separately, a Narrator (`be_manage_plots`, not `be_manage_characters`) can now see and allocate actions for any character in their chronicle, not only one they happen to own as a player — the character roster the Action Allocator reads from is no longer restricted to their own characters, though editing, deleting, or creating a character still needs `be_manage_characters`/`be_delete_characters`, which a Narrator never holds.
+**What an AST doesn't hold.** An AST doesn't hold `be_manage_approval_rules`, `be_manage_schemas`, `be_manage_templates` or `be_delete_characters` for their own chronicle - Approval Rules, catalog and template customization (forking a Schema Block or a Template), and permanently deleting a character are an HST's alone. An AST keeps everything else the two roles share: import, transfers, editing characters, and the bulk XP/status/reset operations. An HST has real write access to three Chronicle Setup settings that are otherwise `be_manage_games`-only (a site administrator, no exceptions): **Creature types**, **Sub-Faction Restrictions** and **New-character approval** - the `be_manage_chronicle_setup` capability, chronicle-scoped the same two-layer way as everything else. A Narrator (`be_manage_plots`, not `be_manage_characters`) can see and allocate actions for any character in their chronicle, not only one they own as a player - the character roster the Action Allocator reads from isn't restricted to their own characters, though editing, deleting, or creating a character still needs `be_manage_characters`/`be_delete_characters`, which a Narrator never holds.
 
 ## Front-End Pages
 
-Four WordPress pages, created automatically the first time the plugin runs (or updates), carry every front-end widget: **My Chronicle** (`be-player`), **Storyteller Toolkit** (`be-storyteller`), **Character Sheet (Print)** (`character-sheet-print`), and **Verify Character** (`be-verify`). Fixed at four regardless of how many chronicles this site hosts — My Chronicle and Storyteller Toolkit each carry a chronicle switcher rather than being tied to one chronicle at creation time; see the [Storyteller Guide](st-guide.md#7-the-game-dashboard) for what lives on each.
+Four WordPress pages, created automatically the first time the plugin runs (or updates), carry every front-end widget: **My Chronicle** (`be-player`), **Storyteller Toolkit** (`be-storyteller`), **Character Sheet (Print)** (`character-sheet-print`), and **Verify Character** (`be-verify`). Fixed at four regardless of how many chronicles this site hosts - My Chronicle and Storyteller Toolkit each carry a chronicle switcher rather than being tied to one chronicle at creation time; see the [Storyteller Guide](st-guide.md#7-the-game-dashboard) for what lives on each.
 
-If one of these pages is ever deleted by mistake, it is **not** recreated automatically on its own — a page, once created at a given slug, is never overwritten or replaced. Recover it from **Beyond Elysium → Chronicle Setup**: the **Front-end pages** checklist row turns red when any of the four is missing, with a **Fix** link that re-runs the same provisioning step (`?provision_pages=1`, `be_manage_games`-gated) the plugin already ran once automatically.
+If one of these pages is ever deleted by mistake, it is **not** recreated automatically on its own - a page, once created at a given slug, is never overwritten or replaced. Recover it from **Beyond Elysium → Chronicle Setup**: the **Front-end pages** checklist row turns red when any of the four is missing, with a **Fix** link that re-runs the same provisioning step (`?provision_pages=1`, `be_manage_games`-gated) the plugin already ran once automatically.
 
 ## Import
 
@@ -197,15 +215,19 @@ Under **Beyond Elysium → Import**, an admin (not just a Storyteller) can impor
 
 ## AI Writing Assist
 
-A small **AI Assist** button sits next to every long-form free-text field in the plugin — character Biography/Notes, the NPC Roleplaying Notes block, plot descriptions/cliffhangers/ timeline entries, rumor descriptions, World Object Description/Limitations/text properties, Schema Block catalog Reference/Description/Source, an Approval Rule's Reason, a chronicle's own Description, and the Credits text. Clicking it opens a small popover: an empty field asks what to write about, a field with existing text offers to polish it. Nothing is ever saved automatically — a suggestion only reaches the field after an explicit **Accept**, and the field's own normal Save button is still what actually persists it.
+A small **AI Assist** button sits next to every long-form free-text field in the plugin - character Biography/Notes, the NPC Roleplaying Notes block, plot descriptions/cliffhangers/ timeline entries, rumor descriptions, World Object Description/Limitations/text properties, Schema Block catalog Reference/Description/Source, an Approval Rule's Reason, a chronicle's own Description, and the Credits text. Clicking it opens a small popover: an empty field asks what to write about, a field with existing text offers to polish it. Nothing is ever saved automatically - a suggestion only reaches the field after an explicit **Accept**, and the field's own normal Save button is still what actually persists it.
 
-**ST-only, by design.** The button is gated on the same management-tier capability that already governs that field's own area (`be_manage_characters`, `be_manage_plots`, `be_manage_world_objects`, `be_manage_schemas`, `be_manage_approval_rules`, or `be_manage_games`) — never the plain edit-tier capability a field's own save route accepts. A player editing their own character's Biography, for example, never sees this button at all, even though they can otherwise save that field themselves.
+**ST-only, by design.** The button is gated on the same management-tier capability that already governs that field's own area (`be_manage_characters`, `be_manage_plots`, `be_manage_world_objects`, `be_manage_schemas`, `be_manage_approval_rules`, or `be_manage_games`) - never the plain edit-tier capability a field's own save route accepts. A player editing their own character's Biography, for example, never sees this button at all, even though they can otherwise save that field themselves.
 
-**Two providers, deliberately chosen**: OpenAI first, Claude second — Gemini was considered and dropped. Each request sends only that one field's own current text (or a short one-line prompt for an empty field); nothing else about the character, chronicle, or other players ever leaves the site.
+**Two providers, deliberately chosen**: OpenAI first, Claude second - Gemini was considered and dropped. Each request sends only that one field's own current text (or a short one-line prompt for an empty field); nothing else about the character, chronicle, or other players ever leaves the site.
+
+### Three drafting tools, a different mechanism from the button above
+
+Three more AI-assisted tools draft a *structured* result rather than polishing one field's plain text, and each writes into more than one place at once: a **Draft roleplaying notes** button on an NPC's own Storyteller-only notes section fills every currently-empty field there in one request (see [Character Editor](help/character-editor.md)); **Draft from a premise** on Plots & Rumors turns a one-line premise straight into a created plot, its Storyteller-only beats, and a couple of held rumors, with no preview step (see [Draft a Plot from a Premise](help/draft-plot.md)); and **Draft recap** on a game night fills in whatever's still empty of that session's own recap from its attendance and after-game reports (see [Game Nights](help/game-nights.md)). All three share the same provider, key, and chronicle opt-in as the button above - there's nothing extra to configure for them - and the same rate limit and demo-chronicle lockout.
 
 ### Configuring it
 
-**This requires a real API key from OpenAI or Anthropic — not a ChatGPT Plus or Claude Pro login.** There is no way to connect this feature to either provider using a regular consumer subscription login instead; neither provider offers that as an option, for this plugin or for anyone else. The two are different products with different billing:
+**This requires a real API key from OpenAI or Anthropic - not a ChatGPT Plus or Claude Pro login.** There is no way to connect this feature to either provider using a regular consumer subscription login instead; neither provider offers that as an option, for this plugin or for anyone else. The two are different products with different billing:
 
 | | Consumer subscription (ChatGPT Plus / Claude Pro) | API key (what this feature actually needs) |
 |---|---|---|
@@ -215,25 +237,25 @@ A small **AI Assist** button sits next to every long-form free-text field in the
 
 Getting a key: create a developer account at the API console (not the consumer site) for whichever provider you want, add a payment method there, and generate a key. The models this feature uses by default (`gpt-4o-mini` / `claude-haiku-4-5`) are each provider's cheap tier, and every request sends only one short field's own text - realistic usage for occasional biography/plot polishing runs to cents, not a real budget line.
 
-Under **Beyond Elysium → System Config → AI Assist** (`be_manage_games`, administrator-only), a single **Provider** dropdown offers three options — only one is ever configured at a time, and only that one's fields are shown:
+Under **Beyond Elysium → System Config → AI Assist** (`be_manage_games`, administrator-only), a single **Provider** dropdown offers three options - only one is ever configured at a time, and only that one's fields are shown:
 
-- **OpenAI (ChatGPT)** — the real OpenAI API, needing just an API key.
-- **Claude** — the real Anthropic API, needing just an API key.
-- **Self-Hosted (OpenAI-compatible)** — see below.
+- **OpenAI (ChatGPT)** - the real OpenAI API, needing just an API key.
+- **Claude** - the real Anthropic API, needing just an API key.
+- **Self-Hosted (OpenAI-compatible)** - see below.
 
-Whichever is selected becomes the site-wide default, used directly for every catalog-level field (Schema Block descriptions, Credits text — neither belongs to any one chronicle), and as the fallback for any chronicle that opts in without supplying its own.
+Whichever is selected becomes the site-wide default, used directly for every catalog-level field (Schema Block descriptions, Credits text - neither belongs to any one chronicle), and as the fallback for any chronicle that opts in without supplying its own.
 
-Under **Beyond Elysium → Chronicle Setup → AI Assist** (`be_manage_apr` — the same access tier as Action & Rumor Settings, reachable by an HST with no site-administrator access), enable the feature for one chronicle and pick from the same three-option dropdown to optionally give it its own configuration, overriding the site-wide one for that chronicle's own character/plot/rumor/world-object fields.
+Under **Beyond Elysium → Chronicle Setup → AI Assist** (`be_manage_apr` - the same access tier as Action & Rumor Settings, reachable by an HST with no site-administrator access), enable the feature for one chronicle and pick from the same three-option dropdown to optionally give it its own configuration, overriding the site-wide one for that chronicle's own character/plot/rumor/world-object fields.
 
-**A key is never shown again once saved.** Every settings screen displays only whether a key is configured (a plain "configured" indicator, never the value) — re-enter a key to change it, or use **Clear** to remove it. Every key is encrypted at rest.
+**A key is never shown again once saved.** Every settings screen displays only whether a key is configured (a plain "configured" indicator, never the value) - re-enter a key to change it, or use **Clear** to remove it. Every key is encrypted at rest.
 
 ### Using your own server instead (self-hosted / OpenAI-compatible)
 
-Choosing **Self-Hosted (OpenAI-compatible)** from the Provider dropdown reveals three fields: an **API base URL**, a **Model** name, and an API key. Point the base URL at any self-hosted server that speaks the same request/response shape as OpenAI's own Chat Completions API — Ollama, LM Studio, vLLM, LocalAI, or similar — and name whichever model that server is running. This isn't a fourth wire protocol: under the hood it's the same OpenAI request shape at a different URL, since every common self-hosted option already speaks it; there's no comparably common self-hosted equivalent for Claude's own API, so it isn't offered as a separate self-hosted flavor. The API key field is still required even for a server with no real authentication of its own — many accept any placeholder value (check your server's own docs for what it expects, if anything).
+Choosing **Self-Hosted (OpenAI-compatible)** from the Provider dropdown reveals three fields: an **API base URL**, a **Model** name, and an API key. Point the base URL at any self-hosted server that speaks the same request/response shape as OpenAI's own Chat Completions API - Ollama, LM Studio, vLLM, LocalAI, or similar - and name whichever model that server is running. This isn't a fourth wire protocol: under the hood it's the same OpenAI request shape at a different URL, since every common self-hosted option already speaks it; there's no comparably common self-hosted equivalent for Claude's own API, so it isn't offered as a separate self-hosted flavor. The API key field is still required even for a server with no real authentication of its own - many accept any placeholder value (check your server's own docs for what it expects, if anything).
 
 This is the practical way to eliminate per-request API cost entirely: a self-hosted model has no metered billing, at the cost of running (and paying for) the server yourself. A chronicle configuring its own Self-Hosted entry is independent of the site-wide default; a chronicle that falls back to the site-wide key also inherits the site-wide server, so the two never mismatch.
 
-**Test Connection** — inside whichever fieldset is currently showing — sends a minimal request using whatever you've currently typed (key, and base URL/model for Self-Hosted, whether saved yet or not) and reports success or a specific failure, so a typo'd URL or an expired key is caught before you rely on it in the field. It never tests an already-saved key silently; a key is never sent back to this page once saved, so testing it means re-entering it first.
+**Test Connection** - inside whichever fieldset is currently showing - sends a minimal request using whatever you've currently typed (key, and base URL/model for Self-Hosted, whether saved yet or not) and reports success or a specific failure, so a typo'd URL or an expired key is caught before you rely on it in the field. It never tests an already-saved key silently; a key is never sent back to this page once saved, so testing it means re-entering it first.
 
 ## Multisite
 
@@ -245,24 +267,26 @@ To let site administrators activate it themselves, enable **Network Admin → Se
 
 Deleting a site takes its Beyond Elysium tables with it, and deleting the plugin cleans up every site that turned on "delete data on uninstall" for itself - a site that never asked for deletion keeps everything, even if another site did.
 
-**One caveat.** WordPress only loads a plugin on sites where it is active, so the table cleanup runs only when Beyond Elysium is loaded in that request. If you delete a site from Network Admin while the plugin is not active on the site you are working from, its tables are left behind. They are inert, and nothing else is affected, but you may want to drop them - they are named with that site's own table prefix followed by `be_`:
+### Deleting a subsite
 
-```sql
-SHOW TABLES LIKE 'yni_12_be\_%';
-```
+**Install the site-export mu-plugin first, before anyone deletes a subsite.** It's `mu-plugin/be-site-export.php` inside the plugin's own folder - copy it to the network's `wp-content/mu-plugins/` directory (a plain file copy, no activation step; WordPress loads anything directly inside that folder on every request, on every site, whether Beyond Elysium itself is active there or not). Without it, deleting a subsite from Network Admin or WP-CLI still works, but nothing is backed up first - WordPress only loads an ordinary plugin on sites where it is active, so the subsite's own tables and private attachment files are gone with no record, the moment the plugin wasn't active there when you clicked delete.
+
+With the mu-plugin in place, deleting a subsite always writes a zip first - a manifest, every row of every Beyond Elysium table, and every file under that subsite's own private attachment folder - to a folder beside the WordPress install (or wherever `BE_SITE_EXPORT_DIR` in `wp-config.php` points instead), protected the same way the plugin's own private attachment folder is: locked to its owner, a deny-all `.htaccess`, a blank `index.php`. A Network Admin page you're on right after shows whether it worked; if the folder couldn't be written to, the deletion itself is refused and nothing is dropped - the site stays, rather than losing it with no backup.
+
+The folder is refused outright if it would sit inside the web root, since a deny-all `.htaccess` is not a guarantee on every server. Move it, or set `BE_SITE_EXPORT_DIR` to somewhere that genuinely sits outside the web root, and try again.
 
 ## Secure Printing
 
 **Beyond Elysium → System Config → Secure Printing.**
 
-Printing never refuses. With secure printing off, with no certificate installed, or on a host that cannot sign at all, sheets and reports still print through the same typesetter and come out looking the same — every page stamped UNSIGNED. An unsigned print can never be mistaken for a signed one, and a chronicle that will never have a certificate is not locked out of printing.
+Printing never refuses. With secure printing off, with no certificate installed, or on a host that cannot sign at all, sheets and reports still print through the same typesetter and come out looking the same - every page stamped UNSIGNED. An unsigned print can never be mistaken for a signed one, and a chronicle that will never have a certificate is not locked out of printing.
 
 A print is signed only when **both** are true:
 
 1. A usable certificate is configured, through three `wp-config.php` constants.
 2. An administrator has ticked **Sign printed sheets and reports** on that screen.
 
-The switch is separate from the certificate deliberately. A certificate arriving on the server isn't the same as a decision to sign with it — you might be testing one, or have inherited one from whoever ran the site before you. It is site-wide rather than per chronicle, because the certificate is site-wide; a per-chronicle switch would imply per-chronicle certificates, which multiplies the one genuinely delicate thing here.
+The switch is separate from the certificate deliberately. A certificate arriving on the server isn't the same as a decision to sign with it - you might be testing one, or have inherited one from whoever ran the site before you. It is site-wide rather than per chronicle, because the certificate is site-wide; a per-chronicle switch would imply per-chronicle certificates, which multiplies the one genuinely delicate thing here.
 
 ### Installing a certificate
 
@@ -274,7 +298,7 @@ define( 'BE_PDF_SIGNING_KEY', '/home/you/private/be-signing.key' );
 define( 'BE_PDF_SIGNING_PASSPHRASE', 'your passphrase' );
 ```
 
-Leave the third out if the key has no passphrase — that's a real configuration, not a mistake. With shell access, this is the command both production chronicles used:
+Leave the third out if the key has no passphrase - that's a real configuration, not a mistake. With shell access, this is the command both production chronicles used:
 
 ```sh
 openssl req -x509 -newkey rsa:4096 -sha256 -days 3650 \
@@ -283,7 +307,7 @@ openssl req -x509 -newkey rsa:4096 -sha256 -days 3650 \
 
 ### Hosts with no shell
 
-Plenty of shared hosting gives you no command line, so `openssl req` is unavailable — and that, not knowing where to put a file, is what locks a chronicle out of signed printing for good. The screen will mint a self-signed pair **in memory** and hand it to you once, with the constants to paste. Nothing is written to the server or saved in the database. Copy both files before leaving the page; asking again mints a different certificate.
+Plenty of shared hosting gives you no command line, so `openssl req` is unavailable - and that, not knowing where to put a file, is what locks a chronicle out of signed printing for good. The screen will mint a self-signed pair **in memory** and hand it to you once, with the constants to paste. Nothing is written to the server or saved in the database. Copy both files before leaving the page; asking again mints a different certificate.
 
 This needs PHP's `openssl` extension, which is not an extra requirement the feature invents: a PDF is signed through that same extension, so a host without it cannot sign a sheet no matter where the certificate came from. Where it's missing, the screen says so rather than offering a button that cannot work.
 
@@ -291,28 +315,28 @@ See the [Secure Printing](help/secure-printing.md) help page for the full walkth
 
 ## Who Can See a Plot, Item, or Location
 
-Every plot, item, and location has a **Who can see this** setting: **Everyone in the chronicle**, **Storytellers and Narrators only**, or **Only characters matching rules I set**. A new plot starts Storytellers-only; a new item or location starts open to everyone. Widening a player's own plot is Storyteller-only — the player who owns it can never widen it themselves, though they get everything else a global plot has (public and private replies, directed posts, uploads).
+Every plot, item, and location has a **Who can see this** setting: **Everyone in the chronicle**, **Storytellers and Narrators only**, or **Only characters matching rules I set**. A new plot starts Storytellers-only; a new item or location starts open to everyone. Widening a player's own plot is Storyteller-only - the player who owns it can never widen it themselves, though they get everything else a global plot has (public and private replies, directed posts, uploads).
 
-Picking **Only characters matching rules I set** opens the same clause-and-value query builder the Query Tool uses, against your chronicle's characters — "Clan is Tremere," "Sect is Sabbat," or several clauses combined with AND/OR. A live count shows how many characters currently match while you build it, plus a reminder that a character directly connected to the plot, item, or location (an owner, a holder, an invited co-narrator) always sees it too, whether or not it matches the rule. A rule with no complete clause yet is treated as "no rule set" rather than blocking the save — add at least one complete clause before it actually narrows anything.
+Picking **Only characters matching rules I set** opens the same clause-and-value query builder the Query Tool uses, against your chronicle's characters - "Clan is Tremere," "Sect is Sabbat," or several clauses combined with AND/OR. A live count shows how many characters currently match while you build it, plus a reminder that a character directly connected to the plot, item, or location (an owner, a holder, an invited co-narrator) always sees it too, whether or not it matches the rule. A rule with no complete clause yet is treated as "no rule set" rather than blocking the save - add at least one complete clause before it actually narrows anything.
 
-A plot entry (a reply on the Timeline) has its own, separate three-way choice: **Public** (everyone who can see the plot), **Storytellers and Narrators only** (private to you, other managers, and the entry's own author), or, Storyteller-only, **Directed to specific characters** — pick from a list of who can currently see the plot at all. A player composing their own entry only ever sees the first two choices.
+A plot entry (a reply on the Timeline) has its own, separate three-way choice: **Public** (everyone who can see the plot), **Storytellers and Narrators only** (private to you, other managers, and the entry's own author), or, Storyteller-only, **Directed to specific characters** - pick from a list of who can currently see the plot at all. A player composing their own entry only ever sees the first two choices.
 
 ## File Uploads
 
-Plots, items, and locations can each carry uploaded files — images and PDFs, 10 MB each. A plot or location may carry up to 20; an item carries exactly one. An upload follows its entity's own audience automatically: whoever can open the plot, item, or location can open what's attached to it, and no one else. The upload control is a **Files** section on the plot's own detail view (Storyteller Toolkit → Plots & Rumors) and on an item or location's detail pane (Items & Locations); a Storyteller, or a player plot's own owner, sees an upload button and a Remove button per file, everyone else who can see the entity sees the list and a download link only.
+Plots, items, and locations can each carry uploaded files - images and PDFs, 10 MB each. A plot or location may carry up to 20; an item carries exactly one. An upload follows its entity's own audience automatically: whoever can open the plot, item, or location can open what's attached to it, and no one else. The upload control is a **Files** section on the plot's own detail view (Storyteller Toolkit → Plots & Rumors) and on an item or location's detail pane (Items & Locations); a Storyteller, or a player plot's own owner, sees an upload button and a Remove button per file, everyone else who can see the entity sees the list and a download link only.
 
-These files never go through the WordPress media library, because a media library file is a public URL anyone can open regardless of anything this plugin decides. Instead each one is written to its own randomly-named folder under `wp-content/uploads/beyond-elysium-private/`, served only through a signed-in request that re-checks the owning entity's audience every time — never a direct link.
+These files never go through the WordPress media library, because a media library file is a public URL anyone can open regardless of anything this plugin decides. Instead each one is written to its own randomly-named folder under `wp-content/uploads/beyond-elysium-private/`, served only through a signed-in request that re-checks the owning entity's audience every time - never a direct link.
 
-**Read this if your host runs nginx.** The private folder ships with a `.htaccess` file that tells Apache to refuse every direct request to it. Apache honors that file automatically. **nginx does not read `.htaccess` at all**, so on an nginx host that rule does nothing by itself — what still stands between a stranger and a file is that its folder name is 32 random hex characters, never shown anywhere, in a path nobody has reason to guess. That is real protection, but it is unguessable, not locked the way it is on Apache. If your host runs nginx and you want the same server-level guarantee Apache gets for free, add a rule to your site's own nginx config denying direct requests under `uploads/beyond-elysium-private/`; ask your host if you're not sure which web server you're on.
+**Read this if your host runs nginx.** The private folder ships with a `.htaccess` file that tells Apache to refuse every direct request to it. Apache honors that file automatically. **nginx does not read `.htaccess` at all**, so on an nginx host that rule does nothing by itself - what still stands between a stranger and a file is that its folder name is 32 random hex characters, never shown anywhere, in a path nobody has reason to guess. That is real protection, but it is unguessable, not locked the way it is on Apache. If your host runs nginx and you want the same server-level guarantee Apache gets for free, add a rule to your site's own nginx config denying direct requests under `uploads/beyond-elysium-private/`; ask your host if you're not sure which web server you're on.
 
 ## Players Proposing Items
 
 A player can propose an item, location or rote for their own character from **My Chronicle → Propose an Item**. It arrives as an ordinary change in the Approval Queue rather than a separate list.
 
-Approving one writes the chronicle's catalog, so it needs **both** `be_manage_characters` (to work the queue at all) and `be_manage_world_objects` (to write the catalog). An HST and an AST hold both. A reviewer holding character rights but not catalog rights sees the row and can reject it, but not approve it — otherwise character-approval rights would quietly become catalog-write rights.
+Approving one writes the chronicle's catalog, so it needs **both** `be_manage_characters` (to work the queue at all) and `be_manage_world_objects` (to write the catalog). An HST and an AST hold both. A reviewer holding character rights but not catalog rights sees the row and can reject it, but not approve it - otherwise character-approval rights would quietly become catalog-write rights.
 
 Approval creates the catalog row and the character's connection to it in one transaction: the player asked for their character to have the thing, so a catalog entry without the connection would only be half of what was approved.
 
 ## REST API
 
-Every read and write in the plugin goes through its REST API (`be/v1` namespace), which every one of the widgets above is a thin client of — nothing in the admin or Storyteller UI does anything the API itself doesn't also expose. See the [REST API reference](rest-api.md) for the full endpoint list, parameters, and permission requirements.
+Every read and write in the plugin goes through its REST API (`be/v1` namespace), which every one of the widgets above is a thin client of - nothing in the admin or Storyteller UI does anything the API itself doesn't also expose. See the [REST API reference](rest-api.md) for the full endpoint list, parameters, and permission requirements.

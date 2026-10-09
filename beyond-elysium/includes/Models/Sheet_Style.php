@@ -28,8 +28,8 @@ class Sheet_Style {
 	/**
 	 * Create or replace a character's sheet style override.
 	 *
-	 * @param int   $character_id
-	 * @param array $data font_family, accent_color, background_color, text_color,
+	 * @param int                 $character_id
+	 * @param array<string,mixed> $data font_family, accent_color, background_color, text_color,
 	 *                     background_image_id, section_graphics.
 	 * @return bool
 	 */

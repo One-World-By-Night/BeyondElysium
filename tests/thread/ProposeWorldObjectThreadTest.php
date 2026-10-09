@@ -92,6 +92,20 @@ class ProposeWorldObjectThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 0.0, (float) $change['xp_cost'], 'An item is not an XP purchase.' );
 	}
 
+	public function test_a_proposal_started_from_a_book_entry_waits_in_the_queue(): void {
+		$response = $this->propose( [ 'change_data' => [
+			'object_type' => 'item',
+			'name'        => 'Broken Bottle',
+			'description' => 'A jagged, improvised weapon.',
+			'properties'  => [ 'bonus' => 1, 'item_type' => 'Melee', 'book_ref' => 'dark-epics:broken-bottle' ],
+		] ] );
+
+		$this->assertSame( 201, $response->get_status() );
+		$change = (array) $response->get_data();
+		$this->assertSame( 'pending', $change['status'] );
+		$this->assertSame( 'dark-epics:broken-bottle', $change['change_data']['properties']['book_ref'] );
+	}
+
 	public function test_an_invented_object_type_is_refused_on_the_way_in(): void {
 		$response = $this->propose( [ 'change_data' => [
 			'object_type' => 'starship',

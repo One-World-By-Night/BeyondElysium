@@ -67,7 +67,7 @@ class GlobalCatalogWritesThreadTest extends WP_UnitTestCase {
 
 	public function test_a_storyteller_cannot_fork_another_chronicle_through_the_global_route(): void {
 		wp_set_current_user( $this->hst );
-		// The query string must go through set_query_params().
+		// The query string is set with set_query_params().
 		$request = new WP_REST_Request( 'PUT', "/be/v1/schema-blocks/{$this->block}" );
 		$request->set_query_params( [ 'game_slug' => $this->other ] );
 		$request->set_header( 'Content-Type', 'application/json' );
@@ -138,7 +138,7 @@ class GlobalCatalogWritesThreadTest extends WP_UnitTestCase {
 		wp_set_current_user( $this->hst );
 		$before = \BeyondElysium\Models\Creature_Stack::find_by_slug( 'vampire' )->name;
 
-		// A PUT, not a POST: WordPress validates a POST route's required args before its permission callback.
+		// Sent as a PUT request.
 		$response = $this->dispatch( 'PUT', '/be/v1/creature-stacks/vampire', [ 'name' => 'Renamed For Everyone' ] );
 
 		$this->assertSame( 403, $response->get_status() );

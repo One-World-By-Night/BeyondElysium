@@ -15,7 +15,7 @@ My Chronicle → Edit tab, inside any section built as a trait list (Abilities, 
 - Held entries, one row each: the name, a dot or count display for anything held above zero, and, when set, a specialization in parentheses, a note, and the cost chosen for it. Some sections group their entries under heading and subheading rows instead of one flat list, depending on how that section is built.
 - **✎** on each row - opens the same modal used for adding one, for editing.
 - **+ Add** - opens a blank modal to add a new entry.
-- **Reorder** - Rituals only. Puts your held rituals in whatever order you like instead of the usual alphabetical list - see [Your Own Order](player-order.md).
+- **Reorder** - on Rituals, and on any other trait list your chronicle has set to let players choose their own order. Puts what you hold in whatever order you like instead of the usual alphabetical list - see [Your Own Order](player-order.md).
 
 ### The Add/Edit modal
 

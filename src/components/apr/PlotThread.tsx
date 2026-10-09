@@ -10,6 +10,7 @@ import {
 import { __, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
 import { pickMediaImage } from '../../lib/pickMediaImage';
+import { emailLogHref } from '../../lib/mailLog';
 import HtmlEditor from '../shared/HtmlEditor';
 import AudiencePicker from '../shared/AudiencePicker';
 import AssigneePicker from '../shared/AssigneePicker';
@@ -18,6 +19,7 @@ import SecretsPanel from '../shared/SecretsPanel';
 import WhatYouKnow from '../shared/WhatYouKnow';
 import type { FactionGoal, Plot } from '../../types/plot';
 import { EntryForm } from './EntryForm';
+import { highlightStMarkers } from '../../lib/highlightStMarkers';
 import './PlotThread.css';
 
 export interface PlotThreadProps {
@@ -35,6 +37,10 @@ export interface PlotThreadProps {
 	 * Opens one of the shared tools in the parent's modal.
 	 */
 	onOpenTool?: ( tool: 'allocate' | 'rumors' | 'connect' ) => void;
+	/**
+	 * Offers the link to the chronicle's Email Log for this plot, to a viewer who can open that tab.
+	 */
+	emailLogEnabled?: boolean;
 }
 
 interface AllocatorEntryData {
@@ -145,7 +151,9 @@ function renderEntryContent( content: string ) {
 	return (
 		<div
 			className="be-plot-thread__entry-content"
-			dangerouslySetInnerHTML={ { __html: content } }
+			dangerouslySetInnerHTML={ {
+				__html: highlightStMarkers( content ),
+			} }
 		/>
 	);
 }
@@ -159,6 +167,7 @@ export function PlotThread( {
 	onSelectChild,
 	expandedEnabled,
 	onOpenTool,
+	emailLogEnabled,
 }: PlotThreadProps ) {
 	const [ plot, setPlot ] = useState< Plot | null >( null );
 	const [ loading, setLoading ] = useState( true );
@@ -362,6 +371,17 @@ export function PlotThread( {
 								: __( 'Add a cover image…', 'beyond-elysium' ) }
 						</button>
 					) }
+					{ canManage && emailLogEnabled && (
+						<a
+							className="be-plot-thread__email-log"
+							href={ emailLogHref( 'plot', plot.id, gameSlug ) }
+						>
+							{ __(
+								'Who was emailed about this plot',
+								'beyond-elysium'
+							) }
+						</a>
+					) }
 				</div>
 			</header>
 
@@ -417,7 +437,7 @@ export function PlotThread( {
 						<div
 							className="be-plot-thread__prose"
 							dangerouslySetInnerHTML={ {
-								__html: plot.description,
+								__html: highlightStMarkers( plot.description ),
 							} }
 						/>
 					) : (

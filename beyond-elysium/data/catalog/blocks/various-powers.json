@@ -1,0 +1,18 @@
+{
+  "format": 1,
+  "slug": "various-powers",
+  "name": "Other Powers",
+  "kind": "block",
+  "section_type": "trait_list",
+  "provenance": {
+    "sources": [
+      "Grapevine 3.01's own `VariousClass` Powers list (GV-SOURCEMAP.md): a flat, note-only list with no catalog of its own, since a Various character's own powers are whatever a chronicle invents for it. No book entries to seed - every row is a chronicle's own custom one."
+    ],
+    "tool": "read directly, 2026-10-04"
+  },
+  "definition": {
+    "allow_custom": true,
+    "allow_multiples": true,
+    "items": []
+  }
+}

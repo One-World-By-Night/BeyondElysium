@@ -5,10 +5,12 @@ import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
 import { displayTrait } from '../../lib/displayTrait';
+import { highlightStMarkers } from '../../lib/highlightStMarkers';
 import { WORLD_OBJECT_SCHEMAS } from '../../types/world';
 import type { ItemEvent, LocationLink, WorldObject } from '../../types/world';
 import { ConnectionManager } from '../apr/ConnectionManager';
 import AttachmentList from '../shared/AttachmentList';
+import SecretsPanel from '../shared/SecretsPanel';
 import WhatYouKnow from '../shared/WhatYouKnow';
 import './WorldObjectCard.css';
 
@@ -161,7 +163,7 @@ export function WorldObjectCard( {
 				<div
 					className="be-world-card__description"
 					dangerouslySetInnerHTML={ {
-						__html: object.description,
+						__html: highlightStMarkers( object.description ),
 					} }
 				/>
 			) }
@@ -199,7 +201,9 @@ export function WorldObjectCard( {
 									// Rich text, sanitized server-side with wp_kses_post() on save.
 									<div
 										dangerouslySetInnerHTML={ {
-											__html: value as string,
+											__html: highlightStMarkers(
+												value as string
+											),
 										} }
 									/>
 								) : TEXT_TYPES.has( type ) ? (
@@ -231,7 +235,7 @@ export function WorldObjectCard( {
 					<strong>{ __( 'Limitations:', 'beyond-elysium' ) }</strong>{ ' ' }
 					<span
 						dangerouslySetInnerHTML={ {
-							__html: object.limitations,
+							__html: highlightStMarkers( object.limitations ),
 						} }
 					/>
 				</div>
@@ -279,15 +283,21 @@ export function WorldObjectCard( {
 				</>
 			) }
 
-			{ ! canManage &&
-				( object.object_type === 'item' ||
-					object.object_type === 'location' ) && (
+			{ ( object.object_type === 'item' ||
+				object.object_type === 'location' ) &&
+				( canManage ? (
+					<SecretsPanel
+						gameSlug={ gameSlug }
+						entityType={ object.object_type }
+						entityId={ objectId }
+					/>
+				) : (
 					<WhatYouKnow
 						gameSlug={ gameSlug }
 						entityType={ object.object_type }
 						entityId={ objectId }
 					/>
-				) }
+				) ) }
 
 			{ takesAttachments && (
 				<>
@@ -337,6 +347,31 @@ export function WorldObjectCard( {
 					) }
 				</>
 			) }
+			{ canManage &&
+				( object.object_type === 'item' ||
+					object.object_type === 'location' ) && (
+					<p className="be-world-card__print">
+						<button
+							type="button"
+							onClick={ () =>
+								window.open(
+									api
+										.reports( gameSlug )
+										.pdfUrl(
+											object.object_type === 'item'
+												? 'item-cards'
+												: 'location-cards',
+											{ objectId }
+										),
+									'_blank'
+								)
+							}
+						>
+							{ __( 'Print card', 'beyond-elysium' ) }
+						</button>
+					</p>
+				) }
+
 			{ canManage && object.object_type === 'item' && (
 				<ItemHistory gameSlug={ gameSlug } objectId={ objectId } />
 			) }

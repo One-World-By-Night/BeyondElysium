@@ -31,6 +31,7 @@ Every active, non-NPC character's own attention profile, chronicle-wide - not ti
 - **Delete session** - only allowed while the session has no attendance, NPC casting, or after-game report recorded yet; once any of those exists, change its date instead of deleting it.
 - **Reports**, shown only to a Storyteller with Character management access - every after-game report filed for this session, each with a **Mark read** button (or a **Read** badge once you have) and **Award report XP**, working exactly like Attendance XP but keyed off who filed a report rather than who signed in. You never edit a report's own words - see [After-Game Report](after-game-report.md).
 - **Cast NPCs**, shown only to a Storyteller with Character management access - cast any chronicle member (not staff only) to play any NPC for this session, with an optional note just for this game. Each casting lists who's playing what, a **Print brief** link, and a **Remove** button. See [NPC Casting Brief](npc-casting.md) for what the cast member reads.
+- **Recap** - Storyteller-only; players never see it. Key events, player decisions, a repeatable list of NPCs involved (each with an alive/injured/dead/unknown status), a cliffhanger, and prep for next time, with its own **Save recap**. A **Draft recap** button, disabled once every field already has something in it, asks an AI to fill in whatever's still empty from this session's own attendance and after-game reports - review before saving, same as every other draft tool.
 
 ## Common tasks
 
@@ -64,6 +65,12 @@ Every active, non-NPC character's own attention profile, chronicle-wide - not ti
 2. Click **Spotlight**.
 3. Start with the **Flagged** characters at the top.
 
+### Write a session's recap
+
+1. Open the session.
+2. Fill in **Recap**'s fields yourself, or click **Draft recap** first and review what comes back before saving.
+3. Click **Save recap**.
+
 ### Change a game night's date
 
 1. Delete the wrong session, if nothing has signed in yet, and create a new one with the right date - there is no separate "edit" form on this screen yet.
@@ -86,6 +93,7 @@ Every active, non-NPC character's own attention profile, chronicle-wide - not ti
 - **"This session already has attendance, an NPC casting, or a report recorded - change its date instead of deleting it."** Edit isn't available yet for the date itself; if the date is genuinely wrong, ask an administrator to correct it directly.
 - **"Attendance XP has already been awarded for this session." / "Report XP has already been awarded for this session."** Use **Award again anyway** if you deliberately want to run it a second time.
 - **"Failed to load the spotlight check."** Refresh and try again.
+- **"Failed to save the recap."** Try **Save recap** again.
 - **I don't see this tab at all.** You don't hold a Storyteller or Narrator role in the chronicle currently selected - switch chronicles, or ask an HST/AST to check your role.
 
 ## Related
@@ -97,5 +105,6 @@ Every active, non-NPC character's own attention profile, chronicle-wide - not ti
 - [Action & Rumor Settings](apr-settings.md)
 - [NPC Casting Brief](npc-casting.md)
 - [After-Game Report](after-game-report.md)
+- [AI Writing Assist](writing-assist.md)
 - [Roles](roles.md)
 - [Storyteller Guide](../st-guide.md#8-plots-actions-and-rumors)

@@ -6,8 +6,7 @@ Storyteller at all.
 
 ## Who can use this
 
-Every player's submitted changes go through this. Reviewing one - approving or rejecting it
-- is a Storyteller's job (HST and AST); nobody else reviews a change. What actually needs
+Every player's submitted changes go through this. Reviewing one - approving or rejecting it - is a Storyteller's job (HST and AST); nobody else reviews a change. What actually needs
 review, and what doesn't, is set by a Storyteller (on Approval Rules or directly on a schema
 block) or by a site administrator (the chronicle's own overall default).
 
@@ -61,7 +60,7 @@ Storyteller can never approve something different from what they saw.
 
 ### Check whether your change is still waiting
 
-1. Open [My Chronicle](my-chronicle.md) → **Dashboard** → **My Pending Changes**.
+1. Open [My Chronicle](my-chronicle.md) → **Dashboard** → **My Changes**.
 2. Still listed there means still waiting. Not listed, but not on the sheet either? Check that
    character's [Change History](sheet-history.md) for whether it was approved or rejected.
 
@@ -100,14 +99,13 @@ Storyteller can never approve something different from what they saw.
   the identical approval to every change you've checked - not a separate bulk mechanism with
   its own rules. The one exception is homebrew that still needs a price: it can't be
   approved in a batch, because nobody has said what it costs.
-- **Not everything goes through this queue at all.** Some things a Storyteller does directly
-  - an XP award, for instance - are recorded as already decided, since a Storyteller's own
+- **Not everything goes through this queue at all.** Some things a Storyteller does directly - an XP award, for instance - are recorded as already decided, since a Storyteller's own
   action already carries that authority.
 
 ## Troubleshooting
 
 - **My change didn't show up on my sheet.** It's most likely pending Storyteller review -
-  check [My Chronicle](my-chronicle.md) → Dashboard → My Pending Changes, or the character's
+  check [My Chronicle](my-chronicle.md) → Dashboard → My Changes, or the character's
   [Change History](sheet-history.md).
 - **Submit Changes won't click.** As a player, submitting would leave you with negative XP -
   reduce what you're buying, or ask a Storyteller for more, first.

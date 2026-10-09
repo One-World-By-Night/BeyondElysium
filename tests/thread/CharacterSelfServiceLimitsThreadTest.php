@@ -9,7 +9,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * A player's own-character update route accepted `status`, `narrator`, and `rp_notes`.
+ * A player's own-character update route does not accept `status`, `narrator` or `rp_notes`.
  */
 class CharacterSelfServiceLimitsThreadTest extends WP_UnitTestCase {
 

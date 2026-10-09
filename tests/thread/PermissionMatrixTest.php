@@ -132,7 +132,7 @@ class PermissionMatrixTest extends WP_UnitTestCase {
 			'foreign_st' => $this->foreign_st_id,
 			'admin'      => $this->admin_id,
 		];
-		// Same test both ways of detecting it: a game-scoped route names this fixture's own game_slug in its path.
+		// A game-scoped route names this fixture's own game_slug in its path.
 		$is_game_scoped = ( false !== strpos( $route, "/{$this->game_slug}/" ) );
 
 		foreach ( $personas as $persona => $user_id ) {
@@ -173,7 +173,7 @@ class PermissionMatrixTest extends WP_UnitTestCase {
 	}
 
 	// -------------------------------------------------------------------------
-	// 1a/1b: route enumeration - zero real unguarded routes.
+	// Route enumeration - zero real unguarded routes.
 	// -------------------------------------------------------------------------
 
 	public function test_every_be_route_has_a_permission_callback_except_the_wp_core_index(): void {
@@ -195,7 +195,7 @@ class PermissionMatrixTest extends WP_UnitTestCase {
 	}
 
 	// -------------------------------------------------------------------------
-	// 1g: object-level ownership - capability alone is not enough.
+	// Object-level ownership - capability alone is not enough.
 	// -------------------------------------------------------------------------
 
 	public function test_a_player_cannot_read_another_players_character(): void {
@@ -243,7 +243,7 @@ class PermissionMatrixTest extends WP_UnitTestCase {
 	}
 
 	// -------------------------------------------------------------------------
-	// 1f: field-level visibility, checked in raw responses.
+	// Field-level visibility, checked in raw responses.
 	// -------------------------------------------------------------------------
 
 	public function test_rp_notes_is_st_only_and_notes_st_markers_are_stripped_for_a_non_manager(): void {

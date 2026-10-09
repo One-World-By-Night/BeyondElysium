@@ -5,6 +5,40 @@ import { __, sprintf } from '@wordpress/i18n';
 import type { MyGame } from '../../types';
 import './ChronicleSwitcher.css';
 
+/**
+ * One chronicle's own label in the switcher dropdown: its name and the viewer's role there, "- Demo" where it is
+ * one, and a pending count where the chronicle isn't the one currently selected and has one.
+ */
+export function switcherOptionLabel(
+	game: MyGame,
+	gameSlug: string,
+	pendingCounts: Record< string, number > = {}
+): string {
+	const base = game.demo
+		? sprintf(
+				/* translators: 1: chronicle name, 2: the viewer's role there */
+				__( '%1$s (%2$s) - Demo', 'beyond-elysium' ),
+				game.name,
+				game.role
+			)
+		: sprintf(
+				/* translators: 1: chronicle name, 2: the viewer's role there */
+				__( '%1$s (%2$s)', 'beyond-elysium' ),
+				game.name,
+				game.role
+			);
+	const pending =
+		game.slug !== gameSlug ? ( pendingCounts[ game.slug ] ?? 0 ) : 0;
+	return pending > 0
+		? sprintf(
+				/* translators: 1: the chronicle's own label, 2: number of the player's own changes pending there */
+				__( '%1$s - %2$d pending', 'beyond-elysium' ),
+				base,
+				pending
+			)
+		: base;
+}
+
 export interface ChronicleSwitcherProps {
 	games: MyGame[];
 	gameSlug: string;
@@ -15,6 +49,11 @@ export interface ChronicleSwitcherProps {
 	 */
 	failed?: boolean;
 	onRetry?: () => void;
+	/**
+	 * How many of the player's own changes are pending in each chronicle, by slug - shown on any chronicle other than
+	 * the one currently selected.
+	 */
+	pendingCounts?: Record< string, number >;
 }
 
 export function ChronicleSwitcher( {
@@ -24,6 +63,7 @@ export function ChronicleSwitcher( {
 	loading,
 	failed = false,
 	onRetry,
+	pendingCounts = {},
 }: ChronicleSwitcherProps ) {
 	if ( loading ) {
 		return (
@@ -76,12 +116,7 @@ export function ChronicleSwitcher( {
 			>
 				{ games.map( ( g ) => (
 					<option key={ g.slug } value={ g.slug }>
-						{ sprintf(
-							/* translators: 1: chronicle name, 2: the viewer's role there */
-							__( '%1$s (%2$s)', 'beyond-elysium' ),
-							g.name,
-							g.role
-						) }
+						{ switcherOptionLabel( g, gameSlug, pendingCounts ) }
 					</option>
 				) ) }
 			</select>

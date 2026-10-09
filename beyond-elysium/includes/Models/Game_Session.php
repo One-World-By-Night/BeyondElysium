@@ -69,7 +69,7 @@ class Game_Session {
 	/**
 	 * Creates a new session. game_id and game_date are required.
 	 *
-	 * @param array $data
+	 * @param array<string,mixed> $data
 	 * @return int|false
 	 */
 	public static function create( array $data ) {
@@ -109,8 +109,8 @@ class Game_Session {
 	/**
 	 * Updates a session.
 	 *
-	 * @param int   $id
-	 * @param array $data
+	 * @param int                 $id
+	 * @param array<string,mixed> $data
 	 * @return bool
 	 */
 	public static function update( int $id, array $data ): bool {
@@ -128,6 +128,12 @@ class Game_Session {
 		if ( array_key_exists( 'downtime_extensions', $data ) ) {
 			$update['downtime_extensions'] = self::encode_json_field( $data['downtime_extensions'] );
 			if ( $update['downtime_extensions'] === false ) {
+				return false;
+			}
+		}
+		if ( array_key_exists( 'recap', $data ) ) {
+			$update['recap'] = self::encode_json_field( $data['recap'] );
+			if ( $update['recap'] === false ) {
 				return false;
 			}
 		}
@@ -168,6 +174,8 @@ class Game_Session {
 
 	/**
 	 * Every datetime-typed column besides created_at/updated_at, shared by create() and update().
+	 *
+	 * @return array<int,string>
 	 */
 	private static function datetime_fields(): array {
 		return [
@@ -209,6 +217,18 @@ class Game_Session {
 				$decoded = null;
 			}
 			$row->downtime_extensions = $decoded;
+		}
+		if ( property_exists( $row, 'recap' ) && $row->recap !== null ) {
+			$decoded = json_decode( $row->recap, true );
+			if ( json_last_error() !== JSON_ERROR_NONE ) {
+				$id = property_exists( $row, 'id' ) ? (int) $row->id : 0;
+				error_log( sprintf(
+					'Beyond Elysium: game session id %d has corrupt recap JSON; treating as null.',
+					$id
+				) );
+				$decoded = null;
+			}
+			$row->recap = $decoded;
 		}
 		return $row;
 	}

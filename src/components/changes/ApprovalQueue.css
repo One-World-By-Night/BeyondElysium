@@ -25,12 +25,33 @@
 	max-width: 22rem;
 	font-size: 0.85rem;
 	color: var(--be-gold-5);
+	white-space: pre-line;
 }
 
 .be-approval-queue__request-note {
 	max-width: 22rem;
 	margin: 0.25rem 0 0;
 	font-size: 0.85rem;
+	color: var(--be-gray-6);
+	white-space: pre-line;
+}
+
+.be-approval-queue__row--visit {
+	background: var(--be-blue-6);
+}
+
+.be-approval-queue__forwarded-from {
+	margin: 0 0 0.25rem;
+	font-size: 0.8rem;
+	font-weight: 600;
+	color: var(--be-blue-5);
+}
+
+.be-approval-queue__host-note {
+	max-width: 22rem;
+	margin: 0.25rem 0 0;
+	font-size: 0.85rem;
+	font-style: italic;
 	color: var(--be-gray-6);
 	white-space: pre-line;
 }
@@ -64,6 +85,25 @@
 .be-approval-queue__price-total {
 	font-size: 0.85rem;
 	color: var(--be-gray-6);
+}
+
+/* A log_knowledge change waiting for its reviewer to name which secret it belongs to. */
+.be-approval-queue__secret-choice {
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+	margin: 0.35rem 0;
+	padding: 0.5rem;
+	border: 1px solid var(--be-gray-20);
+	border-radius: 4px;
+}
+
+.be-approval-queue__secret-choice-existing,
+.be-approval-queue__secret-choice-new {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.35rem;
+	margin-left: 1.25rem;
 }
 
 .be-approval-queue__error {

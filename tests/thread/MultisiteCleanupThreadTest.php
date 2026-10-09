@@ -34,7 +34,7 @@ class MultisiteCleanupThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * A new table added to the schema must be dropped with a site without anyone remembering.
+	 * Every table in the schema is dropped with a site.
 	 */
 	public function test_the_table_list_is_derived_not_hand_maintained(): void {
 		global $wpdb;

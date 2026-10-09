@@ -27,8 +27,7 @@ and in an export. This works inside:
 - An item's, location's, or rote's description or other free-text properties.
 - A boon's Terms.
 
-A Storyteller sees the marked text in full, wherever they'd normally see the field at all -
-the same view a player gets, just without anything stripped out. Catalog search and report
+A Storyteller sees the marked text in full, wherever they'd normally see the field at all - the same view a player gets, just without anything stripped out - and highlighted in place, so the part a player never receives is easy to spot. That holds on a character's Background and Notes, in plot descriptions and entries, in a secret's text, and on an item or location card. Catalog search and report
 conditions all run on the same stripped text a player sees, so marked text can't be found
 through them either, by anyone who isn't a Storyteller.
 

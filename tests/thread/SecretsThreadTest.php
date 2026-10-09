@@ -113,7 +113,7 @@ class SecretsThreadTest extends WP_UnitTestCase {
 		// The revealed character's own player, via My Secrets.
 		$player_of_revealed = Character::find( $revealed_id )->wp_user_id;
 		wp_set_current_user( $player_of_revealed );
-		$mine = $this->send( 'GET', '/my/secrets' )->get_data();
+		$mine = $this->send( 'GET', '/my/secrets' )->get_data()['known'];
 		$this->assertCount( 1, $mine );
 		$this->assertSame( 'A Secret', $mine[0]['title'] );
 	}
@@ -133,12 +133,12 @@ class SecretsThreadTest extends WP_UnitTestCase {
 
 		$wp_user_id = Character::find( $character_id )->wp_user_id;
 		wp_set_current_user( $wp_user_id );
-		$this->assertSame( [], $this->send( 'GET', '/my/secrets' )->get_data() );
+		$this->assertSame( [], $this->send( 'GET', '/my/secrets' )->get_data()['known'] );
 
 		$now = current_time( 'mysql' );
 		Release_Batch::mark_released( $batch_id, $now, $now );
 
-		$mine = $this->send( 'GET', '/my/secrets' )->get_data();
+		$mine = $this->send( 'GET', '/my/secrets' )->get_data()['known'];
 		$this->assertCount( 1, $mine );
 	}
 
@@ -184,7 +184,7 @@ class SecretsThreadTest extends WP_UnitTestCase {
 
 		$wp_user_id = Character::find( $character_id )->wp_user_id;
 		wp_set_current_user( $wp_user_id );
-		$mine = $this->send( 'GET', '/my/secrets' )->get_data();
+		$mine = $this->send( 'GET', '/my/secrets' )->get_data()['known'];
 
 		$this->assertCount( 1, $mine );
 		$this->assertNull( $mine[0]['entity_name'] );
@@ -204,6 +204,62 @@ class SecretsThreadTest extends WP_UnitTestCase {
 	// -------------------------------------------------------------------------
 	// A player can't write or reveal.
 	// -------------------------------------------------------------------------
+
+	public function test_a_storyteller_can_attach_a_secret_to_a_player_character(): void {
+		[ , $character_id ] = $this->make_player();
+
+		wp_set_current_user( $this->storyteller_id );
+		$response = $this->send( 'POST', '/secrets', [
+			'entity_type' => 'character', 'entity_id' => $character_id, 'title' => 'A character secret',
+		] );
+
+		$this->assertSame( 201, $response->get_status() );
+		$this->assertSame( 'character', $response->get_data()->entity_type );
+	}
+
+	public function test_a_character_secret_is_refused_against_an_npc_id(): void {
+		$npc_id = (int) Character::create( [
+			'name' => 'An NPC', 'stack_slug' => 'vampire', 'owner_type' => 'chronicle',
+			'owner_slug' => $this->slug, 'is_npc' => 1, 'created_by' => $this->storyteller_id,
+		] );
+
+		wp_set_current_user( $this->storyteller_id );
+		$response = $this->send( 'POST', '/secrets', [
+			'entity_type' => 'character', 'entity_id' => $npc_id, 'title' => 'Wrong kind',
+		] );
+
+		$this->assertSame( 400, $response->get_status() );
+	}
+
+	public function test_a_storyteller_can_create_a_secret_attached_to_nothing(): void {
+		wp_set_current_user( $this->storyteller_id );
+		$response = $this->send( 'POST', '/secrets', [
+			'title' => 'A loose thread',
+		] );
+
+		$this->assertSame( 201, $response->get_status() );
+		$data = $response->get_data();
+		$this->assertNull( $data->entity_type );
+		$this->assertNull( $data->entity_id );
+		$this->assertSame( 'A loose thread', $data->title );
+	}
+
+	public function test_an_unattached_secret_is_refused_with_no_title(): void {
+		wp_set_current_user( $this->storyteller_id );
+		$response = $this->send( 'POST', '/secrets', [] );
+
+		$this->assertSame( 400, $response->get_status() );
+	}
+
+	public function test_an_unattached_secret_still_lists_in_get_all(): void {
+		wp_set_current_user( $this->storyteller_id );
+		$this->send( 'POST', '/secrets', [ 'title' => 'A loose thread' ] );
+
+		$response = $this->send( 'GET', '/secrets/all' );
+		$titles   = array_map( static fn( $s ) => $s->title, $response->get_data() );
+
+		$this->assertContains( 'A loose thread', $titles );
+	}
 
 	public function test_a_player_cannot_create_a_secret(): void {
 		[ $player_id ] = $this->make_player();
@@ -240,7 +296,7 @@ class SecretsThreadTest extends WP_UnitTestCase {
 
 		$wp_user_id = Character::find( $character_id )->wp_user_id;
 		wp_set_current_user( $wp_user_id );
-		$mine = $this->send( 'GET', '/my/secrets' )->get_data();
+		$mine = $this->send( 'GET', '/my/secrets' )->get_data()['known'];
 
 		$this->assertStringNotContainsString( 'lying about the alibi', $mine[0]['content'] );
 		$this->assertStringContainsString( 'The Prince did it.', $mine[0]['content'] );

@@ -18,7 +18,7 @@ Character Sheet → pick **View history** in the actions list and click **Go**. 
   - A plain description of the change, such as "Celerity 2 → 3," "Added Underworld Lore," or
     "+5 XP (session attendance)."
   - Its **XP** cost, when the change has one. A homebrew purchase still waiting for a price reads **Price set on approval**.
-  - A **Catalog update** line, one per character, when an upgrade moves a site onto each creature type's own lists. Open **Matched entries** under it to see each custom entry that became a catalog item, as "what it was → what it is". See [Moving an Older Site to the Per-Creature Lists](../admin-guide.md#moving-an-older-site-to-the-per-creature-lists).
+  - A **Catalog update** line, one per character, when an upgrade moves a site onto each creature type's own lists. Open **Matched entries** under it to see each custom entry that became a catalog item, as "what it was → what it is". An upgrade that moves a Blood Magic pick out of Disciplines says how many repeated rows it dropped because the sheet already held them, and lists each one, with any pick it kept that disagrees with a held row on level. See [Moving an Older Site to the Per-Creature Lists](../admin-guide.md#moving-an-older-site-to-the-per-creature-lists).
   - When it was submitted, and, once reviewed, when.
   - The submitter's own note, if there is one.
   - The Storyteller's note, labeled "Storyteller: ...," if there is one - kept separate from

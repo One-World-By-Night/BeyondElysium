@@ -156,11 +156,20 @@ class ChroniclePlayersInvitesThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 'invalid_email', $response->get_data()['code'] );
 	}
 
-	public function test_a_chronicle_not_linked_to_accessschema_has_no_invites(): void {
+	public function test_a_chronicle_not_linked_to_accessschema_still_has_invites(): void {
 		update_option( 'be_asc_enabled', false );
 
-		$this->assertSame( 404, $this->dispatch( $this->hst_id, 'POST', '/players/invites', [ 'email' => 'x@example.test', 'character_ids' => [] ] )->get_status() );
-		$this->assertSame( 404, $this->dispatch( $this->hst_id, 'GET', '/players/invites' )->get_status() );
+		$this->assertSame( 201, $this->dispatch( $this->hst_id, 'POST', '/players/invites', [ 'email' => 'x@example.test', 'character_ids' => [] ] )->get_status() );
+		$this->assertSame( 200, $this->dispatch( $this->hst_id, 'GET', '/players/invites' )->get_status() );
+	}
+
+	public function test_the_invite_link_carries_sso_only_when_the_chronicle_is_accessschema_linked(): void {
+		$this->dispatch( $this->hst_id, 'POST', '/players/invites', [ 'email' => 'linked@example.test', 'character_ids' => [], 'send_email' => true ] );
+		$this->assertStringContainsString( 'auth=sso', tests_retrieve_phpmailer_instance()->get_sent( 0 )->body );
+
+		update_option( 'be_asc_enabled', false );
+		$this->dispatch( $this->hst_id, 'POST', '/players/invites', [ 'email' => 'unlinked@example.test', 'character_ids' => [], 'send_email' => true ] );
+		$this->assertStringNotContainsString( 'auth=sso', tests_retrieve_phpmailer_instance()->get_sent( 1 )->body );
 	}
 
 	public function test_a_pending_email_set_from_the_characters_list_waits_as_an_invite(): void {

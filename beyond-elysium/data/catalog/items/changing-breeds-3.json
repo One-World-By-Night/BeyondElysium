@@ -1,0 +1,189 @@
+{
+  "format": 1,
+  "kind": "item_catalog",
+  "slug": "changing-breeds-3",
+  "name": "Mind's Eye Theatre: Changing Breeds III",
+  "book": "Mind's Eye Theatre: Changing Breeds III",
+  "code": "WW05034",
+  "provenance": {
+    "sources": [
+      "Mind's Eye Theatre: Changing Breeds III (WW05034) covers only two breeds in full: Ananasi's own \"Fylfot\" section (pp.87-91) and the Ratkin's own \"Knick-Knacks, Doohickeys and Other Ratkin Fetishes\" section (pp.195-197). Neither chapter has a Talens section.",
+      "Every entry read directly from the book's own page images (not OCR), per reference-wod-scan-ocr-lessons. This copy's own printed page numbers are plain, legible Arabic numerals."
+    ],
+    "tool": "read directly, 2026-10-04"
+  },
+  "notes": [
+    "Fetish Trait Cost -> properties.level, Gnosis -> properties.tempers (one entry, {name:\"Gnosis\",count:N}), Spirit/Spiritual Affinity -> properties.item_subtype, Melee Bonus Traits (weapon-shaped fetishes only) -> properties.bonus, the full prose description -> properties.powers, per the design's own fetish mapping rules.",
+    "This book labels the Spirit Affinity field \"Spiritual Affinity\" throughout the Ananasi chapter - the same property, worded differently; mapped to item_subtype exactly like every other book's \"Spirit Affinity\".",
+    "None of the five Ratkin fetishes print a Spirit/Spiritual Affinity line at all, unlike every Ananasi Fylfot in the same book - item_subtype left unset on all five rather than invented.",
+    "Circular Saw Launcher prints \"Damage: Aggravated\" alongside its Bonus Traits - a damage-type statement this catalog's fetish shape has no field for (damage_amount/damage_type belong to the mundane-gear mapping rules, not the fetish ones) - kept in `powers`' own prose rather than dropped.",
+    "This PDF's own text layer intermittently mangles \"Cost\" into separated letters (\"Fetish Trait C o s t\") on two entries (Piccola's Picture Frame, Skeleton Closet Key) - invisible to a plain text search for \"Fetish Trait Cost\", harmless here since every entry was read from the real page image rather than extracted text."
+  ],
+  "items": [
+    {
+      "key": "the-armoire-of-abiele",
+      "name": "The Armoire of Abiele",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "item_subtype": "Weaver Spirits",
+        "level": 3,
+        "tempers": [ { "name": "Gnosis", "count": 2 } ],
+        "powers": "Abiele Dumont, a 19th-century fashion designer, created this classic French armoire to ensure she was always appropriately dressed in the latest fashion and had everything she would ever need to wear. Whispering a simple request into the keyhole activates the Fylfot, and the owner may then open the armoire doors to find the perfect outfit. The clothing is always made of finely woven silk, fits perfectly, and is appropriate for male or female attire - exactly like having one's own private Hollywood dresser. The armoire itself is a massive piece of ornate furniture standing nearly seven feet tall, four feet wide and two and a half feet deep, constructed of the richest, deepest mahogany, and is cumbersome and quite heavy."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds III", "code": "WW05034", "page": 87 }
+    },
+    {
+      "key": "arnochs-bait",
+      "name": "Arnoch's Bait",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "item_subtype": "Hunting, Entrancement",
+        "level": 3,
+        "tempers": [ { "name": "Gnosis", "count": 3 } ],
+        "powers": "Arnoch the spider was always hungry and too impatient to hunt, so he created the right bait to lure his food to him. This enchanted tin looks like an antique snuff tin and allows the user to withdraw a small piece of bait that looks and tastes like whatever the target enjoys. To activate, the Ananasi places the item on a solid surface in front of himself and asks for anything he can see to come and pick it up; the target loses all control of their actions and must come pick up the bait. The Ananasi must spend the required Gnosis to activate it; the target makes a Static Test against Willpower to resist, with a tie allowing a retest and a Willpower expenditure canceling it outright. Only one piece of bait can be drawn from the tin per day; a new piece takes a full 24 hours to create."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds III", "code": "WW05034", "page": 88 }
+    },
+    {
+      "key": "caens-lace-kerchief",
+      "name": "Caen's Lace Kerchief",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "item_subtype": "Healing, Camouflage",
+        "level": 2,
+        "tempers": [ { "name": "Gnosis", "count": 4 } ],
+        "powers": "A Welsh dandy bound a spirit into an openwork lace handkerchief to hide his feeding, since Ananasi cannot heal the wounds they inflict by feeding on humans. Placed over the skin of a victim before biting through the lace's holes, it leaves the puncture wound healed almost instantly rather than marked; if placed on an already-opened wound, the handkerchief becomes bloodstained instead. The character must attack through the lace - if he breaks the lace or tears the fabric, the Fylfot loses its enchantment until repaired, and if the Ananasi fails a Simple Test to bite through the open spaces, the Fylfot does not work and the lace is damaged (half damage on a tie). Any attack made through the lace heals when the kerchief is removed, leaving no visible wound even though fangs still cause aggravated damage underneath."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds III", "code": "WW05034", "page": 88 }
+    },
+    {
+      "key": "the-ruby-eye-of-tomas",
+      "name": "The Ruby Eye of Tomas",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "item_subtype": "Wisdom, Knowledge, Vision",
+        "level": 3,
+        "tempers": [ { "name": "Gnosis", "count": 4 } ],
+        "powers": "This smooth-cut ruby, about half an inch in diameter and set into rings, necklaces, brooches, scepters or even reportedly a laser, grants limited clairvoyant vision - seeing through the gem is like viewing the world from inside a glass bubble in a 360-degree arc, tinted red, with no sound carried through it. The owner must stare into a mirror to activate the fetish, which then lets him link with the gem and look around any given area within a mile as if he were in the room himself. Many attempts to recreate this Fylfot have failed; only one genuine Ruby Eye is proven to have ever existed, though fakes circulate among collectors of enchanted items."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds III", "code": "WW05034", "page": 89 }
+    },
+    {
+      "key": "the-music-box-of-chien-tu",
+      "name": "The Music Box of Chien-Tu",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "item_subtype": "Calm, Peace, Beauty",
+        "level": 3,
+        "tempers": [ { "name": "Gnosis", "count": 5 } ],
+        "powers": "Chien-Tu Phillips created this Fylfot as his way of ensuring his sanity after growing up in a home filled with constant arguing. This small magical music box produces a calming, soothing song that fascinates anyone who hears it; when opened, all characters within a 15-foot radius must make a Static Willpower test or fall into a state of calm and relaxation, ceasing all hostilities while under its spell. It is powerful enough to quell the Rage of another Ovid or even a crazed Garou - against a Raging creature the Ananasi performs a Social Challenge, and success forces a Willpower test to see if the target falls under the music's effect, with a tie letting the Ananasi spend an additional Gnosis Trait for a retest."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds III", "code": "WW05034", "page": 89 }
+    },
+    {
+      "key": "piccolas-picture-frame",
+      "name": "Piccola's Picture Frame",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "item_subtype": "Mistrust, Wisdom, Love",
+        "level": 4,
+        "tempers": [ { "name": "Gnosis", "count": 6 } ],
+        "powers": "Rena Piccola, an idealistic and insanely jealous Ananasi, created this large wall frame to keep track of her lover at all times. When a well-crafted and accurate image of a single person is placed in the frame and hung on a wall, the owner may stare at it while concentrating on the person pictured, triggering a Gnosis versus Willpower challenge (a Simple Test comparing total Traits) between the Ananasi and the target; the Ananasi winning means the target is observed, the target winning means the Ananasi fails and knows it, and a tie is resolved by comparing each party's Traits directly. On success the werespider gets a mental image of where the pictured character is and what they are doing, including a name if the location has one, though the frame carries no sound and only a vague impression of any conversation. If more than one person appears in the image, the Fylfot simply does not work."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds III", "code": "WW05034", "page": 90 }
+    },
+    {
+      "key": "skeleton-closet-key",
+      "name": "Skeleton Closet Key",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "item_subtype": "Wisdom, Secrets, Hatred",
+        "level": 4,
+        "tempers": [ { "name": "Gnosis", "count": 6 } ],
+        "powers": "This ordinary-looking old key of cured bone, allegedly around since the dawn of man, is the key to discovering the skeletons hidden in everybody's closet. Once an Ananasi bonds with it after two weeks of handling, anyone who subsequently holds the key is compelled to reveal a secret - the one thing they hold most closely, if the owner doesn't ask something more specific. The holder resists across three Simple Tests at a difficulty equal to the Ananasi owner's Gnosis: losing all three bares their deepest, darkest secret (Chantry locations, Garou battle plans, caern weaknesses and the like); losing only two tells a lesser but still damaging secret; losing just one surfaces minor gossip; winning all three resists the key's magic entirely. Many Anansi know of this Fylfot and avoid touching it; spending a Willpower Trait (up to two per game) permits one retest per Trait spent against its effect."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds III", "code": "WW05034", "page": 90 }
+    },
+    {
+      "key": "the-watch-of-second-sight",
+      "name": "The Watch of Second Sight",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "item_subtype": "Paradox, Vision",
+        "level": 5,
+        "tempers": [ { "name": "Gnosis", "count": 8 } ],
+        "powers": "This old pocketwatch with an elaborate brass inlay resembles an ordinary timepiece but traps a Paradox-spirit inside, rumored to allow the walls of reality to break down. Activating its inner workings lets only the watch's owner view recent events in the area, granting five minutes of vision. It can be a mystery-busting tool of the first order, and Storytellers are cautioned about how it enters their chronicles; the watch also keeps perfect time."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds III", "code": "WW05034", "page": 91 }
+    },
+    {
+      "key": "pipes-of-the-swarm",
+      "name": "Pipes of the Swarm",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "level": 2,
+        "tempers": [ { "name": "Gnosis", "count": 4 } ],
+        "powers": "Activating this fetish requires the expenditure of a Gnosis Trait. Its effects are identical to the Rite of the Swarm, summoning a swarm of rats and rat-spirits, save that the Ratkin need not give the spirits any justification."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds III", "code": "WW05034", "page": 195 }
+    },
+    {
+      "key": "circular-saw-launcher",
+      "name": "Circular Saw Launcher",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "level": 2,
+        "tempers": [ { "name": "Gnosis", "count": 5 } ],
+        "bonus": 2,
+        "powers": "One of the more popular weapons originally designed by the Ratkin Engineers, this device consists of plywood, a gun stock (or reasonable facsimile), several industrial-strength rubber bands, and a circular saw blade. When activated, it fires circular saw blades, propelling them in a method similar to the Gift Shadow Throw, and any damage it deals is aggravated."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds III", "code": "WW05034", "page": 196 }
+    },
+    {
+      "key": "rat-mask",
+      "name": "Rat Mask",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "level": 3,
+        "tempers": [ { "name": "Gnosis", "count": 6 } ],
+        "powers": "These valuable fetishes can only be used by Ratkin. When created, each mask - designed as a parody of a human or other creature - is given an archetypal name and a two- or three-word description of the type of person it represents, such as the Slack-jawed Yokel, the Hateful Neo-Nazi, or the Naive Schoolteacher. When activated, a Ratkin wearing the mask can pass herself off as that archetype so long as she can manage at least a minimally sufficient impersonation, and none will question her identity - except anyone with supernatural insight (vampiric Auspex, Spirit Sight and the like), who may make a Mental Challenge to see past the illusion if actively looking for the wearer's true identity."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds III", "code": "WW05034", "page": 196 }
+    },
+    {
+      "key": "nezumi-kite",
+      "name": "Nezumi Kite",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "level": 4,
+        "tempers": [ { "name": "Gnosis", "count": 7 } ],
+        "powers": "Originally developed by Japanese Ratkin, this item is invaluable for secret reconnaissance and a favored piece of equipment for Ratkin assassins lucky enough to possess one. It looks like nothing more than a bulky one-man kite until it takes to the air at night, when night-spirits cloak it from sight with a variant of the Ratkin Gift Cloak of Shadows and air-spirits keep it aloft no matter how inexperienced its flier. The kite is totally silent, can land anywhere, and can carry one Homid or three Rodens-form Ratkin - but it travels only as fast as a gentle breeze and cannot be used during the day."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds III", "code": "WW05034", "page": 196 }
+    },
+    {
+      "key": "mystery-machine",
+      "name": "Mystery Machine",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "level": 5,
+        "tempers": [ { "name": "Gnosis", "count": 8 } ],
+        "powers": "These extremely rare fetishes were said to have originally been created by a Ratkin Shadow Seer who took the vehicle from a group of meddling kids who fancied themselves detectives of the supernatural. These vehicles get horrible gas mileage, look run-down and battered, and aren't any faster than an ordinary van of their type, but they are nonetheless the most valuable fetish any Ratkin could ever own, and Ratkin have been known to kill for one. Essentially a transportable Crash Space, it can run off pure Gnosis if necessary (one Gnosis per day of travel), and when activated it can travel with the effects of the Gift Silent Running up to three times per day, making tracking difficult if not impossible. The van is fully visible in the Umbra and can even be taken into it should the driver flash the high-beams - doing so while already in the Umbra brings the van back into the physical world. Activating the fetish gives the driver the Charm Ant Sense while driving in the Umbra, preventing him from getting lost. Two or three humans can sleep comfortably in the back, and it can fit plenty of rat-form wererats."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds III", "code": "WW05034", "page": 196 }
+    }
+  ]
+}

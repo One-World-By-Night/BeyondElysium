@@ -100,7 +100,7 @@ class Trait_Grouping {
 	 *
 	 * @param array<int,array{name:string}> $data       Held trait rows, each with at least a `name`.
 	 * @param object                        $definition Decoded trait_list block definition (`items` catalog).
-	 * @return array<int,array{group:string,subgroups:array<int,array{subgroup:?string,items:array}>}>|null
+	 * @return array<int,array{group:string,subgroups:array<int,array{subgroup:?string,items:array<int,array<string,mixed>>}>}>|null
 	 */
 	public static function group_traits_by_field( array $data, object $definition ): ?array {
 		$items = (array) ( $definition->items ?? [] );
@@ -178,7 +178,7 @@ class Trait_Grouping {
 	 *
 	 * @param array<int,array{name:string}> $data
 	 * @param object                        $definition
-	 * @return array<int,array{label:?string,traits:array}>
+	 * @return array<int,array{label:?string,traits:array<int,array<string,mixed>>}>
 	 */
 	public static function group_by_category( array $data, object $definition ): array {
 		$categories = (array) ( $definition->categories ?? [] );

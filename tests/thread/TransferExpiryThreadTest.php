@@ -47,16 +47,16 @@ class TransferExpiryThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 'offered', Transfer::find( $fresh )->state );
 	}
 
-	public function test_a_pending_transfer_expires_along_with_its_code(): void {
-		$export = Character_Exporter::export( $this->character, [ 'as_transfer' => true ] );
-		$stale  = $this->row( 'outbound', 'pending', 61, [ 'attestation_id' => $export['attestation_id'] ] );
-		$abroad = $this->row( 'outbound', 'abroad', 400 );
+	public function test_an_offered_outbound_transfer_expires_along_with_its_code(): void {
+		$export  = Character_Exporter::export( $this->character, [ 'as_transfer' => true ] );
+		$stale   = $this->row( 'outbound', 'offered', 61, [ 'attestation_id' => $export['attestation_id'] ] );
+		$visiting = $this->row( 'outbound', 'visiting', 400 );
 
 		Maintenance::run();
 
 		$this->assertSame( 'expired', Transfer::find( $stale )->state );
 		$this->assertNotNull( Attestation::find( (int) $export['attestation_id'] )->revoked_at );
-		$this->assertSame( 'abroad', Transfer::find( $abroad )->state, 'a character already accepted somewhere is travelling, not stale' );
+		$this->assertSame( 'visiting', Transfer::find( $visiting )->state, 'a character already accepted somewhere is active, not stale' );
 	}
 
 	public function test_a_transfer_code_lasts_sixty_days_and_a_printed_sheets_code_never_expires(): void {

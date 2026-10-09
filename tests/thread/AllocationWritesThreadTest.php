@@ -57,7 +57,7 @@ class AllocationWritesThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Fails every insert into one table, as a lost connection or lock timeout would.
+	 * Fails every insert into one table.
 	 */
 	public function break_inserts( string $query ): string {
 		global $wpdb;

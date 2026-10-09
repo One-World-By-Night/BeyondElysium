@@ -15,7 +15,7 @@ Open the character's Sheet, pick **Customize appearance** in the actions list, a
 ## The screen
 
 - **Font** - a dropdown of preset fonts, or Default.
-- **Accent color** / **Background color** / **Text color** - a color picker each.
+- **Accent color** / **Background color** / **Text color** - a color picker each. The sheet follows the color while you drag in the picker and saves it once, when you finish choosing. A background color paints the whole sheet - the summary row, the action picker and the dots too - and if you haven't chosen a text color, a black or white one is picked to read on it. When the colors you've chosen are hard to read together, a note says so.
 - **Background image** - **Choose…** (or **Change…**, once one is set) opens your site's media library; the chosen image previews right below.
 - **Section graphics** - one row per section on the sheet, each with its own **Choose…** / **Change…** button for a small image behind that section.
 - **Reset to default** - clears every one of the above at once, immediately, with no confirmation.
@@ -27,7 +27,7 @@ Every control here saves the moment you change it - there's no separate Save but
 ### Change your sheet's font or colors
 
 1. Open the character's Sheet, pick **Customize appearance**, and click **Go**.
-2. Pick a font, or a color from any of the three pickers - each saves immediately.
+2. Pick a font, or a color from any of the three pickers - the font saves immediately, a color saves when you finish choosing it.
 
 ### Set a background image
 

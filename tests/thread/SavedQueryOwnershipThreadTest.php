@@ -9,8 +9,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * Every query-tool user in a chronicle saw every other user's saved queries and "Most Recent Search", and could
- * overwrite or delete any of them.
+ * A query-tool user sees the shared saved queries but not another user's "Most Recent Search", and manages their own
+ * saved queries while an HST manages everyone's.
  */
 class SavedQueryOwnershipThreadTest extends WP_UnitTestCase {
 

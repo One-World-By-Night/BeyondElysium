@@ -1,11 +1,15 @@
 /**
- * The player-facing fixed page: a chronicle switcher plus tabs for Characters, Sheet, Edit, and My Plots & Rumors.
+ * The player-facing fixed page: a chronicle switcher plus a tab for each thing a player does in a chronicle
+ * (Dashboard, Characters, Sheet, Edit, My Plots & Rumors, Who's Who, What I Know, After-Game Report, Reports, Propose
+ * an Item, Propose a Group), and the Send a Grapevine File panel.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import type { CSSProperties } from 'react';
 import { useChronicleSwitcher } from '../../lib/useChronicleSwitcher';
 import { ChronicleSwitcher } from '../shared/ChronicleSwitcher';
+import { JoinChronicle } from '../game/JoinChronicle';
+import DemoBanner, { DemoBannerShownContext } from '../shared/DemoBanner';
 import { TabStrip } from '../shared/TabStrip';
 import { CharacterList } from '../character/CharacterList';
 import { CharacterSheet } from '../character/CharacterSheet';
@@ -23,6 +27,7 @@ import ProposeFaction from '../faction/ProposeFaction';
 import {
 	newCharacterUrl,
 	playerTabUrl,
+	readNewNpcFromUrl,
 	readTabFromUrl,
 	writeTabToUrl,
 	PLAYER_TABS,
@@ -51,6 +56,7 @@ export function MyChroniclePage() {
 		gamesFailed,
 		retryGames,
 		accentColor,
+		pendingCounts,
 	} = useChronicleSwitcher();
 	const accentStyle: CSSProperties | undefined = accentColor
 		? ( { '--be-st-accent': accentColor } as CSSProperties )
@@ -177,7 +183,13 @@ export function MyChroniclePage() {
 				loading={ loadingGames }
 				failed={ gamesFailed }
 				onRetry={ retryGames }
+				pendingCounts={ pendingCounts }
 			/>
+			{ gameSlug && <DemoBanner gameSlug={ gameSlug } /> }
+
+			{ ! loadingGames && (
+				<JoinChronicle hasMemberships={ games.length > 0 } />
+			) }
 
 			{ ! loadingGames &&
 				games.length === 0 &&
@@ -202,7 +214,7 @@ export function MyChroniclePage() {
 				) }
 
 			{ gameSlug && capabilitiesFor === gameSlug && (
-				<>
+				<DemoBannerShownContext.Provider value={ true }>
 					<TabStrip
 						tabs={ tabs }
 						active={ tab }
@@ -310,6 +322,7 @@ export function MyChroniclePage() {
 							characterId={ characterId }
 							gameSlug={ gameSlug }
 							capabilities={ capabilities }
+							startAsNpc={ readNewNpcFromUrl() }
 						/>
 					) }
 
@@ -387,7 +400,7 @@ export function MyChroniclePage() {
 							) }
 						</div>
 					) }
-				</>
+				</DemoBannerShownContext.Provider>
 			) }
 		</div>
 	);

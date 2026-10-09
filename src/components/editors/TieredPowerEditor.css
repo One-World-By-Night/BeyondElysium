@@ -178,7 +178,7 @@
 	background: var(--be-gray-23);
 }
 
-/* Desktop: the tradition field and remove button stay inline exactly as before. */
+/* Desktop: the tradition field and remove button stay inline. */
 .be-tiered-power-editor__row-detail {
 	display: contents;
 }

@@ -37,6 +37,55 @@
 	font-size: 0.85rem;
 }
 
+.be-admin__demo-section {
+	max-width: 480px;
+	margin-top: 1.5rem;
+	padding: 1rem;
+	border: 1px solid var(--be-gray-10);
+	border-radius: 4px;
+}
+
+.be-admin__demo-section label {
+	display: block;
+	margin-bottom: 0.75rem;
+}
+
+.be-admin__demo-account-chosen {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	margin-top: 0.25rem;
+}
+
+.be-admin__demo-account-results {
+	margin: 0.25rem 0 0;
+	padding: 0;
+	list-style: none;
+	border: 1px solid var(--be-gray-10);
+	border-radius: 4px;
+	max-height: 10rem;
+	overflow-y: auto;
+}
+
+.be-admin__demo-account-results li button {
+	display: block;
+	width: 100%;
+	padding: 0.4rem 0.6rem;
+	border: 0;
+	background: none;
+	text-align: left;
+}
+
+.be-admin__demo-account-results li button:hover {
+	background: var(--be-gray-4);
+}
+
+.be-admin__demo-last-reset {
+	margin-top: 0.75rem;
+	font-size: 0.85rem;
+	color: var(--be-gray-9);
+}
+
 .be-admin__table {
 	width: 100%;
 	border-collapse: collapse;
@@ -81,6 +130,48 @@
 	margin-top: 0.25rem;
 	padding: 0.4rem;
 	font-weight: 400;
+}
+
+.be-admin__bylaws {
+	max-width: none;
+	margin-top: 1rem;
+}
+
+.be-admin__bylaws-toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	align-items: center;
+	margin-bottom: 0.75rem;
+}
+
+.be-admin__bylaws-toolbar input[type="search"],
+.be-admin__bylaws-toolbar input[type="text"],
+.be-admin__bylaws-toolbar select {
+	width: auto;
+	margin-top: 0;
+}
+
+.be-admin__bylaws-upload {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	font-weight: 400;
+	margin-bottom: 0;
+}
+
+.be-admin__bylaws-panel {
+	margin-top: 1.5rem;
+}
+
+.be-admin__bylaws-panel > summary {
+	cursor: pointer;
+	font-size: 1.1rem;
+	font-weight: 600;
+}
+
+.be-admin__bylaws-more {
+	margin-top: 0.75rem;
 }
 
 .be-admin__block-label {

@@ -3,6 +3,7 @@
 namespace BeyondElysium\REST;
 
 use BeyondElysium\Core\Authorization;
+use BeyondElysium\Core\Notifications;
 use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Game;
 use BeyondElysium\Models\Location_Link;
@@ -130,13 +131,32 @@ class Locations_Controller extends Base_Controller {
 
 		$source_type = (string) ( $request->get_param( 'source_type' ) ?: 'character' );
 		$source_id   = (int) $request->get_param( 'source_id' );
-		if ( ! $source_id || $source_type !== 'character' || ! Character::find( $source_id ) ) {
+		$character   = $source_id && $source_type === 'character' ? Character::find( $source_id ) : null;
+		if ( ! $character ) {
 			return $this->error( 'invalid_param', __( 'source_id must be a real character in this game.', 'beyond-elysium' ), 400 );
 		}
+
+		$was_visible = Audience::can_see( $location, 'location', (int) ( $character->wp_user_id ?? 0 ), $request['game_slug'], false );
 
 		$id = Location_Link::create( (int) $location->game_id, $label, $source_type, $source_id, (int) $location->id, get_current_user_id() );
 		if ( ! $id ) {
 			return $this->error( 'create_failed', __( 'Failed to create this link.', 'beyond-elysium' ), 500 );
+		}
+
+		$game = Game::find_by_slug( $request['game_slug'] );
+		if ( $game ) {
+			$now_visible = Audience::can_see( $location, 'location', (int) ( $character->wp_user_id ?? 0 ), $request['game_slug'], false );
+			Notifications::notify_if_newly_visible(
+				$character,
+				$was_visible,
+				$now_visible,
+				$game,
+				'location',
+				(string) $location->name,
+				Notifications::player_location_url( (int) $character->id, $request['game_slug'] ),
+				get_current_user_id()
+			);
+			Notifications::flush_visible();
 		}
 
 		return $this->success( $this->shape_link( (object) [

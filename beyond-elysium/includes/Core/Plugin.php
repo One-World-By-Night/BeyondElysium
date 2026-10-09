@@ -17,6 +17,7 @@ class Plugin {
 		load_plugin_textdomain( 'beyond-elysium', false, dirname( plugin_basename( BE_PLUGIN_FILE ) ) . '/languages' );
 
 		self::enqueue_assets();
+		Editor_Defaults::register();
 		\BeyondElysium\Core\Elementor_Requirement::register();
 		\BeyondElysium\Elementor\Init::register();
 		User_Settings::register();
@@ -88,6 +89,8 @@ class Plugin {
 			'version'  => BE_VERSION,
 			// The site locale.
 			'locale'   => get_locale(),
+			// 0 for a logged-out visitor.
+			'currentUserId' => get_current_user_id(),
 			// The admin Import page URL.
 			'importPageUrl' => admin_url( 'admin.php?page=beyond-elysium-import' ),
 			// The paper sheets print on unless the viewer picks another.
@@ -148,6 +151,7 @@ class Plugin {
 			new \BeyondElysium\REST\Game_Import_Controller(),
 			new \BeyondElysium\REST\Game_Members_Controller(),
 			new \BeyondElysium\REST\Chronicle_Players_Controller(),
+			new \BeyondElysium\REST\Join_Requests_Controller(),
 			new \BeyondElysium\REST\Authorization_Settings_Controller(),
 			new \BeyondElysium\REST\Game_Stats_Controller(),
 			new \BeyondElysium\REST\Docs_Controller(),
@@ -180,6 +184,8 @@ class Plugin {
 			new \BeyondElysium\REST\Character_Order_Controller(),
 			new \BeyondElysium\REST\Factions_Controller(),
 			new \BeyondElysium\REST\Translations_Controller(),
+			new \BeyondElysium\REST\Items_Catalog_Controller(),
+			new \BeyondElysium\REST\Mail_Log_Controller(),
 		];
 		foreach ( $controllers as $controller ) {
 			$controller->register_routes();

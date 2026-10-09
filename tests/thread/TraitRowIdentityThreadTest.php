@@ -11,7 +11,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * Through the real change route: a held row's identity is its `name` alone unless the item.
+ * Through the real change route: a held row's identity is its `name` alone, unless the item - or its block, by
+ * default - allows multiples, in which case its label is part of the identity.
  */
 class TraitRowIdentityThreadTest extends WP_UnitTestCase {
 
@@ -138,7 +139,7 @@ class TraitRowIdentityThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Guard: the server path was always correct.
+	 * Guard: two labelled Retainers on a plain Backgrounds block are two rows.
 	 */
 	public function test_two_labelled_retainers_on_a_plain_backgrounds_block_are_two_rows(): void {
 		$this->assertSame( 201, $this->add( 'tri-plain-backgrounds', [ 'name' => 'Retainers', 'count' => 3, 'specialization' => 'Bob' ] )->get_status() );
@@ -205,7 +206,7 @@ class TraitRowIdentityThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Consumer 3: a modify lands on the holding it names.
+	 * A modify lands on the holding it names.
 	 */
 	public function test_raising_one_retainer_does_not_raise_the_other(): void {
 		$this->add( 'tri-backgrounds', [ 'name' => 'Retainers', 'count' => 3, 'specialization' => 'John Doe' ] );
@@ -224,7 +225,7 @@ class TraitRowIdentityThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Consumer 3: removing one labelled holding leaves the other standing.
+	 * Removing one labelled holding leaves the other standing.
 	 */
 	public function test_removing_one_retainer_leaves_the_other(): void {
 		$this->add( 'tri-backgrounds', [ 'name' => 'Retainers', 'count' => 3, 'specialization' => 'John Doe' ] );

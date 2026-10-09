@@ -6,7 +6,7 @@ use BeyondElysium\Database\Seeder;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Every identity `select` field carried an `options_ref` that nothing ever resolved.
+ * Every identity `select` field's `options_ref` resolves to real options.
  */
 class IdentityFieldOptionsTest extends TestCase {
 
@@ -30,7 +30,7 @@ class IdentityFieldOptionsTest extends TestCase {
 	}
 
 	/**
-	 * Superseded by the MET-Mechanics CSV overlay.
+	 * Vampire's Clan resolves to real options, alphabetized.
 	 */
 	public function test_vampire_clan_resolves_real_options_alphabetized(): void {
 		$options = $this->field( 'vampire-identity', 'Clan' )['options'];

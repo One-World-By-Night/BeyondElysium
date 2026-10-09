@@ -1,0 +1,38 @@
+{
+  "format": 1,
+  "slug": "hunter-virtues",
+  "name": "Virtues",
+  "kind": "block",
+  "section_type": "resource_pool",
+  "provenance": {
+    "sources": [
+      "Mind's Eye Theatre: Laws of the Reckoning (WW05037), \"Virtue Traits\" p.90: three Virtues - Mercy, Vision, Zeal - a character assigns three Traits among at creation, with the creed's own primary Virtue always at least equal to the others. Experience p.269: \"Virtues and edges cannot be purchased with Experience; edges can only be gained when new Virtue Traits are acquired, and Virtues can only [be] raised by cashing in 10 temporary Conviction Traits.\""
+    ],
+    "tool": "read directly, 2026-10-04"
+  },
+  "definition": {
+    "pools": [
+      {
+        "name": "Mercy",
+        "value_type": "integer",
+        "default_start": 0,
+        "max": 10,
+        "raised_by": { "from": "hunter-resources.Conviction", "temporary": 10 }
+      },
+      {
+        "name": "Vision",
+        "value_type": "integer",
+        "default_start": 0,
+        "max": 10,
+        "raised_by": { "from": "hunter-resources.Conviction", "temporary": 10 }
+      },
+      {
+        "name": "Zeal",
+        "value_type": "integer",
+        "default_start": 0,
+        "max": 10,
+        "raised_by": { "from": "hunter-resources.Conviction", "temporary": 10 }
+      }
+    ]
+  }
+}

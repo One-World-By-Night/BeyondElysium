@@ -68,4 +68,29 @@ class KeptListBackfillThreadTest extends WP_UnitTestCase {
 		$this->assertSame( $before, Character::find( $this->with_note )->sheet_data );
 		$this->assertArrayNotHasKey( 'vampire-bonds', Character::find( $this->without_note )->sheet_data );
 	}
+
+	public function test_a_kuei_jins_status_and_guanxi_are_filled_from_the_import_record(): void {
+		$owner = self::factory()->user->create( [ 'role' => 'administrator' ] );
+
+		$kuei_jin = (int) Character::create( [
+			'name' => 'Noted Kuei-Jin', 'owner_slug' => 'kept-list-test', 'stack_slug' => 'kueijin', 'status' => 'active',
+			'sheet_data' => [ 'kueijin-identity' => [ 'Dharma' => 'Song of the Shadow' ] ], 'created_by' => $owner,
+		] );
+		Change_Engine::submit( $kuei_jin, [
+			'change_type' => 'import_note', 'category' => 'import',
+			'change_data' => [
+				'source_file' => 'test.gex', 'imported_at' => current_time( 'mysql' ), 'action' => 'created',
+				'raw_record'  => [ 'trait_lists' => [
+					[ 'name' => 'Status', 'traits' => [ [ 'name' => 'Revered', 'total' => '3', 'note' => '' ] ] ],
+					[ 'name' => 'Guanxi', 'traits' => [ [ 'name' => 'Mei-Lin', 'total' => '7', 'note' => '' ] ] ],
+				] ],
+			],
+		], 1 );
+
+		Kept_List_Backfill::run();
+
+		$sheet = Character::find( $kuei_jin )->sheet_data;
+		$this->assertEquals( [ [ 'name' => 'Revered', 'count' => 3 ] ], $sheet['kueijin-status'], 'Revered is a real catalog Status Trait, so it is not marked custom' );
+		$this->assertEquals( [ [ 'name' => 'Mei-Lin', 'count' => 7, 'custom' => true ] ], $sheet['kueijin-guanxi'], 'Guanxi has no fixed catalog, so every wu-mate name is custom' );
+	}
 }

@@ -1,0 +1,6 @@
+.be-ai-demo-notice {
+	margin: 0;
+	padding: 0.6rem 0.75rem;
+	border: 1px solid var(--be-gold-9);
+	border-radius: 3px;
+}

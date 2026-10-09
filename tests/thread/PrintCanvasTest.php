@@ -7,7 +7,7 @@ use BeyondElysium\Core\Print_Canvas;
 use WP_UnitTestCase;
 
 /**
- * Printing showed a theme-owned box CSS could never fully hide.
+ * The print page uses the blank canvas template; every other page keeps its own template.
  */
 class PrintCanvasTest extends WP_UnitTestCase {
 

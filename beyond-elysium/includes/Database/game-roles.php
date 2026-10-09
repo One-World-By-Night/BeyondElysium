@@ -19,7 +19,7 @@ $ast = array_values( array_diff( $hst, [
 return [
 	'hst'      => $hst,
 	'ast'      => $ast,
-	// No be_run_queries: the Query Tool reads whole sheets and is a Storyteller's.
+	// No be_run_queries: the Query Tool is a Storyteller's.
 	'narrator' => [
 		'be_manage_plots',
 		'be_view_characters',

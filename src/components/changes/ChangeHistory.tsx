@@ -22,6 +22,7 @@ const STATUS_LABEL: Record< CharacterChange[ 'status' ], string > = {
 	pending: __( 'Pending', 'beyond-elysium' ),
 	approved: __( 'Approved', 'beyond-elysium' ),
 	rejected: __( 'Rejected', 'beyond-elysium' ),
+	forwarded: __( 'Forwarded home', 'beyond-elysium' ),
 };
 
 /**

@@ -36,8 +36,8 @@ class TraitAliasResolutionPricingTest extends TestCase {
 	}
 
 	/**
-	 * Hitchens' real `vampire-disciplines` holdings (`be_dev` character 1093, captured via a direct read of
-	 * `wp_be_characters.sheet_data`), unmodified, PLUS one row this test adds for the proof.
+	 * Hitchens' `vampire-disciplines` holdings (character 1093 on the dev site), unmodified, plus one row this test
+	 * adds.
 	 *
 	 * @return array<int,array<string,mixed>>
 	 */
@@ -58,7 +58,7 @@ class TraitAliasResolutionPricingTest extends TestCase {
 			[ 'name' => 'Serpentis', 'level' => 4 ],
 			[ 'name' => 'Thanatosis', 'level' => 4 ],
 			[ 'name' => 'Vicissitude', 'level' => 4 ],
-			// Constructed for this test - see the docblock above.
+			// Constructed for this test.
 			[ 'name' => 'Creo Ignem', 'level' => 3 ],
 		];
 	}

@@ -60,7 +60,7 @@ class Layout_FlowTest extends TestCase {
 		$this->assertSame( $original, $sections );
 	}
 
-	// -- This port's own required addition: sortedForFlow() stability ----------------
+	// -- sortedForFlow() stability ----------------
 
 	public function test_sorted_for_flow_is_stable_for_equal_column_and_order(): void {
 		$sections = [

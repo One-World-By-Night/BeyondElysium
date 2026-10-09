@@ -46,6 +46,7 @@ export interface FlaggedTrait {
 	raw: string;
 	suggestions: string[];
 	reason: string;
+	allow_custom: boolean;
 }
 
 /**
@@ -56,6 +57,7 @@ export interface UnresolvedTrait {
 	block: string;
 	raw: string;
 	reason?: string;
+	allow_custom: boolean;
 }
 
 /**
@@ -117,7 +119,18 @@ export interface ImportPreview {
 	unresolved: UnresolvedTrait[];
 	duplicates: DuplicateCharacter[];
 	world_object_duplicates: DuplicateWorldObject[];
+	refused: RefusedCharacter[];
 	warnings: string[];
+	narrative: NarrativeImportPreview;
+}
+
+/**
+ * A character this import will not write at all: their own creature type has no shipped stack on this site, or
+ * isn't enabled in this chronicle.
+ */
+export interface RefusedCharacter {
+	character: string;
+	reason: string;
 }
 
 /**
@@ -152,6 +165,10 @@ export interface ImportResolutions {
 	 */
 	world_objects?: Record< string, DuplicateAction >;
 	traits?: TraitResolution[];
+	/**
+	 * Which of a game file's plots, rumors and actions to import, each ticked when absent.
+	 */
+	import_kinds?: { plots?: boolean; rumors?: boolean; actions?: boolean };
 }
 
 /**
@@ -172,10 +189,15 @@ export interface ImportCommitResult {
 	locations: ImportedEntity[];
 	rotes: ImportedEntity[];
 	characters: ImportedEntity[];
+	plots?: number;
+	rumors?: number;
+	actions?: number;
 	skipped_actions?: number;
 	skipped_plots?: number;
 	skipped_rumors?: number;
 	skipped_queries?: number;
+	unmatched_cast?: string[];
+	unmatched_actors?: string[];
 }
 
 // ---------------------------------------------------------------------------
@@ -196,13 +218,21 @@ export interface ExistingGame {
  */
 export interface GameImportSkipped {
 	queries: number;
-	actions: number;
-	plots: number;
-	rumors: number;
 	xp_awards: number;
 	templates: number;
 	calendar_entries: number;
 	apr_engine: boolean;
+}
+
+/**
+ * Read-only preview of a file's plots, rumors and actions: how many already exist in the target chronicle (by
+ * title and date) and which cast/action names match no character, in the file or the chronicle.
+ */
+export interface NarrativeImportPreview {
+	plots: { already_present: number };
+	rumors: { already_present: number };
+	actions: { already_present: number };
+	unmatched_names: string[];
 }
 
 /**

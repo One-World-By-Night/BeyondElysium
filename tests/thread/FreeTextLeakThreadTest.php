@@ -10,7 +10,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * Free-text leaks found by the coverage guard, proven closed on the real routes.
+ * A player never sees Storyteller-only text in free-text fields on the real routes.
  */
 class FreeTextLeakThreadTest extends WP_UnitTestCase {
 

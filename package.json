@@ -1,6 +1,6 @@
 {
   "name": "beyond-elysium",
-  "version": "1.4.0-2",
+  "version": "1.5.0",
   "description": "Character management system for Mind's Eye Theatre LARP chronicles.",
   "private": true,
   "engines": {
@@ -22,6 +22,7 @@
     "@wordpress/hooks": "^4.56.0",
     "@wordpress/scripts": "^36.0.0",
     "jsdom": "^26.1.0",
+    "playwright": "^1.63.0",
     "postcss": "^8.5.28",
     "typescript": "^5.5.0",
     "vite": "^8.3.1",

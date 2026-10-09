@@ -310,6 +310,7 @@ class Factions_Controller extends Base_Controller {
 			'character_name'  => $character->name ?? null,
 			'rank'            => $member->member_rank,
 			'is_leader'       => (bool) $member->is_leader,
+			'is_public'       => (bool) ( $member->is_public ?? true ),
 			'created_at'      => $member->created_at,
 		];
 	}
@@ -437,6 +438,13 @@ class Factions_Controller extends Base_Controller {
 			if ( ! Faction_Member::set_leader( (int) $faction->id, $character_id, (bool) $request->get_param( 'is_leader' ) ) ) {
 				return $this->error( 'update_failed', __( 'Could not update this member - a faction needs at least one leader.', 'beyond-elysium' ), 400 );
 			}
+		}
+
+		if ( $request->get_param( 'is_public' ) !== null ) {
+			if ( ! $can_manage ) {
+				return $this->error( 'ownership_denied', __( 'Only a Storyteller may change whether a membership shows on a public profile.', 'beyond-elysium' ), 403 );
+			}
+			Faction_Member::set_public( (int) $faction->id, $character_id, (bool) $request->get_param( 'is_public' ) );
 		}
 
 		if ( $request->get_param( 'rank' ) !== null || ( is_array( $request->get_json_params() ) && array_key_exists( 'rank', $request->get_json_params() ) ) ) {
@@ -618,7 +626,7 @@ class Factions_Controller extends Base_Controller {
 	 *
 	 * @param \WP_REST_Request $request
 	 * @param string[]         $valid_audiences
-	 * @return array{audience?:string,audience_rules?:?array}|\WP_Error
+	 * @return array{audience?:string,audience_rules?:array<string,mixed>|null}|\WP_Error
 	 */
 	private function resolve_audience( $request, array $valid_audiences ) {
 		$data = [];
@@ -655,7 +663,7 @@ class Factions_Controller extends Base_Controller {
 	 * @param bool        $can_manage
 	 * @param bool        $is_member
 	 * @param object|null $game
-	 * @return array
+	 * @return array<string,mixed>
 	 */
 	private function project_faction( object $faction, bool $can_manage, bool $is_member, ?object $game = null ): array {
 		St_Visibility::filter_faction( $faction, $game, $can_manage );
@@ -688,7 +696,7 @@ class Factions_Controller extends Base_Controller {
 	 *
 	 * @param object $position
 	 * @param bool   $can_manage
-	 * @return array
+	 * @return array<string,mixed>
 	 */
 	private function project_position( object $position, bool $can_manage ): array {
 		$holder_public = ! empty( $position->holder_public );

@@ -112,14 +112,7 @@ class RoteCardsForMagesThreadTest extends WP_UnitTestCase {
 		$cards = $response->get_data()['cards'];
 		$this->assertCount( 2, $cards );
 
-		$names = array_map( static function ( $card ) {
-			foreach ( $card as [ $label, $value ] ) {
-				if ( $label === 'Name' ) {
-					return $value;
-				}
-			}
-			return null;
-		}, $cards );
+		$names = array_map( static fn( $card ) => $card['name'], $cards );
 		$this->assertContains( $this->rote_a, $names );
 		$this->assertContains( $this->rote_b, $names );
 		$this->assertNotContains( $unheld_name, $names );
@@ -135,8 +128,8 @@ class RoteCardsForMagesThreadTest extends WP_UnitTestCase {
 		$cards    = $response->get_data()['cards'];
 
 		foreach ( $cards as $card ) {
-			$labels = array_column( $card, 0 );
-			$this->assertSame( [ 'Name', 'Note', 'Source' ], $labels );
+			$labels = array_column( $card['fields'], 'label' );
+			$this->assertSame( [ 'Note', 'Source' ], $labels );
 		}
 	}
 
@@ -155,13 +148,13 @@ class RoteCardsForMagesThreadTest extends WP_UnitTestCase {
 
 		$a_card = null;
 		foreach ( $cards as $card ) {
-			if ( [ 'Name', $this->rote_a ] === $card[0] ) {
+			if ( $this->rote_a === $card['name'] ) {
 				$a_card = $card;
 			}
 		}
 		$this->assertNotNull( $a_card );
-		// The real card's own columns (Level among them).
-		$this->assertContains( [ 'Level', '3' ], $a_card );
+		// The real card's own fields (Level among them).
+		$this->assertContains( [ 'label' => 'Level', 'value' => '3', 'html' => false ], $a_card['fields'] );
 	}
 
 	// -------------------------------------------------------------------------

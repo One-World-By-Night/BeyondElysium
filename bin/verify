@@ -3,7 +3,7 @@
 # The validation gate.
 #
 # Usage:
-#   bin/verify            lint, static analysis (level 5, plus level 8's null/false checks), unit tests, build
+#   bin/verify            lint, static analysis (level 6, plus level 8's null/false checks), unit tests, build
 #   bin/verify --all      also run thread and workflow suites (needs WP_TESTS_DIR)
 #
 set -euo pipefail
@@ -29,7 +29,7 @@ if [ "$PHP_VER" != "8.2" ]; then
 fi
 
 echo "==> php -l (PHP $("$PHP" -r 'echo PHP_VERSION;'))"
-find beyond-elysium/includes -name '*.php' -not -path '*/accessschema-client/*' -print0 \
+find beyond-elysium/includes beyond-elysium/mu-plugin -name '*.php' -not -path '*/accessschema-client/*' -print0 \
     | xargs -0 -n1 "$PHP" -l > /dev/null
 "$PHP" -l beyond-elysium/beyond-elysium.php > /dev/null
 echo "    ok"
@@ -43,7 +43,7 @@ run_phpstan() {
     fi
 }
 
-echo "==> phpstan (level 5)"
+echo "==> phpstan (level 6)"
 run_phpstan
 
 echo "==> phpstan (null and false handling, level 8)"
@@ -60,6 +60,16 @@ if [ "$RUN_ALL" = "1" ]; then
         "$PHP" beyond-elysium/vendor/bin/phpunit --testsuite thread --no-coverage
         echo "==> phpunit :: workflow"
         "$PHP" beyond-elysium/vendor/bin/phpunit --testsuite workflow --no-coverage
+
+        # A @group multisite case needs a real multisite install, which WP_TESTS_DIR's own single-site one is not -
+        # it runs instead against a second, dedicated wp-tests-config naming its own database.
+        MS_CONFIG="${BE_WP_TESTS_MULTISITE_CONFIG:-$(dirname "$(dirname "$WP_TESTS_DIR")")/wp-tests-config-multisite.php}"
+        if [ ! -f "$MS_CONFIG" ]; then
+            echo "==> phpunit :: thread (multisite)  SKIPPED (no wp-tests-config-multisite.php at $MS_CONFIG)"
+        else
+            echo "==> phpunit :: thread (multisite)"
+            WP_TESTS_CONFIG_FILE_PATH="$MS_CONFIG" "$PHP" beyond-elysium/vendor/bin/phpunit --testsuite thread --group multisite --no-coverage
+        fi
     fi
 fi
 

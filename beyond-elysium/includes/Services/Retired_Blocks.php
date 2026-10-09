@@ -9,8 +9,8 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * The shared blocks the per-creature catalog replaced (`met-abilities`, `met-merits`, `met-flaws`) and the two blocks
- * no stack lists any more (`demon-lores`, `mortal-numina`). `remove_unused()` deletes each one nothing on the install
- * names and logs what keeps the others.
+ * no stack lists (`demon-lores`, `mortal-numina`). `remove_unused()` deletes each one nothing on the install names
+ * and logs what keeps the others.
  */
 class Retired_Blocks {
 

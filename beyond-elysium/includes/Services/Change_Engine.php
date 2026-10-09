@@ -13,6 +13,10 @@ use BeyondElysium\Models\Faction;
 use BeyondElysium\Models\Faction_Member;
 use BeyondElysium\Models\Game;
 use BeyondElysium\Models\Item_Event;
+use BeyondElysium\Models\Plot_Entry;
+use BeyondElysium\Models\Secret;
+use BeyondElysium\Models\Secret_Reveal;
+use BeyondElysium\Models\Transfer;
 use BeyondElysium\Models\World_Object;
 
 defined( 'ABSPATH' ) || exit;
@@ -30,9 +34,9 @@ class Change_Engine {
 	/**
 	 * Submits a change for a character.
 	 *
-	 * @param int   $character_id
-	 * @param array $change_data  Must include: change_type, category, change_data, xp_cost (optional).
-	 * @param int   $submitted_by
+	 * @param int                 $character_id
+	 * @param array<string,mixed> $change_data  Must include: change_type, category, change_data, xp_cost (optional).
+	 * @param int                 $submitted_by
 	 * @return int Change ID on success, 0 on failure.
 	 */
 	public static function submit( int $character_id, array $change_data, int $submitted_by ): int {
@@ -48,18 +52,27 @@ class Change_Engine {
 
 		$resolved = self::resolve_approval_level( $character, (object) $change_data );
 		$level    = $resolved['level'];
+		$reason   = $resolved['reason'];
+
+		// A chronicle whose removal/lowering switch is on, and a change this classifies as one, always waits.
+		if ( ! empty( $change_data['force_level'] ) ) {
+			$level  = self::strictest( $level, (string) $change_data['force_level'] );
+			$reason = $reason ?? ( $change_data['force_reason'] ?? null );
+		}
 
 		// Every change is created pending.
 		$insert = [
-			'character_id' => $character_id,
-			'change_type'  => $change_data['change_type'],
-			'category'     => $change_data['category'] ?? null,
-			'change_data'  => $change_data['change_data'] ?? [],
-			'xp_cost'      => $change_data['xp_cost'] ?? 0,
-			'status'       => 'pending',
-			'submitted_by' => $submitted_by,
-			'notes'        => $change_data['notes'] ?? null,
-			'reason'       => $resolved['reason'],
+			'character_id'  => $character_id,
+			'change_type'   => $change_data['change_type'],
+			'category'      => $change_data['category'] ?? null,
+			'change_data'   => $change_data['change_data'] ?? [],
+			'xp_cost'       => $change_data['xp_cost'] ?? 0,
+			'status'        => 'pending',
+			'submitted_by'  => $submitted_by,
+			'notes'         => $change_data['notes'] ?? null,
+			'reason'        => $reason,
+			'submission_id' => $change_data['submission_id'] ?? null,
+			'auto_approved' => $level === 'auto',
 		];
 
 		// A still-pending resubmission of the same trait/field overwrites the one existing row.
@@ -85,6 +98,172 @@ class Change_Engine {
 		}
 
 		return $change_id;
+	}
+
+	/**
+	 * Submits a whole set of changes from the editor as one transaction, under one shared submission id. On a chronicle
+	 * with `settings.approval_on_removal` on, any change in the set that `catches_removal_rule()` catches forces every
+	 * change in the set to wait for a Storyteller, with a shared reason - never decided from what the client sent.
+	 *
+	 * @param int                      $character_id
+	 * @param array<int,array<string,mixed>> $changes Each shaped as submit()'s own `$change_data`.
+	 * @param int                      $submitted_by
+	 * @return array{submission_id:?string,change_ids:int[]} An empty `change_ids` means the whole set failed and nothing
+	 *                                                        was written.
+	 */
+	public static function submit_set( int $character_id, array $changes, int $submitted_by ): array {
+		if ( $changes === [] ) {
+			return [ 'submission_id' => null, 'change_ids' => [] ];
+		}
+
+		$character = Character::find( $character_id );
+		if ( ! $character ) {
+			return [ 'submission_id' => null, 'change_ids' => [] ];
+		}
+
+		$game      = Game::find_by_slug( (string) ( $character->owner_slug ?? '' ) );
+		$switch_on = $game && ( $game->settings->approval_on_removal ?? false ) === true;
+
+		$any_caught = false;
+		if ( $switch_on ) {
+			foreach ( $changes as $change ) {
+				if ( self::catches_removal_rule( $character, $change ) ) {
+					$any_caught = true;
+					break;
+				}
+			}
+		}
+
+		$submission_id = wp_generate_uuid4();
+		$unit          = Transaction::begin( 'be_changes_submit_set' );
+		$change_ids    = [];
+
+		foreach ( $changes as $change ) {
+			$change['submission_id'] = $submission_id;
+			if ( $any_caught ) {
+				$change['force_level']  = 'st';
+				$change['force_reason'] = __( 'Part of a change that removes, lowers or renames something.', 'beyond-elysium' );
+			}
+			$change_id = self::submit( $character_id, $change, $submitted_by );
+			if ( ! $change_id ) {
+				Transaction::rollback( $unit );
+				return [ 'submission_id' => null, 'change_ids' => [] ];
+			}
+			$change_ids[] = $change_id;
+		}
+
+		Transaction::commit( $unit );
+		return [ 'submission_id' => $submission_id, 'change_ids' => $change_ids ];
+	}
+
+	/**
+	 * Whether a proposed change removes something, lowers a held rating or a permanent pool, or relabels/renames a held
+	 * row - decided from the character's own currently held sheet, never from what the client's change claims to be.
+	 *
+	 * @param object               $character
+	 * @param array<string,mixed>  $change    Shaped as submit()'s own `$change_data`: change_type, change_data.
+	 * @return bool
+	 */
+	public static function catches_removal_rule( object $character, array $change ): bool {
+		$type = $change['change_type'] ?? '';
+		$data = is_array( $change['change_data'] ?? null ) ? $change['change_data'] : [];
+		$sheet = is_array( $character->sheet_data ?? null ) ? $character->sheet_data : [];
+
+		if ( $type === 'remove_trait' ) {
+			return true;
+		}
+
+		// A claimed add_trait that actually names an already-held row is checked as a modify.
+		if ( $type === 'modify_trait' || $type === 'add_trait' ) {
+			$block_slug = $data['block_slug'] ?? null;
+			$trait      = is_array( $data['trait'] ?? null ) ? $data['trait'] : [];
+			if ( ! is_string( $block_slug ) || $block_slug === '' || ! isset( $trait['name'] ) ) {
+				return false;
+			}
+
+			// A tiered_power pick or ladder rung: caught when the new level/pick is a lower rank than the held one.
+			if ( array_key_exists( 'level', $trait ) || array_key_exists( 'power_name', $trait ) ) {
+				$held = null;
+				foreach ( ( $sheet[ $block_slug ] ?? [] ) as $row ) {
+					if ( ! is_array( $row ) || ( $row['name'] ?? null ) !== $trait['name'] ) {
+						continue;
+					}
+					$row_power_name = ( $row['power_name'] ?? '' ) !== '' ? $row['power_name'] : null;
+					$want_power_name = ( $trait['power_name'] ?? '' ) !== '' ? $trait['power_name'] : null;
+					if ( $row_power_name === $want_power_name ) {
+						$held = $row;
+						break;
+					}
+				}
+				if ( $held === null ) {
+					// Nothing held under this name/pick yet - a genuine addition, never caught.
+					return false;
+				}
+				$old_level = (int) ( $held['level'] ?? 0 );
+				$new_level = array_key_exists( 'level', $trait ) ? (int) $trait['level'] : $old_level;
+				return $new_level < $old_level;
+			}
+
+			// A trait_list row: caught when the new count is lower, or - a modify alone - the name or label it
+			// addresses has changed. An add_trait with no held match is a genuine addition, never caught.
+			$previous   = is_array( $data['previous'] ?? null ) ? $data['previous'] : null;
+			$definition = self::block_definition( (string) ( $character->owner_slug ?? '' ), $block_slug );
+
+			// A renamed row is addressed by what it was held as, not by its new name - previous's own identity finds it.
+			if ( $type === 'modify_trait' && is_string( $previous['name'] ?? null ) && $previous['name'] !== '' ) {
+				$previous_label = is_string( $previous['specialization'] ?? null ) ? $previous['specialization'] : '';
+				$identity       = Trait_Identity::of( $definition, $previous['name'], $previous_label );
+			} else {
+				$identity = Trait_Identity::target_of( $definition, $trait, $previous );
+			}
+			if ( $identity === null ) {
+				return false;
+			}
+			$held_row = null;
+			foreach ( ( $sheet[ $block_slug ] ?? [] ) as $row ) {
+				if ( is_array( $row ) && Trait_Identity::of_row( $definition, $row ) === $identity ) {
+					$held_row = $row;
+					break;
+				}
+			}
+			if ( $held_row === null ) {
+				return false;
+			}
+			$old_count = (int) ( $held_row['count'] ?? 1 );
+			$new_count = array_key_exists( 'count', $trait ) ? (int) $trait['count'] : $old_count;
+			if ( $new_count < $old_count ) {
+				return true;
+			}
+			if ( $type !== 'modify_trait' ) {
+				return false;
+			}
+			$old_name = $held_row['name'] ?? null;
+			$new_name = $trait['name'];
+			if ( $old_name !== null && $old_name !== $new_name ) {
+				return true;
+			}
+			$old_label = $held_row['specialization'] ?? '';
+			$new_label = $trait['specialization'] ?? '';
+			return (string) $old_label !== (string) $new_label;
+		}
+
+		if ( ! empty( $data['values'] ) ) {
+			$block_slug  = $data['block_slug'] ?? null;
+			$held_values = is_string( $block_slug ) && $block_slug !== '' ? ( $sheet[ $block_slug ] ?? [] ) : [];
+			foreach ( (array) $data['values'] as $pool_name => $new_value ) {
+				$new_permanent = is_array( $new_value ) ? ( $new_value['permanent'] ?? null ) : $new_value;
+				if ( $new_permanent === null ) {
+					continue;
+				}
+				$old_value     = is_array( $held_values ) ? ( $held_values[ $pool_name ] ?? null ) : null;
+				$old_permanent = is_array( $old_value ) ? ( $old_value['permanent'] ?? null ) : $old_value;
+				if ( $old_permanent !== null && (int) $new_permanent < (int) $old_permanent ) {
+					return true;
+				}
+			}
+		}
+
+		return false;
 	}
 
 	/**
@@ -170,9 +349,12 @@ class Change_Engine {
 	 * @param int|null    $set_cost       What the reviewer says a purchase waiting for a price costs - a whole
 	 *                                    number of XP, 0 allowed, per dot for a trait list and per pick for a
 	 *                                    power. Required for a change with `cost_pending` and read for no other.
+	 * @param array<string,mixed>|null $secret_choice Required for a `log_knowledge` change: either `{secret_id}` to
+	 *                                    tie it to an existing secret, or `{entity_type, entity_id, title?, content?}`
+	 *                                    to create one. Read for no other change type.
 	 * @return bool False when the change is missing, no longer pending, changed since the token was taken, could not be written, or is waiting for a price and was given none.
 	 */
-	public static function approve( int $change_id, int $reviewed_by, $notes, ?string $expected_token = null, ?int $set_cost = null ): bool {
+	public static function approve( int $change_id, int $reviewed_by, $notes, ?string $expected_token = null, ?int $set_cost = null, ?array $secret_choice = null ): bool {
 		$savepoint = Transaction::begin( 'be_change_approve' );
 
 		$change = Change::find_for_update( $change_id );
@@ -213,6 +395,108 @@ class Change_Engine {
 				return false;
 			}
 			Transaction::commit( $savepoint );
+			return true;
+		}
+
+		// A logged knowledge claim writes the secret it belongs to - existing or new - and an approved reveal.
+		if ( $change->change_type === 'log_knowledge' ) {
+			if ( ! self::approve_log_knowledge( $change_id, $character, $change, $secret_choice ) ) {
+				Transaction::rollback( $savepoint );
+				return false;
+			}
+			if ( ! Change::update_status( $change_id, 'approved', $reviewed_by, $notes ) ) {
+				Transaction::rollback( $savepoint );
+				return false;
+			}
+			Transaction::commit( $savepoint );
+			return true;
+		}
+
+		// A secret pass writes, or confirms, an approved reveal naming who told the recipient.
+		if ( $change->change_type === 'pass_secret' ) {
+			if ( ! self::approve_pass_secret( $character, $change ) ) {
+				Transaction::rollback( $savepoint );
+				return false;
+			}
+			if ( ! Change::update_status( $change_id, 'approved', $reviewed_by, $notes ) ) {
+				Transaction::rollback( $savepoint );
+				return false;
+			}
+			Transaction::commit( $savepoint );
+			return true;
+		}
+
+		// A note shared from a visiting copy's own host has no sheet effect - approved, it lands on the character's
+		// own plot as a Storytellers-only entry; refused, nothing is recorded.
+		if ( $change->change_type === 'visit_note' ) {
+			$plot_id = Character::ensure_plot( (int) $character->id );
+			if ( $plot_id !== null ) {
+				Plot_Entry::create( [
+					'plot_id'    => $plot_id,
+					'author_id'  => $reviewed_by,
+					'entry_type' => 'note',
+					'content'    => (string) ( $change->change_data['note'] ?? '' ),
+					'audience'   => Plot_Entry::AUDIENCE_STORYTELLERS,
+				] );
+			}
+			if ( ! Change::update_status( $change_id, 'approved', $reviewed_by, $notes ) ) {
+				Transaction::rollback( $savepoint );
+				return false;
+			}
+			Transaction::commit( $savepoint );
+			return true;
+		}
+
+		// A host's own request to pair a player-submitted character with its real home - approved, this chronicle's
+		// own outbound visit row is created, both keep-current flags on; refused, nothing is written and the host's
+		// own copy stays as it already was: `keep_current` set, `keep_current_accepted` never agreed to.
+		if ( $change->change_type === 'visit_pairing' ) {
+			$data = (array) $change->change_data;
+			$game = Game::find_by_slug( (string) ( $character->owner_slug ?? '' ) );
+			if ( ! $game ) {
+				Transaction::rollback( $savepoint );
+				return false;
+			}
+			$visit_id = Transfer::create( [
+				'character_uuid' => $character->uuid,
+				'peer_uuid'      => (string) ( $data['host_uuid'] ?? '' ),
+				'character_id'   => (int) $character->id,
+				'character_name' => (string) $character->name,
+				'direction'      => 'outbound',
+				'state'          => 'visiting',
+				'home_slug'      => (string) $game->slug,
+				'home_site'      => home_url(),
+				'home_chronicle' => (string) $game->name,
+				'host_slug'      => (string) ( $data['host_slug'] ?? '' ),
+				'host_site'      => (string) ( $data['host_site'] ?? '' ),
+				'host_chronicle' => (string) ( $data['host_chronicle'] ?? '' ),
+				'payload_hash'   => hash( 'sha256', $character->uuid . '|' . current_time( 'mysql', true ) ),
+				'initiated_by'   => $reviewed_by,
+				'keep_current'          => 1,
+				'keep_current_accepted' => 1,
+				'notes'          => __( 'Paired from a Grapevine file its player sent to the host chronicle.', 'beyond-elysium' ),
+			] );
+			if ( ! Change::update_status( $change_id, 'approved', $reviewed_by, $notes ) ) {
+				Transaction::rollback( $savepoint );
+				return false;
+			}
+			Transaction::commit( $savepoint );
+			$visit = Transfer::find( $visit_id );
+			if ( $visit !== null ) {
+				Keep_Current::notify_pairing_accepted( $visit, (string) ( $data['host_uuid'] ?? '' ) );
+			}
+			return true;
+		}
+
+		// A change on a visiting copy whose own home keeps it current is forwarded there instead of applied here.
+		$forwarding_visit = Keep_Current::inbound_kept_current_visit( (int) $character->id );
+		if ( $forwarding_visit !== null ) {
+			if ( ! Change::update_status( $change_id, 'forwarded', $reviewed_by, $notes ) ) {
+				Transaction::rollback( $savepoint );
+				return false;
+			}
+			Transaction::commit( $savepoint );
+			Keep_Current::forward_change( $forwarding_visit, Change::find( $change_id ) );
 			return true;
 		}
 
@@ -289,6 +573,49 @@ class Change_Engine {
 	}
 
 	/**
+	 * Approves every change in a set together, in one transaction: a removal or a lowered rating or pool first, then
+	 * the rest. A removal's own xp_cost is never applied. Any failure rolls the whole set back - nothing partially
+	 * applies.
+	 *
+	 * @param int[]                    $change_ids
+	 * @param int                      $reviewed_by
+	 * @param array<int,string>        $tokens      Optional per-change review_token(), keyed by change id.
+	 * @param string|null              $notes
+	 * @return bool
+	 */
+	public static function approve_group( array $change_ids, int $reviewed_by, array $tokens = [], $notes = null ): bool {
+		if ( $change_ids === [] ) {
+			return true;
+		}
+
+		$unit = Transaction::begin( 'be_change_approve_group' );
+
+		$rows = [];
+		foreach ( $change_ids as $id ) {
+			$row = Change::find( (int) $id );
+			if ( ! $row || $row->status !== 'pending' ) {
+				Transaction::rollback( $unit );
+				return false;
+			}
+			$rows[] = $row;
+		}
+
+		// Refunds (a negative or zero xp_cost) before charges.
+		usort( $rows, static fn( $a, $b ) => ( (float) $a->xp_cost ) <=> ( (float) $b->xp_cost ) );
+
+		foreach ( $rows as $row ) {
+			$token = $tokens[ (int) $row->id ] ?? null;
+			if ( ! self::approve( (int) $row->id, $reviewed_by, $notes, $token ) ) {
+				Transaction::rollback( $unit );
+				return false;
+			}
+		}
+
+		Transaction::commit( $unit );
+		return true;
+	}
+
+	/**
 	 * Rejects a pending change.
 	 *
 	 * @param int         $change_id
@@ -304,6 +631,15 @@ class Change_Engine {
 		if ( ! self::reviewable( $change, $expected_token ) ) {
 			Transaction::rollback( $savepoint );
 			return false;
+		}
+
+		// An Immediate-mode secret pass already wrote an unapproved reveal at submit time; refusing removes it.
+		if ( $change->change_type === 'pass_secret' ) {
+			$data     = is_array( $change->change_data ) ? $change->change_data : [];
+			$existing = Secret_Reveal::find_for( (int) ( $data['secret_id'] ?? 0 ), (int) ( $data['to_character_id'] ?? 0 ) );
+			if ( $existing && empty( $existing->approved ) ) {
+				Secret_Reveal::delete( (int) $existing->id );
+			}
 		}
 
 		$ok = Change::update_status( $change_id, 'rejected', $reviewed_by, $notes );
@@ -427,6 +763,134 @@ class Change_Engine {
 		return (bool) Faction_Member::add( (int) $faction_id, (int) $character->id, $submitted_by, true );
 	}
 
+	/**
+	 * Writes the secret a logged knowledge claim belongs to - an existing one chosen by the reviewer, or a new one
+	 * built from the reviewer's own entity/title/content - and an approved reveal carrying the logged how and teller.
+	 *
+	 * @param int                      $change_id
+	 * @param object                   $character
+	 * @param object                   $change
+	 * @param array<string,mixed>|null $secret_choice
+	 * @return bool
+	 */
+	private static function approve_log_knowledge( int $change_id, $character, $change, ?array $secret_choice ): bool {
+		if ( $secret_choice === null ) {
+			return false;
+		}
+
+		$data = is_array( $change->change_data ) ? $change->change_data : [];
+		$game = Game::find_by_slug( (string) $character->owner_slug );
+		if ( ! $game ) {
+			return false;
+		}
+
+		$secret_id = null;
+		if ( ! empty( $secret_choice['secret_id'] ) ) {
+			$secret = Secret::find( (int) $secret_choice['secret_id'] );
+			if ( ! $secret || (int) $secret->game_id !== (int) $game->id ) {
+				return false;
+			}
+			$secret_id = (int) $secret->id;
+		} elseif ( ! empty( $secret_choice['entity_type'] ) && ! empty( $secret_choice['entity_id'] ) ) {
+			$secret_id = (int) Secret::create( [
+				'game_id'     => (int) $game->id,
+				'entity_type' => (string) $secret_choice['entity_type'],
+				'entity_id'   => (int) $secret_choice['entity_id'],
+				'title'       => (string) ( $secret_choice['title'] ?? ( $data['title'] ?? '' ) ),
+				'content'     => $secret_choice['content'] ?? ( $data['details'] ?? null ),
+				'audience'    => 'restricted',
+				'created_by'  => (int) ( $change->submitted_by ?? 0 ),
+			] );
+			if ( ! $secret_id ) {
+				return false;
+			}
+		} elseif ( ! empty( $secret_choice['title'] ) ) {
+			$secret_id = (int) Secret::create( [
+				'game_id'    => (int) $game->id,
+				'title'      => (string) $secret_choice['title'],
+				'content'    => $secret_choice['content'] ?? ( $data['details'] ?? null ),
+				'audience'   => 'restricted',
+				'created_by' => (int) ( $change->submitted_by ?? 0 ),
+			] );
+			if ( ! $secret_id ) {
+				return false;
+			}
+		}
+
+		if ( ! $secret_id || Secret_Reveal::already_revealed( $secret_id, (int) $character->id ) ) {
+			return false;
+		}
+
+		$how  = in_array( $data['how'] ?? null, Secret_Reveal::HOW_VALUES, true ) ? $data['how'] : 'other';
+		$note = ! empty( $data['teller_character_id'] ) || empty( $data['teller_name'] )
+			? ( $data['details'] ?? null )
+			: sprintf( '%s: %s', $data['teller_name'], $data['details'] ?? '' );
+
+		$reveal_id = Secret_Reveal::create( [
+			'secret_id'         => $secret_id,
+			'character_id'      => (int) $character->id,
+			'how'               => $how,
+			'note'              => $note,
+			'from_character_id' => ! empty( $data['teller_character_id'] ) ? (int) $data['teller_character_id'] : null,
+			'revealed_by'       => (int) ( $change->submitted_by ?? 0 ),
+			'approved'          => true,
+		] );
+		if ( ! $reveal_id ) {
+			return false;
+		}
+
+		$data['secret_id'] = $secret_id;
+		return Change::update_change_data( $change_id, $data );
+	}
+
+	/**
+	 * Writes, or confirms, the approved reveal a secret pass creates: an Immediate-mode pass already wrote an
+	 * unapproved reveal at submit time and this only approves it; a Needs-a-Storyteller pass re-checks the teller
+	 * still holds an approved reveal of the secret before writing one for the recipient.
+	 *
+	 * @param object $character The telling character - the change's own `character_id`.
+	 * @param object $change
+	 * @return bool
+	 */
+	private static function approve_pass_secret( $character, $change ): bool {
+		$data      = is_array( $change->change_data ) ? $change->change_data : [];
+		$secret_id = (int) ( $data['secret_id'] ?? 0 );
+		$from_id   = (int) ( $data['from_character_id'] ?? 0 );
+		$to_id     = (int) ( $data['to_character_id'] ?? 0 );
+		if ( ! $secret_id || ! $from_id || ! $to_id || $from_id !== (int) $character->id ) {
+			return false;
+		}
+
+		$existing = Secret_Reveal::find_for( $secret_id, $to_id );
+		if ( $existing ) {
+			// Immediate mode: the reveal already exists, unapproved. Approve it in place.
+			return Secret_Reveal::update( (int) $existing->id, [ 'approved' => true ] );
+		}
+
+		// Needs a Storyteller: the teller must still hold an approved reveal of the secret.
+		$teller_reveal = Secret_Reveal::find_for( $secret_id, $from_id );
+		if ( ! $teller_reveal || empty( $teller_reveal->approved ) ) {
+			return false;
+		}
+
+		return (bool) Secret_Reveal::create( [
+			'secret_id'         => $secret_id,
+			'character_id'      => $to_id,
+			'how'               => 'told',
+			'note'              => $data['note'] ?? null,
+			'from_character_id' => $from_id,
+			'revealed_by'       => (int) ( $change->submitted_by ?? 0 ),
+			'approved'          => true,
+		] );
+	}
+
+	/**
+	 * The character's sheet data with one change applied; nothing is saved.
+	 *
+	 * @param object $character
+	 * @param object $change
+	 * @return array<string,mixed>
+	 */
 	public static function apply_to_sheet( $character, $change ): array {
 		$sheet       = is_array( $character->sheet_data ) ? $character->sheet_data : [];
 		$change_data = is_array( $change->change_data ) ? $change->change_data : [];
@@ -438,7 +902,14 @@ class Change_Engine {
 					if ( ! isset( $sheet[ $block_slug ] ) || ! is_array( $sheet[ $block_slug ] ) ) {
 						$sheet[ $block_slug ] = [];
 					}
-					$sheet[ $block_slug ][] = $change_data['trait'] ?? $change_data;
+					$trait                  = $change_data['trait'] ?? $change_data;
+					$sheet[ $block_slug ][] = $trait;
+
+					$definition = self::block_definition( (string) ( $character->owner_slug ?? '' ), $block_slug );
+					$cost       = self::spent_from_cost( $definition, $trait );
+					if ( $cost !== null ) {
+						$sheet = self::adjust_spent_dots( $sheet, $definition, $trait, $cost );
+					}
 				}
 				break;
 
@@ -457,6 +928,11 @@ class Change_Engine {
 								ARRAY_FILTER_USE_BOTH
 							)
 						);
+
+						$cost = self::spent_from_cost( $definition, $trait );
+						if ( $cost !== null ) {
+							$sheet = self::adjust_spent_dots( $sheet, $definition, $trait, -$cost );
+						}
 					}
 				}
 				break;
@@ -480,6 +956,10 @@ class Change_Engine {
 				if ( $block_slug ) {
 					if ( ! isset( $sheet[ $block_slug ] ) || ! is_array( $sheet[ $block_slug ] ) ) {
 						$sheet[ $block_slug ] = [];
+					}
+					$definition = self::block_definition( (string) ( $character->owner_slug ?? '' ), $block_slug );
+					foreach ( (array) ( $change_data['values'] ?? [] ) as $pool_name => $new_value ) {
+						$sheet = self::convert_temporary_for_raise( $sheet, $definition, $block_slug, (string) $pool_name, $sheet[ $block_slug ][ $pool_name ] ?? null, $new_value );
 					}
 					$sheet[ $block_slug ] = array_merge( $sheet[ $block_slug ], $change_data['values'] ?? [] );
 				}
@@ -527,6 +1007,133 @@ class Change_Engine {
 	}
 
 	/**
+	 * The number of Virtue (or similar) dots a `spent_from` block's trait spends, when the trait names a real pick at
+	 * a real rank - `null` for anything else, so the caller knows there is nothing to spend or free.
+	 *
+	 * @param object|null          $definition
+	 * @param array<string,mixed>  $trait
+	 */
+	private static function spent_from_cost( $definition, array $trait ): ?int {
+		$spent_from = $definition->_meta->spent_from ?? null;
+		if ( $spent_from === null ) {
+			return null;
+		}
+		$family_name = (string) ( $trait['name'] ?? '' );
+		$power_name  = (string) ( $trait['power_name'] ?? '' );
+		if ( $family_name === '' || $power_name === '' ) {
+			return null;
+		}
+		$family = null;
+		foreach ( ( $definition->powers ?? [] ) as $power ) {
+			if ( isset( $power->name ) && $power->name === $family_name ) {
+				$family = $power;
+				break;
+			}
+		}
+		if ( $family === null ) {
+			return null;
+		}
+		foreach ( (array) ( $family->elder ?? [] ) as $rank_name => $picks ) {
+			foreach ( (array) $picks as $pick ) {
+				if ( isset( $pick->power_name ) && $pick->power_name === $power_name ) {
+					$cost = $spent_from->rank_cost->{$rank_name} ?? null;
+					return is_numeric( $cost ) ? (int) $cost : null;
+				}
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Marks (or frees) dots spent in the pool a `spent_from` block's trait draws from, without lowering the pool's
+	 * own rating - buying an edge never lowers a Virtue, and removing one never raises it.
+	 *
+	 * @param array<string,mixed> $sheet
+	 * @param object|null         $definition
+	 * @param array<string,mixed> $trait
+	 * @param int                 $delta Positive to mark dots spent, negative to free them.
+	 * @return array<string,mixed>
+	 */
+	private static function adjust_spent_dots( array $sheet, $definition, array $trait, int $delta ): array {
+		$spent_from = $definition->_meta->spent_from ?? null;
+		$field      = is_string( $spent_from->by_family_field ?? null ) ? $spent_from->by_family_field : '';
+		$pool_block = is_string( $spent_from->pool_block ?? null ) ? $spent_from->pool_block : '';
+		$family     = null;
+		foreach ( ( $definition->powers ?? [] ) as $power ) {
+			if ( isset( $power->name ) && $power->name === ( $trait['name'] ?? null ) ) {
+				$family = $power;
+				break;
+			}
+		}
+		$pool_field = $family !== null && $field !== '' && is_string( $family->{$field} ?? null ) ? $family->{$field} : '';
+		if ( $pool_block === '' || $pool_field === '' ) {
+			return $sheet;
+		}
+
+		$current = $sheet[ $pool_block ][ $pool_field ] ?? null;
+		$row     = is_array( $current ) ? $current : [ 'permanent' => (int) ( $current ?? 0 ) ];
+		$row['spent'] = max( 0, (int) ( $row['spent'] ?? 0 ) + $delta );
+
+		if ( ! isset( $sheet[ $pool_block ] ) || ! is_array( $sheet[ $pool_block ] ) ) {
+			$sheet[ $pool_block ] = [];
+		}
+		$sheet[ $pool_block ][ $pool_field ] = $row;
+		return $sheet;
+	}
+
+	/**
+	 * Converts a `raised_by` pool's named source pool's temporary points when a change genuinely raises the pool's
+	 * permanent rating by one dot - the source pool is never touched for a lowering, an unchanged value, or a pool
+	 * with no `raised_by` rule.
+	 *
+	 * @param array<string,mixed> $sheet
+	 * @param object|null         $definition
+	 * @param mixed               $old_value
+	 * @param mixed               $new_value
+	 * @return array<string,mixed>
+	 */
+	private static function convert_temporary_for_raise( array $sheet, $definition, string $block_slug, string $pool_name, $old_value, $new_value ): array {
+		$pool_def = null;
+		foreach ( ( $definition->pools ?? [] ) as $pool ) {
+			if ( isset( $pool->name ) && $pool->name === $pool_name ) {
+				$pool_def = $pool;
+				break;
+			}
+		}
+		if ( $pool_def === null || ! isset( $pool_def->raised_by ) ) {
+			return $sheet;
+		}
+
+		// A change without `raised_cost` (a Storyteller's direct override) charges nothing.
+		if ( ! is_array( $new_value ) || ! isset( $new_value['raised_cost'] ) ) {
+			return $sheet;
+		}
+
+		$old_permanent = is_array( $old_value ) ? (int) ( $old_value['permanent'] ?? ( $pool_def->default_start ?? 0 ) ) : (int) ( $old_value ?? ( $pool_def->default_start ?? 0 ) );
+		$new_permanent = (int) ( $new_value['permanent'] ?? $old_permanent );
+		if ( $new_permanent - $old_permanent !== 1 ) {
+			return $sheet; // Validated elsewhere; apply_to_sheet only ever converts a genuine single-dot raise.
+		}
+
+		$raised_by = $pool_def->raised_by;
+		[ $from_block, $from_field ] = array_pad( explode( '.', (string) ( $raised_by->from ?? '' ), 2 ), 2, '' );
+		$needed = (int) ( $raised_by->temporary ?? 0 );
+		if ( $from_block === '' || $from_field === '' || $needed < 1 ) {
+			return $sheet;
+		}
+
+		$from_current = $sheet[ $from_block ][ $from_field ] ?? null;
+		$from_row     = is_array( $from_current ) ? $from_current : [ 'permanent' => (int) ( $from_current ?? 0 ) ];
+		$from_row['temporary'] = max( 0, (int) ( $from_row['temporary'] ?? 0 ) - $needed );
+
+		if ( ! isset( $sheet[ $from_block ] ) || ! is_array( $sheet[ $from_block ] ) ) {
+			$sheet[ $from_block ] = [];
+		}
+		$sheet[ $from_block ][ $from_field ] = $from_row;
+		return $sheet;
+	}
+
+	/**
 	 * Determines the approval level required for a change, and any citation explaining why: 'auto' or 'st', alongside an
 	 * optional reason.
 	 *
@@ -561,8 +1168,8 @@ class Change_Engine {
 			return [ 'level' => 'st', 'reason' => null ];
 		}
 
-		// A proposed catalog item or faction always waits for a Storyteller.
-		if ( in_array( $change->change_type, [ 'propose_world_object', 'propose_faction' ], true ) ) {
+		// A proposed catalog item or faction, a logged knowledge claim, or a secret pass always waits for a Storyteller.
+		if ( in_array( $change->change_type, [ 'propose_world_object', 'propose_faction', 'log_knowledge', 'pass_secret' ], true ) ) {
 			return [ 'level' => 'st', 'reason' => null ];
 		}
 
@@ -704,8 +1311,26 @@ class Change_Engine {
 			}
 		}
 
-		// Falls back to the chronicle's own default approval setting.
+		// The chronicle's own reason, if any, comes first; every OWBN Character Bylaw attached to this entry
+		// follows, one per line, on a chronicle with the switch on.
 		$game = \BeyondElysium\Models\Game::find_by_slug( $character->owner_slug );
+		if ( $block_slug && isset( $trait_name ) && $trait_name && $game && ( $game->settings->owbn_bylaws ?? false ) === true ) {
+			$axis         = ! empty( $character->is_npc ) ? 'npc' : 'pc';
+			$family       = Bylaws::family_of_block( $block_slug );
+			$held_level   = isset( $change_data['trait']['level'] ) && is_numeric( $change_data['trait']['level'] ) ? (int) $change_data['trait']['level'] : null;
+			$new_count    = isset( $change_data['trait']['count'] ) && is_numeric( $change_data['trait']['count'] ) ? (int) $change_data['trait']['count'] : null;
+			// A purchase named by its own power_name, rather than a numbered level, is exactly how this engine
+			// already represents an Elder-and-above pick (Cost_Engine's own 'elder_pick' pricing basis).
+			$is_named_pick = ! empty( $change_data['trait']['power_name'] );
+			$bylaw_rules  = Bylaws::rules_for( $family, $trait_name, $held_level, $is_named_pick, $new_count );
+			$bylaw_reason = Bylaw_Reason::format_all( $bylaw_rules, $axis, $trait_name );
+			if ( $bylaw_reason !== null ) {
+				$reason = $reason !== null ? ( $reason . "\n" . $bylaw_reason ) : $bylaw_reason;
+				$level  = self::strictest( $level, 'st' );
+			}
+		}
+
+		// Falls back to the chronicle's own default approval setting.
 		$chronicle_default = ( $game && ( $game->settings->auto_approve ?? false ) === true ) ? 'auto' : 'st';
 		$level = $level ?? $chronicle_default;
 
@@ -715,10 +1340,10 @@ class Change_Engine {
 	/**
 	 * Awards XP to multiple characters in one call.
 	 *
-	 * @param array  $character_ids
-	 * @param int    $amount
-	 * @param string $reason
-	 * @param int    $awarded_by
+	 * @param array<int,int> $character_ids
+	 * @param int            $amount
+	 * @param string         $reason
+	 * @param int            $awarded_by
 	 * @return int Number of awards successfully created.
 	 */
 	public static function bulk_award_xp( array $character_ids, int $amount, string $reason, int $awarded_by ): int {
@@ -730,6 +1355,7 @@ class Change_Engine {
 			}
 
 			$savepoint = Transaction::begin( 'be_bulk_award_xp' );
+			$visit     = Keep_Current::inbound_kept_current_visit( $character_id );
 			$change_id = Change::create( [
 				'character_id' => $character_id,
 				'change_type'  => 'xp_earn',
@@ -739,17 +1365,25 @@ class Change_Engine {
 					'reason' => $reason,
 				],
 				'xp_cost'      => 0,
-				'status'       => 'approved',
+				'status'       => $visit !== null ? 'forwarded' : 'approved',
 				'submitted_by' => $awarded_by,
 				'notes'        => $reason,
 			] );
 
-			if ( ! $change_id || ! Character::update_xp( $character_id, $amount, $amount ) ) {
+			if ( ! $change_id ) {
+				Transaction::rollback( $savepoint );
+				continue;
+			}
+
+			if ( $visit === null && ! Character::update_xp( $character_id, $amount, $amount ) ) {
 				Transaction::rollback( $savepoint );
 				continue;
 			}
 
 			Transaction::commit( $savepoint );
+			if ( $visit !== null ) {
+				Keep_Current::forward_change( $visit, Change::find( $change_id ) );
+			}
 			$count++;
 		}
 		return $count;
@@ -789,6 +1423,7 @@ class Change_Engine {
 			];
 		}
 
+		$visit     = Keep_Current::inbound_kept_current_visit( $character_id );
 		$change_id = Change::create( [
 			'character_id' => $character_id,
 			'change_type'  => $amount > 0 ? 'xp_earn' : 'xp_adjust',
@@ -798,12 +1433,12 @@ class Change_Engine {
 				'reason' => $reason,
 			],
 			'xp_cost'      => 0,
-			'status'       => 'approved',
+			'status'       => $visit !== null ? 'forwarded' : 'approved',
 			'submitted_by' => $applied_by,
 			'notes'        => $reason,
 		] );
 
-		if ( ! $change_id || ! Character::update_xp( $character_id, $amount, $amount ) ) {
+		if ( ! $change_id || ( $visit === null && ! Character::update_xp( $character_id, $amount, $amount ) ) ) {
 			Transaction::rollback( $savepoint );
 			return [
 				'applied' => false,
@@ -813,6 +1448,17 @@ class Change_Engine {
 		}
 
 		Transaction::commit( $savepoint );
+
+		if ( $visit !== null ) {
+			Keep_Current::forward_change( $visit, Change::find( $change_id ) );
+			return [
+				'applied'   => true,
+				'forwarded' => true,
+				'amount'    => $amount,
+				'xp_earned' => (int) $character->xp_earned,
+				'xp_unspent' => (int) $character->xp_unspent,
+			];
+		}
 
 		$updated = Character::find( $character_id );
 		return [

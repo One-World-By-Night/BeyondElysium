@@ -47,6 +47,16 @@ class FieldRegistryTest extends TestCase {
 		$this->assertCount( 231, Field_Registry::all() );
 	}
 
+	public function test_the_tempers_extra_widens_the_existing_row_to_the_item_inventory(): void {
+		$row = Field_Registry::get( 'tempers' );
+		$this->assertNotNull( $row );
+		$this->assertSame( 'list', $row['type'] );
+		$this->assertContains( 'char', $row['inventories'] );
+		$this->assertContains( 'item', $row['inventories'] );
+		$this->assertArrayHasKey( 'tempers', Field_Registry::for_inventory( 'item' ) );
+		$this->assertArrayHasKey( 'tempers', Field_Registry::for_inventory( 'char' ) );
+	}
+
 	public function test_type_counts_match_the_source_map(): void {
 		$counts = array_count_values( array_column( Field_Registry::all(), 'type' ) );
 
@@ -68,7 +78,7 @@ class FieldRegistryTest extends TestCase {
 	public function test_inventory_membership_matches_the_source_map(): void {
 		$this->assertCount( 204, Field_Registry::for_inventory( 'char' ) );
 		$this->assertCount( 18, Field_Registry::for_inventory( 'loc' ) );
-		$this->assertCount( 16, Field_Registry::for_inventory( 'item' ) );
+		$this->assertCount( 17, Field_Registry::for_inventory( 'item' ) );
 		$this->assertCount( 13, Field_Registry::for_inventory( 'player' ) );
 		$this->assertCount( 8, Field_Registry::for_inventory( 'rote' ) );
 
@@ -144,7 +154,7 @@ class FieldRegistryTest extends TestCase {
 	}
 
 	/**
-	 * A whole-list entry can name a shared list no block carries any more (`met-abilities`, `met-merits`, `met-flaws`):
+	 * A whole-list entry can name a shared list that no block carries (`met-abilities`, `met-merits`, `met-flaws`):
 	 * every stack then declares the block that answers for it, and each of those exists.
 	 */
 	private function assert_answered_by_every_stack( string $key, string $slug ): void {
@@ -153,6 +163,9 @@ class FieldRegistryTest extends TestCase {
 		$this->assertNotEmpty( $stacks );
 
 		foreach ( array_keys( $stacks ) as $stack ) {
+			if ( $stack === 'various' && in_array( $slug, [ 'met-merits', 'met-flaws' ], true ) ) {
+				continue; // Various carries no Merits or Flaws section at all.
+			}
 			$replacement = $maps[ $stack ][ $slug ] ?? null;
 			$this->assertNotNull( $replacement, "{$key}: block '{$slug}' does not exist and stack '{$stack}' declares no block for it" );
 			$this->assertArrayHasKey( $replacement, self::$blocks_by_slug, "{$key}: stack '{$stack}' answers '{$slug}' with '{$replacement}', which does not exist" );

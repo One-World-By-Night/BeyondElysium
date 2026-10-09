@@ -562,7 +562,7 @@ describe( 'computeChanges — identity_field', () => {
 } );
 
 /**
- * Consumer 4 - the diff pairs held rows by identity.
+ * The diff pairs held rows by identity.
  */
 describe( 'computeChanges — trait_list rows that may be held more than once', () => {
 	const blocks = {

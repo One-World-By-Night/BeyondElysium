@@ -8,8 +8,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * The last two free-text fields that were still plain text when every comparable field had become rich: a chronicle's
- * own `description`, and the generic `textarea` identity-field type an NPC's roleplaying notes use.
+ * A chronicle's own `description` and the generic `textarea` identity-field type (an NPC's roleplaying notes use it)
+ * keep their rich-text markup.
  */
 class RichTextHoldoutsThreadTest extends WP_UnitTestCase {
 

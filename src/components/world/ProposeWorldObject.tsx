@@ -7,7 +7,9 @@ import api from '../../api/client';
 import HtmlEditor from '../shared/HtmlEditor';
 import HelpButton from '../shared/HelpButton';
 import { WORLD_OBJECT_SCHEMAS } from '../../types/world';
+import type { CatalogItemEntry } from '../../types/world';
 import type { Character } from '../../types/character';
+import { BookItemPicker } from './BookItemPicker';
 import './ProposeWorldObject.css';
 
 export interface ProposeWorldObjectProps {
@@ -21,6 +23,25 @@ export interface ProposeWorldObjectProps {
 type PropertyValue = string | number | boolean;
 
 import { errorMessage } from '../../lib/errorMessage';
+
+/**
+ * The name, description and properties a book catalog entry seeds a fresh proposal with, `book_ref` stamped onto
+ * properties alongside whatever the book itself declares.
+ */
+export function catalogEntryToProposalSeed( entry: CatalogItemEntry ): {
+	name: string;
+	description: string;
+	properties: Record< string, PropertyValue >;
+} {
+	return {
+		name: entry.name,
+		description: entry.description ?? '',
+		properties: {
+			...( entry.properties as Record< string, PropertyValue > ),
+			book_ref: entry.book_ref,
+		},
+	};
+}
 
 export function ProposeWorldObject( {
 	gameSlug,
@@ -41,6 +62,8 @@ export function ProposeWorldObject( {
 	const [ error, setError ] = useState< string | null >( null );
 	const [ submitted, setSubmitted ] = useState( false );
 	const [ character, setCharacter ] = useState< Character | null >( null );
+	const [ showBookPicker, setShowBookPicker ] = useState( false );
+	const [ prefillNonce, setPrefillNonce ] = useState( 0 );
 
 	useEffect( () => {
 		api.characters( gameSlug )
@@ -49,9 +72,10 @@ export function ProposeWorldObject( {
 			.catch( () => setCharacter( null ) );
 	}, [ gameSlug, characterId ] );
 
-	// Properties belong to the chosen type.
+	// Properties and the description belong to the chosen type.
 	useEffect( () => {
 		setProperties( {} );
+		setDescription( '' );
 	}, [ objectType ] );
 
 	const schema =
@@ -95,6 +119,27 @@ export function ProposeWorldObject( {
 		setName( '' );
 		setDescription( '' );
 		setProperties( {} );
+	}
+
+	function startFromBookEntry( entry: CatalogItemEntry ) {
+		const seed = catalogEntryToProposalSeed( entry );
+		setObjectType( 'item' );
+		setName( seed.name );
+		setDescription( seed.description );
+		setProperties( seed.properties );
+		setShowBookPicker( false );
+		setPrefillNonce( ( n ) => n + 1 );
+	}
+
+	if ( showBookPicker ) {
+		return (
+			<div className="be-propose-object">
+				<BookItemPicker
+					onPick={ startFromBookEntry }
+					onCancel={ () => setShowBookPicker( false ) }
+				/>
+			</div>
+		);
 	}
 
 	if ( submitted ) {
@@ -157,6 +202,15 @@ export function ProposeWorldObject( {
 				</select>
 			</label>
 
+			{ objectType === 'item' && (
+				<button
+					type="button"
+					onClick={ () => setShowBookPicker( true ) }
+				>
+					{ __( 'Start from a book entry', 'beyond-elysium' ) }
+				</button>
+			) }
+
 			<label>
 				{ __( 'Name', 'beyond-elysium' ) }
 				<input
@@ -170,8 +224,9 @@ export function ProposeWorldObject( {
 			<div className="be-propose-object__field">
 				<span>{ __( 'Description', 'beyond-elysium' ) }</span>
 				<HtmlEditor
+					key={ `${ objectType }-${ prefillNonce }` }
 					id={ `be-propose-description-${ characterId }-${ objectType }` }
-					defaultValue=""
+					defaultValue={ description }
 					rows={ 6 }
 					onChange={ setDescription }
 				/>
@@ -180,20 +235,29 @@ export function ProposeWorldObject( {
 			{ Object.entries( schema )
 				// A trait_list property is a Storyteller-side structure (availability lists, security traits).
 				.filter( ( [ , kind ] ) => kind !== 'trait_list' )
-				.map( ( [ key, kind ] ) => (
-					<label key={ key }>
-						{ key.replace( /_/g, ' ' ) }
-						{ kind === 'text' ? (
-							<textarea
-								value={ String( properties[ key ] ?? '' ) }
-								onChange={ ( e ) =>
+				.map( ( [ key, kind ] ) =>
+					kind === 'text' ? (
+						<div
+							className="be-propose-object__field"
+							key={ `${ objectType }:${ key }:${ prefillNonce }` }
+						>
+							<span>{ key.replace( /_/g, ' ' ) }</span>
+							<HtmlEditor
+								id={ `be-propose-property-${ characterId }-${ objectType }-${ key }` }
+								defaultValue={ String(
+									properties[ key ] ?? ''
+								) }
+								onChange={ ( html ) =>
 									setProperties( {
 										...properties,
-										[ key ]: e.target.value,
+										[ key ]: html,
 									} )
 								}
 							/>
-						) : (
+						</div>
+					) : (
+						<label key={ key }>
+							{ key.replace( /_/g, ' ' ) }
 							<input
 								type={
 									kind === 'int'
@@ -213,9 +277,9 @@ export function ProposeWorldObject( {
 									} )
 								}
 							/>
-						) }
-					</label>
-				) ) }
+						</label>
+					)
+				) }
 
 			<button type="submit" disabled={ saving || ! name.trim() }>
 				{ saving

@@ -10,7 +10,7 @@ import type {
 	CharacterCollectionParams,
 	WpUserSummary,
 } from '../../types/character';
-import type { TravellingStatus } from '../../types/transfer';
+import { alsoActiveAt, travellingBadgeLabel } from '../../lib/visitStatus';
 import { canIn } from '../../lib/chronicleCapabilities';
 import { sameId } from '../../lib/ids';
 import {
@@ -70,25 +70,6 @@ function labelFor( key: SortableColumn ): string {
 const STATUS_OPTIONS = [ 'active', 'inactive', 'retired', 'dead', 'pending' ];
 
 const SEARCH_DEBOUNCE_MS = 300;
-
-/**
- * The travelling badge's hover text: where the character went, or where it came from.
- */
-function travellingTitle( status: TravellingStatus ): string {
-	const other =
-		status.chronicle ?? __( 'no host confirmed yet', 'beyond-elysium' );
-	return status.direction === 'outbound'
-		? sprintf(
-				/* translators: %s: the chronicle it went to, or that no host is confirmed yet */
-				__( 'Travelling - %s', 'beyond-elysium' ),
-				other
-			)
-		: sprintf(
-				/* translators: %s: the chronicle it came from */
-				__( 'Visiting from %s', 'beyond-elysium' ),
-				other
-			);
-}
 
 function sheetLink(
 	sheetPageUrl: string | undefined,
@@ -476,31 +457,19 @@ export function CharacterList( {
 										) : (
 											character.name
 										) }
-										{ character.travelling_status && (
-											<span
-												className={ `be-st-badge be-st-badge--${
-													character.travelling_status
-														.direction ===
-													'outbound'
-														? 'travelling'
-														: 'visiting'
-												}` }
-												title={ travellingTitle(
-													character.travelling_status
-												) }
-											>
-												{ character.travelling_status
-													.direction === 'outbound'
-													? __(
-															'Travelling',
-															'beyond-elysium'
-														)
-													: __(
-															'Visiting',
-															'beyond-elysium'
-														) }
-											</span>
-										) }
+										{ character.visits &&
+											character.visits.length > 0 && (
+												<span
+													className="be-st-badge be-st-badge--travelling"
+													title={ alsoActiveAt(
+														character.visits
+													) }
+												>
+													{ travellingBadgeLabel(
+														character.visits
+													) }
+												</span>
+											) }
 									</td>
 									<td data-label={ labelFor( 'stack_slug' ) }>
 										{ character.stack_slug }

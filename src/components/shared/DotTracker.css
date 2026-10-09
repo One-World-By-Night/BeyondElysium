@@ -35,19 +35,19 @@
 	width: 0.875rem;
 	height: 0.875rem;
 	padding: 0;
-	border: 1px solid var(--be-gray-12);
+	border: 1px solid var(--be-sheet-dot-line, var(--be-gray-12));
 	border-radius: 2px;
-	background: var(--be-gray-29);
+	background: var(--be-sheet-surface, var(--be-gray-29));
 }
 
 .be-dot-tracker__dot--filled {
-	background: var(--be-gray-4);
-	border-color: var(--be-gray-4);
+	background: var(--be-sheet-dot-filled, var(--be-gray-4));
+	border-color: var(--be-sheet-dot-filled, var(--be-gray-4));
 }
 
 .be-dot-tracker__dot--spent {
-	background: var(--be-gray-29);
-	border-color: var(--be-gray-12);
+	background: var(--be-sheet-surface, var(--be-gray-29));
+	border-color: var(--be-sheet-dot-line, var(--be-gray-12));
 }
 
 .be-dot-tracker__dot--overflow {
@@ -56,8 +56,8 @@
 }
 
 .be-dot-tracker__dot--empty {
-	background: var(--be-gray-29);
-	border-color: var(--be-gray-16);
+	background: var(--be-sheet-surface, var(--be-gray-29));
+	border-color: var(--be-sheet-dot-line, var(--be-gray-16));
 }
 
 .be-dot-tracker__dot--temp {

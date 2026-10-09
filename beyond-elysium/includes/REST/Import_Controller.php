@@ -6,17 +6,25 @@ use BeyondElysium\Database\Option_Lock;
 use BeyondElysium\Database\Transaction;
 use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Connection;
+use BeyondElysium\Models\Creature_Stack;
 use BeyondElysium\Models\Game;
 use BeyondElysium\Models\Game_Session;
+use BeyondElysium\Models\Plot;
+use BeyondElysium\Models\Plot_Entry;
 use BeyondElysium\Models\Schema_Block;
 use BeyondElysium\Models\World_Object;
+use BeyondElysium\Services\Action_Allocator;
+use BeyondElysium\Services\Audience;
 use BeyondElysium\Services\Change_Engine;
 use BeyondElysium\Services\Character_Diff;
+use BeyondElysium\Services\Field_Registry;
 use BeyondElysium\Services\GEX_Parser;
 use BeyondElysium\Services\GEX_Xml_Parser;
 use BeyondElysium\Services\GV_Binary_Reader;
 use BeyondElysium\Services\Not_Exportable_Exception;
 use BeyondElysium\Services\Purchase_Scope;
+use BeyondElysium\Services\Query_Engine;
+use BeyondElysium\Services\Rumor_Generator;
 use BeyondElysium\Services\Trait_Mapper;
 use BeyondElysium\Utils\Uuid;
 
@@ -38,6 +46,37 @@ class Import_Controller extends Base_Controller {
 	 * Seconds after which a commit lock is stale.
 	 */
 	const COMMIT_LOCK_TTL = 600;
+
+	/**
+	 * Grapevine races with no shipped creature type at all.
+	 */
+	const REFUSED_RACES = [];
+
+	/**
+	 * `QueryCompareType` (`QueryEngineClass.cls`), Grapevine's own raw query-clause comparison codes, mapped onto
+	 * Query_Engine's matching operator names.
+	 */
+	const GV_COMPARISON_OPERATORS = [
+		0  => 'contains',
+		1  => 'equals',
+		2  => 'at_least',
+		3  => 'greater',
+		4  => 'less',
+		5  => 'no_more',
+		6  => 'contains_exactly',
+		7  => 'contains_at_least',
+		8  => 'contains_more',
+		9  => 'contains_less',
+		10 => 'contains_no_more',
+		11 => 'totals',
+		12 => 'totals_at_least',
+		13 => 'totals_more',
+		14 => 'totals_no_more',
+		15 => 'totals_less',
+		16 => 'contains_note',
+		17 => 'is_true',
+		18 => 'is_false',
+	];
 
 	/**
 	 * Registers the REST routes for parsing an uploaded file, fetching a parsed job's preview, and committing a reviewed
@@ -304,19 +343,342 @@ class Import_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Applies a fully-resolved import job within a single transaction: creates every parsed item, location, and rote as a
-	 * world object.
+	 * Converts one Grapevine raw query clause into Beyond Elysium's own single-condition `target_query` shape.
+	 *
+	 * `target_query`/`audience_rules.conditions` only ever hold one condition (`Rumor_Generator::persist_one()`'s own
+	 * shape), so a Grapevine query this cannot represent - more than one clause, a negated clause, or a
+	 * `contains_exactly`/`contains_at_least`/`contains_more`/`contains_less`/`contains_no_more` clause, which needs
+	 * both a trait name and a count where `target_query` has room for one value - returns no query and a reason; a
+	 * field or operator this catalog doesn't recognize returns `Query_Engine::validate_conditions()`'s own message as
+	 * the reason.
+	 *
+	 * @param array<string,mixed>|null $query
+	 * @return array{target_query: array<string,mixed>|null, reason: string|null}
+	 */
+	private static function gv_query_to_target_query( ?array $query ): array {
+		$clauses = $query['clauses'] ?? [];
+		if ( $query === null || empty( $clauses ) ) {
+			return [ 'target_query' => null, 'reason' => null ];
+		}
+		if ( count( $clauses ) > 1 ) {
+			return [
+				'target_query' => null,
+				'reason'       => __( 'This rumor targets more than one condition at once, which this install cannot represent as a single rule.', 'beyond-elysium' ),
+			];
+		}
+
+		$clause = $clauses[0];
+		if ( ! empty( $clause['comp_not'] ) ) {
+			return [
+				'target_query' => null,
+				'reason'       => __( "This rumor targets everyone who does NOT match a condition, which this install can't represent.", 'beyond-elysium' ),
+			];
+		}
+
+		$operator = self::GV_COMPARISON_OPERATORS[ (int) ( $clause['comparison'] ?? -1 ) ] ?? null;
+		if ( $operator === null ) {
+			return [
+				'target_query' => null,
+				'reason'       => __( "This rumor uses a comparison this install doesn't recognize.", 'beyond-elysium' ),
+			];
+		}
+		if ( in_array( $operator, Query_Engine::NAMED_COUNT_OPERATORS, true ) ) {
+			return [
+				'target_query' => null,
+				'reason'       => __( 'This rumor needs both a trait name and a count, which this install cannot combine into one rule.', 'beyond-elysium' ),
+			];
+		}
+
+		$field = (string) ( $clause['key'] ?? '' );
+		$type  = Field_Registry::type_for( $field, 'char' );
+		$value = in_array( $type, [ 'num', 'date' ], true ) || str_starts_with( $operator, 'totals' )
+			? (float) ( $clause['number'] ?? 0 )
+			: (string) ( $clause['find'] ?? '' );
+
+		// Validated through validate_conditions(), stored as target_query's own plain shape.
+		$invalid = Query_Engine::validate_conditions(
+			[ [ 'field' => $field, 'operator' => $operator, 'find' => (string) $value, 'value' => $value ] ],
+			'char'
+		);
+		if ( $invalid !== null ) {
+			return [ 'target_query' => null, 'reason' => $invalid['message'] ];
+		}
+
+		return [ 'target_query' => [ 'field' => $field, 'operator' => $operator, 'value' => $value ], 'reason' => null ];
+	}
+
+	/**
+	 * Imports a `.gv3` file's plots: Storytellers-only, cast matched to real characters as connections, unmatched
+	 * cast and the narrator into Storyteller notes, each development a Storytellers-only `note` entry. Already
+	 * present (same title and start date) is skipped.
+	 *
+	 * @param int                  $game_id
+	 * @param string               $game_slug
+	 * @param array<int,mixed>     $plots
+	 * @return array{created: int, skipped: int, unmatched_cast: string[]}
+	 */
+	private static function import_plots( int $game_id, string $game_slug, array $plots ): array {
+		$created        = 0;
+		$skipped        = 0;
+		$unmatched_cast = [];
+
+		foreach ( $plots as $plot ) {
+			$name       = (string) ( $plot['name'] ?? '' );
+			$start_date = substr( (string) ( $plot['start_date'] ?? '' ), 0, 10 );
+			if ( $name === '' ) {
+				continue;
+			}
+			if ( Plot::find_by_title_and_date( $game_id, $name, 'start_date', $start_date ) ) {
+				++$skipped;
+				continue;
+			}
+
+			$cast_names = array_column( (array) ( $plot['cast_list']['traits'] ?? [] ), 'name' );
+			$unmatched  = [];
+			$notes      = [];
+			if ( ( $plot['narrator'] ?? '' ) !== '' ) {
+				$notes[] = sprintf(
+					/* translators: %s: the narrator's name as Grapevine recorded it */
+					__( "Grapevine's own narrator: %s", 'beyond-elysium' ),
+					$plot['narrator']
+				);
+			}
+
+			$plot_id = Plot::create( [
+				'game_id'      => $game_id,
+				'title'        => $name,
+				'description'  => $plot['outline'] ?? '',
+				'start_date'   => $start_date !== '' ? $start_date : null,
+				'end_date'     => substr( (string) ( $plot['end_date'] ?? '' ), 0, 10 ) ?: null,
+				'audience'     => Audience::STORYTELLERS,
+				'initiated_by' => 'st',
+				'st_notes'     => '',
+			] );
+			if ( ! $plot_id ) {
+				continue;
+			}
+			++$created;
+
+			foreach ( $cast_names as $cast_name ) {
+				$character = $cast_name !== '' ? Character::find_by_name_in_game( $cast_name, $game_slug ) : null;
+				if ( $character ) {
+					Connection::create( [
+						'game_id'     => $game_id,
+						'source_type' => 'plot',
+						'source_id'   => $plot_id,
+						'target_type' => 'character',
+						'target_id'   => (int) $character->id,
+						'label'       => __( 'Plot Cast', 'beyond-elysium' ),
+						'created_by'  => get_current_user_id(),
+					] );
+				} elseif ( $cast_name !== '' ) {
+					$unmatched[]      = $cast_name;
+					$unmatched_cast[] = $cast_name;
+				}
+			}
+			if ( ! empty( $unmatched ) ) {
+				$notes[] = sprintf(
+					/* translators: %s: comma-separated cast names Grapevine listed that matched no character */
+					__( 'Cast names matching no character: %s', 'beyond-elysium' ),
+					implode( ', ', $unmatched )
+				);
+			}
+			if ( ! empty( $notes ) ) {
+				Plot::update( $plot_id, [ 'st_notes' => implode( "\n", $notes ) ] );
+			}
+
+			foreach ( (array) ( $plot['developments'] ?? [] ) as $development ) {
+				$lines = [ (string) ( $development['development'] ?? '' ) ];
+				foreach ( (array) ( $development['effects'] ?? [] ) as $effect ) {
+					if ( ( $effect['item'] ?? '' ) !== '' ) {
+						$lines[] = sprintf(
+							/* translators: %s: the affected item, location or character's name */
+							__( 'Affects: %s', 'beyond-elysium' ),
+							$effect['item']
+						);
+					}
+				}
+				Plot_Entry::create( [
+					'plot_id'    => $plot_id,
+					'entry_type' => 'note',
+					'audience'   => 'plot',
+					'event_date' => substr( (string) ( $development['dev_date'] ?? '' ), 0, 10 ) ?: null,
+					'content'    => implode( "\n", array_filter( $lines ) ),
+				] );
+			}
+		}
+
+		return [ 'created' => $created, 'skipped' => $skipped, 'unmatched_cast' => $unmatched_cast ];
+	}
+
+	/**
+	 * Imports a `.gv3` file's rumors, built the way `Rumor_Generator` builds its own: a plot tagged `apr_rumor`,
+	 * Grapevine's query converted to `target_query` where it can be, MultiKey/MultiMatch as the level key and
+	 * match, one `rumor_level` entry per variant. Done in Grapevine arrives delivered (not held, so its targets
+	 * can read it, no email - imports never email); not done arrives held, in no batch. A query that won't
+	 * convert keeps the rumor Storytellers-only with a note saying why. Already present (same title and date) is
+	 * skipped.
+	 *
+	 * @param int               $game_id
+	 * @param string            $game_slug
+	 * @param array<int,mixed>  $rumors
+	 * @return array{created: int, skipped: int}
+	 */
+	private static function import_rumors( int $game_id, string $game_slug, array $rumors ): array {
+		$created = 0;
+		$skipped = 0;
+
+		foreach ( $rumors as $rumor ) {
+			$title = (string) ( $rumor['title'] ?? '' );
+			$date  = substr( (string) ( $rumor['rumor_date'] ?? '' ), 0, 10 );
+			if ( $title === '' ) {
+				continue;
+			}
+			if ( Plot::find_by_title_and_date( $game_id, $title, 'game_date', $date ) ) {
+				++$skipped;
+				continue;
+			}
+
+			$multi_key   = (string) ( $rumor['multi_key'] ?? '' );
+			$multi_match = (string) ( $rumor['multi_match'] ?? '' );
+			$reason      = null;
+			$target_query = null;
+
+			if ( $multi_key === '' && ! empty( $rumor['query'] ) ) {
+				$result       = self::gv_query_to_target_query( $rumor['query'] );
+				$target_query = $result['target_query'];
+				$reason       = $result['reason'];
+			}
+
+			$done   = ! empty( $rumor['done'] );
+			$plot_id = Plot::create( [
+				'game_id'           => $game_id,
+				'title'             => $title,
+				'description'       => '',
+				'game_date'         => $date !== '' ? $date : null,
+				'initiated_by'      => 'st',
+				'target_query'      => $target_query,
+				'audience'          => $reason !== null ? Audience::STORYTELLERS : ( $target_query ? Audience::RESTRICTED : Audience::EVERYONE ),
+				'audience_rules'    => $target_query ? [ 'logic' => 'AND', 'conditions' => [ Query_Engine::target_query_to_condition( $target_query ) ] ] : null,
+				'rumor_level_key'   => $multi_key !== '' ? $multi_key : null,
+				'rumor_level_match' => $multi_match !== '' ? $multi_match : null,
+				'st_notes'          => $reason !== null
+					? sprintf(
+						/* translators: %s: why the Grapevine query could not become a target rule */
+						__( "Could not target this rumor precisely: %s", 'beyond-elysium' ),
+						$reason
+					)
+					: '',
+			] );
+			if ( ! $plot_id ) {
+				continue;
+			}
+			++$created;
+
+			// `held` is set in a second step, as in Rumor_Generator::persist_one().
+			Plot::update( $plot_id, [ 'held' => ! $done ] );
+			Rumor_Generator::tag_as_rumor( $plot_id, $game_id );
+
+			foreach ( (array) ( $rumor['variants'] ?? [] ) as $variant ) {
+				Plot_Entry::create( [
+					'plot_id'    => $plot_id,
+					'entry_type' => 'rumor_level',
+					'level'      => (int) ( $variant['level'] ?? 0 ),
+					'content'    => (string) ( $variant['rumor'] ?? '' ),
+				] );
+			}
+		}
+
+		return [ 'created' => $created, 'skipped' => $skipped ];
+	}
+
+	/**
+	 * Imports a `.gv3` file's actions: the character matched the way the importer already matches everything else,
+	 * one `Action_Allocator` plot per character/date with one readable `action` entry per subaction (Grapevine's own
+	 * history as plain text). Done marks the plot resolved. No match, or an allocator plot already existing for that
+	 * character and date, is skipped and listed.
+	 *
+	 * @param int               $game_id
+	 * @param string            $game_slug
+	 * @param array<int,mixed>  $actions
+	 * @return array{created: int, skipped: int, unmatched: string[]}
+	 */
+	private static function import_actions( int $game_id, string $game_slug, array $actions ): array {
+		$created   = 0;
+		$skipped   = 0;
+		$unmatched = [];
+
+		foreach ( $actions as $action ) {
+			$char_name = (string) ( $action['char_name'] ?? '' );
+			$character = $char_name !== '' ? Character::find_by_name_in_game( $char_name, $game_slug ) : null;
+			if ( ! $character ) {
+				if ( $char_name !== '' ) {
+					$unmatched[] = $char_name;
+				}
+				continue;
+			}
+
+			$game_date = substr( (string) ( $action['act_date'] ?? '' ), 0, 10 );
+			if ( $game_date === '' ) {
+				continue;
+			}
+			if ( Action_Allocator::find_own_plot_id( (int) $character->id, $game_date ) !== null ) {
+				++$skipped;
+				continue;
+			}
+
+			$plot_id = Action_Allocator::create_own_plot( $character, $game_date );
+			if ( ! $plot_id ) {
+				continue;
+			}
+			++$created;
+
+			foreach ( (array) ( $action['subactions'] ?? [] ) as $subaction ) {
+				$lines = [ sprintf(
+					/* translators: 1: the background/influence name, 2: the dot level spent */
+					__( '%1$s (%2$d)', 'beyond-elysium' ),
+					(string) ( $subaction['name'] ?? '' ),
+					(int) ( $subaction['level'] ?? 0 )
+				) ];
+				if ( ( $subaction['action'] ?? '' ) !== '' ) {
+					$lines[] = (string) $subaction['action'];
+				}
+				if ( ( $subaction['result'] ?? '' ) !== '' ) {
+					$lines[] = sprintf(
+						/* translators: %s: Grapevine's own recorded result text */
+						__( 'Result: %s', 'beyond-elysium' ),
+						$subaction['result']
+					);
+				}
+				Plot_Entry::create( [
+					'plot_id'    => $plot_id,
+					'entry_type' => 'action',
+					'event_date' => $game_date,
+					'content'    => implode( "\n", $lines ),
+				] );
+			}
+
+			if ( ! empty( $action['done'] ) ) {
+				Plot::update( $plot_id, [ 'status' => 'resolved' ] );
+			}
+		}
+
+		return [ 'created' => $created, 'skipped' => $skipped, 'unmatched' => $unmatched ];
+	}
+
+	/**
+	 * Applies a fully-resolved import job within a single transaction: creates every parsed item, location, rote and
+	 * character.
 	 *
 	 * @param int                  $game_id
 	 * @param string               $game_slug
 	 * @param array<string,mixed>  $parsed
 	 * @param string               $source_file
-	 * @param array<string,mixed>  $resolutions Duplicate/trait resolution choices (Chunk 1 of the Import plan) - see commit()'s own doc comment.
+	 * @param array<string,mixed>  $resolutions Duplicate/trait resolution choices, as `commit()` documents.
 	 * @param array<string,mixed> $options `submitted_by` (int): the file came from a
 	 *                              player's own submission, not a Storyteller's upload - every
 	 *                              character created or overwritten is forced to that account
-	 *                              (never NPC, never a bare player_name, always active), since
-	 *                              accepting a submission is itself the Storyteller's approval.
+	 *                              (never NPC, never a bare player_name, always active).
 	 * @return array<string,mixed>
 	 */
 	public static function apply_import( int $game_id, string $game_slug, array $parsed, string $source_file, array $resolutions, array $options = [] ): array {
@@ -404,6 +766,11 @@ class Import_Controller extends Base_Controller {
 
 		foreach ( $parsed['characters'] as $character ) {
 			$char_name = self::character_display_name( $character );
+			$reason    = self::stack_unavailable_reason( (string) $character['race'], $game_slug );
+			if ( $reason !== null ) {
+				$created['characters'][] = [ 'id' => 0, 'name' => $char_name, 'action' => 'refused', 'reason' => $reason ];
+				continue;
+			}
 			$match     = self::match_existing_character( $character, $game_slug );
 			if ( $match['existing'] && isset( $written_characters[ (int) $match['existing']->id ] ) ) {
 				// Already written by an earlier entry in this file: never overwritten a second time.
@@ -448,10 +815,42 @@ class Import_Controller extends Base_Controller {
 			$created['characters'][] = $imported;
 		}
 
-		// Actions/plots/rumors/queries have no import destination.
-		foreach ( [ 'actions', 'plots', 'rumors', 'queries' ] as $kind ) {
-			if ( ! empty( $parsed[ $kind ] ) ) {
-				$created[ "skipped_{$kind}" ] = count( $parsed[ $kind ] );
+		// Queries have no import destination.
+		if ( ! empty( $parsed['queries'] ) ) {
+			$created['skipped_queries'] = count( $parsed['queries'] );
+		}
+
+		$import_kinds = (array) ( $resolutions['import_kinds'] ?? [] );
+
+		if ( ! empty( $parsed['plots'] ) ) {
+			if ( ( $import_kinds['plots'] ?? true ) ) {
+				$result                     = self::import_plots( $game_id, $game_slug, $parsed['plots'] );
+				$created['plots']           = $result['created'];
+				$created['skipped_plots']   = $result['skipped'];
+				$created['unmatched_cast']  = $result['unmatched_cast'];
+			} else {
+				$created['skipped_plots'] = count( $parsed['plots'] );
+			}
+		}
+
+		if ( ! empty( $parsed['rumors'] ) ) {
+			if ( ( $import_kinds['rumors'] ?? true ) ) {
+				$result                    = self::import_rumors( $game_id, $game_slug, $parsed['rumors'] );
+				$created['rumors']         = $result['created'];
+				$created['skipped_rumors'] = $result['skipped'];
+			} else {
+				$created['skipped_rumors'] = count( $parsed['rumors'] );
+			}
+		}
+
+		if ( ! empty( $parsed['actions'] ) ) {
+			if ( ( $import_kinds['actions'] ?? true ) ) {
+				$result                     = self::import_actions( $game_id, $game_slug, $parsed['actions'] );
+				$created['actions']         = $result['created'];
+				$created['skipped_actions'] = $result['skipped'];
+				$created['unmatched_actors'] = $result['unmatched'];
+			} else {
+				$created['skipped_actions'] = count( $parsed['actions'] );
 			}
 		}
 
@@ -1176,6 +1575,30 @@ class Import_Controller extends Base_Controller {
 	}
 
 	/**
+	 * Names why a character's own creature type can't be imported here - it was never shipped at all, or this
+	 * chronicle has turned it off - or null when the chronicle can take it.
+	 *
+	 * @param string $stack_slug
+	 * @param string $game_slug
+	 */
+	private static function stack_unavailable_reason( string $stack_slug, string $game_slug ): ?string {
+		foreach ( Creature_Stack::all_for_game( $game_slug, [], false, \BeyondElysium\Core\Authorization::can( 'be_manage_characters' ) ) as $stack ) {
+			if ( $stack->slug === $stack_slug ) {
+				return null;
+			}
+		}
+
+		$stack = Creature_Stack::find_for_game( $stack_slug, $game_slug );
+		$label = $stack ? (string) $stack->name : ucfirst( $stack_slug );
+
+		return sprintf(
+			/* translators: %s: a creature type's display name, named twice */
+			__( '%1$s: there is no %1$s creature type on this site.', 'beyond-elysium' ),
+			$label
+		);
+	}
+
+	/**
 	 * Confirms a trait's resolution outcome is clean (exact, normalized, or custom) before it is written to a character's
 	 * sheet_data, throwing when it is not.
 	 *
@@ -1387,9 +1810,9 @@ class Import_Controller extends Base_Controller {
 	 *
 	 * @param array<string,mixed> $parsed
 	 * @param string              $game_slug
-	 * @param int                 $game_id     Needed alongside `$game_slug` because `World_Object::find_by_name_in_game()` is scoped by id, not slug (unlike `Character`'s equivalent).
+	 * @param int                 $game_id     The chronicle's game id, alongside `$game_slug`.
 	 * @param array<string,mixed> $resolutions Optional - `parse()`'s first preview has none yet; `commit()` passes what the client just chose.
-	 * @param string              $format      'GVBE'|'XML'|'GVBG' - purely informational (the response's own `format` field); every parser produces the identical `$parsed` shape, so nothing else here branches on it.
+	 * @param string              $format      'GVBE'|'XML'|'GVBG' - informational (the response's own `format` field).
 	 * @return array<string,mixed>
 	 */
 	public static function build_preview( array $parsed, string $game_slug, int $game_id, array $resolutions = [], string $format = 'GVBE' ): array {
@@ -1408,6 +1831,7 @@ class Import_Controller extends Base_Controller {
 		$flagged               = [];
 		$unresolved            = [];
 		$duplicates            = [];
+		$refused               = [];
 		$world_object_duplicates = [];
 		// How many entries in the file share each matched name.
 		$character_repeats = [];
@@ -1440,6 +1864,12 @@ class Import_Controller extends Base_Controller {
 		foreach ( $parsed['characters'] as $character ) {
 			$stack_slug = $character['race'];
 			$char_name  = self::character_display_name( $character );
+
+			$reason = self::stack_unavailable_reason( (string) $stack_slug, $game_slug );
+			if ( $reason !== null ) {
+				$refused[] = [ 'character' => $char_name, 'reason' => $reason ];
+				continue;
+			}
 
 			$match    = self::match_existing_character( $character, $game_slug );
 			$existing = $match['existing'];
@@ -1485,24 +1915,27 @@ class Import_Controller extends Base_Controller {
 
 					if ( $result['outcome'] === 'fuzzy' ) {
 						$flagged[] = [
-							'character'   => $char_name,
-							'block'       => $block_slug,
-							'raw'         => $trait['name'],
-							'suggestions' => $result['suggestions'],
-							'reason'      => 'fuzzy_match',
+							'character'    => $char_name,
+							'block'        => $block_slug,
+							'raw'          => $trait['name'],
+							'suggestions'  => $result['suggestions'],
+							'reason'       => 'fuzzy_match',
+							'allow_custom' => ! empty( $block->definition->allow_custom ),
 						];
 					} elseif ( $result['outcome'] === 'unresolved' ) {
 						$unresolved[] = [
-							'character' => $char_name,
-							'block'     => $block_slug,
-							'raw'       => $trait['name'],
+							'character'    => $char_name,
+							'block'        => $block_slug,
+							'raw'          => $trait['name'],
+							'allow_custom' => ! empty( $block->definition->allow_custom ),
 						];
 					} elseif ( $result['outcome'] === 'ambiguous' ) {
 						$unresolved[] = [
-							'character' => $char_name,
-							'block'     => $block_slug,
-							'raw'       => $trait['name'],
-							'reason'    => 'ambiguous',
+							'character'    => $char_name,
+							'block'        => $block_slug,
+							'raw'          => $trait['name'],
+							'reason'       => 'ambiguous',
+							'allow_custom' => ! empty( $block->definition->allow_custom ),
 						];
 					}
 				}
@@ -1537,6 +1970,9 @@ class Import_Controller extends Base_Controller {
 			'location' => array_column( $parsed['locations'] ?? [], 'name' ),
 		];
 		foreach ( $parsed['characters'] as $character ) {
+			if ( self::stack_unavailable_reason( (string) $character['race'], $game_slug ) !== null ) {
+				continue; // Refused above - never written, so nothing it holds matters either.
+			}
 			$new_entries = [];
 			foreach ( $character['trait_lists'] ?? [] as $list ) {
 				if ( ! is_array( $list ) || ! isset( $list['traits'], $list['name'] ) ) {
@@ -1573,7 +2009,82 @@ class Import_Controller extends Base_Controller {
 			'unresolved'               => $unresolved,
 			'duplicates'               => $duplicates,
 			'world_object_duplicates'  => $world_object_duplicates,
+			'refused'                  => $refused,
 			'warnings'                 => $warnings,
+			'narrative'                => self::preview_narrative( $parsed, $game_slug, $game_id ),
+		];
+	}
+
+	/**
+	 * Read-only preview of a `.gv3` file's plots, rumors and actions: how many of each already exist in this
+	 * chronicle (by the same dedup rule `import_plots()`/`import_rumors()`/`import_actions()` use) and which
+	 * cast/action names match no character, in the file or the chronicle. Nothing is written.
+	 *
+	 * @param array<string,mixed> $parsed
+	 * @param string              $game_slug
+	 * @param int                 $game_id
+	 * @return array{plots: array{already_present: int}, rumors: array{already_present: int}, actions: array{already_present: int}, unmatched_names: string[]}
+	 */
+	private static function preview_narrative( array $parsed, string $game_slug, int $game_id ): array {
+		$empty = [
+			'plots'           => [ 'already_present' => 0 ],
+			'rumors'          => [ 'already_present' => 0 ],
+			'actions'         => [ 'already_present' => 0 ],
+			'unmatched_names' => [],
+		];
+		if ( $game_id === 0 ) {
+			return $empty;
+		}
+
+		$file_character_names = array_map( [ self::class, 'character_display_name' ], $parsed['characters'] );
+		$unmatched             = [];
+		$matches_someone       = static function ( string $name ) use ( $game_slug, $file_character_names ): bool {
+			return $name !== '' && ( in_array( $name, $file_character_names, true ) || Character::find_by_name_in_game( $name, $game_slug ) !== null );
+		};
+
+		$plots_present = 0;
+		foreach ( (array) $parsed['plots'] as $plot ) {
+			$name = (string) ( $plot['name'] ?? '' );
+			if ( $name !== '' && Plot::find_by_title_and_date( $game_id, $name, 'start_date', substr( (string) ( $plot['start_date'] ?? '' ), 0, 10 ) ) ) {
+				++$plots_present;
+			}
+			foreach ( array_column( (array) ( $plot['cast_list']['traits'] ?? [] ), 'name' ) as $cast_name ) {
+				if ( (string) $cast_name !== '' && ! $matches_someone( (string) $cast_name ) ) {
+					$unmatched[] = (string) $cast_name;
+				}
+			}
+		}
+
+		$rumors_present = 0;
+		foreach ( (array) $parsed['rumors'] as $rumor ) {
+			$title = (string) ( $rumor['title'] ?? '' );
+			if ( $title !== '' && Plot::find_by_title_and_date( $game_id, $title, 'game_date', substr( (string) ( $rumor['rumor_date'] ?? '' ), 0, 10 ) ) ) {
+				++$rumors_present;
+			}
+		}
+
+		$actions_present = 0;
+		foreach ( (array) $parsed['actions'] as $action ) {
+			$char_name = (string) ( $action['char_name'] ?? '' );
+			if ( $char_name === '' ) {
+				continue;
+			}
+			if ( ! $matches_someone( $char_name ) ) {
+				$unmatched[] = $char_name;
+				continue;
+			}
+			$character = Character::find_by_name_in_game( $char_name, $game_slug );
+			$game_date = substr( (string) ( $action['act_date'] ?? '' ), 0, 10 );
+			if ( $character && $game_date !== '' && Action_Allocator::find_own_plot_id( (int) $character->id, $game_date ) !== null ) {
+				++$actions_present;
+			}
+		}
+
+		return [
+			'plots'           => [ 'already_present' => $plots_present ],
+			'rumors'          => [ 'already_present' => $rumors_present ],
+			'actions'         => [ 'already_present' => $actions_present ],
+			'unmatched_names' => array_values( array_unique( $unmatched ) ),
 		];
 	}
 

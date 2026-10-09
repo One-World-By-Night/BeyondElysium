@@ -8,6 +8,8 @@ import api from '../../api/client';
 import { readGameSlugFromUrl } from '../../lib/useChronicleSwitcher';
 import { characterSheetUrl } from '../../lib/pluginPages';
 import { otherChroniclesFor } from '../../lib/sendGrapevineFile';
+import { pickList } from '../../lib/searchableSelect';
+import { SearchableSelect } from '../shared/SearchableSelect';
 import type { MyGame, Game } from '../../types';
 import type {
 	Submission,
@@ -40,6 +42,7 @@ export function SendGrapevineFile() {
 		'joining'
 	);
 	const [ homeChronicle, setHomeChronicle ] = useState( '' );
+	const [ keepCurrent, setKeepCurrent ] = useState( false );
 	const [ reading, setReading ] = useState( false );
 	const [ sending, setSending ] = useState( false );
 	const [ error, setError ] = useState< string | null >( null );
@@ -116,6 +119,7 @@ export function SendGrapevineFile() {
 			await api.submissions( chosenGameSlug ).create( file, arrival, {
 				characterIndex,
 				homeChronicle: homeChronicle || undefined,
+				keepCurrent: arrival === 'visiting' ? keepCurrent : undefined,
 			} );
 			const chronicleName =
 				myChronicles.find( ( g ) => g.slug === chosenGameSlug )?.name ??
@@ -134,6 +138,7 @@ export function SendGrapevineFile() {
 			);
 			resetFile();
 			setHomeChronicle( '' );
+			setKeepCurrent( false );
 			loadMySubmissions();
 		} catch ( err: unknown ) {
 			setError(
@@ -177,6 +182,22 @@ export function SendGrapevineFile() {
 	}
 
 	const otherChronicles = otherChroniclesFor( myChronicles, allChronicles );
+	const chroniclePick = pickList( [
+		{
+			label: __( 'Your chronicles', 'beyond-elysium' ),
+			items: myChronicles.map( ( g ) => ( {
+				key: g.slug,
+				label: g.name,
+			} ) ),
+		},
+		{
+			label: __( 'Other chronicles', 'beyond-elysium' ),
+			items: otherChronicles.map( ( g ) => ( {
+				key: g.slug,
+				label: g.name,
+			} ) ),
+		},
+	] );
 
 	const chosenCharacter = preview?.characters.find(
 		( c ) => c.index === characterIndex
@@ -208,39 +229,21 @@ export function SendGrapevineFile() {
 
 			<label className="be-send-grapevine-file__field">
 				{ __( 'Chronicle', 'beyond-elysium' ) }
-				<select
-					value={ gameSlug }
-					onChange={ ( e ) => {
-						setGameSlug( e.target.value );
+				<SearchableSelect
+					key={ `${ gameSlug }-${ chroniclePick.labelOf( gameSlug ) }` }
+					groups={ chroniclePick.groups }
+					value={ chroniclePick.labelOf( gameSlug ) }
+					placeholder={ __( 'Choose a chronicle', 'beyond-elysium' ) }
+					ariaLabel={ __( 'Chronicle', 'beyond-elysium' ) }
+					onChange={ ( label ) => {
+						const slug = chroniclePick.keyOf( label );
+						if ( ! slug || slug === gameSlug ) {
+							return;
+						}
+						setGameSlug( slug );
 						resetFile();
 					} }
-				>
-					<option value="">
-						{ __( 'Choose a chronicle', 'beyond-elysium' ) }
-					</option>
-					{ myChronicles.length > 0 && (
-						<optgroup
-							label={ __( 'Your chronicles', 'beyond-elysium' ) }
-						>
-							{ myChronicles.map( ( g ) => (
-								<option key={ g.slug } value={ g.slug }>
-									{ g.name }
-								</option>
-							) ) }
-						</optgroup>
-					) }
-					{ otherChronicles.length > 0 && (
-						<optgroup
-							label={ __( 'Other chronicles', 'beyond-elysium' ) }
-						>
-							{ otherChronicles.map( ( g ) => (
-								<option key={ g.slug } value={ g.slug }>
-									{ g.name }
-								</option>
-							) ) }
-						</optgroup>
-					) }
-				</select>
+				/>
 			</label>
 
 			<label className="be-send-grapevine-file__field">
@@ -362,6 +365,21 @@ export function SendGrapevineFile() {
 									setHomeChronicle( e.target.value )
 								}
 							/>
+						</label>
+					) }
+					{ arrival === 'visiting' && (
+						<label className="be-send-grapevine-file__keep-current">
+							<input
+								type="checkbox"
+								checked={ keepCurrent }
+								onChange={ ( e ) =>
+									setKeepCurrent( e.target.checked )
+								}
+							/>{ ' ' }
+							{ __(
+								'Keep this current with my home chronicle.',
+								'beyond-elysium'
+							) }
 						</label>
 					) }
 				</fieldset>

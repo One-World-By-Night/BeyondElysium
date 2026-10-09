@@ -1,3 +1,15 @@
 .be-storyteller-toolkit-page {
 	max-width: 100%;
 }
+
+.be-storyteller-toolkit-page__npc-toggle {
+	display: block;
+	margin: 0.75rem 0;
+}
+
+.be-storyteller-toolkit-page__new-character {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem 1rem;
+	margin: 0.75rem 0;
+}

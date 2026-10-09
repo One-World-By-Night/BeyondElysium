@@ -1,17 +1,18 @@
 /**
- * The Storyteller-facing fixed page: a chronicle switcher plus tabs for Dashboard, Approval Queue, Plots & Rumors,
- * Boon Ledger, and Items & Locations.
+ * The Storyteller-facing fixed page: a chronicle switcher plus tabs for Dashboard, My Queue, Approval Queue,
+ * Characters, Players, Plots & Rumors, Secrets, Boon Ledger, Items & Locations, Game Nights, Releases, Downtime,
+ * Factions, Relationships and Email Log.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import type { CSSProperties } from 'react';
-import {
-	isLinkedToAccessSchema,
-	useChronicleSwitcher,
-} from '../../lib/useChronicleSwitcher';
+import { useChronicleSwitcher } from '../../lib/useChronicleSwitcher';
 import { ChronicleSwitcher } from '../shared/ChronicleSwitcher';
+import DemoBanner, { DemoBannerShownContext } from '../shared/DemoBanner';
 import { TabStrip } from '../shared/TabStrip';
 import { GameDashboard } from '../game/GameDashboard';
+import { CharacterList } from '../character/CharacterList';
+import { SecretsList } from '../shared/SecretsList';
 import { ApprovalQueue } from '../changes/ApprovalQueue';
 import { PlotManager } from '../apr/PlotManager';
 import { BoonLedger } from '../world/BoonLedger';
@@ -22,7 +23,10 @@ import { DowntimeQueue } from '../game/DowntimeQueue';
 import { StaffQueue } from '../game/StaffQueue';
 import { FactionsAndPositions } from '../faction/FactionsAndPositions';
 import { ChroniclePlayers } from '../game/ChroniclePlayers';
+import { RelationshipChart } from '../apr/RelationshipChart';
+import { EmailLog } from '../game/EmailLog';
 import {
+	newCharacterUrl,
 	playerTabUrl,
 	readTabFromUrl,
 	writeTabToUrl,
@@ -44,6 +48,7 @@ export function StorytellerToolkitPage() {
 		gamesFailed,
 		retryGames,
 		accentColor,
+		pendingCounts,
 	} = useChronicleSwitcher();
 	const accentStyle: CSSProperties | undefined = accentColor
 		? ( { '--be-st-accent': accentColor } as CSSProperties )
@@ -51,6 +56,7 @@ export function StorytellerToolkitPage() {
 	const [ tab, setTab ] = useState( () =>
 		readTabFromUrl( STORYTELLER_TABS.dashboard )
 	);
+	const [ showNpcs, setShowNpcs ] = useState( false );
 	// The Downtime queue's own "open the plot thread" link arrives as ?open_plot=.
 	const [ openPlotId ] = useState( () => {
 		const raw = new URLSearchParams( window.location.search ).get(
@@ -77,14 +83,21 @@ export function StorytellerToolkitPage() {
 			key: STORYTELLER_TABS.approvalQueue,
 			label: __( 'Approval Queue', 'beyond-elysium' ),
 		},
-		capabilities.be_manage_characters &&
-			isLinkedToAccessSchema( games, gameSlug ) && {
-				key: STORYTELLER_TABS.players,
-				label: __( 'Players', 'beyond-elysium' ),
-			},
+		capabilities.be_manage_characters && {
+			key: STORYTELLER_TABS.characters,
+			label: __( 'Characters', 'beyond-elysium' ),
+		},
+		capabilities.be_manage_characters && {
+			key: STORYTELLER_TABS.players,
+			label: __( 'Players', 'beyond-elysium' ),
+		},
 		capabilities.be_manage_plots && {
 			key: STORYTELLER_TABS.plots,
 			label: __( 'Plots & Rumors', 'beyond-elysium' ),
+		},
+		capabilities.be_manage_plots && {
+			key: STORYTELLER_TABS.secrets,
+			label: __( 'Secrets', 'beyond-elysium' ),
 		},
 		capabilities.be_manage_boons && {
 			key: STORYTELLER_TABS.boonLedger,
@@ -110,6 +123,14 @@ export function StorytellerToolkitPage() {
 			key: STORYTELLER_TABS.factions,
 			label: __( 'Factions', 'beyond-elysium' ),
 		},
+		capabilities.be_manage_connections && {
+			key: STORYTELLER_TABS.relationships,
+			label: __( 'Relationships', 'beyond-elysium' ),
+		},
+		capabilities.be_manage_characters && {
+			key: STORYTELLER_TABS.emailLog,
+			label: __( 'Email Log', 'beyond-elysium' ),
+		},
 	].filter( Boolean ) as Tab[];
 
 	useEffect( () => {
@@ -132,7 +153,9 @@ export function StorytellerToolkitPage() {
 				loading={ loadingGames }
 				failed={ gamesFailed }
 				onRetry={ retryGames }
+				pendingCounts={ pendingCounts }
 			/>
+			{ gameSlug && <DemoBanner gameSlug={ gameSlug } /> }
 
 			{ gameSlug &&
 				capabilitiesFor === gameSlug &&
@@ -144,7 +167,7 @@ export function StorytellerToolkitPage() {
 						) }
 					</p>
 				) : (
-					<>
+					<DemoBannerShownContext.Provider value={ true }>
 						<TabStrip
 							tabs={ tabs }
 							active={ tab }
@@ -177,6 +200,52 @@ export function StorytellerToolkitPage() {
 							/>
 						) }
 
+						{ tab === STORYTELLER_TABS.characters && (
+							<>
+								<p className="be-storyteller-toolkit-page__new-character">
+									<a
+										className="be-storyteller-toolkit-page__new-character-link"
+										href={ newCharacterUrl( gameSlug ) }
+									>
+										{ __(
+											'+ New Character',
+											'beyond-elysium'
+										) }
+									</a>{ ' ' }
+									<a
+										className="be-storyteller-toolkit-page__new-character-link"
+										href={ newCharacterUrl( gameSlug, {
+											npc: true,
+										} ) }
+									>
+										{ __( '+ New NPC', 'beyond-elysium' ) }
+									</a>
+								</p>
+								<label className="be-storyteller-toolkit-page__npc-toggle">
+									<input
+										type="checkbox"
+										checked={ showNpcs }
+										onChange={ ( e ) =>
+											setShowNpcs( e.target.checked )
+										}
+									/>{ ' ' }
+									{ __(
+										'Show NPCs instead of player characters',
+										'beyond-elysium'
+									) }
+								</label>
+								<CharacterList
+									key={ `${ gameSlug }-${ showNpcs }` }
+									gameSlug={ gameSlug }
+									showNpcs={ showNpcs }
+									sheetPageUrl={ playerTabUrl(
+										PLAYER_TABS.sheet
+									) }
+									capabilities={ capabilities }
+								/>
+							</>
+						) }
+
 						{ tab === STORYTELLER_TABS.players && (
 							<ChroniclePlayers
 								key={ gameSlug }
@@ -193,6 +262,13 @@ export function StorytellerToolkitPage() {
 							/>
 						) }
 
+						{ tab === STORYTELLER_TABS.secrets && (
+							<SecretsList
+								key={ gameSlug }
+								gameSlug={ gameSlug }
+							/>
+						) }
+
 						{ tab === STORYTELLER_TABS.boonLedger && (
 							<BoonLedger
 								key={ gameSlug }
@@ -205,6 +281,7 @@ export function StorytellerToolkitPage() {
 							<WorldObjectManager
 								key={ gameSlug }
 								gameSlug={ gameSlug }
+								showEditor
 							/>
 						) }
 
@@ -238,7 +315,18 @@ export function StorytellerToolkitPage() {
 								gameSlug={ gameSlug }
 							/>
 						) }
-					</>
+
+						{ tab === STORYTELLER_TABS.relationships && (
+							<RelationshipChart
+								key={ gameSlug }
+								gameSlug={ gameSlug }
+							/>
+						) }
+
+						{ tab === STORYTELLER_TABS.emailLog && (
+							<EmailLog key={ gameSlug } gameSlug={ gameSlug } />
+						) }
+					</DemoBannerShownContext.Provider>
 				) ) }
 		</div>
 	);

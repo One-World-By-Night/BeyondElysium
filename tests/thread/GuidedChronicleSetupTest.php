@@ -10,7 +10,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * The guided chronicle setup behaviors not covered by a dedicated test file: the permission fix, the membership
+ * The guided chronicle setup behaviors not covered by a dedicated test file: the setup permission, the membership
  * bootstrap on create and page provisioning.
  */
 class GuidedChronicleSetupTest extends WP_UnitTestCase {
@@ -44,7 +44,7 @@ class GuidedChronicleSetupTest extends WP_UnitTestCase {
 		$block = \BeyondElysium\Models\Schema_Block::find_for_game( 'vampire-abilities', $this->game_slug );
 		$this->assertSame( 'Abilities (customized)', $block->name );
 
-		// The global block itself must be untouched - this was a fork, never a mutation.
+		// The global block itself is untouched: customizing forks it, never mutates it.
 		$global = \BeyondElysium\Models\Schema_Block::find_by_slug( 'vampire-abilities' );
 		$this->assertNotSame( 'Abilities (customized)', $global->name );
 	}

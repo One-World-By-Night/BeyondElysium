@@ -12,8 +12,8 @@ defined( 'ABSPATH' ) || exit;
  */
 class Secret {
 
-	/** @var string[] Entity types a secret may attach to today. */
-	const ENTITY_TYPES = [ 'plot', 'item', 'location', 'npc' ];
+	/** @var string[] Entity types a secret may attach to. */
+	const ENTITY_TYPES = [ 'plot', 'item', 'location', 'character', 'npc' ];
 
 	/**
 	 * Valid stored `audience` values.
@@ -68,16 +68,19 @@ class Secret {
 	}
 
 	/**
-	 * Creates a secret.
+	 * Creates a secret, optionally attached to an entity. `entity_type` absent or empty leaves the secret
+	 * unattached - `entity_id` is then ignored rather than treated as a validation failure.
 	 *
-	 * @param array $data
+	 * @param array<string,mixed> $data
 	 * @return int|false Insert ID, or false on any validation failure or unencodable JSON.
 	 */
 	public static function create( array $data ) {
-		$entity_type = $data['entity_type'] ?? '';
-		if ( ! in_array( $entity_type, self::ENTITY_TYPES, true ) ) {
+		$entity_type = $data['entity_type'] ?? null;
+		if ( $entity_type !== null && ! in_array( $entity_type, self::ENTITY_TYPES, true ) ) {
 			return false;
 		}
+		$entity_id = $entity_type !== null ? (int) ( $data['entity_id'] ?? 0 ) : null;
+
 		$audience = $data['audience'] ?? self::DEFAULT_AUDIENCE;
 		if ( ! in_array( $audience, self::AUDIENCE_VALUES, true ) ) {
 			return false;
@@ -91,7 +94,7 @@ class Secret {
 		return Manager::insert( 'secrets', [
 			'game_id'        => (int) $data['game_id'],
 			'entity_type'    => $entity_type,
-			'entity_id'      => (int) $data['entity_id'],
+			'entity_id'      => $entity_id,
 			'title'          => (string) ( $data['title'] ?? '' ),
 			'content'        => $data['content'] ?? null,
 			'audience'       => $audience,
@@ -105,8 +108,8 @@ class Secret {
 	/**
 	 * Updates a secret's title, content, audience, and/or audience_rules. entity_type/entity_id/game_id are not editable.
 	 *
-	 * @param int   $id
-	 * @param array $data
+	 * @param int                 $id
+	 * @param array<string,mixed> $data
 	 * @return bool
 	 */
 	public static function update( int $id, array $data ): bool {
@@ -158,9 +161,8 @@ class Secret {
 	}
 
 	/**
-	 * Encode a value for a JSON column, matching `Plot::encode_json_field()`'s exact contract: null stays null, an
-	 * array/object is JSON-encoded, anything else is cast to string as-is (never expected in real use, kept only so this
-	 * never silently drops data).
+	 * Encode a value for a JSON column, matching `Plot::encode_json_field()`'s contract: null stays null, an array or
+	 * object is JSON-encoded, anything else is cast to string.
 	 *
 	 * @param mixed $value
 	 * @return string|false|null False only when `wp_json_encode()` itself fails.

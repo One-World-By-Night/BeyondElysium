@@ -17,7 +17,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * (closes).
+ * Deleting a chronicle: what it takes with it and what it never touches.
  */
 class ChronicleDeleteThreadTest extends WP_UnitTestCase {
 
@@ -148,7 +148,7 @@ class ChronicleDeleteThreadTest extends WP_UnitTestCase {
 	}
 
 	public function test_a_new_chronicle_never_takes_a_slug_that_still_holds_a_deleted_chronicles_content(): void {
-		// No be_games row: an earlier row-only delete left this character behind.
+		// No be_games row: a character left behind by a delete that removed only the game row.
 		$this->character( 'thread-orphaned-slug', 'Orphaned Sheet' );
 
 		$generated = Game::find( (int) Game::create( [ 'name' => 'Thread Orphaned Slug' ] ) );
@@ -195,7 +195,7 @@ class ChronicleDeleteThreadTest extends WP_UnitTestCase {
 		}
 		$this->assertTrue( Game::delete_with_content( 'be-demo' ) );
 
-		// An install upgrading from a version that predates the seeded-once flag.
+		// An install with no seeded-once flag recorded.
 		delete_option( Seeder::DEMO_SEEDED_OPTION );
 		Seeder::seed_demo_characters( false );
 		Seeder::seed_demo_characters( false );

@@ -51,7 +51,7 @@ class Release_Batch {
 	/**
 	 * Creates a new release batch. game_id and name are required. status is derived.
 	 *
-	 * @param array $data
+	 * @param array<string,mixed> $data
 	 * @return int|false
 	 */
 	public static function create( array $data ) {
@@ -75,8 +75,8 @@ class Release_Batch {
 	/**
 	 * Updates a draft or scheduled batch's name, release_at, and/or status.
 	 *
-	 * @param int   $id
-	 * @param array $data
+	 * @param int                 $id
+	 * @param array<string,mixed> $data
 	 * @return bool
 	 */
 	public static function update( int $id, array $data ): bool {

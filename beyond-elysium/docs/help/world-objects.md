@@ -14,6 +14,7 @@ wp-admin sidebar → Beyond Elysium → Items & Locations.
 
 - **Game** - a dropdown listing every chronicle on the install. Picking one loads that chronicle's catalog.
 - **New item**, **New location**, or **New rote** - opens a blank create form; the label follows whichever tab is active.
+- **New item from the book**, items only - opens the book picker instead of a blank form. See **Add from the book** below.
 - Tabs: **Items**, **Locations**, **Rotes**. Boons have their own ledger and never appear here.
 - **Search name…** - filters the active tab's list by name.
 - **Catalog / Personal copies / All**, items only - which items the list shows. **Catalog** (the default) hides every copy made for a character; **Personal copies** shows only those; **All** shows both. See **Copy for a character** below.
@@ -27,7 +28,7 @@ wp-admin sidebar → Beyond Elysium → Items & Locations.
 ### The detail pane
 
 - A **breadcrumb**, locations only, shown when the location is inside another one - "Downtown › Elysium."
-- Name and description.
+- Name and description. A Storyteller sees any `[ST]...[/ST]` passage in the description or a text property highlighted in place, so the part a player never receives is easy to spot; a player never sees the passage at all. See [Storyteller-Only Content](storyteller-only.md).
 - **Based on {source}**, items only, shown only on a copy - the item it was copied from. See **Copy for a character** below.
 - **Used up.** / **Expired.**, items only, shown only once one applies - see **Uses and Expires** below.
 - Every property that object type defines, formatted for its kind:
@@ -45,9 +46,11 @@ wp-admin sidebar → Beyond Elysium → Items & Locations.
 - **Who's Here**, locations only - who's `based_at` this location right now. You see every named link, with which one (owner, domain, haven, or based here); a player only ever sees the NPCs based here whose own public profile reaches them (see [Who's Who](whos-who.md)) - never a link's label, never another player's haven.
 - **Who can see this** - items and locations only, never rotes: **Everyone in the chronicle** (the default), **Storytellers and Narrators only**, or **Only characters matching rules I set**, which opens a query builder against your characters with a live count of who currently matches. A character directly connected to the item or location (its holder, for instance) always sees it regardless of this setting.
 - **Files** - items and locations only: any images or PDFs attached, up to one for an item or 20 for a location, 10 MB each, with a download link per file and, for you, an upload box and a **Remove** button per file.
+- **Secrets**, items and locations, Storyteller only - every secret attached to this entry, each with its audience and who it has been revealed to, right on the detail view. See [Secrets](secrets.md). A player's own detail view shows instead what their characters already know of it.
 - **Connections** - every character connected to this object, and the tools to add or remove one. See [Connections](connections.md).
 - **History**, items only - every event recorded against this item, oldest first: given, taken, traded, stolen, lost, used, copied, proposed, and adjusted, each with when it happened and any note attached.
 - **Edit**, **Duplicate**, (items only) **Copy for a character**, and (items only) **Transfer** buttons below the detail view.
+- **Print card**, items and locations, for a Storyteller - prints this one entry's card as a PDF, the same card layout Item Cards and Location Cards use in Reports, but for only the entry you have open. A player's own copy of the card is still **Print My Items**.
 
 ### Copy for a character
 
@@ -58,6 +61,17 @@ Items only - a real, independent copy of a catalog item made for one specific ch
 3. Click **Copy**. The new copy opens in the editor, already connected to that character and visible only to them.
 
 Copying carries over every field and property, and any file attached to the source - as its own separate file, so changing one item's file never touches the other's. The copy is always **Only characters matching rules I set**-visible to just its holder, no matter what the source's own **Who can see this** says; widen it from there like any other item if it should reach anyone else. The source item is never changed.
+
+### Add from the book
+
+Items only - starts a new item from the declared, read-only book catalog (gear from the Mind's Eye Theatre rulebooks) instead of a blank form.
+
+1. Click **New item from the book**.
+2. Search by name, or narrow by **Book** or **Type**.
+3. Click **Use this** on the entry you want. The ordinary create form opens, pre-filled with that entry's name, description, and every stat the book prints.
+4. Change anything you need, then click **Create**.
+
+The book itself is read-only - what you get is an ordinary new item in your own chronicle's catalog, free to edit or delete from here on, same as one built by hand. It isn't connected to any character and carries no visible link back to the book entry it started from.
 
 ### Uses and Expires
 
@@ -102,6 +116,12 @@ Printing the same item's card again reuses the same code as long as nothing abou
 3. Click **New item**, **New location**, or **New rote** (matching the tab you picked).
 4. Fill in **Name** and whichever properties apply.
 5. Click **Create**.
+
+### Add an item from the book
+
+1. Click **New item from the book**.
+2. Search or filter to find the entry, then click **Use this**.
+3. Change anything you need on the pre-filled form, then click **Create**.
 
 ### Edit an existing entry
 
@@ -177,6 +197,7 @@ Printing the same item's card again reuses the same code as long as nothing abou
 ## Troubleshooting
 
 - **"Failed to load world objects."** Refresh and try again.
+- **"Failed to load the book catalog. Try again."** Shown inside the book picker when the catalog can't be fetched - try again.
 - **"No items/locations/rotes match these filters."** Clear the search box.
 - **"Failed to save this world object."** Check that **Name** is filled in, then try again.
 - **"Failed to load this item. Try again."** Shown in place of the edit or duplicate form when the entry couldn't be fetched - reload the page.

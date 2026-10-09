@@ -2,6 +2,7 @@
 
 namespace BeyondElysium\Services;
 
+use BeyondElysium\Models\Attachment;
 use BeyondElysium\Models\Change;
 use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Connection;
@@ -84,6 +85,7 @@ class Report_Document {
 	 * @param array<string,mixed> $report
 	 * @param array<string,mixed> $filters
 	 * @param array<string,mixed> $options
+	 * @return array<string,mixed>
 	 */
 	private static function build_table( array $report, object $game, array $filters, array $options, bool $can_manage ): array {
 		$entity = $report['entity'];
@@ -199,6 +201,7 @@ class Report_Document {
 	/**
 	 * @param array<string,mixed> $report
 	 * @param array<string,mixed> $filters
+	 * @return array<string,mixed>
 	 */
 	private static function build_card( array $report, object $game, array $filters, bool $can_manage ): array {
 		// Rote Cards, built from the character's held rotes in sheet_data.
@@ -223,6 +226,10 @@ class Report_Document {
 
 		$rows = $result['results'];
 
+		if ( ! empty( $filters['object_id'] ) ) {
+			$rows = array_values( array_filter( $rows, static fn( $row ) => (int) $row->id === (int) $filters['object_id'] ) );
+		}
+
 		if ( ! empty( $filters['character_id'] ) ) {
 			// Print My Items, or a location a character knows of: the connection to the character is the authorization.
 			$rows = self::filter_rows_connected_to_character( $rows, (int) $filters['character_id'] );
@@ -236,13 +243,10 @@ class Report_Document {
 
 		$cards = [];
 		foreach ( $rows as $row ) {
-			$card = [];
-			foreach ( $report['columns'] as [ $label, $key, $source ] ) {
-				$card[] = [ $label, self::resolve_one( $key, $source, $row, $game, $report['entity'] ) ];
-			}
+			$card = self::assemble_card( $report, $row, $game );
 			// Verifiable item cards - only item-cards, the one card report an item can appear.
 			if ( $report['entity'] === 'item' ) {
-				$card[] = [ 'Verify', self::verify_line_for_item( $row, $game ) ];
+				$card['verify'] = self::verify_line_for_item( $row, $game );
 			}
 			$cards[] = $card;
 		}
@@ -253,6 +257,73 @@ class Report_Document {
 			'cards' => $cards,
 			'game'  => $game->name,
 		];
+	}
+
+	/**
+	 * Builds one card's structured fields from a report's declared columns, plus its picture (when its entity type
+	 * can carry an attachment and has one) and its `uses_max`/`uses_used` count. "Uses Left" never prints as a plain
+	 * field - it becomes the count and its boxes, drawn separately by `Report_Writer`.
+	 *
+	 * @param array<string,mixed> $report
+	 * @return array<string,mixed>
+	 */
+	private static function assemble_card( array $report, object $row, object $game ): array {
+		$entity        = (string) $report['entity'];
+		$schema_entity = $entity === 'loc' ? 'location' : $entity;
+		$schema        = World_Object::schemas()[ $schema_entity ] ?? [];
+
+		$fields    = [];
+		$uses_max  = null;
+		$uses_used = 0;
+
+		foreach ( $report['columns'] as [ $label, $key, $source ] ) {
+			if ( $source === 'field' && $key === 'name' ) {
+				// The card's title already carries the name.
+				continue;
+			}
+			if ( $source === 'special' && $key === 'usesleft' ) {
+				$raw_max  = $row->properties['uses_max'] ?? null;
+				$uses_max = ( $raw_max !== null && $raw_max !== '' ) ? (int) $raw_max : null;
+				if ( $uses_max !== null ) {
+					$uses_used = max( 0, $uses_max - (int) ( $row->properties['uses_left'] ?? 0 ) );
+				}
+				continue;
+			}
+
+			$value = self::resolve_one( $key, $source, $row, $game, $entity );
+			if ( $value === '' || $value === '—' ) {
+				continue;
+			}
+
+			$fields[] = [
+				'label' => $label,
+				'value' => $value,
+				'html'  => $source === 'field' && ( $schema[ $key ] ?? '' ) === 'text',
+			];
+		}
+
+		return [
+			'name'      => (string) ( $row->name ?? '' ),
+			'picture'   => self::first_attachment_id( $entity, (int) ( $row->id ?? 0 ) ),
+			'fields'    => $fields,
+			'uses_max'  => $uses_max,
+			'uses_used' => $uses_used,
+			'verify'    => null,
+		];
+	}
+
+	/**
+	 * The id of the first attachment on an item or a location - or null when its entity type can't carry one (a
+	 * rote), or it has none. A plain id, never a filesystem path.
+	 */
+	private static function first_attachment_id( string $entity, int $object_id ): ?int {
+		$entity_type = [ 'item' => 'item', 'loc' => 'location' ][ $entity ] ?? null;
+		if ( $entity_type === null || $object_id <= 0 ) {
+			return null;
+		}
+
+		$attachments = Attachment::for_entity( $entity_type, $object_id );
+		return empty( $attachments ) ? null : (int) $attachments[0]->id;
 	}
 
 	/**
@@ -292,20 +363,21 @@ class Report_Document {
 			$key = Name_Key::for( $name );
 
 			if ( isset( $rote_objects_by_key[ $key ] ) ) {
-				$row  = $rote_objects_by_key[ $key ];
-				$card = [];
-				foreach ( $report['columns'] as [ $label, $col_key, $source ] ) {
-					$card[] = [ $label, self::resolve_one( $col_key, $source, $row, $game, $report['entity'] ) ];
-				}
-				$cards[] = $card;
+				$cards[] = self::assemble_card( $report, $rote_objects_by_key[ $key ], $game );
 				continue;
 			}
 
 			$catalog_item = $catalog_items_by_key[ $key ] ?? null;
 			$cards[]      = [
-				[ 'Name', $name ],
-				[ 'Note', (string) ( $catalog_item->note ?? '' ) ],
-				[ 'Source', (string) ( $catalog_item->source ?? '' ) ],
+				'name'      => $name,
+				'picture'   => null,
+				'fields'    => [
+					[ 'label' => 'Note', 'value' => (string) ( $catalog_item->note ?? '' ), 'html' => false ],
+					[ 'label' => 'Source', 'value' => (string) ( $catalog_item->source ?? '' ), 'html' => false ],
+				],
+				'uses_max'  => null,
+				'uses_used' => 0,
+				'verify'    => null,
 			];
 		}
 
@@ -362,6 +434,7 @@ class Report_Document {
 	 * @param array<string,mixed> $report
 	 * @param array<string,mixed> $filters
 	 * @param array<string,mixed> $options
+	 * @return array<string,mixed>
 	 */
 	private static function build_statistics( array $report, object $game, array $filters, array $options ): array {
 		$fields     = $report['statfields'] ?? ( isset( $options['stat_field'] ) ? [ $options['stat_field'] ] : [] );
@@ -385,6 +458,9 @@ class Report_Document {
 
 	/**
 	 * Plot Report: one narrative block per plot, its entries in date order.
+	 *
+	 * @param array<string,mixed> $report
+	 * @return array<string,mixed>
 	 */
 	private static function build_narrative( array $report, object $game ): array {
 		$plots  = Plot::for_game( (int) $game->id );
@@ -418,6 +494,9 @@ class Report_Document {
 
 	/**
 	 * The chronicle's own game sessions.
+	 *
+	 * @param array<string,mixed> $report
+	 * @return array<string,mixed>
 	 */
 	private static function build_calendar( array $report, object $game, bool $can_manage ): array {
 		$sessions = Game_Session::for_game( (int) $game->id );
@@ -444,6 +523,7 @@ class Report_Document {
 	 * Gathers every `description` (the rich-text reference/description/source note) actually set anywhere in this
 	 * chronicle's catalog, grouped by the schema block it lives on.
 	 *
+	 * @param array<string,mixed> $report
 	 * @return array<string,mixed>
 	 */
 	private static function build_house_rules( array $report, object $game ): array {
@@ -514,6 +594,7 @@ class Report_Document {
 	 * A plot-entity row for the table shape: either one action line (see `action_rows()`) or a rumor-tagged `Plot`
 	 * itself.
 	 *
+	 * @param array<string,mixed> $report
 	 * @return array<int,object>
 	 */
 	private static function plot_rows( object $game, array $report ): array {

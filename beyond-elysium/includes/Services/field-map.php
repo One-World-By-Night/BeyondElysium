@@ -40,7 +40,7 @@ return [
 	'flaws'        => [ 'source' => 'json', 'block' => 'met-flaws' ],
 	'equipment'    => [ 'source' => 'unmapped', 'note' => 'a world object (item), not character data' ],
 	'locations'    => [ 'source' => 'unmapped', 'note' => 'a world object (location), not character data' ],
-	'other'        => [ 'source' => 'unmapped', 'note' => 'no generic catch-all field on be_characters' ],
+	'other'        => [ 'source' => 'json', 'field' => 'Other' ],
 	'biography'    => [ 'source' => 'column', 'column' => 'biography' ],
 	'random'       => [ 'source' => 'derived', 'note' => "computed at query time, GV's CInt(Rnd() * 100) - qkRandom" ],
 	'notes'        => [ 'source' => 'column', 'column' => 'notes' ],
@@ -165,11 +165,11 @@ return [
 	'bonds'        => [ 'source' => 'unmapped', 'note' => 'blood bonds not modeled as a block' ],
 	'boons'        => [ 'source' => 'unmapped', 'note' => 'a boon on the Boon Ledger, not character data' ],
 	'miscellaneous' => [ 'source' => 'unmapped', 'note' => 'no generic miscellaneous-traits block' ],
-	'class'        => [ 'source' => 'unmapped', 'note' => 'no generic "class" field' ],
-	'subclass'     => [ 'source' => 'unmapped', 'note' => 'no generic "subclass" field' ],
-	'affinity'     => [ 'source' => 'unmapped', 'note' => 'Garou realm affinity not modeled' ],
-	'plane'        => [ 'source' => 'unmapped', 'note' => 'Wraith plane not modeled' ],
-	'brood'        => [ 'source' => 'unmapped', 'note' => 'Kuei-Jin brood not modeled' ],
+	'class'        => [ 'source' => 'json', 'field' => 'Class' ],
+	'subclass'     => [ 'source' => 'json', 'field' => 'Subclass' ],
+	'affinity'     => [ 'source' => 'json', 'field' => 'Affinity' ],
+	'plane'        => [ 'source' => 'json', 'field' => 'Plane' ],
+	'brood'        => [ 'source' => 'json', 'field' => 'Brood' ],
 	'tempers'      => [ 'source' => 'unmapped', 'note' => 'superseded by the named resource_pool blocks per stack' ],
 
 	// -- Wraith ----------------------------------------------------------------------
@@ -224,14 +224,14 @@ return [
 	'gauntlet'         => [ 'source' => 'unmapped', 'note' => 'a world object (location), not character data' ],
 	'umbra'            => [ 'source' => 'unmapped', 'note' => 'a world object (location), not character data' ],
 
-	// -- Hunter (no creature stack) ------------------------------------------------------
-	'creed'       => [ 'source' => 'unmapped', 'note' => 'no Hunter creature stack' ],
-	'handle'      => [ 'source' => 'unmapped', 'note' => 'no Hunter creature stack' ],
-	'conviction'  => [ 'source' => 'unmapped', 'note' => 'Hunter/Demon Conviction; there is no Hunter creature stack and Demon does not define this pool' ],
-	'mercy'       => [ 'source' => 'unmapped', 'note' => 'no Hunter creature stack' ],
-	'vision'      => [ 'source' => 'unmapped', 'note' => 'no Hunter creature stack' ],
-	'zeal'        => [ 'source' => 'unmapped', 'note' => 'no Hunter creature stack' ],
-	'edges'       => [ 'source' => 'unmapped', 'note' => 'no Hunter creature stack' ],
+	// -- Hunter ----------------------------------------------------------------------
+	'creed'       => [ 'source' => 'json', 'block' => 'hunter-identity', 'field' => 'Creed' ],
+	'handle'      => [ 'source' => 'json', 'block' => 'hunter-identity', 'field' => 'Handle' ],
+	'conviction'  => [ 'source' => 'json', 'block' => 'hunter-resources', 'pool' => 'Conviction', 'part' => 'permanent' ],
+	'mercy'       => [ 'source' => 'json', 'block' => 'hunter-virtues', 'pool' => 'Mercy', 'part' => 'permanent' ],
+	'vision'      => [ 'source' => 'json', 'block' => 'hunter-virtues', 'pool' => 'Vision', 'part' => 'permanent' ],
+	'zeal'        => [ 'source' => 'json', 'block' => 'hunter-virtues', 'pool' => 'Zeal', 'part' => 'permanent' ],
+	'edges'       => [ 'source' => 'json', 'block' => 'hunter-edges' ],
 
 	// -- Demon -----------------------------------------------------------------------
 	'torment' => [ 'source' => 'json', 'block' => 'demon-resources', 'pool' => 'Torment', 'part' => 'permanent' ],
@@ -268,10 +268,10 @@ return [
 	'temppathos'       => [ 'source' => 'json', 'block' => 'wraith-resources', 'pool' => 'Pathos', 'part' => 'temporary' ],
 	'tempcorpus'       => [ 'source' => 'json', 'block' => 'wraith-resources', 'pool' => 'Corpus', 'part' => 'temporary' ],
 	'tempangst'        => [ 'source' => 'json', 'block' => 'wraith-resources', 'pool' => 'Angst', 'part' => 'temporary' ],
-	'tempconviction'   => [ 'source' => 'unmapped', 'note' => 'Hunter/Demon Conviction; there is no Hunter creature stack and Demon does not define this pool' ],
-	'tempmercy'        => [ 'source' => 'unmapped', 'note' => 'no Hunter creature stack' ],
-	'tempvision'       => [ 'source' => 'unmapped', 'note' => 'no Hunter creature stack' ],
-	'tempzeal'         => [ 'source' => 'unmapped', 'note' => 'no Hunter creature stack' ],
+	'tempconviction'   => [ 'source' => 'json', 'block' => 'hunter-resources', 'pool' => 'Conviction', 'part' => 'temporary' ],
+	'tempmercy'        => [ 'source' => 'json', 'block' => 'hunter-virtues', 'pool' => 'Mercy', 'part' => 'temporary' ],
+	'tempvision'       => [ 'source' => 'json', 'block' => 'hunter-virtues', 'pool' => 'Vision', 'part' => 'temporary' ],
+	'tempzeal'         => [ 'source' => 'json', 'block' => 'hunter-virtues', 'pool' => 'Zeal', 'part' => 'temporary' ],
 	'temptorment'      => [ 'source' => 'json', 'block' => 'demon-resources', 'pool' => 'Torment', 'part' => 'temporary' ],
 	'tempfaith'        => [ 'source' => 'json', 'block' => 'demon-resources', 'pool' => 'Faith', 'part' => 'temporary' ],
 ];

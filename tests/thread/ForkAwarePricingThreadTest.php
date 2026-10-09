@@ -8,8 +8,8 @@ use BeyondElysium\Services\Cost_Engine;
 use WP_UnitTestCase;
 
 /**
- * A chronicle's own customization of a schema block (0.5e) is honored everywhere except two lookups that read the
- * global row.
+ * A chronicle's own customization of a schema block prices its characters; a character elsewhere prices against the
+ * global catalog.
  */
 class ForkAwarePricingThreadTest extends WP_UnitTestCase {
 

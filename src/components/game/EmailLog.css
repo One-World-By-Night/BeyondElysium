@@ -1,0 +1,96 @@
+.be-email-log {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
+.be-email-log__filters {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1rem;
+	align-items: flex-end;
+}
+
+.be-email-log__filters label {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	font-size: 0.85rem;
+}
+
+.be-email-log__filters input[type="search"] {
+	min-width: 16rem;
+	max-width: 100%;
+}
+
+.be-email-log__error {
+	color: var(--be-red-7);
+}
+
+.be-email-log__table td {
+	vertical-align: top;
+}
+
+.be-email-log__email,
+.be-email-log__kind,
+.be-email-log__subject,
+.be-email-log__about {
+	display: block;
+}
+
+.be-email-log__email,
+.be-email-log__about {
+	font-size: 0.85em;
+	opacity: 0.8;
+}
+
+.be-email-log__kind {
+	font-weight: 600;
+}
+
+.be-email-log__subject {
+	overflow-wrap: anywhere;
+}
+
+.be-email-log__result {
+	display: inline-block;
+	padding: 0.1rem 0.5rem;
+	border: 1px solid transparent;
+	border-radius: 0.6rem;
+	font-size: 0.85em;
+}
+
+.be-email-log__result--sent {
+	background: var(--be-green-8);
+	border-color: var(--be-green-7);
+	color: var(--be-green-1);
+}
+
+.be-email-log__result--failed {
+	background: var(--be-red-11);
+	border-color: var(--be-red-10);
+	color: var(--be-red-1);
+}
+
+.be-email-log__result--skipped {
+	background: var(--be-gray-23);
+	border-color: var(--be-gray-16);
+	color: var(--be-gray-4);
+}
+
+.be-email-log__result--queued {
+	background: var(--be-blue-6);
+	border-color: var(--be-blue-5);
+	color: var(--be-blue-1);
+}
+
+.be-email-log__pagination {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.75rem;
+	align-items: center;
+}
+
+.be-email-log__clear.be-email-log__clear {
+	white-space: normal;
+}

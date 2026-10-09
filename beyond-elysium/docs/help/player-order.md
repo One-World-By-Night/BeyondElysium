@@ -1,10 +1,10 @@
 # Your Own Order
 
-Putting Rituals and Blood Magic paths in whatever order you like, instead of the chronicle's usual alphabetical or catalog order.
+Putting what you hold in a section in whatever order you like, instead of the chronicle's usual alphabetical or catalog order. Rituals and Blood Magic paths start with this turned on, and a Storyteller can switch it on for any other trait list or powers section.
 
 ## Who can use this
 
-Anyone editing a character sees this - a player editing their own character, or a Storyteller editing any character in the chronicle. Only these two sections offer it today: Rituals (in [Trait Lists](trait-editor.md)) and Blood Magic (in [Powers](power-editor.md)).
+Anyone editing a character sees this - a player editing their own character, or a Storyteller editing any character in the chronicle. A section offers it when your chronicle has set it to let players choose their own order: Rituals (in [Trait Lists](trait-editor.md)) and Blood Magic (in [Powers](power-editor.md)) always start that way, and a Storyteller can turn it on for another section under **Players set their own order** in [Schema Blocks](schema-blocks.md).
 
 ## How to get there
 
@@ -32,7 +32,7 @@ My Chronicle → Edit tab → Rituals or Blood Magic → **Reorder**.
 
 ## Troubleshooting
 
-- **I don't see a Reorder button.** Only Rituals and Blood Magic support a custom order today - every other section still sorts itself. If you can't edit this character at all, see [Character Editor](character-editor.md).
+- **I don't see a Reorder button.** That section sorts itself - your chronicle hasn't set it to let players choose their own order. Ask a Storyteller to turn on **Players set their own order** for it. If you can't edit this character at all, see [Character Editor](character-editor.md).
 - **"This list changed since you loaded it - reload and try again."** Someone else saved a change to this same list - another tab, or a Storyteller approving a change - after you opened Reorder. Reload the page and try again; nothing was saved partway.
 - **Save order didn't do anything.** Check for the error message above the Save/Cancel buttons - a stale list (above) is the most common cause.
 

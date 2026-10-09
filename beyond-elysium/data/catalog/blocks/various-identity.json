@@ -1,0 +1,23 @@
+{
+  "format": 1,
+  "slug": "various-identity",
+  "name": "Various Identity",
+  "kind": "block",
+  "section_type": "identity_field",
+  "provenance": {
+    "sources": [
+      "Grapevine 3.01's own `VariousClass` (GV-SOURCEMAP.md): the generic character class a chronicle uses for a creature type Grapevine has no dedicated support for. Its own identity fields (Class, Subclass, Affinity, Plane, Brood, Other) are free text with no book behind them, since a Various character can be anything a chronicle invents."
+    ],
+    "tool": "read directly, 2026-10-04"
+  },
+  "definition": {
+    "fields": [
+      { "name": "Class", "field_type": "text", "required": false },
+      { "name": "Subclass", "field_type": "text", "required": false },
+      { "name": "Affinity", "field_type": "text", "required": false },
+      { "name": "Plane", "field_type": "text", "required": false },
+      { "name": "Brood", "field_type": "text", "required": false },
+      { "name": "Other", "field_type": "text", "required": false }
+    ]
+  }
+}

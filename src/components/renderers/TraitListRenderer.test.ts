@@ -1,5 +1,6 @@
 import {
 	resolveDisplay,
+	resolveScreenMode,
 	resolveTraitListMode,
 	groupByCategory,
 	sortIfAlphabetized,
@@ -100,5 +101,38 @@ describe( 'groupHeading', () => {
 
 	it( 'keeps an unlabelled group unlabelled', () => {
 		expect( groupHeading( null, 3 ) ).toBeNull();
+	} );
+} );
+
+/**
+ * A list that declares no rings (Bonds, Guanxi, the status lists) shows its numbers on screen the way the printed sheet
+ * does, whatever circle-drawing mode a template section asks for.
+ */
+describe( 'a list that prints no circles', () => {
+	const bonds = {
+		items: [],
+		display: 'multiplier',
+		print_rings: false,
+		allow_custom: true,
+		alphabetize: true,
+	} as unknown as TraitListDefinition;
+	const abilities = {
+		items: [],
+		display: 'multiplier',
+		allow_custom: true,
+		alphabetize: true,
+	} as unknown as TraitListDefinition;
+
+	it( 'resolves a circle-drawing section display to the plain multiplier', () => {
+		expect( resolveScreenMode( bonds, 'multiplier_dot' ) ).toBe(
+			'multiplier'
+		);
+		expect( resolveScreenMode( bonds, 'dot' ) ).toBe( 'multiplier' );
+	} );
+
+	it( 'leaves a list that does print circles on its section display', () => {
+		expect( resolveScreenMode( abilities, 'multiplier_dot' ) ).toBe(
+			'multiplier_dot'
+		);
 	} );
 } );

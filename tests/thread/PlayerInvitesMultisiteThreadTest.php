@@ -12,6 +12,8 @@ use PHPUnit\Framework\TestCase;
 /**
  * One sign-in accepts the invites for its email on every site of a network, on a real autocommit connection with a
  * real second site, removed afterwards.
+ *
+ * @group multisite
  */
 class PlayerInvitesMultisiteThreadTest extends TestCase {
 

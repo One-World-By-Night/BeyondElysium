@@ -2,9 +2,8 @@ import { readdirSync, readFileSync, statSync } from 'fs';
 import { join } from 'path';
 
 /**
- * `CharacterEditor.tsx` sets an inline desktop `gridColumn: span N` on every section (d found this fabricates
- * near-zero-width implicit grid tracks at phone width unless the phone-width media query explicitly overrides it with
- * `!important`).
+ * `CharacterEditor.tsx` sets an inline desktop `gridColumn: span N` on every section; at phone width that fabricates
+ * near-zero-width implicit grid tracks unless the phone-width media query explicitly overrides it with `!important`.
  */
 
 function findComponentFiles(

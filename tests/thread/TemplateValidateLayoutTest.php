@@ -57,7 +57,7 @@ class TemplateValidateLayoutTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Widened from 1-4 to 1-6: the real grid (templateLayout.ts) is 6 tracks wide.
+	 * Widths run from 1 to 6: the real grid (templateLayout.ts) is 6 tracks wide.
 	 *
 	 * @dataProvider invalid_column_counts
 	 */

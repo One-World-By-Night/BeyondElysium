@@ -379,7 +379,7 @@ class TraitMapperTest extends TestCase {
 	// -------------------------------------------------------------------------
 
 	public function test_a_tradition_prefixed_family_resolves_as_a_numbered_rung_not_an_unresolved_named_pick(): void {
-		// The real reported failure: "Thaumaturgy: Focused Mind" never resolved.
+		// "Thaumaturgy: Fortitude" resolves as Fortitude level 3 under the Thaumaturgy tradition.
 		$result = Trait_Mapper::resolve_tiered_power_trait( 'Thaumaturgy: Fortitude', '3', $this->tiered_power_block() );
 
 		$this->assertSame( 'exact', $result['outcome'] );
@@ -411,7 +411,7 @@ class TraitMapperTest extends TestCase {
 	}
 
 	/**
-	 * Real Grapevine export decoration, confirmed against actual `.gex` samples.
+	 * Real Grapevine export decoration.
 	 */
 	public function test_a_trailing_star_decoration_is_stripped_before_matching(): void {
 		$bare = Trait_Mapper::resolve_tiered_power_trait( 'Fortitude*', '1', $this->tiered_power_block() );
@@ -433,8 +433,7 @@ class TraitMapperTest extends TestCase {
 	}
 
 	/**
-	 * Found running all four real GEX files this project has through the real import pipeline ("we need some better
-	 * matching too").
+	 * A leading "The " on the family suffix is tried as a fallback.
 	 */
 	public function test_a_leading_the_on_the_family_suffix_is_tried_as_a_fallback(): void {
 		$block = (object) [
@@ -501,7 +500,7 @@ class TraitMapperTest extends TestCase {
 	}
 
 	/**
-	 * Confirmed against a real.gex export (Chase Ashford): the file spells the tradition "Dur-An-Ki" throughout.
+	 * A real .gex export (Chase Ashford) spells the tradition "Dur-An-Ki" throughout.
 	 */
 	public function test_a_hyphenated_tradition_spelling_normalizes_to_the_catalog_form(): void {
 		$result = Trait_Mapper::resolve_tiered_power_trait( 'Dur-An-Ki: Path of Blood', '1', $this->blood_magic_block() );
@@ -511,7 +510,7 @@ class TraitMapperTest extends TestCase {
 	}
 
 	/**
-	 * Confirmed against the same real file: "Sadhanna" (one stray letter) for what the catalog spells "Sadhana".
+	 * The same file spells "Sadhanna" (one stray letter) for what the catalog spells "Sadhana".
 	 */
 	public function test_a_single_letter_typo_in_a_tradition_name_fuzzy_normalizes(): void {
 		$result = Trait_Mapper::resolve_tiered_power_trait( 'Sadhanna: Path of Blood', '1', $this->blood_magic_block() );
@@ -521,7 +520,7 @@ class TraitMapperTest extends TestCase {
 	}
 
 	/**
-	 * Confirmed against the same real file: "Eastern Necromancy" for what the catalog simply calls "Necromancy".
+	 * The same file uses "Eastern Necromancy" for what the catalog simply calls "Necromancy".
 	 */
 	public function test_an_unrecognized_tradition_phrasing_is_kept_verbatim_not_guessed(): void {
 		$result = Trait_Mapper::resolve_tiered_power_trait( 'Eastern Necromancy: Path of Blood', '1', $this->blood_magic_block() );

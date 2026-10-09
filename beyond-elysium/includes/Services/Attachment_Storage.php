@@ -15,6 +15,11 @@ class Attachment_Storage {
 	const ALLOWED_MIME_TYPES = [ 'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf' ];
 
 	/**
+	 * Images only - no PDF, for an entity type whose attachment is a portrait.
+	 */
+	const IMAGE_MIME_TYPES = [ 'image/jpeg', 'image/png', 'image/gif', 'image/webp' ];
+
+	/**
 	 * 10 MB, matched against the size PHP itself reports for the uploaded file.
 	 */
 	const MAX_BYTES = 10 * 1024 * 1024;
@@ -46,12 +51,11 @@ class Attachment_Storage {
 	 * Validates and stores one uploaded file (the shape of a single `$_FILES` entry), returning what
 	 * `Attachment::create()` needs.
 	 *
-	 * @param array<string,mixed> $uploaded_file One `$_FILES` entry - untrusted request input,
-	 *                             not a shape PHP or a client is ever guaranteed to send intact,
-	 *                             so every key access below is defensive.
+	 * @param array<string,mixed> $uploaded_file One `$_FILES` entry - untrusted request input.
+	 * @param string[]|null       $allowed_mime_types Overrides ALLOWED_MIME_TYPES for this call.
 	 * @return array{stored_name:string,original_name:string,mime:string,bytes:int}|\WP_Error
 	 */
-	public static function store( array $uploaded_file ) {
+	public static function store( array $uploaded_file, ?array $allowed_mime_types = null ) {
 		if ( ( $uploaded_file['error'] ?? UPLOAD_ERR_NO_FILE ) !== UPLOAD_ERR_OK ) {
 			return new \WP_Error( 'upload_error', __( 'The file could not be uploaded.', 'beyond-elysium' ), [ 'status' => 400 ] );
 		}
@@ -68,7 +72,7 @@ class Attachment_Storage {
 
 		$checked = wp_check_filetype_and_ext( $tmp_name, (string) ( $uploaded_file['name'] ?? '' ) );
 		$mime = (string) $checked['type'];
-		if ( ! in_array( $mime, self::ALLOWED_MIME_TYPES, true ) ) {
+		if ( ! in_array( $mime, $allowed_mime_types ?? self::ALLOWED_MIME_TYPES, true ) ) {
 			return new \WP_Error(
 				'invalid_file_type',
 				__( 'Only images (JPEG, PNG, GIF, WebP) and PDFs may be uploaded.', 'beyond-elysium' ),
@@ -201,10 +205,7 @@ class Attachment_Storage {
 	}
 
 	/**
-	 * @return string 32 lowercase hex characters (`random_bytes(16)`), regenerated on the
-	 *                vanishingly unlikely event of a real directory collision - matching
-	 *                `Attestation::generate_unique_short_code()`'s own "don't just trust
-	 *                randomness" precedent.
+	 * @return string 32 lowercase hex characters (`random_bytes(16)`), regenerated on a directory collision.
 	 */
 	private static function generate_unique_stored_name(): string {
 		do {

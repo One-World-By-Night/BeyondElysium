@@ -1,0 +1,18 @@
+.be-sheet-warnings {
+	padding: 0.6rem 0.75rem;
+	margin-bottom: 0.75rem;
+	border: 1px solid var(--be-gold-9);
+	background: var(--be-sheet-notice-bg, transparent);
+	border-radius: 3px;
+	font-size: 0.9rem;
+}
+
+.be-sheet-warnings__lead {
+	margin: 0 0 0.35rem;
+	font-weight: 600;
+}
+
+.be-sheet-warnings__list {
+	margin: 0;
+	padding-left: 1.2rem;
+}

@@ -34,9 +34,7 @@ class Authorization_Settings_Controller extends Base_Controller {
 	/**
 	 * Returns the current authorization settings.
 	 *
-	 * @param \WP_REST_Request $request Unused - this resource is a single, unparameterized
-	 *                                  settings object, but the base class's signature
-	 *                                  still requires accepting it.
+	 * @param \WP_REST_Request $request Unused.
 	 * @return \WP_REST_Response
 	 */
 	public function get_item( $request ) {

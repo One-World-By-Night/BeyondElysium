@@ -24,10 +24,10 @@
 	width: auto;
 	padding: 0.4rem 0.9rem;
 	min-height: var(--be-tap-min, 32px);
-	border: 1px solid var(--be-blue-4);
+	border: 1px solid var(--be-link-blue);
 	border-radius: 3px;
 	background: transparent;
-	color: var(--be-blue-4);
+	color: var(--be-link-blue);
 	font-size: 0.85rem;
 	cursor: pointer;
 }

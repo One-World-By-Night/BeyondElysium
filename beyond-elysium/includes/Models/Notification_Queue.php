@@ -14,10 +14,10 @@ class Notification_Queue {
 	/**
 	 * Queues one notification for later digesting.
 	 *
-	 * @param int    $wp_user_id
-	 * @param int    $game_id
-	 * @param string $kind    A short label distinguishing what this notification is about.
-	 * @param array  $payload Whatever the eventual digest email needs to describe it.
+	 * @param int                 $wp_user_id
+	 * @param int                 $game_id
+	 * @param string              $kind    A short label distinguishing what this notification is about.
+	 * @param array<string,mixed> $payload Whatever the eventual digest email needs to describe it.
 	 * @return int|false Insert id, or false on failure.
 	 */
 	public static function create( int $wp_user_id, int $game_id, string $kind, array $payload ) {

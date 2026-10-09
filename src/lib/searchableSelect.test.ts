@@ -4,6 +4,7 @@ import {
 	filterOptions,
 	flattenGroups,
 	nextSelectableRow,
+	pickList,
 	resolveBlurCommit,
 	type OptionGroup,
 } from './searchableSelect';
@@ -217,5 +218,52 @@ describe( 'flattenGroups', () => {
 
 	it( 'is empty for no groups', () => {
 		expect( flattenGroups( [] ) ).toEqual( [] );
+	} );
+} );
+
+describe( 'pickList', () => {
+	const groups = [
+		{
+			label: 'Your chronicles',
+			items: [
+				{ key: 'kony', label: 'Kings of New York' },
+				{ key: 'bbf', label: 'Brooklyn' },
+			],
+		},
+		{
+			label: 'Other chronicles',
+			items: [ { key: 'brooklyn-2', label: 'Brooklyn' } ],
+		},
+		{ label: 'Empty', items: [] },
+	];
+
+	it( 'lists each group with its labels and drops a group with nothing in it', () => {
+		const list = pickList( groups );
+		expect( list.groups ).toEqual( [
+			{
+				label: 'Your chronicles',
+				options: [ 'Kings of New York', 'Brooklyn' ],
+			},
+			{ label: 'Other chronicles', options: [ 'Brooklyn [brooklyn-2]' ] },
+		] );
+	} );
+
+	it( 'makes a repeated label unique with its key', () => {
+		const labels = flattenGroups( pickList( groups ).groups );
+		expect( new Set( labels ).size ).toBe( labels.length );
+	} );
+
+	it( 'maps a label back to its key and a key to its label', () => {
+		const list = pickList( groups );
+		expect( list.keyOf( 'Brooklyn [brooklyn-2]' ) ).toBe( 'brooklyn-2' );
+		expect( list.keyOf( 'Brooklyn' ) ).toBe( 'bbf' );
+		expect( list.labelOf( 'kony' ) ).toBe( 'Kings of New York' );
+	} );
+
+	it( 'answers nothing for what it never offered', () => {
+		const list = pickList( groups );
+		expect( list.keyOf( 'Elsewhere' ) ).toBeUndefined();
+		expect( list.labelOf( 'elsewhere' ) ).toBe( '' );
+		expect( list.labelOf( '' ) ).toBe( '' );
 	} );
 } );

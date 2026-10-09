@@ -12,7 +12,7 @@ class Schema {
 	/**
 	 * The plugin's current database schema version, matching the plugin release version.
 	 */
-	const DB_VERSION = '1.4.0.2';
+	const DB_VERSION = '1.5.0';
 
 	/**
 	 * Option key holding the installed schema version.
@@ -63,6 +63,7 @@ class Schema {
 		'attendance',
 		'release_batches',
 		'notification_queue',
+		'mail_log',
 		'npc_castings',
 		'secrets',
 		'secret_reveals',
@@ -75,6 +76,7 @@ class Schema {
 		'position_history',
 		'translation_strings',
 		'translations',
+		'join_requests',
 	];
 
 	/**
@@ -199,6 +201,7 @@ class Schema {
 			public_image_id bigint(20) unsigned DEFAULT NULL,
 			profile_audience varchar(20) NOT NULL DEFAULT 'storytellers',
 			profile_audience_rules json DEFAULT NULL,
+			profile_show_player tinyint(1) NOT NULL DEFAULT 0,
 			created_by bigint(20) unsigned NOT NULL,
 			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -228,11 +231,16 @@ class Schema {
 			notes text,
 			review_notes text,
 			reason text,
+			submission_id char(36) DEFAULT NULL,
+			auto_approved tinyint(1) NOT NULL DEFAULT 0,
+			source_visit_id bigint(20) unsigned DEFAULT NULL,
+			host_note text,
 			PRIMARY KEY  (id),
 			KEY idx_character (character_id),
 			KEY idx_status (status),
 			KEY idx_change_type (change_type),
-			KEY idx_submitted_at (submitted_at)
+			KEY idx_submitted_at (submitted_at),
+			KEY idx_submission (submission_id)
 		) $charset_collate;" );
 
 		// be_character_snapshots: point-in-time copies of a character's sheet data.
@@ -255,7 +263,7 @@ class Schema {
 			game_slug varchar(100) NOT NULL,
 			token char(43) NOT NULL,
 			short_code varchar(12) NOT NULL,
-			kind varchar(10) NOT NULL,
+			kind varchar(20) NOT NULL,
 			sheet_hash char(64) NOT NULL,
 			attested json NOT NULL,
 			issued_at datetime NOT NULL,
@@ -271,10 +279,12 @@ class Schema {
 			KEY idx_game (game_slug, issued_at)
 		) $charset_collate;" );
 
-		// be_character_transfers: chronicle-to-chronicle travel state.
+		// be_character_transfers: chronicle-to-chronicle travel state. peer_uuid is the other side's own uuid for
+		// this same character, used only when it differs from this row's own character_uuid.
 		dbDelta( "CREATE TABLE {$prefix}character_transfers (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			character_uuid char(36) NOT NULL,
+			peer_uuid char(36) DEFAULT NULL,
 			character_id bigint(20) unsigned DEFAULT NULL,
 			character_name varchar(255) DEFAULT NULL,
 			direction varchar(10) NOT NULL,
@@ -292,6 +302,14 @@ class Schema {
 			initiated_at datetime NOT NULL,
 			acknowledged_at datetime DEFAULT NULL,
 			returned_at datetime DEFAULT NULL,
+			keep_current tinyint(1) NOT NULL DEFAULT 0,
+			keep_current_accepted tinyint(1) NOT NULL DEFAULT 0,
+			sequence bigint(20) unsigned NOT NULL DEFAULT 0,
+			delivered_sequence bigint(20) unsigned NOT NULL DEFAULT 0,
+			last_code_id bigint(20) unsigned DEFAULT NULL,
+			delivered_at datetime DEFAULT NULL,
+			unreachable_since datetime DEFAULT NULL,
+			update_log longtext,
 			notes text,
 			payload longtext,
 			PRIMARY KEY  (id),
@@ -315,6 +333,7 @@ class Schema {
 			parsed longtext,
 			verification_source longtext,
 			state varchar(20) NOT NULL,
+			keep_current tinyint(1) NOT NULL DEFAULT 0,
 			character_id bigint(20) unsigned DEFAULT NULL,
 			answered_by bigint(20) unsigned DEFAULT NULL,
 			answer_note text,
@@ -379,6 +398,7 @@ class Schema {
 			held tinyint(1) NOT NULL DEFAULT 0,
 			release_batch_id bigint(20) unsigned DEFAULT NULL,
 			level tinyint(3) unsigned DEFAULT NULL,
+			shared_at datetime DEFAULT NULL,
 			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY  (id),
 			KEY idx_release_batch (release_batch_id),
@@ -510,6 +530,25 @@ class Schema {
 			KEY email (email)
 		) $charset_collate;" );
 
+		// be_join_requests: a signed-in account asking to join a chronicle, open until a Storyteller approves,
+		// refuses, or the account withdraws it.
+		dbDelta( "CREATE TABLE {$prefix}join_requests (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			game_id bigint(20) unsigned NOT NULL,
+			wp_user_id bigint(20) unsigned NOT NULL,
+			message text,
+			character_id bigint(20) unsigned DEFAULT NULL,
+			submission_id bigint(20) unsigned DEFAULT NULL,
+			status varchar(20) NOT NULL DEFAULT 'waiting',
+			note text,
+			reviewed_by bigint(20) unsigned DEFAULT NULL,
+			reviewed_at datetime DEFAULT NULL,
+			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY  (id),
+			KEY game_user (game_id, wp_user_id),
+			KEY idx_status (status)
+		) $charset_collate;" );
+
 		// be_attachments: private uploads on a plot or world object.
 		dbDelta( "CREATE TABLE {$prefix}attachments (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
@@ -535,6 +574,7 @@ class Schema {
 			start_time varchar(50) DEFAULT NULL,
 			place varchar(255) DEFAULT NULL,
 			notes longtext,
+			recap json DEFAULT NULL,
 			downtime_opens_at datetime DEFAULT NULL,
 			downtime_deadline_at datetime DEFAULT NULL,
 			downtime_extensions json DEFAULT NULL,
@@ -595,6 +635,28 @@ class Schema {
 			KEY idx_user (wp_user_id)
 		) $charset_collate;" );
 
+		// be_mail_log: one row per email the plugin sent, tried to send, queued for a digest or chose not to send.
+		dbDelta( "CREATE TABLE {$prefix}mail_log (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			game_id bigint(20) unsigned NOT NULL DEFAULT 0,
+			wp_user_id bigint(20) unsigned NOT NULL DEFAULT 0,
+			recipient_name varchar(255) NOT NULL DEFAULT '',
+			recipient_email varchar(255) NOT NULL DEFAULT '',
+			kind varchar(40) NOT NULL,
+			subject varchar(500) NOT NULL DEFAULT '',
+			result varchar(10) NOT NULL,
+			reason varchar(40) NOT NULL DEFAULT '',
+			error varchar(500) NOT NULL DEFAULT '',
+			entity_type varchar(20) NOT NULL DEFAULT '',
+			entity_id bigint(20) unsigned NOT NULL DEFAULT 0,
+			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY  (id),
+			KEY idx_game_created (game_id, created_at),
+			KEY idx_entity (game_id, entity_type, entity_id),
+			KEY idx_user (wp_user_id),
+			KEY idx_created (created_at)
+		) $charset_collate;" );
+
 		// be_npc_castings: a chronicle member cast to play one NPC for one session.
 		dbDelta( "CREATE TABLE {$prefix}npc_castings (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
@@ -611,12 +673,12 @@ class Schema {
 			KEY idx_wp_user (wp_user_id)
 		) $charset_collate;" );
 
-		// be_secrets: a Storyteller-authored secret attached to a plot, item, location, or NPC.
+		// be_secrets: a Storyteller-authored secret, optionally attached to a plot, item, location, character, or NPC.
 		dbDelta( "CREATE TABLE {$prefix}secrets (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			game_id bigint(20) unsigned NOT NULL,
-			entity_type varchar(20) NOT NULL,
-			entity_id bigint(20) unsigned NOT NULL,
+			entity_type varchar(20) DEFAULT NULL,
+			entity_id bigint(20) unsigned DEFAULT NULL,
 			title varchar(255) NOT NULL,
 			content longtext,
 			audience varchar(20) NOT NULL DEFAULT 'storytellers',
@@ -639,6 +701,8 @@ class Schema {
 			held tinyint(1) NOT NULL DEFAULT 0,
 			release_batch_id bigint(20) unsigned DEFAULT NULL,
 			revealed_by bigint(20) unsigned NOT NULL,
+			from_character_id bigint(20) unsigned DEFAULT NULL,
+			approved tinyint(1) NOT NULL DEFAULT 1,
 			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY  (id),
 			UNIQUE KEY secret_character (secret_id, character_id),
@@ -727,6 +791,7 @@ class Schema {
 			character_id bigint(20) unsigned NOT NULL,
 			member_rank varchar(100) DEFAULT NULL,
 			is_leader tinyint(1) NOT NULL DEFAULT 0,
+			is_public tinyint(1) NOT NULL DEFAULT 1,
 			added_by bigint(20) unsigned NOT NULL,
 			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY  (id),
@@ -838,9 +903,21 @@ class Schema {
 		self::add_assigned_to_to_plots();
 		self::add_assigned_to_to_characters();
 		self::add_npc_profile_to_characters();
+		self::add_profile_show_player_to_characters();
+		self::add_secret_passing_to_secret_reveals();
 		self::add_parent_id_to_world_objects();
 		self::add_based_on_id_to_world_objects();
 		\BeyondElysium\Services\Player_Invites::convert_pending_emails();
+		self::add_submission_id_to_character_changes();
+		self::add_auto_approved_to_character_changes();
+		self::rename_transfer_states_for_the_visit_model();
+		self::add_keep_current_to_character_transfers();
+		self::add_source_visit_to_character_changes();
+		self::add_shared_at_to_plot_entries();
+		self::add_keep_current_to_character_submissions();
+		self::widen_attestation_kind();
+		self::add_peer_uuid_to_character_transfers();
+		self::add_recap_to_game_sessions();
 	}
 
 	/**
@@ -925,6 +1002,77 @@ class Schema {
 	}
 
 	/**
+	 * Adds the column that ties every change in one editor submission together, to an existing character_changes table.
+	 */
+	public static function add_submission_id_to_character_changes(): void {
+		global $wpdb;
+		$table = self::table( 'character_changes' );
+		self::add_column_if_missing( $table, 'submission_id', 'char(36) DEFAULT NULL AFTER reason' );
+
+		$has_index = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM information_schema.statistics
+				 WHERE table_schema = DATABASE() AND table_name = %s AND index_name = 'idx_submission'",
+				$table
+			)
+		);
+		if ( (int) $has_index === 0 ) {
+			$wpdb->query( "ALTER TABLE {$table} ADD KEY idx_submission (submission_id)" );
+			if ( $wpdb->last_error ) {
+				error_log( "Beyond Elysium: failed to add idx_submission to {$table}: " . $wpdb->last_error );
+			}
+		}
+	}
+
+	/**
+	 * Adds the column that records whether a change approved itself, to an existing character_changes table. A row
+	 * with no value reads as a Storyteller's own approval.
+	 */
+	public static function add_auto_approved_to_character_changes(): void {
+		$table = self::table( 'character_changes' );
+		self::add_column_if_missing( $table, 'auto_approved', "tinyint(1) NOT NULL DEFAULT 0 AFTER submission_id" );
+	}
+
+	/**
+	 * Adds the columns a change forwarded from a host chronicle needs: which visit it arrived on, and the host's
+	 * own free-text note.
+	 */
+	public static function add_source_visit_to_character_changes(): void {
+		$table = self::table( 'character_changes' );
+		self::add_column_if_missing( $table, 'source_visit_id', 'bigint(20) unsigned DEFAULT NULL AFTER auto_approved' );
+		self::add_column_if_missing( $table, 'host_note', 'text DEFAULT NULL AFTER source_visit_id' );
+	}
+
+	/**
+	 * Renames every `character_transfers` row onto the visit vocabulary: outbound `pending` becomes `offered`,
+	 * `abroad` becomes `visiting`, and either direction's `returned` or `sent_home` becomes `ended`. Safe to run
+	 * again.
+	 */
+	public static function rename_transfer_states_for_the_visit_model(): void {
+		global $wpdb;
+		$table = self::table( 'character_transfers' );
+
+		$wpdb->query( "UPDATE {$table} SET state = 'offered' WHERE direction = 'outbound' AND state = 'pending'" );
+		$wpdb->query( "UPDATE {$table} SET state = 'visiting' WHERE direction = 'outbound' AND state = 'abroad'" );
+		$wpdb->query( "UPDATE {$table} SET state = 'ended' WHERE state IN ( 'returned', 'sent_home' )" );
+	}
+
+	/**
+	 * Adds `keep_current` and `keep_current_accepted` to `character_transfers`.
+	 */
+	public static function add_keep_current_to_character_transfers(): void {
+		$table = self::table( 'character_transfers' );
+		self::add_column_if_missing( $table, 'keep_current', 'tinyint(1) NOT NULL DEFAULT 0 AFTER returned_at' );
+		self::add_column_if_missing( $table, 'keep_current_accepted', 'tinyint(1) NOT NULL DEFAULT 0 AFTER keep_current' );
+		self::add_column_if_missing( $table, 'sequence', 'bigint(20) unsigned NOT NULL DEFAULT 0 AFTER keep_current_accepted' );
+		self::add_column_if_missing( $table, 'delivered_sequence', 'bigint(20) unsigned NOT NULL DEFAULT 0 AFTER sequence' );
+		self::add_column_if_missing( $table, 'last_code_id', 'bigint(20) unsigned DEFAULT NULL AFTER delivered_sequence' );
+		self::add_column_if_missing( $table, 'delivered_at', 'datetime DEFAULT NULL AFTER last_code_id' );
+		self::add_column_if_missing( $table, 'unreachable_since', 'datetime DEFAULT NULL AFTER delivered_at' );
+		self::add_column_if_missing( $table, 'update_log', 'longtext DEFAULT NULL AFTER unreachable_since' );
+	}
+
+	/**
 	 * Sets every personal actor plot's audience to 'restricted', matching who can already see it.
 	 */
 	public static function migrate_actor_plots_to_restricted_audience(): void {
@@ -979,7 +1127,7 @@ class Schema {
 			$key    = \BeyondElysium\Services\Name_Key::for( $text );
 			$string = \BeyondElysium\Models\Translation_String::find_by_source_key( $key );
 			if ( ! $string ) {
-				continue; // Rescan just indexed every real catalog string; defensive only.
+				continue; // Skips a key with no indexed string.
 			}
 
 			if ( isset( $seen[ $key ] ) ) {
@@ -1092,6 +1240,49 @@ class Schema {
 	}
 
 	/**
+	 * Adds the column marking when an entry was last shared with a visiting character's home chronicle.
+	 */
+	public static function add_shared_at_to_plot_entries(): void {
+		self::add_column_if_missing( self::table( 'plot_entries' ), 'shared_at', 'datetime DEFAULT NULL AFTER level' );
+	}
+
+	/**
+	 * Adds the column naming the other side's own uuid for a character, when it differs from this row's own.
+	 */
+	public static function add_peer_uuid_to_character_transfers(): void {
+		self::add_column_if_missing( self::table( 'character_transfers' ), 'peer_uuid', 'char(36) DEFAULT NULL AFTER character_uuid' );
+	}
+
+	/**
+	 * Adds the flag marking a player's own submitted file as asking to be kept current.
+	 */
+	public static function add_keep_current_to_character_submissions(): void {
+		self::add_column_if_missing( self::table( 'character_submissions' ), 'keep_current', 'tinyint(1) NOT NULL DEFAULT 0 AFTER state' );
+	}
+
+	/**
+	 * Widens `character_attestations.kind` to `varchar(20)`.
+	 */
+	public static function widen_attestation_kind(): void {
+		global $wpdb;
+		$table = self::table( 'character_attestations' );
+
+		$length = $wpdb->get_var( $wpdb->prepare(
+			"SELECT CHARACTER_MAXIMUM_LENGTH FROM information_schema.columns
+			 WHERE table_schema = DATABASE() AND table_name = %s AND column_name = 'kind'",
+			$table
+		) );
+		if ( (int) $length >= 20 ) {
+			return;
+		}
+
+		$wpdb->query( "ALTER TABLE {$table} MODIFY COLUMN kind varchar(20) NOT NULL" );
+		if ( $wpdb->last_error ) {
+			error_log( 'Beyond Elysium: failed to widen character_attestations.kind: ' . $wpdb->last_error );
+		}
+	}
+
+	/**
 	 * Adds the staff-assignment column to an existing plots table.
 	 */
 	public static function add_assigned_to_to_plots(): void {
@@ -1119,7 +1310,32 @@ class Schema {
 	}
 
 	/**
-	 * Puts every existing rumor into a released batch, one per chronicle, so it stays visible to whoever could read it.
+	 * Adds the Storyteller recap column to an existing game_sessions table.
+	 */
+	public static function add_recap_to_game_sessions(): void {
+		$table = self::table( 'game_sessions' );
+		self::add_column_if_missing( $table, 'recap', 'json DEFAULT NULL AFTER notes' );
+	}
+
+	/**
+	 * Whether a player character's own profile names the account playing them.
+	 */
+	public static function add_profile_show_player_to_characters(): void {
+		$table = self::table( 'characters' );
+		self::add_column_if_missing( $table, 'profile_show_player', 'tinyint(1) NOT NULL DEFAULT 0 AFTER profile_audience_rules' );
+	}
+
+	/**
+	 * A reveal a player told another character, and whether a player-sourced reveal has been approved yet.
+	 */
+	public static function add_secret_passing_to_secret_reveals(): void {
+		$table = self::table( 'secret_reveals' );
+		self::add_column_if_missing( $table, 'from_character_id', 'bigint(20) unsigned DEFAULT NULL AFTER revealed_by' );
+		self::add_column_if_missing( $table, 'approved', 'tinyint(1) NOT NULL DEFAULT 1 AFTER from_character_id' );
+	}
+
+	/**
+	 * Puts every existing rumor into a released batch, one per chronicle.
 	 */
 	public static function migrate_rumors_to_release_batches(): void {
 		if ( get_option( 'be_rumor_release_migrated' ) ) {
@@ -1157,8 +1373,7 @@ class Schema {
 	 *
 	 * @param int    $game_id
 	 * @param string $rumor_label
-	 * @return bool False on any failure - the caller stops there and leaves the option unset,
-	 *              so a later upgrade retries a chronicle that never got its batch.
+	 * @return bool False on any failure.
 	 */
 	private static function migrate_one_chronicles_rumors_to_a_release_batch( int $game_id, string $rumor_label ): bool {
 		global $wpdb;
@@ -1285,8 +1500,7 @@ class Schema {
 	}
 
 	/**
-	 * Drops `creature_stacks`' unique `slug` index once `slug_game` is there, so a chronicle's layer can share its
-	 * creature type's slug.
+	 * Drops `creature_stacks`' unique `slug` index once `slug_game` is there.
 	 */
 	public static function drop_creature_stack_slug_index(): void {
 		global $wpdb;
@@ -1622,12 +1836,11 @@ class Schema {
 	}
 
 	/**
-	 * Adds the `vampire-blood-magic` section to vampire's own `sheet_full` template for every install that seeded it
-	 * before Blood Magic existed.
+	 * Adds the `vampire-blood-magic` section to vampire's `sheet_full` template where it is missing.
 	 */
 	public static function add_missing_blood_magic_template_section(): void {
 		foreach ( \BeyondElysium\Models\Template::globals( [ 'stack_slug' => 'vampire', 'template_type' => 'sheet_full' ] ) as $template ) {
-			/** @var object{id:int,is_system:int,layout:array} $template */
+			/** @var object{id:int,is_system:int,layout:array<string,mixed>} $template */
 			if ( empty( $template->is_system ) ) {
 				continue;
 			}
@@ -1804,8 +2017,8 @@ class Schema {
 	}
 
 	/**
-	 * Renames the `werewolf-gifts` sheet_data key to `fera-gifts` for every fera/bete character that still has held picks
-	 * stored under the old key.
+	 * Renames the `werewolf-gifts` sheet_data key to `fera-gifts` for every fera/bete character holding picks under
+	 * it.
 	 */
 	public static function rename_fera_gifts_sheet_data_key(): void {
 		global $wpdb;
@@ -1829,7 +2042,7 @@ class Schema {
 	}
 
 	/**
-	 * Rewrites a held Gift's stored `name` from its old compound label (e.g. "Silver Fangs: Falcon's Grasp (basic)") to
+	 * Rewrites a held Gift's stored `name` from its compound label (e.g. "Silver Fangs: Falcon's Grasp (basic)") to
 	 * the plain catalog name (e.g. "Falcon's Grasp") for werewolf-gifts and fera-gifts.
 	 */
 	public static function migrate_held_gift_names_to_grouped_fields(): void {
@@ -1943,7 +2156,7 @@ class Schema {
 			$game_slug = (string) $row['game_slug'];
 			$fork      = \BeyondElysium\Models\Schema_Block::find_for_game( 'vampire-disciplines', $game_slug );
 			if ( ! $fork || ( $fork->game_slug ?? '' ) !== $game_slug ) {
-				continue; // Only ever operate on a real fork row, never the global one.
+				continue; // Skips a chronicle with no fork of its own.
 			}
 
 			$powers      = is_array( $fork->definition->powers ?? null ) ? $fork->definition->powers : [];
@@ -1976,7 +2189,7 @@ class Schema {
 
 			$bm_fork = \BeyondElysium\Models\Schema_Block::find_or_create_fork_for_game( 'vampire-blood-magic', $game_slug );
 			if ( ! $bm_fork ) {
-				continue; // vampire-blood-magic does not exist globally yet - nothing to fork into.
+				continue; // No global vampire-blood-magic block to fork from.
 			}
 
 			$bm_definition         = (array) $bm_fork->definition;
@@ -2190,6 +2403,38 @@ class Schema {
 	}
 
 	/**
+	 * Lets a secret exist with no entity attached.
+	 */
+	public static function make_secret_entity_nullable(): void {
+		global $wpdb;
+
+		$table = self::table( 'secrets' );
+
+		foreach ( [
+			'entity_type' => 'varchar(20) DEFAULT NULL',
+			'entity_id'   => 'bigint(20) unsigned DEFAULT NULL',
+		] as $column => $definition ) {
+			$not_null = $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT COUNT(*) FROM information_schema.columns
+					 WHERE table_schema = DATABASE() AND table_name = %s
+					   AND column_name = %s AND is_nullable = 'NO'",
+					$table,
+					$column
+				)
+			);
+			if ( (int) $not_null === 0 ) {
+				continue;
+			}
+
+			$wpdb->query( "ALTER TABLE {$table} MODIFY COLUMN {$column} {$definition}" );
+			if ( $wpdb->last_error ) {
+				error_log( "Beyond Elysium: failed to make secrets.{$column} nullable: " . $wpdb->last_error );
+			}
+		}
+	}
+
+	/**
 	 * Rebuilds a creature stack's default `sheet_full` template layout when it is out of date.
 	 */
 	public static function repair_stale_default_layouts(): void {
@@ -2198,7 +2443,7 @@ class Schema {
 				'stack_slug'    => $stack->slug,
 				'template_type' => 'sheet_full',
 			] ) as $template ) {
-				/** @var object{id:int,is_system:int,layout:array} $template */
+				/** @var object{id:int,is_system:int,layout:array<string,mixed>} $template */
 				if ( empty( $template->is_system ) ) {
 					continue;
 				}
@@ -2247,7 +2492,7 @@ class Schema {
 	 */
 	/**
 	 * Completes every system `sheet_full` and `npc_full` from its own stack: any block the stack declares that the
-	 * template does not already show is inserted beside its own kind (the seeded half of).
+	 * template does not already show is inserted beside its own kind.
 	 */
 	public static function complete_full_sheet_templates(): void {
 		foreach ( \BeyondElysium\Models\Creature_Stack::all() as $stack ) {
@@ -2266,7 +2511,7 @@ class Schema {
 					'stack_slug'    => $stack->slug,
 					'template_type' => $template_type,
 				] ) as $template ) {
-					/** @var object{id:int,is_system:int,layout:array} $template */
+					/** @var object{id:int,is_system:int,layout:array<string,mixed>} $template */
 					if ( empty( $template->is_system ) ) {
 						continue;
 					}
@@ -2316,14 +2561,57 @@ class Schema {
 	}
 
 	/**
+	 * Sets every system sheet's own health section to `full` width.
+	 */
+	public static function correct_health_section_width(): void {
+		foreach ( \BeyondElysium\Models\Creature_Stack::all() as $stack ) {
+			foreach ( [ 'sheet_full', 'npc_full' ] as $template_type ) {
+				foreach ( \BeyondElysium\Models\Template::globals( [
+					'stack_slug'    => $stack->slug,
+					'template_type' => $template_type,
+				] ) as $template ) {
+					/** @var object{id:int,is_system:int,layout:array<string,mixed>} $template */
+					if ( empty( $template->is_system ) ) {
+						continue;
+					}
+
+					$sections = $template->layout['sections'] ?? [];
+					$changed  = false;
+					foreach ( $sections as &$section ) {
+						if (
+							str_ends_with( (string) ( $section['block_slug'] ?? '' ), '-health' )
+							&& ( $section['width'] ?? '' ) !== 'full'
+						) {
+							$section['width'] = 'full';
+							$changed          = true;
+						}
+					}
+					unset( $section );
+
+					if ( ! $changed ) {
+						continue;
+					}
+
+					$layout             = $template->layout;
+					$layout['sections'] = $sections;
+
+					if ( ! \BeyondElysium\Models\Template::update( (int) $template->id, [ 'layout' => $layout ] ) ) {
+						error_log( 'Beyond Elysium: failed to widen ' . $stack->slug . ' ' . $template_type . ' template id ' . (int) $template->id . "'s health section" );
+					}
+				}
+			}
+		}
+	}
+
+	/**
 	 * Inserts one declared block into a layout directly after the nearest earlier-declared block the layout already
 	 * shows, taking that block's width.
 	 *
-	 * @param array    $sections      The layout's sections.
-	 * @param string[] $declared_order Every block the stack declares, in its declared order.
-	 * @param string   $slug          The block to insert.
-	 * @param string   $label         The stack's own label for it.
-	 * @return array The sections with the block inserted; `order` is renumbered by the caller.
+	 * @param array<int,array<string,mixed>> $sections      The layout's sections.
+	 * @param string[]                       $declared_order Every block the stack declares, in its declared order.
+	 * @param string                         $slug          The block to insert.
+	 * @param string                         $label         The stack's own label for it.
+	 * @return array<int,array<string,mixed>> The sections with the block inserted; `order` is renumbered by the caller.
 	 */
 	private static function insert_declared_section( array $sections, array $declared_order, string $slug, string $label ): array {
 		$shown    = array_column( $sections, 'block_slug' );
@@ -2340,6 +2628,11 @@ class Schema {
 					break;
 				}
 			}
+		}
+
+		// A health block always takes the full width.
+		if ( str_ends_with( $slug, '-health' ) ) {
+			$width = 'full';
 		}
 
 		array_splice( $sections, $insert_at, 0, [
@@ -2375,7 +2668,7 @@ class Schema {
 				'stack_slug'    => $stack->slug,
 				'template_type' => 'npc_full',
 			] ) as $template ) {
-				/** @var object{id:int,is_system:int,layout:array} $template */
+				/** @var object{id:int,is_system:int,layout:array<string,mixed>} $template */
 				if ( empty( $template->is_system ) ) {
 					continue;
 				}
@@ -2451,7 +2744,7 @@ class Schema {
 			}
 		}
 
-		// Pass 2: character owners -> player, their own game only; one set-based INSERT...SELECT.
+		// Pass 2: character owners -> player, their own game only.
 		$wpdb->query(
 			$wpdb->prepare(
 				"INSERT IGNORE INTO {$members_table} (game_id, wp_user_id, role, created_at)
@@ -2502,7 +2795,7 @@ class Schema {
 	/**
 	 * Every step of an upgrade, in order: tables, translation recovery, catalog reseed and the migrations after it, the
 	 * move onto per-creature lists, combos moved into their combo lists, lists filled from import records, stacks and
-	 * templates, retired-block removal, translation rescan, demo data and capabilities.
+	 * templates, retired-block removal, translation rescan, a check for repeated holdings, demo data and capabilities.
 	 *
 	 * @param bool $fresh_install Whether no schema version was recorded before this upgrade.
 	 */
@@ -2540,7 +2833,7 @@ class Schema {
 		Seeder::seed_creature_stacks();
 		Seeder::reconcile_stack_blocks();
 
-		// Drops the empty sections of the two blocks no stack lists any more from the system templates.
+		// Drops the empty sections of the two blocks no stack lists from the system templates.
 		\BeyondElysium\Services\Retired_Blocks::drop_from_system_templates();
 
 		Seeder::seed_default_templates();
@@ -2555,17 +2848,24 @@ class Schema {
 
 		self::complete_full_sheet_templates();
 
+		self::correct_health_section_width();
+
+		self::make_secret_entity_nullable();
+
 		// Gives system templates the section titles their declared files name.
 		\BeyondElysium\Services\Template_Titles::run();
 
 		// Brings this upgrade's template changes to every chronicle's template over a site template.
 		\BeyondElysium\Models\Template::refresh_layers();
 
-		// Deletes each retired block that nothing names any more.
+		// Deletes each retired block that nothing names.
 		\BeyondElysium\Services\Retired_Blocks::remove_unused();
 
 		// Re-indexes the catalog's terms for translation.
 		\BeyondElysium\Services\Catalog_Translator::rescan();
+
+		// Names any character left holding a path under two spellings of one tradition.
+		\BeyondElysium\Services\Repeated_Holdings::report();
 
 		// Demo data, seeded on a fresh install only.
 		Seeder::seed_demo_characters( $fresh_install );

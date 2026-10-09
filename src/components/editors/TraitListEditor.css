@@ -39,6 +39,10 @@
 	color: var(--be-gray-4);
 }
 
+.be-trait-list-editor__number {
+	color: var(--be-gray-4);
+}
+
 .be-trait-list-editor__summary-detail {
 	margin-left: 0.4rem;
 	font-size: 0.85rem;

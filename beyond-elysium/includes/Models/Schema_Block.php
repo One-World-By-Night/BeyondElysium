@@ -144,8 +144,8 @@ class Schema_Block {
 	/**
 	 * Return the global/system schema block catalog matching optional filters.
 	 *
-	 * @param array $args Filters: section_type, is_system, search, orderby, order, per_page, offset.
-	 * @return array
+	 * @param array<string,mixed> $args Filters: section_type, is_system, search, orderby, order, per_page, offset.
+	 * @return array<int,object>
 	 */
 	public static function all( array $args = [] ): array {
 		global $wpdb;
@@ -192,7 +192,7 @@ class Schema_Block {
 	/**
 	 * Count global/system schema blocks matching the given filters.
 	 *
-	 * @param array $args Same filters as all().
+	 * @param array<string,mixed> $args Same filters as all().
 	 * @return int
 	 */
 	public static function count( array $args = [] ): int {
@@ -230,9 +230,9 @@ class Schema_Block {
 	 * Return the global catalog with any of this chronicle's own forks substituted in place of the global block of the
 	 * same slug.
 	 *
-	 * @param array  $args
-	 * @param string $game_slug
-	 * @return array
+	 * @param array<string,mixed> $args
+	 * @param string              $game_slug
+	 * @return array<int,object>
 	 */
 	public static function all_for_game( array $args, string $game_slug ): array {
 		$blocks = self::all( $args );
@@ -265,7 +265,7 @@ class Schema_Block {
 	 *
 	 * @param string[] $section_types
 	 * @param string   $game_slug
-	 * @return array
+	 * @return array<int,object>
 	 */
 	public static function all_for_game_by_types( array $section_types, string $game_slug ): array {
 		global $wpdb;
@@ -305,7 +305,7 @@ class Schema_Block {
 	 *
 	 * @param string[] $section_types
 	 * @param string   $game_slug
-	 * @return array
+	 * @return array<int,object>
 	 */
 	public static function forks_for_game_by_types( array $section_types, string $game_slug ): array {
 		if ( $game_slug === '' || $section_types === [] ) {
@@ -327,8 +327,8 @@ class Schema_Block {
 	 * Find multiple schema blocks by a list of slugs, always the global/system definitions regardless of any chronicle
 	 * forks.
 	 *
-	 * @param array $slugs
-	 * @return array Keyed by slug.
+	 * @param array<int,string> $slugs
+	 * @return array<string,object> Keyed by slug.
 	 */
 	public static function find_by_slugs( array $slugs ): array {
 		if ( empty( $slugs ) ) {
@@ -354,9 +354,9 @@ class Schema_Block {
 	 * Batched version of find_for_game() for multiple slugs at once: one query for the global rows, one for the
 	 * requesting game's own forks, with the fork winning per slug wherever both exist.
 	 *
-	 * @param array  $slugs
-	 * @param string $game_slug
-	 * @return array Keyed by slug.
+	 * @param array<int,string> $slugs
+	 * @param string            $game_slug
+	 * @return array<string,object> Keyed by slug.
 	 */
 	public static function find_by_slugs_for_game( array $slugs, string $game_slug = '' ): array {
 		$base = self::find_by_slugs( $slugs );
@@ -382,7 +382,7 @@ class Schema_Block {
 	/**
 	 * Insert a new schema block.
 	 *
-	 * @param array $data Block data.
+	 * @param array<string,mixed> $data Block data.
 	 * @return int|false Insert ID or false on failure.
 	 */
 	public static function create( array $data ) {
@@ -419,9 +419,9 @@ class Schema_Block {
 	 * Update a schema block identified by slug and game_slug, incrementing its version counter. $game_slug defaults to ''
 	 * (the global block).
 	 *
-	 * @param string $slug
-	 * @param array  $data      Fields to update.
-	 * @param string $game_slug
+	 * @param string              $slug
+	 * @param array<string,mixed> $data      Fields to update.
+	 * @param string              $game_slug
 	 * @return bool
 	 */
 	public static function update( string $slug, array $data, string $game_slug = '' ): bool {

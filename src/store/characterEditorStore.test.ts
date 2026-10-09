@@ -1,5 +1,5 @@
 /**
- * A Zustand store is a plain state container.
+ * The character editor's Zustand store as a plain state container, with the REST client mocked.
  */
 vi.mock( '../api/client', () => ( {
 	__esModule: true,
@@ -88,60 +88,60 @@ describe( 'characterEditorStore.submitChanges', () => {
 		} );
 	} );
 
-	it( 'attempts every change even after an earlier one fails, baselining only what succeeded', async () => {
-		const create = vi
+	it( 'fails the whole set together, baselining nothing, when the server rejects the submission', async () => {
+		const submitSet = vi
 			.fn()
-			.mockResolvedValueOnce( { id: 1, status: 'approved' } )
 			.mockRejectedValueOnce( { message: 'server exploded' } );
-		mockedApi.changes = vi.fn().mockReturnValue( { create } ) as never;
+		mockedApi.changes = vi.fn().mockReturnValue( { submitSet } ) as never;
 
 		const result = await useCharacterEditorStore.getState().submitChanges();
 
-		// Both queued changes are attempted.
-		expect( create ).toHaveBeenCalledTimes( 2 );
-		expect( result.submitted ).toHaveLength( 1 );
-		expect( result.failed ).toHaveLength( 1 );
+		// One call submits the whole set, under the server's own one-transaction contract.
+		expect( submitSet ).toHaveBeenCalledTimes( 1 );
+		expect( result.submitted ).toHaveLength( 0 );
+		expect( result.failed ).toHaveLength( 2 );
 
 		const state = useCharacterEditorStore.getState();
 		expect( state.saving ).toBe( false );
 		expect( state.error ).toBe( 'server exploded' );
-		// The failed block's edit is still live to retry.
+		// Nothing was baselined - every edit is still live to retry.
 		expect( state.dirty ).toBe( true );
-
-		const failedCategory = result.failed[ 0 ].category;
-		const succeededCategory = result.submitted[ 0 ].category;
-		// The block that failed keeps its original (pre-edit) baseline.
-		expect( state.originalSheetData[ failedCategory ] ).not.toEqual(
-			state.sheetData[ failedCategory ]
-		);
-		expect( state.originalSheetData[ succeededCategory ] ).toEqual(
-			state.sheetData[ succeededCategory ]
-		);
+		expect( state.originalSheetData ).toEqual( {
+			disciplines: [],
+			virtues: [],
+		} );
 	} );
 
-	it( 'does not resubmit an already-succeeded block on a retry after a partial failure', async () => {
-		const create = vi
+	it( 'retries the whole set again after a failure, and this time it lands', async () => {
+		const submitSet = vi
 			.fn()
-			.mockResolvedValueOnce( { id: 1, status: 'approved' } )
-			.mockRejectedValueOnce( { message: 'server exploded' } );
-		mockedApi.changes = vi.fn().mockReturnValue( { create } ) as never;
+			.mockRejectedValueOnce( { message: 'server exploded' } )
+			.mockResolvedValueOnce( {
+				submission_id: 'retry',
+				changes: [
+					{ id: 1, status: 'approved' },
+					{ id: 2, status: 'approved' },
+				],
+			} );
+		mockedApi.changes = vi.fn().mockReturnValue( { submitSet } ) as never;
 
 		await useCharacterEditorStore.getState().submitChanges();
-		create.mockClear();
-		create.mockResolvedValue( { id: 2, status: 'approved' } );
-
 		const retry = await useCharacterEditorStore.getState().submitChanges();
 
-		expect( create ).toHaveBeenCalledTimes( 1 );
-		expect( retry.submitted ).toHaveLength( 1 );
+		expect( submitSet ).toHaveBeenCalledTimes( 2 );
+		expect( retry.submitted ).toHaveLength( 2 );
 		expect( retry.failed ).toHaveLength( 0 );
 	} );
 
 	it( 'resets the baseline and reports full success when every change lands', async () => {
-		const create = vi
-			.fn()
-			.mockResolvedValue( { id: 1, status: 'approved' } );
-		mockedApi.changes = vi.fn().mockReturnValue( { create } ) as never;
+		const submitSet = vi.fn().mockResolvedValue( {
+			submission_id: 'set-1',
+			changes: [
+				{ id: 1, status: 'approved' },
+				{ id: 2, status: 'approved' },
+			],
+		} );
+		mockedApi.changes = vi.fn().mockReturnValue( { submitSet } ) as never;
 
 		const result = await useCharacterEditorStore.getState().submitChanges();
 
@@ -157,10 +157,14 @@ describe( 'characterEditorStore.submitChanges', () => {
 	} );
 
 	it( 'does NOT baseline a change that submitted successfully but landed pending review (real bug, user report 2026-09-11: a discipline edit appeared saved, then reverted the next time the character reloaded)', async () => {
-		const create = vi
-			.fn()
-			.mockResolvedValue( { id: 1, status: 'pending' } );
-		mockedApi.changes = vi.fn().mockReturnValue( { create } ) as never;
+		const submitSet = vi.fn().mockResolvedValue( {
+			submission_id: 'set-1',
+			changes: [
+				{ id: 1, status: 'pending' },
+				{ id: 2, status: 'pending' },
+			],
+		} );
+		mockedApi.changes = vi.fn().mockReturnValue( { submitSet } ) as never;
 
 		const result = await useCharacterEditorStore.getState().submitChanges();
 
@@ -176,11 +180,14 @@ describe( 'characterEditorStore.submitChanges', () => {
 	} );
 
 	it( 'baselines only the categories that were actually approved when a submission batch is mixed', async () => {
-		const create = vi
-			.fn()
-			.mockResolvedValueOnce( { id: 1, status: 'approved' } )
-			.mockResolvedValueOnce( { id: 2, status: 'pending' } );
-		mockedApi.changes = vi.fn().mockReturnValue( { create } ) as never;
+		const submitSet = vi.fn().mockResolvedValue( {
+			submission_id: 'set-1',
+			changes: [
+				{ id: 1, status: 'approved' },
+				{ id: 2, status: 'pending' },
+			],
+		} );
+		mockedApi.changes = vi.fn().mockReturnValue( { submitSet } ) as never;
 
 		const result = await useCharacterEditorStore.getState().submitChanges();
 		const state = useCharacterEditorStore.getState();
@@ -204,7 +211,7 @@ describe( 'characterEditorStore.submitChanges', () => {
 	 */
 	describe( 'while the requests are still out', () => {
 		let release: ( created: unknown ) => void;
-		let create: Mock;
+		let submitSet: Mock;
 
 		beforeEach( () => {
 			vi.useFakeTimers();
@@ -212,7 +219,7 @@ describe( 'characterEditorStore.submitChanges', () => {
 			mockedApi.characters = vi.fn().mockReturnValue( {
 				previewChanges: vi.fn().mockResolvedValue( null ),
 			} ) as never;
-			create = vi
+			submitSet = vi
 				.fn()
 				.mockImplementationOnce(
 					() =>
@@ -220,8 +227,13 @@ describe( 'characterEditorStore.submitChanges', () => {
 							release = resolve;
 						} )
 				)
-				.mockResolvedValue( { id: 2, status: 'approved' } );
-			mockedApi.changes = vi.fn().mockReturnValue( { create } ) as never;
+				.mockResolvedValue( {
+					submission_id: 'set-2',
+					changes: [ { id: 2, status: 'approved' } ],
+				} );
+			mockedApi.changes = vi
+				.fn()
+				.mockReturnValue( { submitSet } ) as never;
 		} );
 
 		afterEach( () => {
@@ -238,7 +250,13 @@ describe( 'characterEditorStore.submitChanges', () => {
 				.setBlockData( 'disciplines', [
 					{ name: 'Celerity', count: 2 },
 				] );
-			release( { id: 1, status: 'approved' } );
+			release( {
+				submission_id: 'set-1',
+				changes: [
+					{ id: 1, status: 'approved' },
+					{ id: 2, status: 'approved' },
+				],
+			} );
 			await submitting;
 
 			const state = useCharacterEditorStore.getState();
@@ -257,11 +275,17 @@ describe( 'characterEditorStore.submitChanges', () => {
 			const second = await useCharacterEditorStore
 				.getState()
 				.submitChanges();
-			release( { id: 1, status: 'approved' } );
+			release( {
+				submission_id: 'set-1',
+				changes: [
+					{ id: 1, status: 'approved' },
+					{ id: 2, status: 'approved' },
+				],
+			} );
 			await first;
 
 			expect( second.submitted ).toHaveLength( 0 );
-			expect( create ).toHaveBeenCalledTimes( 2 );
+			expect( submitSet ).toHaveBeenCalledTimes( 1 );
 		} );
 
 		it( 'leaves another character alone when it was opened before the requests came back', async () => {
@@ -276,7 +300,13 @@ describe( 'characterEditorStore.submitChanges', () => {
 				},
 				submittedChanges: [],
 			} );
-			release( { id: 1, status: 'approved' } );
+			release( {
+				submission_id: 'set-1',
+				changes: [
+					{ id: 1, status: 'approved' },
+					{ id: 2, status: 'approved' },
+				],
+			} );
 			await submitting;
 
 			const state = useCharacterEditorStore.getState();
@@ -320,7 +350,13 @@ describe( 'characterEditorStore.submitChanges', () => {
 				.setBlockData( 'disciplines', [
 					{ name: 'Celerity', count: 2 },
 				] );
-			release( { id: 1, status: 'approved' } );
+			release( {
+				submission_id: 'set-1',
+				changes: [
+					{ id: 1, status: 'approved' },
+					{ id: 2, status: 'approved' },
+				],
+			} );
 			await submitting;
 			await flush();
 

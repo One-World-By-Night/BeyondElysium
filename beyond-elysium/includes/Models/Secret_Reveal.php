@@ -12,7 +12,7 @@ defined( 'ABSPATH' ) || exit;
 class Secret_Reveal {
 
 	/** @var string[] How a character came to learn a secret. */
-	const HOW_VALUES = [ 'game', 'downtime', 'rumor', 'other' ];
+	const HOW_VALUES = [ 'game', 'downtime', 'rumor', 'told', 'other' ];
 
 	/**
 	 * Look up a single reveal by its primary key, or null when no row with that id exists.
@@ -80,6 +80,9 @@ class Secret_Reveal {
 		if ( property_exists( $row, 'held' ) ) {
 			$row->held = (bool) $row->held;
 		}
+		if ( property_exists( $row, 'approved' ) ) {
+			$row->approved = (bool) $row->approved;
+		}
 		return $row;
 	}
 
@@ -99,9 +102,25 @@ class Secret_Reveal {
 	}
 
 	/**
+	 * The one reveal row for a given secret and character, or null when that character has never been revealed it.
+	 *
+	 * @param int $secret_id
+	 * @param int $character_id
+	 * @return object|null
+	 */
+	public static function find_for( int $secret_id, int $character_id ): ?object {
+		$row = Manager::get_row(
+			'SELECT * FROM ' . Manager::table( 'secret_reveals' ) . ' WHERE secret_id = %d AND character_id = %d',
+			$secret_id,
+			$character_id
+		);
+		return $row ? self::decode( $row ) : null;
+	}
+
+	/**
 	 * Creates a reveal.
 	 *
-	 * @param array $data
+	 * @param array<string,mixed> $data
 	 * @return int|false
 	 */
 	public static function create( array $data ) {
@@ -121,6 +140,8 @@ class Secret_Reveal {
 			'held'              => ! empty( $data['held'] ) ? 1 : 0,
 			'release_batch_id'  => ! empty( $data['release_batch_id'] ) ? (int) $data['release_batch_id'] : null,
 			'revealed_by'       => $data['revealed_by'] ?? get_current_user_id(),
+			'from_character_id' => ! empty( $data['from_character_id'] ) ? (int) $data['from_character_id'] : null,
+			'approved'          => array_key_exists( 'approved', $data ) ? ( $data['approved'] ? 1 : 0 ) : 1,
 			'created_at'        => current_time( 'mysql' ),
 		] );
 	}
@@ -128,8 +149,8 @@ class Secret_Reveal {
 	/**
 	 * Updates a reveal's release_batch_id and/or held flag.
 	 *
-	 * @param int   $id
-	 * @param array $data
+	 * @param int                 $id
+	 * @param array<string,mixed> $data
 	 * @return bool
 	 */
 	public static function update( int $id, array $data ): bool {
@@ -139,6 +160,9 @@ class Secret_Reveal {
 		}
 		if ( array_key_exists( 'release_batch_id', $data ) ) {
 			$update['release_batch_id'] = ! empty( $data['release_batch_id'] ) ? (int) $data['release_batch_id'] : null;
+		}
+		if ( array_key_exists( 'approved', $data ) ) {
+			$update['approved'] = $data['approved'] ? 1 : 0;
 		}
 
 		if ( empty( $update ) ) {

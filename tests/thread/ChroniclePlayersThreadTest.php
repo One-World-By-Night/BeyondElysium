@@ -8,8 +8,9 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * A chronicle linked to accessSchema has its HST or AST add and remove players: the membership row and the player role
- * there. A chronicle that is not linked answers 404. A staff member is never demoted; a player cannot do any of it.
+ * A chronicle's HST or AST add and remove players: the membership row, and, when the chronicle is linked to
+ * accessSchema, the player role there. A chronicle that is not linked answers on every route but attempts no
+ * accessSchema call. A staff member is never demoted; a player cannot do any of it.
  */
 class ChroniclePlayersThreadTest extends WP_UnitTestCase {
 
@@ -104,6 +105,17 @@ class ChroniclePlayersThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 'chronicle/players-test/player', $list['asc_role_path'] );
 	}
 
+	public function test_the_join_link_carries_sso_only_when_the_chronicle_is_accessschema_linked(): void {
+		$linked = $this->dispatch( $this->hst_id, 'GET', "/be/v1/{$this->slug}/players" )->get_data();
+		$this->assertStringContainsString( 'join_slug=players-test', $linked['join_link'] );
+		$this->assertStringContainsString( 'join=1', $linked['join_link'] );
+		$this->assertStringContainsString( 'auth=sso', $linked['join_link'] );
+
+		$this->link_chronicle( null, false );
+		$unlinked = $this->dispatch( $this->hst_id, 'GET', "/be/v1/{$this->slug}/players" )->get_data();
+		$this->assertStringNotContainsString( 'auth=sso', $unlinked['join_link'] );
+	}
+
 	public function test_an_account_that_does_not_exist_is_refused(): void {
 		$response = $this->dispatch( $this->ast_id, 'POST', "/be/v1/{$this->slug}/players", [ 'wp_user_id' => 999999 ] );
 
@@ -151,20 +163,21 @@ class ChroniclePlayersThreadTest extends WP_UnitTestCase {
 	/**
 	 * @dataProvider unlinked_chronicles
 	 */
-	public function test_a_chronicle_not_linked_to_accessschema_answers_404_on_every_players_route( ?string $path, bool $site_reads_asc ): void {
+	public function test_a_chronicle_not_linked_to_accessschema_answers_on_every_players_route_but_grants_no_asc_role( ?string $path, bool $site_reads_asc ): void {
 		$this->link_chronicle( $path, $site_reads_asc );
 
-		foreach ( [ $this->hst_id, $this->ast_id ] as $as ) {
-			$list = $this->dispatch( $as, 'GET', "/be/v1/{$this->slug}/players" );
-			$this->assertSame( 404, $list->get_status() );
-			$this->assertSame( 'players_unavailable', $list->as_error()->get_error_code() );
-			$this->assertSame( 404, $this->dispatch( $as, 'POST', "/be/v1/{$this->slug}/players", [ 'wp_user_id' => $this->newcomer_id ] )->get_status() );
-			$this->assertSame( 404, $this->dispatch( $as, 'DELETE', "/be/v1/{$this->slug}/players/{$this->player_id}" )->get_status() );
-		}
+		$list = $this->dispatch( $this->hst_id, 'GET', "/be/v1/{$this->slug}/players" );
+		$this->assertSame( 200, $list->get_status() );
+		$this->assertNull( $list->get_data()['asc_role_path'] );
 
-		$this->assertNull( Game_Member::find( $this->game_id, $this->newcomer_id ), 'nobody was added' );
-		$this->assertSame( 'player', Game_Member::find( $this->game_id, $this->player_id )->role, 'nobody was removed' );
-		$this->assertSame( [], $GLOBALS['be_test_asc_calls'], 'accessSchema was never asked' );
+		$added = $this->dispatch( $this->ast_id, 'POST', "/be/v1/{$this->slug}/players", [ 'wp_user_id' => $this->newcomer_id ] );
+		$this->assertSame( 201, $added->get_status(), wp_json_encode( $added->get_data() ) );
+		$this->assertFalse( $added->get_data()['asc']['attempted'], 'no accessSchema call on an unlinked chronicle' );
+		$this->assertSame( 'player', Game_Member::find( $this->game_id, $this->newcomer_id )->role, 'the member row is still written' );
+
+		$removed = $this->dispatch( $this->hst_id, 'DELETE', "/be/v1/{$this->slug}/players/{$this->player_id}" );
+		$this->assertSame( 200, $removed->get_status() );
+		$this->assertNull( Game_Member::find( $this->game_id, $this->player_id ), 'the member row is still removed' );
 	}
 
 	public function test_a_player_is_refused_before_the_link_is_looked_at(): void {
@@ -175,11 +188,11 @@ class ChroniclePlayersThreadTest extends WP_UnitTestCase {
 
 	public function test_my_games_says_which_chronicles_are_linked(): void {
 		$linked = $this->dispatch( $this->ast_id, 'GET', '/be/v1/my/games' )->get_data();
-		$this->assertContains( [ 'slug' => $this->slug, 'name' => 'Players Test', 'role' => 'ast', 'asc_linked' => true ], $linked );
+		$this->assertContains( [ 'slug' => $this->slug, 'name' => 'Players Test', 'role' => 'ast', 'asc_linked' => true, 'demo' => false ], $linked );
 
 		$this->link_chronicle( null, true );
 		$unlinked = $this->dispatch( $this->ast_id, 'GET', '/be/v1/my/games' )->get_data();
-		$this->assertContains( [ 'slug' => $this->slug, 'name' => 'Players Test', 'role' => 'ast', 'asc_linked' => false ], $unlinked );
+		$this->assertContains( [ 'slug' => $this->slug, 'name' => 'Players Test', 'role' => 'ast', 'asc_linked' => false, 'demo' => false ], $unlinked );
 	}
 
 	public function test_my_games_lists_a_chronicle_reached_through_accessschema(): void {
@@ -187,6 +200,6 @@ class ChroniclePlayersThreadTest extends WP_UnitTestCase {
 
 		$games = $this->dispatch( $this->newcomer_id, 'GET', '/be/v1/my/games' )->get_data();
 
-		$this->assertContains( [ 'slug' => $this->slug, 'name' => 'Players Test', 'role' => 'ast', 'asc_linked' => true ], $games, 'the highest role held there' );
+		$this->assertContains( [ 'slug' => $this->slug, 'name' => 'Players Test', 'role' => 'ast', 'asc_linked' => true, 'demo' => false ], $games, 'the highest role held there' );
 	}
 }

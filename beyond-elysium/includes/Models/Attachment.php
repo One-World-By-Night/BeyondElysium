@@ -3,6 +3,7 @@
 namespace BeyondElysium\Models;
 
 use BeyondElysium\Database\Manager;
+use BeyondElysium\Services\Attachment_Storage;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -14,12 +15,12 @@ class Attachment {
 	/**
 	 * Entity types an attachment may belong to.
 	 */
-	const ENTITY_TYPES = [ 'plot', 'item', 'location' ];
+	const ENTITY_TYPES = [ 'plot', 'item', 'location', 'character' ];
 
 	/**
 	 * Per-entity attachment caps.
 	 */
-	const LIMITS = [ 'plot' => 20, 'item' => 1, 'location' => 20 ];
+	const LIMITS = [ 'plot' => 20, 'item' => 1, 'location' => 20, 'character' => 1 ];
 
 	/**
 	 * Look up a single attachment by its primary key, or null when no row with that id exists.
@@ -64,7 +65,7 @@ class Attachment {
 	/**
 	 * Insert a new attachment row.
 	 *
-	 * @param array $data game_id, entity_type, entity_id, original_name, stored_name, mime, bytes, created_by.
+	 * @param array<string,mixed> $data game_id, entity_type, entity_id, original_name, stored_name, mime, bytes, created_by.
 	 * @return int|false Insert ID, or false when entity_type is not recognized.
 	 */
 	public static function create( array $data ) {
@@ -97,13 +98,16 @@ class Attachment {
 	}
 
 	/**
-	 * Delete every attachment row for one entity.
+	 * Delete every attachment row for one entity, and the file each one points to.
 	 *
 	 * @param string $entity_type
 	 * @param int    $entity_id
 	 * @return void
 	 */
 	public static function delete_for_entity( string $entity_type, int $entity_id ): void {
+		foreach ( self::for_entity( $entity_type, $entity_id ) as $attachment ) {
+			Attachment_Storage::delete( $attachment->stored_name, $attachment->original_name );
+		}
 		Manager::delete( 'attachments', [ 'entity_type' => $entity_type, 'entity_id' => $entity_id ] );
 	}
 

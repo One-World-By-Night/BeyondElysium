@@ -16,11 +16,11 @@ export interface AprSettings {
 	personal_rumors: boolean;
 	race_rumors: boolean;
 	/**
-	 * Recognized but inert - no character carries group/subgroup data to query against.
+	 * One rumor per group among active characters, such as a vampire's Clan.
 	 */
 	group_rumors: boolean;
 	/**
-	 * Recognized but inert - no character carries group/subgroup data to query against.
+	 * One rumor per subgroup among active characters, such as a vampire's Sect.
 	 */
 	subgroup_rumors: boolean;
 	influence_rumors: boolean;

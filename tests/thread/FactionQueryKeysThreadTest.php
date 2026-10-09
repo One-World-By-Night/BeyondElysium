@@ -11,7 +11,7 @@ use BeyondElysium\Services\Query_Engine;
 use WP_UnitTestCase;
 
 /**
- * The real Grapevine "Group" and "Position" query keys (field-map.php's `group`/`position` entries) now resolve to a
+ * The real Grapevine "Group" and "Position" query keys (field-map.php's `group`/`position` entries) resolve to a
  * character's active `be_faction_members` and `be_positions` rows, comma-joined.
  */
 class FactionQueryKeysThreadTest extends WP_UnitTestCase {

@@ -25,9 +25,9 @@ class Url_Param_Guard {
 	 * Returns a 400 error when this plugin's route carries a pinned URL parameter that the query string, form body, or
 	 * JSON body contradicts.
 	 *
-	 * @param mixed            $response Null, or an earlier filter's result.
-	 * @param array            $handler  The matched route handler.
-	 * @param \WP_REST_Request $request
+	 * @param mixed               $response Null, or an earlier filter's result.
+	 * @param array<string,mixed> $handler  The matched route handler.
+	 * @param \WP_REST_Request    $request
 	 * @return mixed
 	 */
 	public static function check( $response, $handler, $request ) {

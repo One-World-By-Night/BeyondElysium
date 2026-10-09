@@ -14,8 +14,8 @@ use BeyondElysium\Services\Not_Exportable_Exception;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * The plugin's first unauthenticated REST route: answers "is this character document still current" for anyone
- * holding a short verification code, with no login required.
+ * An unauthenticated REST route: answers "is this character document still current" for anyone holding a short
+ * verification code, with no login required.
  */
 class Verify_Controller extends Base_Controller {
 
@@ -31,7 +31,7 @@ class Verify_Controller extends Base_Controller {
 			[
 				'methods'             => 'GET',
 				'callback'            => [ $this, 'verify' ],
-				// Deliberate: this route is public by design.
+				// Public route; no login.
 				'permission_callback' => '__return_true',
 			],
 		] );

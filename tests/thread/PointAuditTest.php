@@ -201,7 +201,8 @@ class PointAuditTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The summary's most common reason was the machine key with its underscores swapped for spaces.
+	 * The summary names its most common reason through translation, never as the machine key with its underscores
+	 * swapped for spaces.
 	 */
 	public function test_the_caveat_names_its_most_common_reason_through_translation(): void {
 		$isolde = $this->find_demo_character( 'Isolde Marchetti' );

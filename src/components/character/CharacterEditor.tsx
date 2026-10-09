@@ -12,12 +12,21 @@ import HtmlEditor from '../shared/HtmlEditor';
 import HelpButton from '../shared/HelpButton';
 import AssigneePicker from '../shared/AssigneePicker';
 import AudiencePicker from '../shared/AudiencePicker';
+import DemoBanner from '../shared/DemoBanner';
 import SecretsPanel from '../shared/SecretsPanel';
+import NpcHooksPanel from './NpcHooksPanel';
+import NpcRoleplayingDraftButton from './NpcRoleplayingDraftButton';
 import RequestXpPanel from './RequestXpPanel';
 import CollapsiblePanel from '../shared/CollapsiblePanel';
 import { previewPriceLabel } from '../../lib/queuePrice';
 import { describeChange } from '../../lib/describeChange';
 import { spanFor, sortedForFlow } from '../../lib/templateLayout';
+import {
+	allowsAnyBlock,
+	withHeldBlockSections,
+} from '../../lib/heldBlockSections';
+import AddSectionPicker from './AddSectionPicker';
+import SheetWarnings from './SheetWarnings';
 import { resolveSectionTitle } from '../../lib/resolveCrossBlockRef';
 import { pickMediaImage } from '../../lib/pickMediaImage';
 import { characterSheetUrl } from '../../lib/pluginPages';
@@ -27,8 +36,10 @@ import type {
 	CreatureStack,
 	MyCapabilities,
 	ResolvedStack,
+	SchemaBlock,
 	TemplateLayoutSection,
 	TemplateResolveResponse,
+	IdentityFieldDefinition,
 	TraitListDefinition,
 	TieredPowerDefinition,
 } from '../../types';
@@ -51,17 +62,31 @@ export interface CharacterEditorProps {
 	 * What the person can do in this chronicle, when the page resolved it.
 	 */
 	capabilities?: MyCapabilities;
+	/**
+	 * Opens a new character with the NPC box already ticked, for a person allowed to flag NPCs.
+	 */
+	startAsNpc?: boolean;
 }
 
 import { errorMessage } from '../../lib/errorMessage';
 
 function sortedSections(
-	resolved: TemplateResolveResponse | null
+	resolved: TemplateResolveResponse | null,
+	stack: ResolvedStack | null,
+	sheetData: Record< string, unknown >,
+	addedSlugs: string[]
 ): TemplateLayoutSection[] {
 	if ( ! resolved ) {
 		return [];
 	}
-	return sortedForFlow( resolved.template.layout.sections );
+	return sortedForFlow(
+		withHeldBlockSections(
+			resolved.template.layout.sections,
+			stack,
+			sheetData,
+			addedSlugs
+		)
+	);
 }
 
 /**
@@ -74,6 +99,7 @@ export function CharacterEditor( {
 	stackSlug,
 	templateType = 'sheet_full',
 	capabilities,
+	startAsNpc = false,
 }: CharacterEditorProps ) {
 	const store = useCharacterEditorStore();
 
@@ -92,16 +118,18 @@ export function CharacterEditor( {
 	const [ createStack, setCreateStack ] = useState< ResolvedStack | null >(
 		null
 	);
+	// Blocks a Storyteller has opened on the new character, beyond its creature type's own sections.
+	const [ createAdded, setCreateAdded ] = useState< string[] >( [] );
 	const [ draftName, setDraftName ] = useState( '' );
 	const [ draftSheetData, setDraftSheetData ] = useState<
 		Record< string, unknown >
 	>( {} );
 	const [ creating, setCreating ] = useState( false );
 	const [ createError, setCreateError ] = useState< string | null >( null );
-	const [ createIsNpc, setCreateIsNpc ] = useState( false );
+	const [ createIsNpc, setCreateIsNpc ] = useState( startAsNpc );
 	const [ createExistingCharacter, setCreateExistingCharacter ] =
 		useState( false );
-	// "New NPC asks Quick or Full".
+	// Whether a new NPC is created as a Quick or a Full one.
 	const [ createNpcDetail, setCreateNpcDetail ] = useState<
 		'full' | 'quick'
 	>( 'full' );
@@ -256,6 +284,7 @@ export function CharacterEditor( {
 		useState< AudienceValue >( 'storytellers' );
 	const [ profileAudienceRules, setProfileAudienceRules ] =
 		useState< AudienceRules | null >( null );
+	const [ profileShowPlayer, setProfileShowPlayer ] = useState( false );
 	const [ savingProfile, setSavingProfile ] = useState( false );
 	const [ profileSaveMessage, setProfileSaveMessage ] = useState<
 		string | null
@@ -263,6 +292,62 @@ export function CharacterEditor( {
 	const [ profileSaveError, setProfileSaveError ] = useState< string | null >(
 		null
 	);
+	const [ portraitAttachment, setPortraitAttachment ] = useState< {
+		id: number;
+		original_name: string;
+	} | null >( null );
+	const [ uploadingPortraitAttachment, setUploadingPortraitAttachment ] =
+		useState( false );
+
+	async function uploadOwnPortrait( file: File ) {
+		if ( ! effectiveCharacterId ) {
+			return;
+		}
+		setUploadingPortraitAttachment( true );
+		setProfileSaveError( null );
+		try {
+			const attachment = await api
+				.attachments( gameSlug )
+				.upload( 'character', effectiveCharacterId, file );
+			setPortraitAttachment( attachment );
+		} catch ( err: unknown ) {
+			setProfileSaveError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
+		} finally {
+			setUploadingPortraitAttachment( false );
+		}
+	}
+
+	async function savePlayerProfile() {
+		if ( ! effectiveCharacterId ) {
+			return;
+		}
+		setSavingProfile( true );
+		setProfileSaveError( null );
+		setProfileSaveMessage( null );
+		try {
+			await api.npcs( gameSlug ).updateProfile( effectiveCharacterId, {
+				public_name: publicNameDraft.current,
+				public_description: publicDescriptionDraft.current,
+				profile_audience: profileAudience,
+				profile_show_player: profileShowPlayer,
+			} );
+			setProfileSaveMessage( __( 'Saved.', 'beyond-elysium' ) );
+		} catch ( err: unknown ) {
+			setProfileSaveError(
+				errorMessage(
+					err,
+					__( 'Something went wrong.', 'beyond-elysium' )
+				)
+			);
+		} finally {
+			setSavingProfile( false );
+		}
+	}
 
 	async function pickPublicImage() {
 		const attachment = await pickMediaImage(
@@ -363,7 +448,10 @@ export function CharacterEditor( {
 		if ( isCreateMode && chosenStackSlug ) {
 			api.creatureStacks
 				.resolve( chosenStackSlug, gameSlug, true )
-				.then( setCreateStack )
+				.then( ( resolved ) => {
+					setCreateStack( resolved );
+					setCreateAdded( [] );
+				} )
 				.catch( () => {
 					setCreateStack( null );
 					setCreateError(
@@ -410,7 +498,24 @@ export function CharacterEditor( {
 
 	const activeStack = isCreateMode ? createStack : store.stack;
 	// Mirrors CharacterSheet.tsx's own flowing grid layout exactly.
-	const sections = useMemo( () => sortedSections( template ), [ template ] );
+	const sections = useMemo(
+		() =>
+			sortedSections(
+				template,
+				activeStack,
+				isCreateMode ? draftSheetData : store.sheetData,
+				isCreateMode ? createAdded : store.addedBlocks
+			),
+		[
+			template,
+			activeStack,
+			isCreateMode,
+			draftSheetData,
+			store.sheetData,
+			createAdded,
+			store.addedBlocks,
+		]
+	);
 
 	useEffect( () => {
 		const dirty = isCreateMode
@@ -426,6 +531,17 @@ export function CharacterEditor( {
 		window.addEventListener( 'beforeunload', handler );
 		return () => window.removeEventListener( 'beforeunload', handler );
 	}, [ isCreateMode, draftSheetData, store.dirty ] );
+
+	function addCreateSection( block: SchemaBlock ) {
+		setCreateStack( ( prev ) =>
+			prev
+				? { ...prev, blocks: { ...prev.blocks, [ block.slug ]: block } }
+				: prev
+		);
+		setCreateAdded( ( prev ) =>
+			prev.includes( block.slug ) ? prev : [ ...prev, block.slug ]
+		);
+	}
 
 	async function handleCreate() {
 		if ( ! chosenStackSlug || ! draftName.trim() ) {
@@ -693,11 +809,20 @@ export function CharacterEditor( {
 										}
 										sheetData={ draftSheetData }
 										gameSlug={ gameSlug }
+										isManager={ canFlagNpc }
 									/>
 								</div>
 							);
 						} ) }
 					</div>
+				) }
+
+				{ canFlagNpc && allowsAnyBlock( activeStack ) && (
+					<AddSectionPicker
+						gameSlug={ gameSlug }
+						shown={ sections.map( ( s ) => s.block_slug ) }
+						onAdd={ addCreateSection }
+					/>
 				) }
 
 				<button
@@ -768,6 +893,16 @@ export function CharacterEditor( {
 		setProfileAudienceRules(
 			store.character.profile_audience_rules ?? null
 		);
+		setProfileShowPlayer( !! store.character.profile_show_player );
+		setPortraitAttachment(
+			store.character.attachments?.[ 0 ]
+				? {
+						id: store.character.attachments[ 0 ].id,
+						original_name:
+							store.character.attachments[ 0 ].original_name,
+					}
+				: null
+		);
 		setProfileSaveMessage( null );
 		setProfileSaveError( null );
 		headerDraftsSeeded.current = effectiveCharacterId;
@@ -775,6 +910,8 @@ export function CharacterEditor( {
 
 	return (
 		<div className="be-character-editor">
+			<DemoBanner gameSlug={ gameSlug } />
+			<SheetWarnings warnings={ store.character.sheet_warnings } />
 			{ store.restorableDraft && ! readOnly && (
 				<div
 					className="be-character-editor__draft-notice"
@@ -1064,6 +1201,129 @@ export function CharacterEditor( {
 				</div>
 			) }
 
+			{ ! canManage && canEdit && ! isNpc && effectiveCharacterId && (
+				<div
+					className="be-character-editor__section be-character-editor__profile"
+					key={ `player-profile-${ effectiveCharacterId }` }
+				>
+					<div className="be-help-heading">
+						<h4>{ __( "Who's Who Profile", 'beyond-elysium' ) }</h4>
+						<HelpButton helpKey="whos-who" />
+					</div>
+					<p className="be-character-editor__profile-hint">
+						{ __(
+							"What other players see about your character in the chronicle's Who's Who directory, whether it appears there at all, and whether your own name shows alongside it.",
+							'beyond-elysium'
+						) }
+					</p>
+
+					<div className="be-character-editor__field">
+						<label
+							htmlFor={ `be-public-name-player-${ effectiveCharacterId }` }
+						>
+							{ __( 'Display Name', 'beyond-elysium' ) }
+						</label>
+						<input
+							id={ `be-public-name-player-${ effectiveCharacterId }` }
+							type="text"
+							placeholder={ store.character.name }
+							defaultValue={ publicNameDraft.current }
+							onChange={ ( e ) =>
+								( publicNameDraft.current = e.target.value )
+							}
+						/>
+					</div>
+
+					<h4>{ __( 'Description', 'beyond-elysium' ) }</h4>
+					<HtmlEditor
+						id={ `be-public-description-player-${ effectiveCharacterId }` }
+						defaultValue={ publicDescriptionDraft.current }
+						onChange={ ( html ) =>
+							( publicDescriptionDraft.current = html )
+						}
+					/>
+
+					<label className="be-character-editor__checkbox-field">
+						<input
+							type="checkbox"
+							checked={ profileAudience === 'everyone' }
+							onChange={ ( e ) =>
+								setProfileAudience(
+									e.target.checked
+										? 'everyone'
+										: 'storytellers'
+								)
+							}
+						/>
+						{ __(
+							"Show this character in Who's Who",
+							'beyond-elysium'
+						) }
+					</label>
+
+					<label className="be-character-editor__checkbox-field">
+						<input
+							type="checkbox"
+							checked={ profileShowPlayer }
+							onChange={ ( e ) =>
+								setProfileShowPlayer( e.target.checked )
+							}
+						/>
+						{ __(
+							'Name me as the player behind this character',
+							'beyond-elysium'
+						) }
+					</label>
+
+					<div className="be-character-editor__field">
+						{ portraitAttachment && (
+							<span>{ portraitAttachment.original_name }</span>
+						) }
+						<input
+							type="file"
+							accept="image/*"
+							disabled={ uploadingPortraitAttachment }
+							onChange={ ( e ) => {
+								const file = e.target.files?.[ 0 ];
+								if ( file ) {
+									uploadOwnPortrait( file );
+								}
+							} }
+						/>
+						{ uploadingPortraitAttachment && (
+							<span>
+								{ __( 'Uploading…', 'beyond-elysium' ) }
+							</span>
+						) }
+					</div>
+
+					<div className="be-character-editor__header-text-actions">
+						<button
+							type="button"
+							disabled={ savingProfile }
+							onClick={ savePlayerProfile }
+						>
+							{ savingProfile
+								? __( 'Saving…', 'beyond-elysium' )
+								: __( 'Save Profile', 'beyond-elysium' ) }
+						</button>
+						{ profileSaveMessage && (
+							<span className="be-character-editor__header-text-status">
+								{ profileSaveMessage }
+							</span>
+						) }
+						{ profileSaveError && (
+							<span
+								className="be-character-editor__error"
+								role="alert"
+							>
+								{ profileSaveError }
+							</span>
+						) }
+					</div>
+				</div>
+			) }
+
 			{ canEdit && ! canManage && effectiveCharacterId && (
 				<div className="be-character-editor__section">
 					<RequestXpPanel
@@ -1079,6 +1339,15 @@ export function CharacterEditor( {
 						gameSlug={ gameSlug }
 						entityType="npc"
 						entityId={ effectiveCharacterId }
+					/>
+				</div>
+			) }
+
+			{ canFlagNpc && canManage && isNpc && effectiveCharacterId && (
+				<div className="be-character-editor__section">
+					<NpcHooksPanel
+						gameSlug={ gameSlug }
+						characterId={ effectiveCharacterId }
 					/>
 				</div>
 			) }
@@ -1129,6 +1398,48 @@ export function CharacterEditor( {
 										 ).player_order && (
 											<HelpButton helpKey="player-order" />
 										) }
+									{ section.block_slug ===
+										'npc-roleplaying-notes' &&
+										! readOnly &&
+										effectiveCharacterId && (
+											<NpcRoleplayingDraftButton
+												gameSlug={ gameSlug }
+												characterId={
+													effectiveCharacterId
+												}
+												characterName={
+													store.character?.name ?? ''
+												}
+												currentData={
+													( store.sheetData[
+														section.block_slug
+													] ?? {} ) as Record<
+														string,
+														string
+													>
+												}
+												fieldNames={ (
+													(
+														block.definition as IdentityFieldDefinition
+													 ).fields ?? []
+												).map(
+													( field ) => field.name
+												) }
+												onApply={ ( merged ) =>
+													store.setBlockData(
+														section.block_slug,
+														{
+															...( store
+																.sheetData[
+																section
+																	.block_slug
+															] ?? {} ),
+															...merged,
+														}
+													)
+												}
+											/>
+										) }
 								</span>
 							}
 						>
@@ -1142,11 +1453,20 @@ export function CharacterEditor( {
 								sheetData={ store.sheetData }
 								gameSlug={ gameSlug }
 								characterId={ effectiveCharacterId }
+								isManager={ canManage }
 							/>
 						</CollapsiblePanel>
 					);
 				} ) }
 			</div>
+
+			{ ! readOnly && canManage && allowsAnyBlock( store.stack ) && (
+				<AddSectionPicker
+					gameSlug={ gameSlug }
+					shown={ sections.map( ( s ) => s.block_slug ) }
+					onAdd={ store.addSection }
+				/>
+			) }
 
 			{ ! readOnly && (
 				<CollapsiblePanel

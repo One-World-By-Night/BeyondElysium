@@ -10,8 +10,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * A held blood-magic power carrying Grapevine's legacy "Sadhanna" spelling validates and prices a level raise
- * correctly, the same as the catalog's own canonical "Sadhana".
+ * A held blood-magic power carrying Grapevine's "Sadhanna" spelling validates and prices a level raise correctly, the
+ * same as the catalog's own canonical "Sadhana".
  */
 class BloodMagicTraditionAliasThreadTest extends WP_UnitTestCase {
 

@@ -24,6 +24,12 @@ function transfer( id: number, initiatedAt: string ): Transfer {
 		acknowledged_at: null,
 		returned_at: null,
 		notes: null,
+		keep_current: false,
+		keep_current_accepted: false,
+		sequence: 0,
+		delivered_at: null,
+		unreachable_since: null,
+		update_log: [],
 	};
 }
 
@@ -40,6 +46,7 @@ function submission( id: number, createdAt: string ): Submission {
 		format: 'XML',
 		file_hash: 'x',
 		state: 'waiting',
+		keep_current: false,
 		character_id: null,
 		answered_by: null,
 		answer_note: null,

@@ -12,7 +12,7 @@ import {
 	type StoredDraft,
 } from '../lib/draftStorage';
 import { errorMessage } from '../lib/errorMessage';
-import type { ResolvedStack } from '../types';
+import type { ResolvedStack, SchemaBlock } from '../types';
 import type {
 	Character,
 	ChangeRequest,
@@ -56,6 +56,10 @@ interface CharacterEditorState {
 	character: Character | null;
 	sheetData: SheetData;
 	originalSheetData: SheetData;
+	/**
+	 * Blocks a Storyteller has added to a creature type that allows any block, shown as a section before they hold anything.
+	 */
+	addedBlocks: string[];
 	pendingChanges: ChangeRequest[];
 	previewCosts: PreviewChangesResponse | null;
 	/**
@@ -79,6 +83,10 @@ interface CharacterEditorState {
 	 * Stages an edit to one sheet block and saves it to the local autosave draft.
 	 */
 	setBlockData: ( blockSlug: string, data: unknown ) => void;
+	/**
+	 * Opens an empty section for a schema block the creature type does not list, so the first entry can be added to it.
+	 */
+	addSection: ( block: SchemaBlock ) => void;
 	/**
 	 * Recomputes the pending change list from the diff between the original and edited sheet data.
 	 */
@@ -150,6 +158,7 @@ export const useCharacterEditorStore = create< CharacterEditorState >(
 		character: null,
 		sheetData: {},
 		originalSheetData: {},
+		addedBlocks: [],
 		pendingChanges: [],
 		previewCosts: null,
 		submittedChanges: [],
@@ -171,7 +180,9 @@ export const useCharacterEditorStore = create< CharacterEditorState >(
 				const character = await api.characters( gameSlug ).get( id );
 				const stack = await api.creatureStacks.resolve(
 					character.stack_slug,
-					gameSlug
+					gameSlug,
+					undefined,
+					id
 				);
 				// Cloned separately so sheetData and originalSheetData never share references.
 				const sheet = deepClone( character.sheet_data );
@@ -190,6 +201,7 @@ export const useCharacterEditorStore = create< CharacterEditorState >(
 					character,
 					sheetData: sheet,
 					originalSheetData: deepClone( sheet ),
+					addedBlocks: [],
 					pendingChanges: [],
 					previewCosts: null,
 					submittedChanges: [],
@@ -228,6 +240,29 @@ export const useCharacterEditorStore = create< CharacterEditorState >(
 		},
 
 		/**
+		 * Adds a schema block's definition to the loaded stack and lists it among the sections shown.
+		 */
+		addSection: ( block ) => {
+			set( ( state ) => {
+				if ( ! state.stack ) {
+					return {};
+				}
+				return {
+					stack: {
+						...state.stack,
+						blocks: {
+							...state.stack.blocks,
+							[ block.slug ]: block,
+						},
+					},
+					addedBlocks: state.addedBlocks.includes( block.slug )
+						? state.addedBlocks
+						: [ ...state.addedBlocks, block.slug ],
+				};
+			} );
+		},
+
+		/**
 		 * Recomputes the pending change list by diffing sheetData against originalSheetData for every block in the loaded
 		 * stack, stores the result, and returns it.
 		 */
@@ -243,8 +278,8 @@ export const useCharacterEditorStore = create< CharacterEditorState >(
 		},
 
 		/**
-		 * Submits every currently pending change to the server, one request per change, continuing through the whole batch
-		 * even if some requests fail.
+		 * Submits every currently pending change to the server together, in one call, under one shared submission id - a
+		 * chronicle with the removal/lowering switch on needs the whole set to wait together when any of it is caught.
 		 */
 		submitChanges: async () => {
 			if ( get().saving ) {
@@ -258,7 +293,7 @@ export const useCharacterEditorStore = create< CharacterEditorState >(
 				return { submitted: [], failed: changes, pending: [] };
 			}
 
-			// The sheet stays editable while the requests are out.
+			// The sheet stays editable while the request is out.
 			const sent: SheetData = {};
 			for ( const change of changes ) {
 				sent[ change.category ] = deepClone(
@@ -270,23 +305,27 @@ export const useCharacterEditorStore = create< CharacterEditorState >(
 			previewRequest++;
 			set( { saving: true, error: null } );
 
-			// Every queued change is attempted, even after an earlier one in the batch fails.
+			// The whole set succeeds or fails together - a validation or pricing failure on any one change leaves
+			// nothing submitted, matching the server's own one-transaction contract.
 			const submitted: ChangeRequest[] = [];
 			const failed: ChangeRequest[] = [];
 			const pending: ChangeRequest[] = [];
 			let lastError: unknown = null;
-			for ( const change of changes ) {
+			if ( changes.length > 0 ) {
 				try {
-					const created = await api
+					const result = await api
 						.changes( gameSlug )
-						.create( characterId, change );
-					submitted.push( change );
-					// A created change only reaches sheet_data once approved.
-					if ( created.status !== 'approved' ) {
-						pending.push( change );
-					}
+						.submitSet( characterId, changes );
+					changes.forEach( ( change, index ) => {
+						submitted.push( change );
+						const created = result.changes[ index ];
+						// A created change only reaches sheet_data once approved.
+						if ( ! created || created.status !== 'approved' ) {
+							pending.push( change );
+						}
+					} );
 				} catch ( error ) {
-					failed.push( change );
+					failed.push( ...changes );
 					lastError = error;
 				}
 			}

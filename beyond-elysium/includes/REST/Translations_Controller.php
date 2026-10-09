@@ -340,9 +340,9 @@ class Translations_Controller extends Base_Controller {
 	/**
 	 * The write side shared by bulk() and import()'s non-dry-run pass.
 	 *
-	 * @param string   $locale
-	 * @param array    $rows
-	 * @param int|null $updated_by
+	 * @param string           $locale
+	 * @param array<int,mixed> $rows
+	 * @param int|null         $updated_by
 	 * @return array{updated:int,skipped:int}
 	 */
 	private function apply_bulk_rows( string $locale, array $rows, ?int $updated_by ): array {
@@ -521,7 +521,7 @@ class Translations_Controller extends Base_Controller {
 	 * shape.
 	 *
 	 * @param \WP_REST_Request $request
-	 * @return array
+	 * @return array<string,mixed>
 	 */
 	private function filters_from_request( $request ): array {
 		$filters = [];

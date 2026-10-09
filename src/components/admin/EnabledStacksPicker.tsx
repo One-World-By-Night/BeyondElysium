@@ -1,6 +1,5 @@
 /**
- * The one genuinely new control the Chronicle Setup checklist needs: a checkbox list over whatever creature stacks
- * exist.
+ * A checkbox list over whatever creature stacks exist, for the Chronicle Setup checklist.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
@@ -19,9 +18,9 @@ export interface EnabledStacksPickerProps {
 }
 
 /**
- * Renders a checkbox per real creature stack - the book's, and this chronicle's own - pre-checked to the chronicle's
- * current `enabled_stacks` (every box checked when the setting is absent - "every one that exists" is the default,
- * not a guess).
+ * Renders a checkbox per real creature stack - the book's, and this chronicle's own, bar a Storyteller-only one, which
+ * is always on - pre-checked to the chronicle's current `enabled_stacks` (every box checked when the setting is absent, except one declaring its own
+ * `stack_definition.default_enabled: false` - "every one that exists, bar an opt-in type" is the default).
  */
 export function EnabledStacksPicker( {
 	enabled,
@@ -34,13 +33,32 @@ export function EnabledStacksPicker( {
 
 	useEffect( () => {
 		api.creatureStacks
-			.list( { game_slug: gameSlug, per_page: 100 } )
-			.then( setStacks );
+			.list( {
+				game_slug: gameSlug,
+				per_page: 100,
+				include_disabled: true,
+			} )
+			.then( ( loaded ) =>
+				setStacks(
+					loaded.filter(
+						( stack ) => ! stack.stack_definition.storyteller_only
+					)
+				)
+			);
 	}, [ gameSlug ] );
 
 	useEffect( () => {
 		if ( enabled === null ) {
-			setChecked( new Set( stacks.map( ( s ) => s.slug ) ) );
+			setChecked(
+				new Set(
+					stacks
+						.filter(
+							( s ) =>
+								s.stack_definition.default_enabled !== false
+						)
+						.map( ( s ) => s.slug )
+				)
+			);
 		} else {
 			setChecked( new Set( enabled ) );
 		}

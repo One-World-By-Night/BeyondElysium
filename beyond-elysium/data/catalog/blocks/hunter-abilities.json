@@ -1,0 +1,60 @@
+{
+  "format": 1,
+  "slug": "hunter-abilities",
+  "name": "Abilities",
+  "kind": "block",
+  "section_type": "trait_list",
+  "provenance": {
+    "sources": [
+      "Mind's Eye Theatre: Laws of the Reckoning (WW05037), \"Choosing Abilities\" p.89 (the full Abilities list) and Experience p.269 (\"New Ability - One Experience per Ability Trait\", flat for every Ability)."
+    ],
+    "tool": "read directly, 2026-10-04"
+  },
+  "definition": {
+    "atomic": false,
+    "allow_custom": true,
+    "allow_multiples": false,
+    "items": [
+      { "name": "Academics", "cost": "1", "tier": null, "group": null, "subgroup": null },
+      { "name": "Alertness", "cost": "1", "tier": null, "group": null, "subgroup": null },
+      { "name": "Animal Ken", "cost": "1", "tier": null, "group": null, "subgroup": null },
+      { "name": "Athletics", "cost": "1", "tier": null, "group": null, "subgroup": null },
+      { "name": "Awareness", "cost": "1", "tier": null, "group": null, "subgroup": null },
+      { "name": "Brawl", "cost": "1", "tier": null, "group": null, "subgroup": null },
+      { "name": "Computer", "cost": "1", "tier": null, "group": null, "subgroup": null },
+      { "name": "Crafts", "cost": "1", "tier": null, "group": null, "subgroup": null, "allow_multiples": true },
+      { "name": "Demolitions", "cost": "1", "tier": null, "group": null, "subgroup": null },
+      { "name": "Disguise", "cost": "1", "tier": null, "group": null, "subgroup": null },
+      { "name": "Dodge", "cost": "1", "tier": null, "group": null, "subgroup": null },
+      { "name": "Drive", "cost": "1", "tier": null, "group": null, "subgroup": null },
+      { "name": "Empathy", "cost": "1", "tier": null, "group": null, "subgroup": null },
+      { "name": "Endurance", "cost": "1", "tier": null, "group": null, "subgroup": null },
+      { "name": "Etiquette", "cost": "1", "tier": null, "group": null, "subgroup": null },
+      { "name": "Expression", "cost": "1", "tier": null, "group": null, "subgroup": null },
+      { "name": "Finance", "cost": "1", "tier": null, "group": null, "subgroup": null },
+      { "name": "Firearms", "cost": "1", "tier": null, "group": null, "subgroup": null },
+      { "name": "Hobby/Professional/Expert Ability", "cost": "1", "tier": null, "group": null, "subgroup": null, "allow_multiples": true },
+      { "name": "Intimidation", "cost": "1", "tier": null, "group": null, "subgroup": null },
+      { "name": "Intuition", "cost": "1", "tier": null, "group": null, "subgroup": null },
+      { "name": "Investigation", "cost": "1", "tier": null, "group": null, "subgroup": null },
+      { "name": "Law", "cost": "1", "tier": null, "group": null, "subgroup": null },
+      { "name": "Leadership", "cost": "1", "tier": null, "group": null, "subgroup": null },
+      { "name": "Linguistics", "cost": "1", "tier": null, "group": null, "subgroup": null, "allow_multiples": true },
+      { "name": "Medicine", "cost": "1", "tier": null, "group": null, "subgroup": null },
+      { "name": "Melee", "cost": "1", "tier": null, "group": null, "subgroup": null },
+      { "name": "Occult", "cost": "1", "tier": null, "group": null, "subgroup": null },
+      { "name": "Performance", "cost": "1", "tier": null, "group": null, "subgroup": null },
+      { "name": "Poison", "cost": "1", "tier": null, "group": null, "subgroup": null },
+      { "name": "Politics", "cost": "1", "tier": null, "group": null, "subgroup": null },
+      { "name": "Science", "cost": "1", "tier": null, "group": null, "subgroup": null },
+      { "name": "Security", "cost": "1", "tier": null, "group": null, "subgroup": null },
+      { "name": "Stealth", "cost": "1", "tier": null, "group": null, "subgroup": null },
+      { "name": "Streetwise", "cost": "1", "tier": null, "group": null, "subgroup": null },
+      { "name": "Subterfuge", "cost": "1", "tier": null, "group": null, "subgroup": null },
+      { "name": "Survival", "cost": "1", "tier": null, "group": null, "subgroup": null },
+      { "name": "Tactics", "cost": "1", "tier": null, "group": null, "subgroup": null },
+      { "name": "Torture", "cost": "1", "tier": null, "group": null, "subgroup": null },
+      { "name": "Traps", "cost": "1", "tier": null, "group": null, "subgroup": null }
+    ]
+  }
+}

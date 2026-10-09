@@ -51,6 +51,23 @@ class Health_Notice {
 		self::render_slug_drift();
 		self::render_signing_notice();
 		self::render_upgrade_error();
+		self::render_site_export_notice();
+	}
+
+	/**
+	 * Warns a network super admin when this network has no site-export mu-plugin installed, so deleting a subsite
+	 * backs up nothing first.
+	 */
+	private static function render_site_export_notice(): void {
+		if ( ! is_multisite() || ! current_user_can( 'manage_network' ) || defined( 'BE_SITE_EXPORT_MU_VERSION' ) ) {
+			return;
+		}
+
+		printf(
+			'<div class="notice notice-warning"><p><strong>%1$s</strong> %2$s</p></div>',
+			esc_html__( 'Beyond Elysium:', 'beyond-elysium' ),
+			esc_html__( 'this network has no site-export mu-plugin installed. Deleting a subsite from Network Admin or WP-CLI will not back up its Beyond Elysium data first. Copy mu-plugin/be-site-export.php from the plugin folder into wp-content/mu-plugins/.', 'beyond-elysium' )
+		);
 	}
 
 	/**

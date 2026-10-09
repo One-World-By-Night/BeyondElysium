@@ -7,7 +7,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * Real security fix, not a UI nicety: `be_view_characters` is granted to every real WP role (Capabilities::CAPS).
+ * `be_view_characters` is granted to every real WP role (Capabilities::CAPS), so a player's change history is scoped
+ * to their own characters.
  */
 class ChangesControllerOwnVisibilityTest extends WP_UnitTestCase {
 
@@ -61,6 +62,54 @@ class ChangesControllerOwnVisibilityTest extends WP_UnitTestCase {
 		$response = $this->dispatch( $this->changes_request( $this->character_a ) );
 
 		$this->assertSame( 200, $response->get_status() );
+	}
+
+	private function add_host_note(): void {
+		\BeyondElysium\Models\Change::create( [
+			'character_id' => $this->character_a,
+			'change_type'  => 'visit_note',
+			'category'     => 'visit',
+			'change_data'  => [ 'note' => 'Host storytellers only: plays fast and loose.' ],
+			'xp_cost'      => 0,
+			'status'       => 'pending',
+			'submitted_by' => 0,
+		] );
+		\BeyondElysium\Models\Change::create( [
+			'character_id' => $this->character_a,
+			'change_type'  => 'xp_earn',
+			'category'     => 'experience',
+			'change_data'  => [ 'amount' => 2 ],
+			'xp_cost'      => 0,
+			'status'       => 'pending',
+			'submitted_by' => $this->player_a,
+		] );
+	}
+
+	private function types_in( $response ): array {
+		return array_map( static fn( $change ) => is_array( $change ) ? $change['change_type'] : $change->change_type, (array) $response->get_data() );
+	}
+
+	public function test_a_player_never_sees_a_host_storytellers_note_on_their_own_character(): void {
+		$this->add_host_note();
+		wp_set_current_user( $this->player_a );
+
+		$history = $this->dispatch( $this->changes_request( $this->character_a ) );
+		$this->assertSame( [ 'xp_earn' ], $this->types_in( $history ) );
+		$this->assertSame( '1', (string) $history->get_headers()['X-WP-Total'] );
+
+		$in_game = $this->dispatch( new WP_REST_Request( 'GET', "/be/v1/{$this->game_slug}/my/changes" ) );
+		$this->assertSame( [ 'xp_earn' ], $this->types_in( $in_game ) );
+
+		$across = $this->dispatch( new WP_REST_Request( 'GET', '/be/v1/my/changes' ) );
+		$this->assertStringNotContainsString( 'fast and loose', (string) wp_json_encode( $across->get_data() ) );
+	}
+
+	public function test_a_manager_still_sees_a_host_storytellers_note(): void {
+		$this->add_host_note();
+		wp_set_current_user( self::factory()->user->create( [ 'role' => 'administrator' ] ) );
+
+		$history = $this->dispatch( $this->changes_request( $this->character_a ) );
+		$this->assertContains( 'visit_note', $this->types_in( $history ) );
 	}
 
 	public function test_a_manager_can_list_any_characters_change_history(): void {

@@ -6,7 +6,7 @@ use BeyondElysium\Services\St_Visibility;
 use PHPUnit\Framework\TestCase;
 
 /**
- * The NPC casting brief's own carve-out: `St_Visibility::filter_layout()`'s `$allow_blocks` param and the new
+ * The NPC casting brief's own carve-out: `St_Visibility::filter_layout()`'s `$allow_blocks` param and the
  * `filter_sheet_data_blocks()` helper both hide every Storyteller-only block except the ones named.
  */
 class StVisibilityAllowBlocksTest extends TestCase {

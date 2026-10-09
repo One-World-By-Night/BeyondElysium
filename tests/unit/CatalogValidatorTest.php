@@ -182,7 +182,7 @@ class CatalogValidatorTest extends TestCase {
 	// --- Rule 5: no orphans ---------------------------------------------------
 
 	public function test_a_non_empty_overflow_is_rejected_as_an_uncommitted_D67_family(): void {
-		// The rule that earns the format: under the flat shape these were invisible and simply mis-priced.
+		// A ladder carrying a second ladder's levels in `overflow` is rejected.
 		$bad             = $this->ladder_family();
 		$bad['overflow'] = [ [ 'tier' => 'basic', 'power_name' => 'Second Ladder One' ] ];
 		$this->assertRejects( $this->tiered( [ $bad ] ), 'two ladders merged' );
@@ -209,6 +209,23 @@ class CatalogValidatorTest extends TestCase {
 		$this->assertSame( [], Catalog_Validator::validate_block( $data, 'test-block' ) );
 	}
 
+	public function test_a_list_may_declare_itself_unpriced(): void {
+		$data = $this->block( 'trait_list', [ 'unpriced' => true, 'allow_custom' => true, 'items' => [] ] );
+		$this->assertSame( [], Catalog_Validator::validate_block( $data, 'test-block' ) );
+	}
+
+	public function test_unpriced_must_be_true_or_false(): void {
+		$this->assertRejects( $this->block( 'trait_list', [ 'unpriced' => 'yes', 'items' => [] ] ), '`unpriced` must be true or false' );
+	}
+
+	public function test_an_unpriced_list_cannot_also_carry_item_costs(): void {
+		$data = $this->block( 'trait_list', [
+			'unpriced' => true,
+			'items'    => [ [ 'name' => 'Thing', 'tier' => null, 'group' => null, 'subgroup' => null, 'cost' => '2' ] ],
+		] );
+		$this->assertRejects( $data, 'declared `unpriced` but "Thing" carries a `cost`' );
+	}
+
 	public function test_a_list_may_declare_paid_from_as_block_slug_dot_pool_name(): void {
 		$data = $this->block( 'trait_list', [
 			'items' => [
@@ -233,6 +250,126 @@ class CatalogValidatorTest extends TestCase {
 			'_meta' => [ 'paid_from' => '.Shadow XP' ],
 		] );
 		$this->assertRejects( $data, '`_meta.paid_from` must be' );
+	}
+
+	// --- spent_from / raised_by -------------------------------------------------
+
+	/** @param array<string,mixed> $overrides */
+	private function spent_from_family( array $overrides = [] ): array {
+		return array_merge( [
+			'name'   => 'Innocence Path',
+			'virtue' => 'Mercy',
+			'levels' => [],
+			'elder'  => [
+				'touched' => [ [ 'level' => null, 'tier' => 'touched', 'power_name' => 'Hide' ] ],
+			],
+		], $overrides );
+	}
+
+	private function pick_only_tiered( array $powers, array $spent_from_overrides = [] ): array {
+		$spent_from = array_merge( [
+			'pool_block'       => 'hunter-virtues',
+			'by_family_field'  => 'virtue',
+			'rank_cost'        => [ 'touched' => 1, 'gifted' => 2, 'devoted' => 3, 'inspired' => 4, 'exalted' => 5 ],
+		], $spent_from_overrides );
+		return $this->block( 'tiered_power', [
+			'_meta'  => [
+				'ranks'      => [ 'touched', 'gifted', 'devoted', 'inspired', 'exalted' ],
+				'ladder'     => [],
+				'spent_from' => $spent_from,
+			],
+			'powers' => $powers,
+		] );
+	}
+
+	public function test_a_correct_spent_from_block_passes(): void {
+		$this->assertSame( [], Catalog_Validator::validate_block( $this->pick_only_tiered( [ $this->spent_from_family() ] ), 'test-block' ) );
+	}
+
+	public function test_spent_from_with_no_pool_block_is_rejected(): void {
+		$data = $this->pick_only_tiered( [ $this->spent_from_family() ], [ 'pool_block' => '' ] );
+		$this->assertRejects( $data, '`_meta.spent_from.pool_block` must name' );
+	}
+
+	public function test_spent_from_with_no_by_family_field_is_rejected(): void {
+		$data = $this->pick_only_tiered( [ $this->spent_from_family() ], [ 'by_family_field' => '' ] );
+		$this->assertRejects( $data, '`_meta.spent_from.by_family_field` must name' );
+	}
+
+	public function test_spent_from_rank_cost_missing_a_rank_is_rejected(): void {
+		$data = $this->pick_only_tiered( [ $this->spent_from_family() ], [ 'rank_cost' => [ 'touched' => 1 ] ] );
+		$this->assertRejects( $data, 'has no positive integer for rank "gifted"' );
+	}
+
+	public function test_spent_from_rank_cost_with_a_zero_is_rejected(): void {
+		$data = $this->pick_only_tiered( [ $this->spent_from_family() ], [
+			'rank_cost' => [ 'touched' => 0, 'gifted' => 2, 'devoted' => 3, 'inspired' => 4, 'exalted' => 5 ],
+		] );
+		$this->assertRejects( $data, 'has no positive integer for rank "touched"' );
+	}
+
+	public function test_a_family_missing_the_by_family_field_is_rejected(): void {
+		$family = $this->spent_from_family();
+		unset( $family['virtue'] );
+		$data = $this->pick_only_tiered( [ $family ] );
+		$this->assertRejects( $data, 'has no string `virtue`' );
+	}
+
+	public function test_creed_restricted_to_needs_a_creed_check(): void {
+		$family                          = $this->spent_from_family();
+		$family['creed_restricted_to']   = [ 'Deviance' ];
+		$data                             = $this->pick_only_tiered( [ $family ] );
+		$this->assertRejects( $data, '`_meta.spent_from.creed_check` must name' );
+	}
+
+	public function test_creed_restricted_to_must_be_a_non_empty_list(): void {
+		$family                        = $this->spent_from_family();
+		$family['creed_restricted_to'] = [];
+		$data                           = $this->pick_only_tiered( [ $family ], [ 'creed_check' => 'hunter-identity.Creed' ] );
+		$this->assertRejects( $data, 'is not a non-empty list of creed names' );
+	}
+
+	public function test_a_correct_creed_restricted_family_passes(): void {
+		$family                        = $this->spent_from_family();
+		$family['creed_restricted_to'] = [ 'Deviance' ];
+		$data                           = $this->pick_only_tiered( [ $family ], [ 'creed_check' => 'hunter-identity.Creed' ] );
+		$this->assertSame( [], Catalog_Validator::validate_block( $data, 'test-block' ) );
+	}
+
+	/** @param array<string,mixed> $overrides */
+	private function pool( array $overrides = [] ): array {
+		return array_merge( [ 'name' => 'Mercy', 'value_type' => 'integer', 'default_start' => 0, 'max' => 10 ], $overrides );
+	}
+
+	public function test_a_correct_raised_by_pool_passes(): void {
+		$data = $this->block( 'resource_pool', [
+			'pools' => [ $this->pool( [ 'raised_by' => [ 'from' => 'hunter-resources.Conviction', 'temporary' => 10 ] ] ) ],
+		] );
+		$this->assertSame( [], Catalog_Validator::validate_block( $data, 'test-block' ) );
+	}
+
+	public function test_raised_by_with_a_malformed_from_is_rejected(): void {
+		$data = $this->block( 'resource_pool', [
+			'pools' => [ $this->pool( [ 'raised_by' => [ 'from' => 'hunter-resources', 'temporary' => 10 ] ] ) ],
+		] );
+		$this->assertRejects( $data, '`raised_by.from` must be' );
+	}
+
+	public function test_raised_by_with_no_temporary_is_rejected(): void {
+		$data = $this->block( 'resource_pool', [
+			'pools' => [ $this->pool( [ 'raised_by' => [ 'from' => 'hunter-resources.Conviction' ] ] ) ],
+		] );
+		$this->assertRejects( $data, '`raised_by.temporary` must be' );
+	}
+
+	public function test_raised_by_with_cost_per_dot_is_rejected(): void {
+		$data = $this->block( 'resource_pool', [
+			'pools' => [ $this->pool( [
+				'raised_by'    => [ 'from' => 'hunter-resources.Conviction', 'temporary' => 10 ],
+				'cost_per_dot' => 3,
+			] ) ],
+		] );
+		$this->assertRejects( $data, 'states both `raised_by` and `cost_per_dot`' );
 	}
 
 	/** @param array<string,mixed> $overrides */
@@ -311,7 +448,7 @@ class CatalogValidatorTest extends TestCase {
 		$this->assertSame( [], Catalog_Validator::validate_block( $this->tiered( [ $this->ladder_family() ] ), 'test-block' ) );
 	}
 
-	// --- An untiered track has no ranks, by design ----------------------------
+	// --- An untiered track has no ranks ---
 
 	/** @param array<string,mixed> $untiered */
 	private function untiered( array $untiered, array $levels = null ): array {
@@ -862,10 +999,11 @@ class CatalogValidatorTest extends TestCase {
 		$this->assertStringContainsString( 'must be a non-negative whole number or "value"', $this->creation_errors( [ [ 'kind' => 'free', 'label' => 'X', 'pool' => 'P', 'points' => 1, 'rates' => [ 'met-physical-traits' => 'a lot' ] ] ] ) );
 	}
 
-	public function test_earned_needs_sources_each_with_a_section_rate_and_max(): void {
+	public function test_earned_needs_sources_each_with_a_section_and_rate_max_only_checked_when_given(): void {
 		$this->assertStringContainsString( '.sources must be a non-empty list', $this->creation_errors( [ [ 'kind' => 'earned', 'label' => 'X', 'pool' => 'P', 'sources' => [] ] ] ) );
 		$this->assertStringContainsString( '.rate must be a whole number or "value"', $this->creation_errors( [ [ 'kind' => 'earned', 'label' => 'X', 'pool' => 'P', 'sources' => [ [ 'section' => 'met-physical-traits', 'rate' => 'lots', 'max' => 1 ] ] ] ] ) );
-		$this->assertStringContainsString( '.max must be a whole number from 1', $this->creation_errors( [ [ 'kind' => 'earned', 'label' => 'X', 'pool' => 'P', 'sources' => [ [ 'section' => 'met-physical-traits', 'rate' => 1 ] ] ] ] ) );
+		$this->assertSame( '', $this->creation_errors( [ [ 'kind' => 'earned', 'label' => 'X', 'pool' => 'P', 'sources' => [ [ 'section' => 'met-physical-traits', 'rate' => 1 ] ] ] ] ), 'a source with no `max` at all is valid - not every source is capped' );
+		$this->assertStringContainsString( '.max must be a whole number from 1', $this->creation_errors( [ [ 'kind' => 'earned', 'label' => 'X', 'pool' => 'P', 'sources' => [ [ 'section' => 'met-physical-traits', 'rate' => 1, 'max' => 0 ] ] ] ] ) );
 	}
 
 	public function test_limit_needs_at_least_one_kind_of_limit(): void {
@@ -927,5 +1065,116 @@ class CatalogValidatorTest extends TestCase {
 
 		$budget = $stack( [ 'kind' => 'budget', 'section' => 'werewolf-gifts', 'count' => 1, 'filter' => [ 'test' => [ 'kind' => 'names', 'values' => [ 'field' => 'werewolf-identity.NoSuchField' ] ] ] ] );
 		$this->assertStringContainsString( 'not a declared field', implode( ' | ', Catalog_Validator::validate_creation_rules_refs( $budget, $blocks ) ) );
+	}
+
+	// --- item_catalog -----------------------------------------------------
+
+	/** @param array<int,array<string,mixed>> $items */
+	private function item_catalog_file( array $items, string $slug = 'test-book' ): array {
+		return [
+			'format'     => 1,
+			'kind'       => 'item_catalog',
+			'slug'       => $slug,
+			'name'       => 'Test Book',
+			'provenance' => [ 'sources' => [ 'a real book, p. 1' ] ],
+			'items'      => $items,
+		];
+	}
+
+	/** @param array<string,mixed> $overrides */
+	private function good_item( array $overrides = [] ): array {
+		return array_merge( [
+			'key'         => 'broken-bottle',
+			'name'        => 'Broken Bottle',
+			'object_type' => 'item',
+			'properties'  => [
+				'item_type'      => 'Melee',
+				'bonus'          => 1,
+				'negatives'      => [ [ 'name' => 'Fragile' ] ],
+				'concealability' => 'Pocket',
+				'damage_amount'  => 1,
+				'availability'   => [ [ 'name' => 'Any' ] ],
+			],
+			'source'      => [ 'book' => 'Test Book', 'code' => 'WW00000', 'page' => 1 ],
+		], $overrides );
+	}
+
+	public function test_a_good_item_catalog_file_passes(): void {
+		$this->assertSame( [], Catalog_Validator::validate_file( $this->item_catalog_file( [ $this->good_item() ] ), 'test-book' ) );
+	}
+
+	public function test_an_empty_items_list_is_rejected(): void {
+		$this->assertStringContainsString( 'non-empty list', implode( ' | ', Catalog_Validator::validate_file( $this->item_catalog_file( [] ), 'test-book' ) ) );
+	}
+
+	public function test_a_missing_key_is_rejected(): void {
+		$item = $this->good_item();
+		unset( $item['key'] );
+		$this->assertStringContainsString( 'no non-empty `key`', implode( ' | ', Catalog_Validator::validate_file( $this->item_catalog_file( [ $item ] ), 'test-book' ) ) );
+	}
+
+	public function test_a_duplicate_key_in_the_same_file_is_rejected(): void {
+		$errors = Catalog_Validator::validate_file( $this->item_catalog_file( [ $this->good_item(), $this->good_item( [ 'name' => 'Broken Bottle Again' ] ) ] ), 'test-book' );
+		$this->assertStringContainsString( 'repeats item [0]', implode( ' | ', $errors ) );
+	}
+
+	public function test_a_missing_name_is_rejected(): void {
+		$item = $this->good_item();
+		unset( $item['name'] );
+		$this->assertStringContainsString( 'no non-empty `name`', implode( ' | ', Catalog_Validator::validate_file( $this->item_catalog_file( [ $item ] ), 'test-book' ) ) );
+	}
+
+	public function test_an_unknown_object_type_is_rejected(): void {
+		$item = $this->good_item( [ 'object_type' => 'spaceship' ] );
+		$this->assertStringContainsString( 'not a known world-object type', implode( ' | ', Catalog_Validator::validate_file( $this->item_catalog_file( [ $item ] ), 'test-book' ) ) );
+	}
+
+	public function test_a_missing_source_is_rejected(): void {
+		$item = $this->good_item();
+		unset( $item['source'] );
+		$this->assertStringContainsString( 'needs a `source`', implode( ' | ', Catalog_Validator::validate_file( $this->item_catalog_file( [ $item ] ), 'test-book' ) ) );
+	}
+
+	public function test_a_source_missing_an_integer_page_is_rejected(): void {
+		$item = $this->good_item( [ 'source' => [ 'book' => 'Test Book', 'code' => 'WW00000', 'page' => '83' ] ] );
+		$this->assertStringContainsString( 'needs a `source`', implode( ' | ', Catalog_Validator::validate_file( $this->item_catalog_file( [ $item ] ), 'test-book' ) ) );
+	}
+
+	public function test_an_unknown_property_is_rejected(): void {
+		$item = $this->good_item( [ 'properties' => [ 'weight_in_kilograms' => 5 ] ] );
+		$this->assertStringContainsString( 'is not a valid property of "item"', implode( ' | ', Catalog_Validator::validate_file( $this->item_catalog_file( [ $item ] ), 'test-book' ) ) );
+	}
+
+	public function test_a_wrong_typed_int_property_is_rejected(): void {
+		$item = $this->good_item( [ 'properties' => [ 'bonus' => 'two' ] ] );
+		$this->assertStringContainsString( 'must be a whole number', implode( ' | ', Catalog_Validator::validate_file( $this->item_catalog_file( [ $item ] ), 'test-book' ) ) );
+	}
+
+	public function test_a_wrong_typed_trait_list_property_is_rejected(): void {
+		$item = $this->good_item( [ 'properties' => [ 'negatives' => 'Fragile' ] ] );
+		$this->assertStringContainsString( 'must be a list of traits', implode( ' | ', Catalog_Validator::validate_file( $this->item_catalog_file( [ $item ] ), 'test-book' ) ) );
+	}
+
+	public function test_a_wrong_typed_string_property_is_rejected(): void {
+		$item = $this->good_item( [ 'properties' => [ 'concealability' => [ 'Pocket' ] ] ] );
+		$this->assertStringContainsString( 'must be a string', implode( ' | ', Catalog_Validator::validate_file( $this->item_catalog_file( [ $item ] ), 'test-book' ) ) );
+	}
+
+	public function test_the_real_dark_epics_file_passes(): void {
+		$path = __DIR__ . '/../../beyond-elysium/data/catalog/items/dark-epics.json';
+		$data = json_decode( (string) file_get_contents( $path ), true );
+		$this->assertIsArray( $data, 'dark-epics.json must decode' );
+		$errors = Catalog_Validator::validate_file( $data, 'dark-epics' );
+		$this->assertSame( [], $errors, implode( ' | ', $errors ) );
+		$this->assertCount( 43, $data['items'] );
+	}
+
+	public function test_the_real_laws_of_the_night_revised_file_passes(): void {
+		$path = __DIR__ . '/../../beyond-elysium/data/catalog/items/laws-of-the-night-revised.json';
+		$data = json_decode( (string) file_get_contents( $path ), true );
+		$this->assertIsArray( $data, 'laws-of-the-night-revised.json must decode' );
+		$errors = Catalog_Validator::validate_file( $data, 'laws-of-the-night-revised' );
+		$this->assertSame( [], $errors, implode( ' | ', $errors ) );
+		$this->assertCount( 9, $data['items'] );
 	}
 }

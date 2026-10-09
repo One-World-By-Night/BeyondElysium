@@ -13,7 +13,7 @@ wp-admin sidebar → Beyond Elysium → Chronicle Setup. This is the hub's first
 ## The screen
 
 - **Chronicle** - a dropdown listing every chronicle on the install. Picking one reloads the checklist for it, and the choice goes into the page address, so it stays put when you switch to Chronicle Access or Action & Rumor Settings, follow a **Go** link, or press Back.
-- A summary line: how many rows are done, then how many need attention - "5 of 16 done. 3 items need attention." or "16 of 16 done. Nothing needs attention." The demo chronicle's own row isn't counted, even though it shows on the demo.
+- A summary line: how many rows are done, then how many need attention - "5 of 18 done. 3 items need attention." or "18 of 18 done. Nothing needs attention." The demo chronicle's own row isn't counted, even though it shows on the demo.
 - The checklist - one row per thing to set up, each with a status pill, a title and detail line, and one button:
   - The pill is **Needs attention** (amber) for something a chronicle needs, **✓ Done** (green, and the whole row goes light green) once it's set, or **Info** (grey) for an optional row you haven't set.
   - **Go** leaves this page for the one that does the job. **Set up** (or **Change**, once the row is done) opens the row's controls right under it, and **Close** folds them again. A row that needs attention starts open; every other row starts folded, so a finished chronicle is a short list. Saving a row that needed attention turns it green and folds it.
@@ -33,6 +33,8 @@ wp-admin sidebar → Beyond Elysium → Chronicle Setup. This is the hub's first
   - **Sub-faction restrictions** - *Done* once at least one catalog field has its own list of allowed values. It's one level finer than Creature types: within a creature type you've already enabled, narrow a real catalog field to only the values your chronicle runs - a Vampire Sect or Clan, a Werewolf Tribe, and any similarly shaped field on another type. Each such field gets a checkbox list of its real values and its own **Save** button; at least one value must stay checked. It takes a moment to open, because it lists every field it finds.
   - **Purchase lists** - three switches, all off by default: **Abilities**, **Backgrounds**, and **Merits and Flaws**. *Done* once at least one is on, and the detail line names which. Each creature type buys from its own lists. Turn a switch on and every creature type in this chronicle can buy from every creature type's entries for that area, priced from the list each entry comes from - a Vampire could take a Mage-only Ability, for instance. The lists themselves stay separate, and importing a Grapevine file into the chronicle matches names against the wider list too, so a Mage-only Ability in a Vampire's file comes in as a catalog entry rather than a custom one. The switches work in any combination (Abilities on and the rest off is fine), and each is all or nothing: you can't open a list to some creature types and not others. Each switch saves as soon as you check it.
   - **Players' Grapevine files** - a link players can use to send this chronicle a character's Grapevine file, with this chronicle already picked when they follow it. A **Copy link** button copies it. *Done* once a player has sent a file through it. See [Send a Grapevine File](send-grapevine-file.md).
+  - **Join requests** - on by default. *Done* once your chronicle has explicitly chosen it one way or the other; *Info* until then. On, anyone signed in can ask to join from My Chronicle, with nothing granted until a Storyteller approves it; off, this chronicle drops off the join list and asking is refused. Review an ask from the Players tab's own Join requests section. See [Joining a Chronicle](joining.md) and [Players](chronicle-players.md).
+  - **Players and secrets** - *Done* once your chronicle has explicitly chosen a mode; *Info* until then (reads as **Needs a Storyteller**). Three radio choices: **Off** (players can't log what a character learned or tell a secret to another character), **Needs a Storyteller** (a log or a pass waits for review before it reaches anyone), **Immediate** (a passed secret reaches its recipient right away, with a Storyteller still reviewing it afterward). See [Secrets](secrets.md) and [What I Know](what-i-know.md).
   - **Demo chronicle** - shown only while the selected chronicle is the seeded demo. Always *Info*. A site administrator gets a **Delete demo chronicle** button here.
 
 ## Common tasks
@@ -105,7 +107,7 @@ wp-admin sidebar → Beyond Elysium → Chronicle Setup. This is the hub's first
 
 1. Pick the demo chronicle from the dropdown.
 2. Find the **Demo chronicle** row and click **Delete demo chronicle**.
-3. Confirm "Delete the demo chronicle and all 22 sample characters? This cannot be undone."
+3. Confirm "Delete the demo chronicle and all 23 sample characters? This cannot be undone."
 
 ## Things to know
 
@@ -140,6 +142,8 @@ wp-admin sidebar → Beyond Elysium → Chronicle Setup. This is the hub's first
 
 - [Creature Stacks](creature-stacks.md)
 - [Chronicle Access](chronicle-access.md)
+- [Joining a Chronicle](joining.md)
+- [Players](chronicle-players.md)
 - [Send a Grapevine File](send-grapevine-file.md)
 - [Action & Rumor Settings](apr-settings.md)
 - [Branding](branding.md)

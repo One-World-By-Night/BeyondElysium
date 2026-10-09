@@ -59,7 +59,7 @@ class SchemaBlockDecorationThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Decoration must not disturb the pre-existing is_system/storyteller_only boolean cast.
+	 * Decoration leaves the is_system/storyteller_only boolean cast intact.
 	 */
 	public function test_decoration_does_not_disturb_the_existing_boolean_casts(): void {
 		$this->make_translated_block( 'decoration-fixture-bool', 'Decorated Bool Check Term', 'X' );

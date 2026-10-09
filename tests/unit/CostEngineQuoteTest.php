@@ -108,6 +108,42 @@ class CostEngineQuoteTest extends TestCase {
 		$this->assertSame( [ 'xp' => -6, 'priced' => true, 'unpriced_reason' => null ], $quote );
 	}
 
+	// --- a list that is never priced -------------------------------------------------
+
+	private const FREE = [ 'xp' => 0, 'priced' => true, 'unpriced_reason' => null ];
+
+	public function test_a_custom_add_to_an_unpriced_list_costs_nothing_for_a_player(): void {
+		$quote = Cost_Engine::quote_trait_list_change( [], self::block( [ 'unpriced' => true ] ), 'b', 'add_trait', self::change( 'b', [ 'name' => 'Gabriel Deveraux', 'count' => 7, 'custom' => true ] ) );
+
+		$this->assertSame( self::FREE, $quote );
+	}
+
+	public function test_a_custom_add_to_an_unpriced_list_costs_nothing_for_a_manager_too(): void {
+		$quote = Cost_Engine::quote_trait_list_change( [], self::block( [ 'unpriced' => true ] ), 'b', 'add_trait', self::change( 'b', [ 'name' => 'Gabriel Deveraux', 'count' => 7, 'custom' => true ] ), true );
+
+		$this->assertSame( self::FREE, $quote );
+	}
+
+	public function test_raising_a_row_in_an_unpriced_list_costs_nothing_even_with_no_price_on_the_row(): void {
+		$sheet = [ 'b' => [ [ 'name' => 'Gabriel Deveraux', 'count' => 3, 'custom' => true ] ] ];
+
+		$quote = Cost_Engine::quote_trait_list_change( $sheet, self::block( [ 'unpriced' => true ] ), 'b', 'modify_trait', self::change( 'b', [ 'name' => 'Gabriel Deveraux', 'count' => 10, 'custom' => true ] ) );
+
+		$this->assertSame( self::FREE, $quote );
+	}
+
+	public function test_a_catalog_item_in_an_unpriced_list_costs_nothing_whatever_its_cost_says(): void {
+		$quote = Cost_Engine::quote_trait_list_change( [], self::block( [ 'unpriced' => true ] ), 'b', 'add_trait', self::change( 'b', [ 'name' => 'Iron Will', 'count' => 1 ] ) );
+
+		$this->assertSame( self::FREE, $quote );
+	}
+
+	public function test_a_list_that_is_not_declared_unpriced_still_asks_for_a_price(): void {
+		$quote = Cost_Engine::quote_trait_list_change( [], self::block( [ 'unpriced' => false ] ), 'b', 'add_trait', self::change( 'b', [ 'name' => 'Gabriel Deveraux', 'count' => 7, 'custom' => true ] ) );
+
+		$this->assertFalse( $quote['priced'] );
+	}
+
 	// --- raising a custom row ------------------------------------------------------
 
 	public function test_raising_a_priced_custom_row_uses_its_own_price(): void {

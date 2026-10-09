@@ -1,10 +1,10 @@
 # Players
 
-Invite a player by email with their characters, see who hasn't signed in yet, and manage your players and which characters are theirs, all on one screen. The HST and the AST both do this here. Staff roles (HST, AST, Narrator, Harpy) are set on [Chronicle Access](chronicle-access.md) by a site administrator. The tab only shows on a chronicle that is linked to OWbN roles.
+Review join requests, invite a player by email with their characters, see who hasn't signed in yet, and manage your players and which characters are theirs, all on one screen. The HST and the AST both do this here. Staff roles (HST, AST, Narrator, Harpy) are set on [Chronicle Access](chronicle-access.md) by a site administrator. The tab shows on every chronicle; a chronicle linked to OWbN roles also grants and revokes that role as players are added and removed, and its join link signs an applicant in through OWbN.
 
 ## Who can use this
 
-The chronicle's HST and AST, on a chronicle linked to OWbN roles. A Narrator, the Harpy and players don't see this tab, and neither does anyone on a chronicle that isn't linked.
+The chronicle's HST and AST, on every chronicle. A Narrator, the Harpy and players don't see this tab.
 
 ## How to get there
 
@@ -12,6 +12,7 @@ Open the [Storyteller Toolkit](storyteller-toolkit.md), pick the chronicle, then
 
 ## The screen
 
+- **Join requests** - the chronicle's join link, with a **Copy link** button, and every account that has asked to join: their message, a character they started or a Grapevine file they sent if either carries the request, and **Approve**/**Refuse** on a waiting one. A note typed before **Refuse** goes to the applicant. See [Joining a Chronicle](joining.md) for the applicant's own side of this.
 - **Invite a player** - a box for their email address, a list of the chronicle's player characters to tick, and a box, ticked by default, to email them an invitation. Typing three letters of a name instead of an address looks up existing accounts; **Use this email** fills in theirs.
 - **The character list** - free characters first, then those waiting for someone's email, then those already linked to a player (you can't tick those). Type in its filter box to narrow it by name.
 - **Waiting to sign in** - every invite nobody has signed in for yet: the email, the characters waiting for it, who sent it and when, with a **Cancel** button.
@@ -20,6 +21,12 @@ Open the [Storyteller Toolkit](storyteller-toolkit.md), pick the chronicle, then
 - After anything you do, a message says what happened: who became a player, which characters were linked, which were left alone and why.
 
 ## Common tasks
+
+### Review a join request
+
+1. Read their message, and open a character or file they carry if one's attached.
+2. Click **Approve** to make them a player - a character they started goes active, a file they sent still needs its own review from Import.
+3. Or type a note and click **Refuse** - a character they started for the request is deleted, and the note is emailed to them.
 
 ### Invite a player with their characters
 
@@ -48,6 +55,9 @@ Open the [Storyteller Toolkit](storyteller-toolkit.md), pick the chronicle, then
 
 ## Things to know
 
+- **Join requests can be turned off** on [Chronicle Setup](chronicle-setup.md). Off, the chronicle leaves the join list and its join link refuses a new request; one already waiting is still reviewed here.
+- **Approving a character or accepting a file is the one way in.** Both make the account a player and close the request at the same time - there's no separate "approve the request" step beyond that for either.
+- **Approving a request that carries a Grapevine file refuses, with a note pointing at Import** - the file needs its own resolutions/duplicates review there, which a bare approve can't supply. Refuse still works, deleting nothing of the file itself.
 - **The email has to match.** An invite is accepted by the account whose email address is the one you typed, whatever the capitals. If they sign in with a different address, the invite keeps waiting; cancel it and invite the address they use, or link their characters by hand once they're a player.
 - **The invitation email goes out once,** when you invite, and only if the box is ticked. It names your chronicle and you, and links to the chronicle with OWbN sign-in.
 - **A character already linked to someone else is never moved.** It is listed in the message and left alone; unlink it from them first.
@@ -60,14 +70,17 @@ Open the [Storyteller Toolkit](storyteller-toolkit.md), pick the chronicle, then
 
 ## Troubleshooting
 
-- **There is no Players tab.** You are not the chronicle's HST or AST, or the chronicle isn't linked to OWbN roles. A site administrator links it by turning accessSchema on and giving the chronicle its role path on [Chronicle Access](chronicle-access.md). Until then, a site administrator adds its members there, and characters are assigned from the Characters list.
+- **There is no Players tab.** You are not the chronicle's HST or AST.
+- **"This request carries a Grapevine file - review and accept it from Import..."** Approve refused on purpose - go review the file from Import, which closes the request too once you accept it.
 - **An invite is still waiting after they signed in.** They used a different email address. Check the address on their OWbN account.
 - **"... is linked to ..., so it was left alone."** Unlink that character from the other player first, then add it again.
 - **"OWbN did not grant ..."** The player is added here. Pass the message to an OWbN admin, who can grant the role.
 
 ## Related
 
+- [Joining a Chronicle](joining.md)
 - [Storyteller Toolkit](storyteller-toolkit.md)
 - [Characters](character-list.md)
+- [Chronicle Setup](chronicle-setup.md)
 - [Chronicle Access](chronicle-access.md)
 - [Roles](roles.md)

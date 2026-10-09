@@ -1,0 +1,654 @@
+{
+  "format": 1,
+  "kind": "item_catalog",
+  "slug": "dark-epics",
+  "name": "Dark Epics",
+  "book": "Dark Epics",
+  "code": "WW05027",
+  "provenance": {
+    "sources": [
+      "Mind's Eye Theatre: Dark Epics (WW05027), \"Nuts and Bolts\" chapter, pp.83-90 - the full mundane gear list (Melee Weapons, Throwing Weapons, Ranged Weapons, Firearms, Firearm Add-ons, Armor, Shields). Explosives (p.89-90) and \"Duration and Scope of Powers\" (p.90) are prose guidance with no printed stat entries and are not catalogued.",
+      "Every entry read directly from the book's own page images (not OCR text), per reference-wod-scan-ocr-lessons."
+    ],
+    "tool": "read directly, 2026-10-04"
+  },
+  "notes": [
+    "Armor has no dedicated property in world-object-schemas.php for the Health Levels it absorbs - the schema's own fields are shaped around a weapon's Bonus/Damage, not an absorbing item's own rating. `level` is otherwise unused for this book's mundane gear (it's only meaningful for Changing Breeds' fetishes, a different file), so Armor entries store Health Levels in `level` and restate it in `description`; this is a deliberate repurposing for this one book, not a schema change.",
+    "`availability` is a one-entry trait_list per the design (\"Availability -> availability, one entry\"); a conditional availability line (\"Police 4, Street 3 or Underworld 2 otherwise\") is kept as the entry's own name verbatim rather than split into several entries, since the book prints it as one condition, not several independent options.",
+    "A firearm's own printed `Rate` has no field of its own in the schema (not Bonus, Damage, or Special Ability) and is kept in `description` rather than folded into `powers`, which holds only the book's own \"Special Ability\" line."
+  ],
+  "items": [
+    {
+      "key": "broken-bottle",
+      "name": "Broken Bottle",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Melee",
+        "bonus": 1,
+        "negatives": [ { "name": "Fragile" }, { "name": "Short" } ],
+        "concealability": "Pocket",
+        "damage_amount": 1,
+        "availability": [ { "name": "Any" } ]
+      },
+      "source": { "book": "Dark Epics", "code": "WW05027", "page": 83 }
+    },
+    {
+      "key": "knife-dagger",
+      "name": "Knife/Dagger",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Melee",
+        "bonus": 2,
+        "negatives": [ { "name": "Short" } ],
+        "concealability": "Pocket",
+        "damage_amount": 1,
+        "availability": [ { "name": "Any" } ]
+      },
+      "source": { "book": "Dark Epics", "code": "WW05027", "page": 83 }
+    },
+    {
+      "key": "club-stake",
+      "name": "Club/Stake",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Melee",
+        "bonus": 2,
+        "negatives": [ { "name": "Clumsy" } ],
+        "concealability": "Jacket",
+        "damage_amount": 1,
+        "availability": [ { "name": "Any" } ],
+        "powers": "Staking (if wooden)"
+      },
+      "source": { "book": "Dark Epics", "code": "WW05027", "page": 83 }
+    },
+    {
+      "key": "mace-small-axe",
+      "name": "Mace/Small Axe",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Melee",
+        "bonus": 2,
+        "negatives": [ { "name": "Clumsy" } ],
+        "concealability": "Jacket",
+        "damage_amount": 1,
+        "availability": [ { "name": "Any" } ],
+        "powers": "Destroy Shield"
+      },
+      "source": { "book": "Dark Epics", "code": "WW05027", "page": 83 }
+    },
+    {
+      "key": "shortsword",
+      "name": "Shortsword",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Melee",
+        "bonus": 2,
+        "negatives": [ { "name": "Short" } ],
+        "concealability": "Jacket",
+        "damage_amount": 1,
+        "availability": [ { "name": "Any" } ],
+        "powers": "Speed"
+      },
+      "source": { "book": "Dark Epics", "code": "WW05027", "page": 83 }
+    },
+    {
+      "key": "fencing-blades",
+      "name": "Fencing Blades",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Melee",
+        "bonus": 3,
+        "negatives": [ { "name": "Fragile" } ],
+        "concealability": "Trenchcoat",
+        "damage_amount": 1,
+        "availability": [ { "name": "Any" } ],
+        "powers": "Speed"
+      },
+      "source": { "book": "Dark Epics", "code": "WW05027", "page": 83 }
+    },
+    {
+      "key": "spear-staff",
+      "name": "Spear/Staff",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Melee",
+        "bonus": 3,
+        "negatives": [ { "name": "Heavy" } ],
+        "concealability": "NA",
+        "damage_amount": 2,
+        "availability": [ { "name": "Any" } ],
+        "powers": "Staking (if wooden), Two-Hand Requirement"
+      },
+      "source": { "book": "Dark Epics", "code": "WW05027", "page": 83 }
+    },
+    {
+      "key": "broadsword",
+      "name": "Broadsword",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Melee",
+        "bonus": 3,
+        "negatives": [ { "name": "Heavy" } ],
+        "concealability": "Trenchcoat",
+        "damage_amount": 2,
+        "availability": [ { "name": "Any" } ]
+      },
+      "source": { "book": "Dark Epics", "code": "WW05027", "page": 84 }
+    },
+    {
+      "key": "large-axe",
+      "name": "Large Axe",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Melee",
+        "bonus": 3,
+        "negatives": [ { "name": "Clumsy" }, { "name": "Heavy" } ],
+        "concealability": "Trenchcoat",
+        "damage_amount": 2,
+        "availability": [ { "name": "Any" } ],
+        "powers": "Destroy Shield"
+      },
+      "source": { "book": "Dark Epics", "code": "WW05027", "page": 84 }
+    },
+    {
+      "key": "greatsword-polearm-scythe",
+      "name": "Greatsword/Polearm/Scythe",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Melee",
+        "bonus": 4,
+        "negatives": [ { "name": "Clumsy" }, { "name": "Heavy" } ],
+        "concealability": "NA",
+        "damage_amount": 2,
+        "availability": [ { "name": "Any" } ],
+        "powers": "Two-Hand Requirement"
+      },
+      "source": { "book": "Dark Epics", "code": "WW05027", "page": 84 }
+    },
+    {
+      "key": "thrown-rock",
+      "name": "Thrown Rock",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Throwing",
+        "bonus": 0,
+        "negatives": [ { "name": "Clumsy" } ],
+        "concealability": "Pocket",
+        "damage_amount": 1,
+        "availability": [ { "name": "Any" } ]
+      },
+      "source": { "book": "Dark Epics", "code": "WW05027", "page": 84 }
+    },
+    {
+      "key": "thrown-dagger-knife-shuriken",
+      "name": "Thrown Dagger, Knife or Shuriken",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Throwing",
+        "bonus": 1,
+        "negatives": [ { "name": "Clumsy" } ],
+        "concealability": "Pocket",
+        "damage_amount": 1,
+        "availability": [ { "name": "Any" } ]
+      },
+      "source": { "book": "Dark Epics", "code": "WW05027", "page": 84 }
+    },
+    {
+      "key": "molotov-cocktail",
+      "name": "Molotov Cocktail",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Throwing",
+        "bonus": 2,
+        "negatives": [ { "name": "Fragile" } ],
+        "concealability": "Jacket (until lit!)",
+        "damage_amount": 1,
+        "availability": [ { "name": "Any" } ],
+        "powers": "Incendiary, Spray, Two-Hand Requirement"
+      },
+      "source": { "book": "Dark Epics", "code": "WW05027", "page": 84 }
+    },
+    {
+      "key": "grenade",
+      "name": "Grenade",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Throwing",
+        "bonus": 2,
+        "negatives": [ { "name": "Clumsy" } ],
+        "concealability": "Pocket",
+        "damage_amount": 2,
+        "availability": [ { "name": "Police 4, or Underworld 4" } ],
+        "powers": "Spray, Two-Hand Requirement"
+      },
+      "source": { "book": "Dark Epics", "code": "WW05027", "page": 85 }
+    },
+    {
+      "key": "thrown-small-axe",
+      "name": "Thrown Small Axe",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Throwing",
+        "bonus": 2,
+        "negatives": [ { "name": "Clumsy" }, { "name": "Heavy" } ],
+        "concealability": "Jacket",
+        "damage_amount": 1,
+        "availability": [ { "name": "Any" } ]
+      },
+      "source": { "book": "Dark Epics", "code": "WW05027", "page": 85 }
+    },
+    {
+      "key": "thrown-spear",
+      "name": "Thrown Spear",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Throwing",
+        "bonus": 3,
+        "negatives": [ { "name": "Clumsy" }, { "name": "Heavy" } ],
+        "concealability": "Jacket",
+        "damage_amount": 1,
+        "availability": [ { "name": "Any" } ],
+        "powers": "Staking (if wooden)"
+      },
+      "source": { "book": "Dark Epics", "code": "WW05027", "page": 85 }
+    },
+    {
+      "key": "crossbow",
+      "name": "Crossbow",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Ranged",
+        "bonus": 2,
+        "negatives": [ { "name": "Heavy" }, { "name": "Slow" } ],
+        "concealability": "NA",
+        "damage_amount": 2,
+        "availability": [ { "name": "Any" } ],
+        "powers": "Destroy Shield, Armor-piercing, Staking (if wooden), Two-Hand Requirement"
+      },
+      "description": "Rate: One.",
+      "source": { "book": "Dark Epics", "code": "WW05027", "page": 85 }
+    },
+    {
+      "key": "shortbow",
+      "name": "Shortbow",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Ranged",
+        "bonus": 2,
+        "negatives": [ { "name": "Fragile" } ],
+        "concealability": "Trenchcoat",
+        "damage_amount": 1,
+        "availability": [ { "name": "Any" } ],
+        "powers": "Armor-piercing, Staking (if wooden), Two-Hand Requirement"
+      },
+      "description": "Rate: One.",
+      "source": { "book": "Dark Epics", "code": "WW05027", "page": 85 }
+    },
+    {
+      "key": "compound-bow-longbow",
+      "name": "Compound Bow/Longbow",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Ranged",
+        "bonus": 3,
+        "negatives": [ { "name": "Fragile" }, { "name": "Heavy" } ],
+        "concealability": "NA",
+        "damage_amount": 2,
+        "availability": [ { "name": "Any" } ],
+        "powers": "Destroy Shield, Armor-piercing, Staking (if wooden), Two-Hand Requirement"
+      },
+      "description": "Rate: One.",
+      "source": { "book": "Dark Epics", "code": "WW05027", "page": 85 }
+    },
+    {
+      "key": "pistol",
+      "name": "Pistol",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Firearm",
+        "bonus": 2,
+        "negatives": [ { "name": "Loud" } ],
+        "concealability": "Pocket",
+        "damage_amount": 2,
+        "availability": [ { "name": "Any, if registered; Police 4, Street 3 or Underworld 2 otherwise" } ]
+      },
+      "description": "Rate: Five.",
+      "source": { "book": "Dark Epics", "code": "WW05027", "page": 86 }
+    },
+    {
+      "key": "heavy-pistol",
+      "name": "Heavy Pistol",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Firearm",
+        "bonus": 2,
+        "negatives": [ { "name": "Loud" } ],
+        "concealability": "Jacket",
+        "damage_amount": 2,
+        "availability": [ { "name": "Any, if registered; Police 4, Street 4 or Underworld 3 otherwise" } ],
+        "powers": "High-Caliber"
+      },
+      "description": "Rate: Three.",
+      "source": { "book": "Dark Epics", "code": "WW05027", "page": 86 }
+    },
+    {
+      "key": "submachine-gun",
+      "name": "Submachine Gun",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Firearm",
+        "bonus": 2,
+        "negatives": [ { "name": "Loud" } ],
+        "concealability": "Jacket",
+        "damage_amount": 2,
+        "availability": [ { "name": "Any, if registered and non-automatic. Police 4, Street 4 or Underworld 3 otherwise" } ],
+        "powers": "Fully Automatic, Spray, [30-round clip]"
+      },
+      "description": "Rate: Four.",
+      "source": { "book": "Dark Epics", "code": "WW05027", "page": 86 }
+    },
+    {
+      "key": "rifle",
+      "name": "Rifle",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Firearm",
+        "bonus": 3,
+        "negatives": [ { "name": "Loud" } ],
+        "concealability": "NA",
+        "damage_amount": 2,
+        "availability": [ { "name": "Any, if registered; Police 4, Street 4 or Underworld 3 otherwise" } ],
+        "powers": "Two-Hand Requirement"
+      },
+      "description": "Rate: Three.",
+      "source": { "book": "Dark Epics", "code": "WW05027", "page": 86 }
+    },
+    {
+      "key": "shotgun",
+      "name": "Shotgun",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Firearm",
+        "bonus": 3,
+        "negatives": [ { "name": "Loud" } ],
+        "concealability": "Trenchcoat",
+        "damage_amount": 2,
+        "availability": [ { "name": "Any, if registered. Police 4, Street 4 or Underworld 3 otherwise" } ],
+        "powers": "Mass-Trauma, Spray, Two-Hand Requirement"
+      },
+      "description": "Rate: Two.",
+      "source": { "book": "Dark Epics", "code": "WW05027", "page": 86 }
+    },
+    {
+      "key": "sniper-rifle",
+      "name": "Sniper Rifle",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Firearm",
+        "bonus": 3,
+        "negatives": [ { "name": "Loud" } ],
+        "concealability": "NA",
+        "damage_amount": 2,
+        "availability": [ { "name": "Police 4, or Underworld 5" } ],
+        "powers": "High-Caliber, Two-Hand Requirement"
+      },
+      "description": "Rate: Two.",
+      "source": { "book": "Dark Epics", "code": "WW05027", "page": 87 }
+    },
+    {
+      "key": "assault-rifle",
+      "name": "Assault Rifle",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Firearm",
+        "bonus": 3,
+        "negatives": [ { "name": "Loud" } ],
+        "concealability": "NA",
+        "damage_amount": 2,
+        "availability": [ { "name": "Police 5, or Underworld 5" } ],
+        "powers": "Fully Automatic, Spray, Two-Hand Requirement, [30-round clip]"
+      },
+      "description": "Rate: Four.",
+      "source": { "book": "Dark Epics", "code": "WW05027", "page": 87 }
+    },
+    {
+      "key": "combat-shotgun",
+      "name": "Combat Shotgun",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Firearm",
+        "bonus": 3,
+        "negatives": [ { "name": "Loud" } ],
+        "concealability": "NA",
+        "damage_amount": 2,
+        "availability": [ { "name": "Police 5, or Underworld 5" } ],
+        "powers": "Fully Automatic, Mass Trauma, Spray, Two-Hand Requirement, [20-round magazine]"
+      },
+      "description": "Rate: Three.",
+      "source": { "book": "Dark Epics", "code": "WW05027", "page": 87 }
+    },
+    {
+      "key": "flame-thrower",
+      "name": "Flame Thrower",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Firearm",
+        "bonus": 0,
+        "negatives": [ { "name": "Clumsy" }, { "name": "Hot" }, { "name": "Heavy" } ],
+        "concealability": "NA",
+        "damage_amount": 2,
+        "availability": [ { "name": "Underworld 5" } ],
+        "powers": "Incendiary, Two-Hand Requirement, Spray"
+      },
+      "description": "Rate: One.",
+      "source": { "book": "Dark Epics", "code": "WW05027", "page": 87 }
+    },
+    {
+      "key": "stake-thrower",
+      "name": "Stake Thrower",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Firearm",
+        "bonus": 2,
+        "negatives": [ { "name": "Loud" } ],
+        "concealability": "Trenchcoat",
+        "damage_amount": 2,
+        "availability": [ { "name": "Each stake thrower must be crafted individually from a shotgun" } ],
+        "powers": "Staking"
+      },
+      "description": "Rate: One.",
+      "source": { "book": "Dark Epics", "code": "WW05027", "page": 87 }
+    },
+    {
+      "key": "armor-piercing-ammunition",
+      "name": "Armor-Piercing Ammunition",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Firearm Add-on",
+        "availability": [ { "name": "Police 4, Street 4 or Underworld 3" } ],
+        "powers": "Armor-piercing"
+      },
+      "description": "[10 rounds]. This ammunition cannot be used with combat shotguns, flame throwers, shotguns and stake throwers.",
+      "source": { "book": "Dark Epics", "code": "WW05027", "page": 88 }
+    },
+    {
+      "key": "incendiary-ammunition",
+      "name": "Incendiary Ammunition",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Firearm Add-on",
+        "availability": [ { "name": "Police 5, Underworld 4" } ],
+        "powers": "Incendiary (limited as described below)"
+      },
+      "description": "[10 rounds]. This ammunition cannot be used with flame throwers or stake throwers. Incendiary ammunition turns the first level of damage from a firearm into aggravated damage, provided the target suffers aggravated wounds from fire. Incendiary ammunition is most often crafted from white phosphorus.",
+      "source": { "book": "Dark Epics", "code": "WW05027", "page": 88 }
+    },
+    {
+      "key": "scope",
+      "name": "Scope",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Firearm Add-on",
+        "availability": [ { "name": "Any" } ]
+      },
+      "description": "This add-on cannot be used with combat shotguns, flame throwers, shotguns and stake throwers. Scopes add a bonus Trait to the weapon if the user aims for the entire turn before firing. Scope refers to actual scopes of various types or laser sights.",
+      "source": { "book": "Dark Epics", "code": "WW05027", "page": 88 }
+    },
+    {
+      "key": "sound-suppression",
+      "name": "Sound Suppression",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Firearm Add-on",
+        "availability": [ { "name": "Police 4, Street 4 or Underworld 3" } ]
+      },
+      "description": "Only pistols, submachine guns and sniper rifles may make use of sound suppression. This hardware removes the Loud Negative Trait by dampening the sound of the weapon's discharge. A weapon with sound suppression loses one bonus Trait.",
+      "source": { "book": "Dark Epics", "code": "WW05027", "page": 88 }
+    },
+    {
+      "key": "leather-armor",
+      "name": "Leather",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Armor",
+        "item_subtype": "Antique",
+        "level": 1,
+        "negatives": [],
+        "concealability": "Can be concealed if specifically made to look like normal clothing (leather pants, jacket and gloves)"
+      },
+      "description": "Health Levels: 1. Antique armor does not provide protection from firearms.",
+      "source": { "book": "Dark Epics", "code": "WW05027", "page": 88 }
+    },
+    {
+      "key": "chain-mail",
+      "name": "Chain-mail",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Armor",
+        "item_subtype": "Antique",
+        "level": 2,
+        "negatives": [ { "name": "Heavy" } ],
+        "concealability": "Trenchcoat",
+        "availability": [ { "name": "Any. Chain-mail generally must be custom made, and it can cost upward of $500 or more." } ]
+      },
+      "description": "Health Levels: 2. Antique armor does not provide protection from firearms. Chain-mail armor is bulky, and it extends below the waist.",
+      "source": { "book": "Dark Epics", "code": "WW05027", "page": 89 }
+    },
+    {
+      "key": "plate-mail",
+      "name": "Plate mail",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Armor",
+        "item_subtype": "Antique",
+        "level": 3,
+        "negatives": [ { "name": "Heavy" }, { "name": "Clumsy" } ],
+        "concealability": "NA",
+        "availability": [ { "name": "Any. Plate mail generally must be custom-ordered, and it can cost upward of $3,000 or more." } ]
+      },
+      "description": "Health Levels: 3. Antique armor does not provide protection from firearms.",
+      "source": { "book": "Dark Epics", "code": "WW05027", "page": 89 }
+    },
+    {
+      "key": "ballistic-vest",
+      "name": "Ballistic Vest",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Armor",
+        "item_subtype": "Modern",
+        "level": 2,
+        "negatives": [],
+        "concealability": "Can be worn concealed under a normal shirt, or clothing can be disguised to mimic its effects",
+        "availability": [ { "name": "Any, mail order" } ]
+      },
+      "description": "Health Levels: 2. Most modern armor is made of materials designed to stop and reduce shock from bullets; a ballistic vest does not protect against melee weapons.",
+      "source": { "book": "Dark Epics", "code": "WW05027", "page": 89 }
+    },
+    {
+      "key": "reinforced-vest",
+      "name": "Reinforced Vest",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Armor",
+        "item_subtype": "Modern",
+        "level": 2,
+        "negatives": [ { "name": "Heavy" } ],
+        "concealability": "Jacket",
+        "availability": [ { "name": "Police 4, or Underworld 3" } ]
+      },
+      "description": "Health Levels: 2.",
+      "source": { "book": "Dark Epics", "code": "WW05027", "page": 89 }
+    },
+    {
+      "key": "riot-suit",
+      "name": "Riot Suit",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Armor",
+        "item_subtype": "Modern",
+        "level": 3,
+        "negatives": [ { "name": "Heavy" }, { "name": "Clumsy" } ],
+        "concealability": "NA",
+        "availability": [ { "name": "Police 4, Underworld 5" } ]
+      },
+      "description": "Health Levels: 3.",
+      "source": { "book": "Dark Epics", "code": "WW05027", "page": 89 }
+    },
+    {
+      "key": "small-shield",
+      "name": "Small Shield",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Shield",
+        "bonus": 1,
+        "negatives": [],
+        "concealability": "Jacket",
+        "availability": [ { "name": "Any" } ]
+      },
+      "description": "Small shields (or bucklers) protect against melee and unarmed attacks.",
+      "source": { "book": "Dark Epics", "code": "WW05027", "page": 89 }
+    },
+    {
+      "key": "large-shield",
+      "name": "Large Shield",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Shield",
+        "bonus": 2,
+        "negatives": [ { "name": "Heavy" } ],
+        "concealability": "NA",
+        "availability": [ { "name": "Any" } ]
+      },
+      "description": "Large shields protect against melee and unarmed attacks, as well as ranged and thrown weapons.",
+      "source": { "book": "Dark Epics", "code": "WW05027", "page": 89 }
+    },
+    {
+      "key": "body-shield",
+      "name": "Body Shield",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Shield",
+        "bonus": 2,
+        "negatives": [ { "name": "Clumsy" }, { "name": "Heavy" } ],
+        "concealability": "NA",
+        "availability": [ { "name": "Any" } ]
+      },
+      "description": "Body shields protect against melee and unarmed attacks, as well as ranged and thrown weapons.",
+      "source": { "book": "Dark Epics", "code": "WW05027", "page": 90 }
+    },
+    {
+      "key": "riot-shield",
+      "name": "Riot Shield",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Shield",
+        "bonus": 2,
+        "negatives": [ { "name": "Clumsy" }, { "name": "Heavy" } ],
+        "concealability": "NA",
+        "availability": [ { "name": "Any" } ]
+      },
+      "description": "Riot shields protect against all manner of attacks.",
+      "source": { "book": "Dark Epics", "code": "WW05027", "page": 90 }
+    }
+  ]
+}

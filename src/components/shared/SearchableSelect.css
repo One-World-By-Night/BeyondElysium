@@ -52,19 +52,21 @@
 
 /* A section heading inside the dropdown. */
 .be-searchable-select__group {
-	padding: 0.35rem 0.5rem;
+	padding: 0.5rem 0.6rem;
 
 	box-sizing: border-box;
 	display: flex;
 	align-items: center;
 	cursor: default;
-	font-weight: 600;
-	font-size: 0.85em;
+	font-weight: 700;
+	font-size: max(0.95em, 13px);
 	text-transform: uppercase;
-	letter-spacing: 0.03em;
-	color: var(--be-gray-10);
-	background: var(--be-gray-27);
-	border-top: 1px solid var(--be-gray-21);
+	letter-spacing: 0.04em;
+	color: var(--be-gray-1);
+	background: var(--be-gray-17);
+	border-top: 1px solid var(--be-gray-13);
+	border-bottom: 1px solid var(--be-gray-13);
+	border-left: 4px solid var(--be-gray-9);
 
 	/* A long species or tribe name truncates. */
 	overflow: hidden;

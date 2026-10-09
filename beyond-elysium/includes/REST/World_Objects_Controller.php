@@ -2,6 +2,7 @@
 
 namespace BeyondElysium\REST;
 
+use BeyondElysium\Core\Notifications;
 use BeyondElysium\Database\Transaction;
 use BeyondElysium\Models\Attachment;
 use BeyondElysium\Models\Character;
@@ -343,7 +344,13 @@ class World_Objects_Controller extends Base_Controller {
 			return $this->error( 'create_failed', __( 'Failed to create world object.', 'beyond-elysium' ), 500 );
 		}
 
-		return $this->success( World_Object::find( $id ), 201 );
+		$created = World_Object::find( $id );
+		if ( $created && in_array( $object_type, [ 'item', 'location' ], true ) ) {
+			$visible_ids = Audience::visible_character_ids( $created, $object_type, $request['game_slug'] );
+			$this->notify_audience_widened( $game, $object_type, (string) $created->name, [], $visible_ids );
+		}
+
+		return $this->success( $created, 201 );
 	}
 
 	/**
@@ -429,7 +436,24 @@ class World_Objects_Controller extends Base_Controller {
 
 		Transaction::commit( $savepoint );
 
-		return $this->success( World_Object::find( $copy_id ), 201 );
+		$copy = World_Object::find( $copy_id );
+		$game = Game::find_by_slug( $request['game_slug'] );
+		if ( $copy && $game ) {
+			$now_visible = Audience::can_see( $copy, 'item', (int) ( $character->wp_user_id ?? 0 ), $request['game_slug'], false );
+			Notifications::notify_if_newly_visible(
+				$character,
+				false,
+				$now_visible,
+				$game,
+				'item',
+				(string) $copy->name,
+				Notifications::player_item_url( (int) $character->id, $request['game_slug'] ),
+				get_current_user_id()
+			);
+			Notifications::flush_visible();
+		}
+
+		return $this->success( $copy, 201 );
 	}
 
 	/**
@@ -534,6 +558,7 @@ class World_Objects_Controller extends Base_Controller {
 		}
 
 		$to_character_id = null;
+		$to_character    = null;
 		if ( $how !== 'lost' ) {
 			$raw = $request->get_param( 'to_character_id' );
 			if ( empty( $raw ) ) {
@@ -548,6 +573,10 @@ class World_Objects_Controller extends Base_Controller {
 
 		$note = $request->get_param( 'note' );
 		$note = $note !== null ? sanitize_textarea_field( (string) $note ) : null;
+
+		$was_visible = $to_character !== null
+			? Audience::can_see( $object, 'item', (int) ( $to_character->wp_user_id ?? 0 ), $request['game_slug'], false )
+			: false;
 
 		$savepoint = Transaction::begin( 'be_item_transfer' );
 
@@ -593,7 +622,24 @@ class World_Objects_Controller extends Base_Controller {
 
 		Transaction::commit( $savepoint );
 
-		return $this->success( World_Object::find( (int) $object->id ) );
+		$updated = World_Object::find( (int) $object->id );
+		$game    = Game::find_by_slug( $request['game_slug'] );
+		if ( $updated && $game && $to_character !== null ) {
+			$now_visible = Audience::can_see( $updated, 'item', (int) ( $to_character->wp_user_id ?? 0 ), $request['game_slug'], false );
+			Notifications::notify_if_newly_visible(
+				$to_character,
+				$was_visible,
+				$now_visible,
+				$game,
+				'item',
+				(string) $updated->name,
+				Notifications::player_item_url( (int) $to_character->id, $request['game_slug'] ),
+				get_current_user_id()
+			);
+			Notifications::flush_visible();
+		}
+
+		return $this->success( $updated );
 	}
 
 	/**
@@ -668,7 +714,7 @@ class World_Objects_Controller extends Base_Controller {
 	 * Validates a requested `audience`/`audience_rules` pair.
 	 *
 	 * @param \WP_REST_Request $request
-	 * @return array{audience?:string,audience_rules?:?array}|\WP_Error
+	 * @return array{audience?:string,audience_rules?:array<string,mixed>|null}|\WP_Error
 	 */
 	private function resolve_audience( $request ) {
 		$data = [];
@@ -699,13 +745,49 @@ class World_Objects_Controller extends Base_Controller {
 	}
 
 	/**
+	 * Tells every player newly reached by an item or location's audience - every active player character now in
+	 * `$after_ids` that wasn't in `$before_ids`, skipping the acting Storyteller, an NPC, or a character with no
+	 * player. `$before_ids` is `[]` on create.
+	 *
+	 * @param object   $game
+	 * @param string   $kind       `item` or `location`.
+	 * @param string   $title
+	 * @param int[]    $before_ids
+	 * @param int[]    $after_ids
+	 * @return void
+	 */
+	private function notify_audience_widened( object $game, string $kind, string $title, array $before_ids, array $after_ids ): void {
+		$acting_wp_user_id = get_current_user_id();
+		foreach ( array_diff( $after_ids, $before_ids ) as $character_id ) {
+			$character = Character::find( (int) $character_id );
+			if ( ! $character ) {
+				continue;
+			}
+			$link = $kind === 'location'
+				? Notifications::player_location_url( (int) $character->id, (string) ( $game->slug ?? '' ) )
+				: Notifications::player_item_url( (int) $character->id, (string) ( $game->slug ?? '' ) );
+			Notifications::notify_if_newly_visible(
+				$character,
+				false,
+				true,
+				$game,
+				$kind,
+				$title,
+				$link,
+				$acting_wp_user_id
+			);
+		}
+		Notifications::flush_visible();
+	}
+
+	/**
 	 * Validates a requested `parent_id` ("Inside of"): meaningless for anything but a location, must name a real
 	 * location in this same game.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @param object            $game
 	 * @param string            $object_type
-	 * @param int|null          $self_id Null on create, since nothing to compare against yet.
+	 * @param int|null          $self_id Null on create.
 	 * @return int|null|\WP_Error Null when no parent_id was sent at all.
 	 */
 	private function resolve_parent_id( $request, object $game, string $object_type, ?int $self_id ) {
@@ -800,7 +882,20 @@ class World_Objects_Controller extends Base_Controller {
 			}
 		}
 
-		return $this->success( World_Object::find( (int) $object->id ) );
+		$updated = World_Object::find( (int) $object->id );
+
+		if ( $updated && in_array( $object->object_type, [ 'item', 'location' ], true )
+			&& ( array_key_exists( 'audience', $data ) || array_key_exists( 'audience_rules', $data ) ) ) {
+			$game_slug = $request['game_slug'];
+			$game      = Game::find_by_slug( $game_slug );
+			if ( $game ) {
+				$before_ids = Audience::visible_character_ids( $object, $object->object_type, $game_slug );
+				$after_ids  = Audience::visible_character_ids( $updated, $object->object_type, $game_slug );
+				$this->notify_audience_widened( $game, $object->object_type, (string) $updated->name, $before_ids, $after_ids );
+			}
+		}
+
+		return $this->success( $updated );
 	}
 
 	/**
@@ -819,12 +914,6 @@ class World_Objects_Controller extends Base_Controller {
 		}
 		if ( $object->object_type === 'location' && World_Object::has_children( (int) $object->id ) ) {
 			return $this->error( 'location_has_children', __( 'Move or delete this location\'s own children first.', 'beyond-elysium' ), 409 );
-		}
-
-		if ( in_array( $object->object_type, [ 'item', 'location' ], true ) ) {
-			foreach ( Attachment::for_entity( $object->object_type, (int) $object->id ) as $attachment ) {
-				Attachment_Storage::delete( $attachment->stored_name, $attachment->original_name );
-			}
 		}
 
 		World_Object::delete( (int) $object->id );

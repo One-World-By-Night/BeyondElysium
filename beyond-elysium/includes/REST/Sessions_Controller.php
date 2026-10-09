@@ -244,6 +244,9 @@ class Sessions_Controller extends Base_Controller {
 		if ( $request->get_param( 'notes' ) !== null ) {
 			$data['notes'] = wp_kses_post( $request->get_param( 'notes' ) );
 		}
+		if ( $request->get_param( 'recap' ) !== null ) {
+			$data['recap'] = $this->sanitize_recap( $request->get_param( 'recap' ) );
+		}
 		if ( $request->get_param( 'reports_due_at' ) !== null ) {
 			$data['reports_due_at'] = $request->get_param( 'reports_due_at' );
 		}
@@ -269,8 +272,7 @@ class Sessions_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Deletes a session, refused with 409 if it already has real data (currently attendance only - see
-	 * Game_Session::is_in_use()).
+	 * Deletes a session, refused with 409 if it already has real data (see Game_Session::is_in_use()).
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -701,8 +703,8 @@ class Sessions_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Validates one release-schedule rule: `weekly` needs a real weekday name, `monthly` needs a day of month from 1 to
-	 * 28 (no 29/30/31 ambiguity across short months).
+	 * Validates one release-schedule rule: `weekly` needs a real weekday name, `monthly` needs a day of month from 1
+	 * to 28.
 	 *
 	 * @param mixed $rule
 	 * @return array{type:string,weekday?:string,day_of_month?:int,time:string}|null
@@ -798,7 +800,7 @@ class Sessions_Controller extends Base_Controller {
 	 * be_manage_sessions.
 	 *
 	 * @param \WP_REST_Request $request
-	 * @return array
+	 * @return array<string,mixed>
 	 */
 	private function resolve_apr_gated_fields( $request ): array {
 		if ( ! Authorization::check_request( 'be_manage_apr', $request ) ) {
@@ -855,9 +857,37 @@ class Sessions_Controller extends Base_Controller {
 				$session->attendance_xp_awarded_at,
 				$session->attendance_xp_awarded_by,
 				$session->report_xp_awarded_at,
-				$session->report_xp_awarded_by
+				$session->report_xp_awarded_by,
+				$session->recap
 			);
 		}
+	}
+
+	/**
+	 * Keeps only the five real recap fields, each a plain string except `npcs_involved` (an array of
+	 * `{name, status}`, `status` narrowed to one of Alive/Injured/Dead/Unknown).
+	 *
+	 * @param mixed $recap
+	 * @return array{key_events:string,player_decisions:string,npcs_involved:array<int,array{name:string,status:string}>,cliffhanger:string,prep:string}
+	 */
+	private function sanitize_recap( $recap ): array {
+		$recap = is_array( $recap ) ? $recap : [];
+		$npcs  = [];
+		foreach ( (array) ( $recap['npcs_involved'] ?? [] ) as $npc ) {
+			if ( ! is_array( $npc ) || ! isset( $npc['name'] ) ) {
+				continue;
+			}
+			$status = in_array( $npc['status'] ?? '', [ 'alive', 'injured', 'dead', 'unknown' ], true ) ? $npc['status'] : 'unknown';
+			$npcs[] = [ 'name' => sanitize_text_field( (string) $npc['name'] ), 'status' => $status ];
+		}
+
+		return [
+			'key_events'       => sanitize_textarea_field( (string) ( $recap['key_events'] ?? '' ) ),
+			'player_decisions' => sanitize_textarea_field( (string) ( $recap['player_decisions'] ?? '' ) ),
+			'npcs_involved'    => $npcs,
+			'cliffhanger'      => sanitize_textarea_field( (string) ( $recap['cliffhanger'] ?? '' ) ),
+			'prep'             => sanitize_textarea_field( (string) ( $recap['prep'] ?? '' ) ),
+		];
 	}
 
 	/**

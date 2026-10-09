@@ -40,6 +40,11 @@ export interface BlockEditorProps {
 	 * Needed only for a player_order block's "Save order" call.
 	 */
 	characterId?: number;
+	/**
+	 * A Storyteller of this chronicle sets any resource_pool value directly, bypassing its own max and any
+	 * raised_by cost - the same standing exception every other section_type already gives a manager.
+	 */
+	isManager?: boolean;
 }
 
 /**
@@ -57,6 +62,7 @@ export function BlockEditor( {
 	sheetData,
 	gameSlug,
 	characterId,
+	isManager,
 }: BlockEditorProps ) {
 	switch ( sectionType ) {
 		case 'trait_list':
@@ -115,6 +121,7 @@ export function BlockEditor( {
 					}
 					readOnly={ readOnly }
 					sheetData={ sheetData }
+					isManager={ isManager }
 				/>
 			);
 

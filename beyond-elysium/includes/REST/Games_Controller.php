@@ -6,6 +6,7 @@ use BeyondElysium\Core\Authorization;
 use BeyondElysium\Models\Game;
 use BeyondElysium\Models\Game_Member;
 use BeyondElysium\Services\Ai_Assist;
+use BeyondElysium\Services\Demo_Chronicle;
 use BeyondElysium\Services\St_Visibility;
 
 defined( 'ABSPATH' ) || exit;
@@ -82,6 +83,22 @@ class Games_Controller extends Base_Controller {
 			],
 		] );
 
+		register_rest_route( $this->namespace, '/' . $this->rest_base . '/(?P<slug>[a-z0-9\-]+)/demo/reset', [
+			[
+				'methods'             => 'POST',
+				'callback'            => [ $this, 'reset_demo' ],
+				'permission_callback' => $this->permission( 'be_manage_games' ),
+			],
+		] );
+
+		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/demo', [
+			[
+				'methods'             => 'GET',
+				'callback'            => [ $this, 'get_demo_status' ],
+				'permission_callback' => $this->permission( 'be_view_characters' ),
+			],
+		] );
+
 		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/chronicle-setup', [
 			[
 				'methods'             => 'PUT',
@@ -152,7 +169,7 @@ class Games_Controller extends Base_Controller {
 		$can_manage = current_user_can( 'be_manage_games' );
 		foreach ( $items as $item ) {
 			if ( isset( $item->settings ) && $item->settings instanceof \stdClass ) {
-				Ai_Assist::redact_settings_read( $item->settings );
+				self::redact_settings( $item->settings );
 			}
 			St_Visibility::filter_game( $item, $can_manage );
 		}
@@ -184,6 +201,7 @@ class Games_Controller extends Base_Controller {
 				'name'       => $game->name,
 				'role'       => $membership->role,
 				'asc_linked' => \BeyondElysium\Core\Authorization::asc_role_path( $game, 'player' ) !== null,
+				'demo'       => \BeyondElysium\Services\Demo_Chronicle::is_demo( $game ),
 			];
 			$seen[ (int) $game->id ] = true;
 		}
@@ -202,6 +220,7 @@ class Games_Controller extends Base_Controller {
 						'name'       => (string) ( $game->name ?? '' ),
 						'role'       => $role,
 						'asc_linked' => true,
+						'demo'       => \BeyondElysium\Services\Demo_Chronicle::is_demo( $game ),
 					];
 				}
 			}
@@ -259,7 +278,7 @@ class Games_Controller extends Base_Controller {
 			return $this->error( 'not_found', __( 'Game not found.', 'beyond-elysium' ), 404 );
 		}
 		if ( isset( $game->settings ) && $game->settings instanceof \stdClass ) {
-			Ai_Assist::redact_settings_read( $game->settings );
+			self::redact_settings( $game->settings );
 		}
 		St_Visibility::filter_game( $game, Authorization::check_request( 'be_manage_games', $request ) );
 		return $this->success( $game );
@@ -290,6 +309,13 @@ class Games_Controller extends Base_Controller {
 
 		$settings = $request->get_param( 'settings' );
 		if ( is_array( $settings ) ) {
+			if ( isset( $settings['demo'] ) ) {
+				$demo_error = self::validate_demo_settings( $settings['demo'] );
+				if ( $demo_error !== null ) {
+					return $this->error( 'invalid_param', $demo_error, 400 );
+				}
+			}
+			$settings = Demo_Chronicle::keep_stored_passwords( $settings, [] );
 			// Encrypts or clears an AI key, as an update does.
 			$settings = Ai_Assist::merge_settings_write( $settings, [] );
 		}
@@ -323,7 +349,7 @@ class Games_Controller extends Base_Controller {
 
 		$game = Game::find( $id );
 		if ( isset( $game->settings ) && $game->settings instanceof \stdClass ) {
-			Ai_Assist::redact_settings_read( $game->settings );
+			self::redact_settings( $game->settings );
 		}
 		return $this->success( $game, 201 );
 	}
@@ -346,6 +372,9 @@ class Games_Controller extends Base_Controller {
 		$rename_report = null;
 		$requested_slug = $request->get_param( 'slug' );
 		if ( $requested_slug !== null && sanitize_title( $requested_slug ) !== $game->slug ) {
+			if ( \BeyondElysium\Services\Demo_Chronicle::is_demo( $game ) ) {
+				return $this->error( 'demo_locked', __( 'A demo chronicle cannot be renamed while it is flagged as a demo. Turn the flag off first.', 'beyond-elysium' ), 403 );
+			}
 			$result = Game::rename( (int) $game->id, $requested_slug );
 
 			if ( ! $result['changed'] ) {
@@ -395,6 +424,7 @@ class Games_Controller extends Base_Controller {
 		}
 
 		// Merges `settings` into the stored settings rather than replacing them.
+		$demo_touched = false;
 		if ( isset( $data['settings'] ) ) {
 			$existing = (array) ( $game->settings ?? new \stdClass() );
 			$incoming = (array) $data['settings'];
@@ -405,6 +435,14 @@ class Games_Controller extends Base_Controller {
 					$incoming['enabled_factions']
 				);
 			}
+			if ( isset( $incoming['demo'] ) ) {
+				$demo_error = self::validate_demo_settings( $incoming['demo'] );
+				if ( $demo_error !== null ) {
+					return $this->error( 'invalid_param', $demo_error, 400 );
+				}
+				$demo_touched = true;
+			}
+			$incoming         = Demo_Chronicle::keep_stored_passwords( $incoming, $existing );
 			$data['settings'] = Ai_Assist::merge_settings_write( $incoming, $existing );
 		}
 
@@ -425,8 +463,13 @@ class Games_Controller extends Base_Controller {
 		if ( ! $updated ) {
 			return $this->error( 'not_found', __( 'Game not found.', 'beyond-elysium' ), 404 );
 		}
+		if ( $demo_touched ) {
+			\BeyondElysium\Services\Demo_Chronicle::is_demo( $updated )
+				? \BeyondElysium\Services\Demo_Chronicle::schedule( $updated )
+				: \BeyondElysium\Services\Demo_Chronicle::unschedule( (int) $updated->id );
+		}
 		if ( isset( $updated->settings ) && $updated->settings instanceof \stdClass ) {
-			Ai_Assist::redact_settings_read( $updated->settings );
+			self::redact_settings( $updated->settings );
 		}
 		if ( $rename_report !== null ) {
 			$updated->rename_report = $rename_report;
@@ -435,8 +478,49 @@ class Games_Controller extends Base_Controller {
 	}
 
 	/**
+	 * Resets a demo chronicle to its declared content now, rather than waiting for its scheduled run.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function reset_demo( $request ) {
+		$game = Game::find_by_slug( $request['slug'] );
+		if ( ! $game ) {
+			return $this->error( 'not_found', __( 'Game not found.', 'beyond-elysium' ), 404 );
+		}
+		if ( ! \BeyondElysium\Services\Demo_Chronicle::is_demo( $game ) ) {
+			return $this->error( 'not_a_demo', __( 'This chronicle is not flagged as a demo.', 'beyond-elysium' ), 400 );
+		}
+		if ( ! \BeyondElysium\Services\Demo_Chronicle::reset( $game ) ) {
+			return $this->error( 'reset_failed', __( 'The reset could not run - check that both demo accounts are still real users.', 'beyond-elysium' ), 500 );
+		}
+		return $this->success( [ 'reset' => true, 'last_reset' => \BeyondElysium\Services\Demo_Chronicle::last_reset( (int) $game->id ) ] );
+	}
+
+	/**
+	 * Whether a chronicle is a demo, its cadence, and when it next resets.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function get_demo_status( $request ) {
+		$game = Game::find_by_slug( $request['game_slug'] );
+		if ( ! $game ) {
+			return $this->error( 'not_found', __( 'Game not found.', 'beyond-elysium' ), 404 );
+		}
+		$is_demo = \BeyondElysium\Services\Demo_Chronicle::is_demo( $game );
+		$next    = $is_demo ? wp_next_scheduled( \BeyondElysium\Services\Demo_Chronicle::RESET_HOOK, [ (int) $game->id ] ) : false;
+		return $this->success( [
+			'on'          => $is_demo,
+			'reset_hours' => $is_demo ? \BeyondElysium\Services\Demo_Chronicle::cadence_hours( $game ) : null,
+			'next_reset'  => $next ? wp_date( 'c', $next ) : null,
+			'last_reset'  => \BeyondElysium\Services\Demo_Chronicle::last_reset( (int) $game->id ),
+		] );
+	}
+
+	/**
 	 * Saves exactly the Chronicle Setup settings an HST may set for their own chronicle: enabled_stacks,
-	 * enabled_factions, require_new_character_approval, accent_color, purchase_scope and starting_xp.
+	 * enabled_factions, require_new_character_approval, accent_color, purchase_scope, starting_xp and secret_passing.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -449,8 +533,12 @@ class Games_Controller extends Base_Controller {
 			return $this->error( 'not_found', __( 'Game not found.', 'beyond-elysium' ), 404 );
 		}
 
+		if ( $request->get_param( 'demo' ) !== null ) {
+			return $this->error( 'demo_requires_site_admin', __( 'Only a site administrator can mark a chronicle as a demo, through the games route.', 'beyond-elysium' ), 400 );
+		}
+
 		$incoming = [];
-		foreach ( [ 'enabled_stacks', 'enabled_factions', 'require_new_character_approval', 'accent_color', 'purchase_scope', 'starting_xp' ] as $field ) {
+		foreach ( [ 'enabled_stacks', 'enabled_factions', 'require_new_character_approval', 'accent_color', 'purchase_scope', 'starting_xp', 'join_requests', 'secret_passing' ] as $field ) {
 			$value = $request->get_param( $field );
 			if ( $value !== null ) {
 				$incoming[ $field ] = $value;
@@ -458,7 +546,15 @@ class Games_Controller extends Base_Controller {
 		}
 
 		if ( empty( $incoming ) ) {
-			return $this->error( 'invalid_param', __( 'At least one of enabled_stacks, enabled_factions, require_new_character_approval, accent_color, purchase_scope, or starting_xp is required.', 'beyond-elysium' ), 400 );
+			return $this->error( 'invalid_param', __( 'At least one of enabled_stacks, enabled_factions, require_new_character_approval, accent_color, purchase_scope, starting_xp, join_requests, or secret_passing is required.', 'beyond-elysium' ), 400 );
+		}
+
+		if ( isset( $incoming['secret_passing'] ) && ! in_array( $incoming['secret_passing'], [ 'off', 'approval', 'immediate' ], true ) ) {
+			return $this->error( 'invalid_param', __( 'secret_passing must be one of: off, approval, immediate.', 'beyond-elysium' ), 400 );
+		}
+
+		if ( isset( $incoming['join_requests'] ) ) {
+			$incoming['join_requests'] = (bool) $incoming['join_requests'];
 		}
 
 		if ( isset( $incoming['starting_xp'] ) && ( ! is_numeric( $incoming['starting_xp'] ) || (int) $incoming['starting_xp'] < 0 ) ) {
@@ -507,7 +603,7 @@ class Games_Controller extends Base_Controller {
 			return $this->error( 'not_found', __( 'Game not found.', 'beyond-elysium' ), 404 );
 		}
 		if ( isset( $updated->settings ) && $updated->settings instanceof \stdClass ) {
-			Ai_Assist::redact_settings_read( $updated->settings );
+			self::redact_settings( $updated->settings );
 		}
 		return $this->success( $updated );
 	}
@@ -537,6 +633,9 @@ class Games_Controller extends Base_Controller {
 		if ( ! $game ) {
 			return $this->error( 'not_found', __( 'Game not found.', 'beyond-elysium' ), 404 );
 		}
+		if ( \BeyondElysium\Services\Demo_Chronicle::is_demo( $game ) ) {
+			return $this->error( 'demo_locked', __( 'A demo chronicle cannot be deleted while it is flagged as a demo. Turn the flag off first.', 'beyond-elysium' ), 403 );
+		}
 
 		$counts = Game::content_counts( $game );
 		if ( ! $request->get_param( 'with_content' ) && array_sum( $counts ) > 0 ) {
@@ -557,7 +656,7 @@ class Games_Controller extends Base_Controller {
 	 * Defines the query parameters accepted by the games collection endpoint: a game_type filter, orderby/order sort
 	 * controls, and page/per_page pagination, each with its allowed values and defaults.
 	 *
-	 * @return array
+	 * @return array<string,array<string,mixed>>
 	 */
 	public function get_collection_params(): array {
 		return [
@@ -621,11 +720,59 @@ class Games_Controller extends Base_Controller {
 	}
 
 	/**
+	 * Removes a game's AI keys and demo account passwords from decoded settings before they are returned.
+	 *
+	 * @param \stdClass $settings
+	 * @return void
+	 */
+	private static function redact_settings( \stdClass $settings ): void {
+		Ai_Assist::redact_settings_read( $settings );
+		Demo_Chronicle::redact_passwords( $settings );
+	}
+
+	/**
+	 * Checks a submitted `settings.demo` object's shape: `on` a bool, `reset_hours` one of the allowed cadences, and
+	 * both `accounts.storyteller`/`accounts.player` real user ids when `on` is true.
+	 *
+	 * @param mixed $demo
+	 * @return string|null An error message, or null when valid.
+	 */
+	private static function validate_demo_settings( $demo ): ?string {
+		if ( ! is_array( $demo ) ) {
+			return __( 'demo must be an object.', 'beyond-elysium' );
+		}
+		if ( isset( $demo['reset_hours'] ) && ! in_array( (int) $demo['reset_hours'], [ 1, 3, 6, 12, 24 ], true ) ) {
+			return __( 'demo.reset_hours must be one of 1, 3, 6, 12, or 24.', 'beyond-elysium' );
+		}
+		if ( ! empty( $demo['on'] ) ) {
+			$accounts = is_array( $demo['accounts'] ?? null ) ? $demo['accounts'] : [];
+			foreach ( [ 'storyteller', 'player' ] as $role ) {
+				$user_id = (int) ( $accounts[ $role ] ?? 0 );
+				if ( ! $user_id || ! get_userdata( $user_id ) || ! is_user_member_of_blog( $user_id ) ) {
+					return sprintf(
+						/* translators: %s: "storyteller" or "player" */
+						__( 'demo.accounts.%s must be a real user id.', 'beyond-elysium' ),
+						$role
+					);
+				}
+				if ( Demo_Chronicle::is_privileged_account( $user_id ) ) {
+					return sprintf(
+						/* translators: %s: "storyteller" or "player" */
+						__( 'demo.accounts.%s cannot be an administrator account.', 'beyond-elysium' ),
+						$role
+					);
+				}
+			}
+		}
+		return null;
+	}
+
+	/**
 	 * Defines the request parameters accepted when creating a game: the required name, an optional slug and game_type, a
 	 * free-text description, an arbitrary settings object, an accessSchema role path and a notifications switch, each
 	 * with its sanitization rule.
 	 *
-	 * @return array
+	 * @return array<string,array<string,mixed>>
 	 */
 	private function get_create_params(): array {
 		return [
@@ -657,7 +804,7 @@ class Games_Controller extends Base_Controller {
 	/**
 	 * The accessSchema role path and the notifications switch, each optional, on create and on update.
 	 *
-	 * @return array
+	 * @return array<string,array<string,mixed>>
 	 */
 	private static function link_params(): array {
 		return [
@@ -674,7 +821,7 @@ class Games_Controller extends Base_Controller {
 	/**
 	 * Defines the request parameters accepted when updating a game: the same fields as create, each optional.
 	 *
-	 * @return array
+	 * @return array<string,array<string,mixed>>
 	 */
 	private function get_update_params(): array {
 		return [

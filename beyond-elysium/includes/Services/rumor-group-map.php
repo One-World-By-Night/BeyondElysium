@@ -19,4 +19,5 @@ return [
 	'fera'       => [ 'group' => 'fera',        'subgroup' => 'auspice' ],
 	'bete'       => [ 'group' => 'fera',        'subgroup' => 'auspice' ],
 	'demon'      => [ 'group' => 'house',       'subgroup' => 'faction' ],
+	'hunter'     => [ 'group' => 'creed',       'subgroup' => null ],
 ];

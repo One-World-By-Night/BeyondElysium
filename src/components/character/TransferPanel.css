@@ -40,3 +40,55 @@
 .be-transfer-panel__status {
 	color: var(--be-gray-6);
 }
+
+.be-transfer-panel__visit-list {
+	list-style: none;
+	margin: 0 0 0.75rem;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.be-transfer-panel__visit {
+	border: 1px solid var(--be-gray-14);
+	border-radius: 3px;
+	padding: 0.5rem 0.75rem;
+}
+
+.be-transfer-panel__visit p {
+	margin: 0 0 0.4rem;
+}
+
+.be-transfer-panel__keep-current,
+.be-transfer-panel__update-log {
+	margin-bottom: 0.75rem;
+}
+
+.be-transfer-panel__note-form {
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+	margin-bottom: 0.75rem;
+	max-width: 24rem;
+}
+
+.be-transfer-panel__note-form label {
+	display: flex;
+	flex-direction: column;
+	gap: 0.2rem;
+	font-size: 0.85rem;
+}
+
+.be-transfer-panel__note-form textarea {
+	padding: 0.4rem 0.5rem;
+	border: 1px solid var(--be-gray-14);
+	border-radius: 3px;
+	font-family: inherit;
+}
+
+.be-transfer-panel__update-log ul {
+	margin: 0.25rem 0 0;
+	padding-left: 1.2rem;
+	font-size: 0.85rem;
+}

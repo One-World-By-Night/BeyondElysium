@@ -94,7 +94,7 @@ class ForkedBlockSplitTest extends TestCase {
 	}
 
 	/**
-	 * Idempotent: an upgrade runs this every time, and a second run must change nothing.
+	 * Idempotent: a second run changes nothing.
 	 */
 	public function test_running_it_twice_is_a_no_op(): void {
 		$once = Seeder::split_stored_definition( 'vampire-disciplines', $this->flat_fork() );

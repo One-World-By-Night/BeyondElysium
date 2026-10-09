@@ -40,3 +40,9 @@
 .be-sheet-style-editor__error {
 	color: var(--be-red-4);
 }
+
+.be-sheet-style-editor__hint {
+	margin: 0.25rem 0 0.5rem;
+	font-size: 0.85rem;
+	font-style: italic;
+}

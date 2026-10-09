@@ -13,8 +13,9 @@ use BeyondElysium\Services\Player_Invites;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * REST controller for a chronicle's players, for the chronicle's Storytellers: the players and their characters, invites
- * by email, and linking characters to a player. Every route answers 404 for a chronicle not linked to accessSchema.
+ * REST controller for a chronicle's players, for the chronicle's Storytellers: the players and their characters,
+ * invites by email, linking characters to a player, and join requests. Every route answers on every chronicle;
+ * `asc_role_path` tells the caller whether accessSchema is linked, for wording only.
  */
 class Chronicle_Players_Controller extends Base_Controller {
 
@@ -92,6 +93,25 @@ class Chronicle_Players_Controller extends Base_Controller {
 				'permission_callback' => $this->permission( 'be_manage_characters' ),
 			],
 		] );
+
+		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/' . $this->rest_base . '/join-requests', [
+			[
+				'methods'             => 'GET',
+				'callback'            => [ $this, 'get_join_requests' ],
+				'permission_callback' => $this->permission( 'be_manage_characters' ),
+			],
+		] );
+
+		foreach ( [ 'approve', 'refuse' ] as $action ) {
+			register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/' . $this->rest_base . "/join-requests/(?P<id>\\d+)/{$action}", [
+				[
+					'methods'             => 'POST',
+					'callback'            => [ $this, "{$action}_join_request" ],
+					'permission_callback' => $this->permission( 'be_manage_characters' ),
+					'args'                => $action === 'refuse' ? [ 'note' => [ 'type' => 'string' ] ] : [],
+				],
+			] );
+		}
 	}
 
 	/**
@@ -102,7 +122,7 @@ class Chronicle_Players_Controller extends Base_Controller {
 	 * @return \WP_REST_Response|\WP_Error
 	 */
 	public function get_items( $request ) {
-		$game = $this->linked_game( $request['game_slug'] );
+		$game = $this->resolve_game( $request['game_slug'] );
 		if ( is_wp_error( $game ) ) {
 			return $game;
 		}
@@ -125,6 +145,7 @@ class Chronicle_Players_Controller extends Base_Controller {
 		return $this->success( [
 			'players'        => $players,
 			'asc_role_path'  => Authorization::asc_role_path( $game, 'player' ),
+			'join_link'      => Chronicle_Players::join_link( $game ),
 		] );
 	}
 
@@ -135,7 +156,7 @@ class Chronicle_Players_Controller extends Base_Controller {
 	 * @return \WP_REST_Response|\WP_Error
 	 */
 	public function create_item( $request ) {
-		$game = $this->linked_game( $request['game_slug'] );
+		$game = $this->resolve_game( $request['game_slug'] );
 		if ( is_wp_error( $game ) ) {
 			return $game;
 		}
@@ -155,7 +176,7 @@ class Chronicle_Players_Controller extends Base_Controller {
 	 * @return \WP_REST_Response|\WP_Error
 	 */
 	public function delete_item( $request ) {
-		$game = $this->linked_game( $request['game_slug'] );
+		$game = $this->resolve_game( $request['game_slug'] );
 		if ( is_wp_error( $game ) ) {
 			return $game;
 		}
@@ -178,7 +199,7 @@ class Chronicle_Players_Controller extends Base_Controller {
 	 * @return \WP_REST_Response|\WP_Error
 	 */
 	public function get_invites( $request ) {
-		$game = $this->linked_game( $request['game_slug'] );
+		$game = $this->resolve_game( $request['game_slug'] );
 		if ( is_wp_error( $game ) ) {
 			return $game;
 		}
@@ -206,7 +227,7 @@ class Chronicle_Players_Controller extends Base_Controller {
 	 * @return \WP_REST_Response|\WP_Error
 	 */
 	public function create_invite( $request ) {
-		$game = $this->linked_game( $request['game_slug'] );
+		$game = $this->resolve_game( $request['game_slug'] );
 		if ( is_wp_error( $game ) ) {
 			return $game;
 		}
@@ -235,7 +256,7 @@ class Chronicle_Players_Controller extends Base_Controller {
 	 * @return \WP_REST_Response|\WP_Error
 	 */
 	public function delete_invite( $request ) {
-		$game = $this->linked_game( $request['game_slug'] );
+		$game = $this->resolve_game( $request['game_slug'] );
 		if ( is_wp_error( $game ) ) {
 			return $game;
 		}
@@ -254,7 +275,7 @@ class Chronicle_Players_Controller extends Base_Controller {
 	 * @return \WP_REST_Response|\WP_Error
 	 */
 	public function link_characters( $request ) {
-		$game = $this->linked_game( $request['game_slug'] );
+		$game = $this->resolve_game( $request['game_slug'] );
 		if ( is_wp_error( $game ) ) {
 			return $game;
 		}
@@ -280,7 +301,7 @@ class Chronicle_Players_Controller extends Base_Controller {
 	 * @return \WP_REST_Response|\WP_Error
 	 */
 	public function unlink_character( $request ) {
-		$game = $this->linked_game( $request['game_slug'] );
+		$game = $this->resolve_game( $request['game_slug'] );
 		if ( is_wp_error( $game ) ) {
 			return $game;
 		}
@@ -289,6 +310,127 @@ class Chronicle_Players_Controller extends Base_Controller {
 			return $this->error( 'not_linked', __( 'That character is not linked to that account in this chronicle.', 'beyond-elysium' ), 404 );
 		}
 		return $this->success( [ 'unlinked' => true ] );
+	}
+
+	/**
+	 * Every join request on this chronicle, each with the applicant's display name and the character or file it
+	 * carries, waiting first.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function get_join_requests( $request ) {
+		$game = $this->resolve_game( $request['game_slug'] );
+		if ( is_wp_error( $game ) ) {
+			return $game;
+		}
+
+		$rows = array_map( function ( $row ) {
+			$user      = get_userdata( (int) $row->wp_user_id );
+			$character = ! empty( $row->character_id ) ? \BeyondElysium\Models\Character::find( (int) $row->character_id ) : null;
+			return [
+				'id'            => (int) $row->id,
+				'wp_user_id'    => (int) $row->wp_user_id,
+				'display_name'  => $user ? $user->display_name : null,
+				'message'       => (string) $row->message,
+				'status'        => (string) $row->status,
+				'created_at'    => (string) $row->created_at,
+				'character'     => $character ? [ 'id' => (int) $character->id, 'name' => (string) $character->name ] : null,
+				'submission_id' => $row->submission_id !== null ? (int) $row->submission_id : null,
+				'note'          => $row->note !== null ? (string) $row->note : null,
+			];
+		}, \BeyondElysium\Models\Join_Request::for_game( (int) $game->id ) );
+
+		usort( $rows, static fn( $a, $b ) => $a['status'] === $b['status'] ? 0 : ( $a['status'] === 'waiting' ? -1 : 1 ) );
+
+		return $this->success( $rows );
+	}
+
+	/**
+	 * Approves a waiting join request: grants membership, activates an attached character or accepts an attached file,
+	 * and emails the applicant.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function approve_join_request( $request ) {
+		$game = $this->resolve_game( $request['game_slug'] );
+		if ( is_wp_error( $game ) ) {
+			return $game;
+		}
+		$join_request = \BeyondElysium\Models\Join_Request::find( (int) $request['id'] );
+		if ( ! $join_request || (int) $join_request->game_id !== (int) $game->id ) {
+			return $this->error( 'not_found', __( 'Join request not found.', 'beyond-elysium' ), 404 );
+		}
+		if ( $join_request->status !== 'waiting' ) {
+			return $this->error( 'already_answered', __( 'This request was already answered.', 'beyond-elysium' ), 409 );
+		}
+		$id = (int) $join_request->id;
+
+		if ( ! empty( $join_request->submission_id ) ) {
+			return $this->error(
+				'review_the_file_instead',
+				__( 'This request carries a Grapevine file - review and accept it from Import, which closes this request too.', 'beyond-elysium' ),
+				400
+			);
+		}
+
+		Chronicle_Players::add( $game, (int) $join_request->wp_user_id );
+
+		if ( ! empty( $join_request->character_id ) ) {
+			\BeyondElysium\Models\Character::update_header( (int) $join_request->character_id, [ 'status' => 'active' ] );
+			// update_header() approves and emails the request tied to the character it just activated.
+			return $this->success( \BeyondElysium\Models\Join_Request::find( $id ) );
+		}
+
+		\BeyondElysium\Models\Join_Request::approve( $id, get_current_user_id() );
+		\BeyondElysium\Core\Notifications::join_answered( $game, $join_request, true, null );
+
+		return $this->success( \BeyondElysium\Models\Join_Request::find( $id ) );
+	}
+
+	/**
+	 * Refuses a waiting join request, with an optional note, deleting a pending character started for it.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function refuse_join_request( $request ) {
+		$game = $this->resolve_game( $request['game_slug'] );
+		if ( is_wp_error( $game ) ) {
+			return $game;
+		}
+		$join_request = \BeyondElysium\Models\Join_Request::find( (int) $request['id'] );
+		if ( ! $join_request || (int) $join_request->game_id !== (int) $game->id ) {
+			return $this->error( 'not_found', __( 'Join request not found.', 'beyond-elysium' ), 404 );
+		}
+		if ( $join_request->status !== 'waiting' ) {
+			return $this->error( 'already_answered', __( 'This request was already answered.', 'beyond-elysium' ), 409 );
+		}
+		$id = (int) $join_request->id;
+
+		$note = $request->get_param( 'note' ) ? sanitize_textarea_field( (string) $request->get_param( 'note' ) ) : null;
+
+		if ( ! empty( $join_request->character_id ) ) {
+			$character = \BeyondElysium\Models\Character::find( (int) $join_request->character_id );
+			if ( $character && $character->status === 'pending' ) {
+				\BeyondElysium\Models\Character::delete( (int) $character->id );
+			}
+		}
+		if ( ! empty( $join_request->submission_id ) ) {
+			$submission = \BeyondElysium\Models\Submission::find( (int) $join_request->submission_id );
+			if ( $submission && $submission->state === 'waiting' ) {
+				\BeyondElysium\Models\Submission::transition( (int) $submission->id, 'refused', [
+					'answered_by' => get_current_user_id(),
+					'answer_note' => $note,
+				] );
+			}
+		}
+
+		\BeyondElysium\Models\Join_Request::refuse( $id, get_current_user_id(), $note );
+		\BeyondElysium\Core\Notifications::join_answered( $game, $join_request, false, $note );
+
+		return $this->success( \BeyondElysium\Models\Join_Request::find( $id ) );
 	}
 
 	/**
@@ -322,24 +464,6 @@ class Chronicle_Players_Controller extends Base_Controller {
 			}
 		}
 		return $named;
-	}
-
-	/**
-	 * Resolves a game by its slug when it is linked to accessSchema: the site reads it and the chronicle names its role
-	 * path. Any other chronicle answers 404.
-	 *
-	 * @param string $game_slug
-	 * @return object|\WP_Error
-	 */
-	protected function linked_game( string $game_slug ) {
-		$game = $this->resolve_game( $game_slug );
-		if ( is_wp_error( $game ) ) {
-			return $game;
-		}
-		if ( Authorization::asc_role_path( $game, 'player' ) === null ) {
-			return $this->error( 'players_unavailable', __( 'This chronicle is not linked to OWbN accessSchema, so its players are not managed here.', 'beyond-elysium' ), 404 );
-		}
-		return $game;
 	}
 
 	/**

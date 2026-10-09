@@ -1,10 +1,10 @@
 # Profile Settings
 
-Two Beyond Elysium checkboxes on your ordinary WordPress profile screen: whether you're emailed about your own approved or rejected character changes, and - site admin only - whether a specific user may customize how their character sheets look.
+Beyond Elysium fields on your ordinary WordPress profile screen: whether you're emailed about your own approved or rejected character changes, how you hear about plot posts and new things your characters can see, and - site admin only - whether a specific user may customize how their character sheets look.
 
 ## Who can use this
 
-Everyone with an account on the site sees **Change Notifications** on their own profile. Only a site admin sees **Sheet Customization** at all, on their own profile or anyone else's.
+Everyone with an account on the site sees **Change Notifications** and **Plot posts and new things your characters can see** on their own profile. Only a site admin sees **Sheet Customization** at all, on their own profile or anyone else's.
 
 ## How to get there
 
@@ -38,6 +38,7 @@ Both save with the profile screen's own **Update Profile** button - there's no s
 - **The grant is per user, not per character or per chronicle.** Once checked, that person can style every character they can already edit, in every chronicle they belong to.
 - **Storytellers (HST and AST) already have sheet customization** without this checkbox - this is how a plain player gets it. See [Customize Appearance](sheet-customize.md).
 - **This is the only piece of change-notification control a player has directly.** Whether a chronicle sends these emails at all is a separate, chronicle-level setting a site admin controls - see [Chronicle Access](chronicle-access.md). Opting out here means you never get the email regardless of that setting; leaving it unchecked only gets you the email from a chronicle that has notifications turned on.
+- **Your Storytellers can see that you opted out.** Each chronicle's [Email Log](email-log.md) shows "They turned off email from Beyond Elysium" beside anything it would have sent you. It shows nothing else about why, and never the body of an email.
 - **This is a WordPress profile screen, not a Beyond Elysium page.** Everything else on it - your name, email, password - is ordinary WordPress, unrelated to this plugin.
 
 ## Troubleshooting

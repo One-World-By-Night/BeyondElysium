@@ -38,7 +38,7 @@ class Backgrounds_Catalog {
 	 *
 	 * @param string $block_slug
 	 * @param string $game_slug
-	 * @return array
+	 * @return array<int,object>
 	 */
 	public static function items_for( string $block_slug, string $game_slug ): array {
 		$block = Schema_Block::find_for_game( $block_slug, $game_slug );
@@ -51,7 +51,7 @@ class Backgrounds_Catalog {
 	 * names.
 	 *
 	 * @param string $game_slug
-	 * @return array[] {name, stacks: string[], is_influence: bool}
+	 * @return array<int,array<string,mixed>> {name, stacks: string[], is_influence: bool}
 	 */
 	public static function union_names( string $game_slug ): array {
 		$by_name = [];

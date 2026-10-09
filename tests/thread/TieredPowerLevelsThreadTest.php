@@ -46,7 +46,7 @@ class TieredPowerLevelsThreadTest extends WP_UnitTestCase {
 	}
 
 	public function test_each_rungs_tier_follows_the_declared_quota_not_one_tier_per_rank(): void {
-		// The correction behind the 45 -> 27 repricing.
+		// Celerity's five rungs follow the declared quota.
 		$celerity = $this->family( 'vampire-disciplines', 'Celerity' );
 		$tiers    = array_column( Power_Levels::ladder( $celerity ), 'tier' );
 

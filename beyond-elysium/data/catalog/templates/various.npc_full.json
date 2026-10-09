@@ -1,0 +1,54 @@
+{
+  "format": 1,
+  "slug": "various.npc_full",
+  "name": "Various NPC Sheet",
+  "kind": "template",
+  "provenance": {
+    "sources": [
+      "Grapevine 3.01's own `VariousClass` (GV-SOURCEMAP.md): the generic character class for a creature type Grapevine has no dedicated support for."
+    ],
+    "tool": "read directly, 2026-10-04"
+  },
+  "definition": {
+    "columns": 6,
+    "version": 1,
+    "sections": [
+      { "order": 1, "title": "Identity", "width": "half", "column": 1, "display": null, "collapsed": false, "block_slug": "various-identity", "former_titles": [ "Various Identity" ] },
+      { "order": 2, "title": "Archetypes", "width": "half", "column": 1, "display": null, "collapsed": false, "block_slug": "met-archetypes" },
+      { "order": 3, "title": "Tempers", "width": "half", "column": 1, "display": null, "collapsed": false, "block_slug": "various-tempers", "former_titles": [ "Various Tempers" ] },
+      { "order": 4, "title": "Health", "width": "half", "column": 1, "display": null, "collapsed": false, "block_slug": "various-health", "former_titles": [ "Various Health" ] },
+      { "order": 5, "title": "Physical Traits (Positive)", "width": "third", "column": 1, "display": "multiplier_dot", "collapsed": false, "block_slug": "met-physical-traits" },
+      { "order": 6, "title": "Social Traits (Positive)", "width": "third", "column": 1, "display": "multiplier_dot", "collapsed": false, "block_slug": "met-social-traits" },
+      { "order": 7, "title": "Mental Traits (Positive)", "width": "third", "column": 1, "display": "multiplier_dot", "collapsed": false, "block_slug": "met-mental-traits" },
+      { "order": 8, "title": "Physical Traits (Negative)", "width": "third", "column": 1, "display": null, "collapsed": false, "block_slug": "met-physical-traits-neg" },
+      { "order": 9, "title": "Social Traits (Negative)", "width": "third", "column": 1, "display": null, "collapsed": false, "block_slug": "met-social-traits-neg" },
+      { "order": 10, "title": "Mental Traits (Negative)", "width": "third", "column": 1, "display": null, "collapsed": false, "block_slug": "met-mental-traits-neg" },
+      { "order": 11, "title": "Abilities", "width": "half", "column": 1, "display": "multiplier_dot", "collapsed": false, "block_slug": "various-abilities", "former_titles": [ "Various Abilities" ] },
+      { "order": 12, "title": "Backgrounds", "width": "half", "column": 1, "display": "multiplier_dot", "collapsed": false, "block_slug": "various-backgrounds", "former_titles": [ "Various Backgrounds" ] },
+      { "order": 13, "title": "Merits", "width": "third", "column": 1, "display": null, "collapsed": false, "block_slug": "various-merits" },
+      { "order": 14, "title": "Flaws", "width": "third", "column": 1, "display": null, "collapsed": false, "block_slug": "various-flaws" },
+      { "order": 15, "title": "Derangements", "width": "third", "column": 1, "display": null, "collapsed": false, "block_slug": "met-derangements" },
+      { "order": 16, "title": "Other Powers", "width": "full", "column": 1, "display": null, "collapsed": false, "block_slug": "various-powers", "former_titles": [ "Powers", "Various Powers" ] },
+      { "order": 17, "title": "Disciplines (Vampire)", "width": "full", "column": 1, "display": null, "collapsed": false, "block_slug": "vampire-disciplines" },
+      { "order": 18, "title": "Blood Magic (Vampire)", "width": "full", "column": 1, "display": null, "collapsed": false, "block_slug": "vampire-blood-magic" },
+      { "order": 19, "title": "Gifts (Werewolf)", "width": "full", "column": 1, "display": null, "collapsed": false, "block_slug": "werewolf-gifts" },
+      { "order": 20, "title": "Gifts (Fera)", "width": "full", "column": 1, "display": null, "collapsed": false, "block_slug": "fera-gifts" },
+      { "order": 21, "title": "Arts (Changeling)", "width": "full", "column": 1, "display": null, "collapsed": false, "block_slug": "changeling-arts" },
+      { "order": 22, "title": "Realms (Changeling)", "width": "full", "column": 1, "display": null, "collapsed": false, "block_slug": "changeling-realms" },
+      { "order": 23, "title": "Spheres (Mage)", "width": "full", "column": 1, "display": null, "collapsed": false, "block_slug": "mage-spheres" },
+      { "order": 24, "title": "Arcanoi (Wraith)", "width": "full", "column": 1, "display": null, "collapsed": false, "block_slug": "wraith-arcanoi" },
+      { "order": 25, "title": "Lores (Demon)", "width": "full", "column": 1, "display": null, "collapsed": false, "block_slug": "demon-evocations" },
+      { "order": 26, "title": "Edges (Hunter)", "width": "full", "column": 1, "display": null, "collapsed": false, "block_slug": "hunter-edges" },
+      { "order": 27, "title": "Disciplines (Kuei-Jin)", "width": "full", "column": 1, "display": null, "collapsed": false, "block_slug": "kueijin-disciplines" },
+      { "order": 28, "title": "Shintai (Kuei-Jin)", "width": "full", "column": 1, "display": null, "collapsed": false, "block_slug": "kueijin-shintai" },
+      { "order": 29, "title": "Hekau (Mummy)", "width": "full", "column": 1, "display": null, "collapsed": false, "block_slug": "mummy-hekau" },
+      { "order": 30, "title": "Psychic Phenomena", "width": "full", "column": 1, "display": null, "collapsed": false, "block_slug": "mortal-psychic" },
+      { "order": 31, "title": "Hedge Magic", "width": "full", "column": 1, "display": null, "collapsed": false, "block_slug": "mortal-hedge-magic" },
+      { "order": 32, "title": "Martial Arts", "width": "full", "column": 1, "display": null, "collapsed": false, "block_slug": "mortal-martial-arts" },
+      { "order": 33, "title": "Theurgy", "width": "full", "column": 1, "display": null, "collapsed": false, "block_slug": "mortal-theurgy" },
+      { "order": 34, "title": "Fomori Powers", "width": "full", "column": 1, "display": null, "collapsed": false, "block_slug": "mortal-fomori" },
+      { "order": 35, "title": "Bioenhancements", "width": "full", "column": 1, "display": null, "collapsed": false, "block_slug": "mortal-bioenhancements" },
+      { "order": 36, "title": "Roleplaying Notes", "width": "full", "column": 1, "display": null, "collapsed": false, "block_slug": "npc-roleplaying-notes" }
+    ]
+  }
+}

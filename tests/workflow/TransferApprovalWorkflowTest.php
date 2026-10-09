@@ -39,6 +39,16 @@ class TransferApprovalWorkflowTest extends WP_UnitTestCase {
 			}
 			$response = rest_get_server()->dispatch( $request );
 			wp_set_current_user( $as );
+		} elseif ( preg_match( '#/([a-z0-9\-]+)/transfers/([^/]+)/(from-host|from-home)#', $url, $m ) ) {
+			$as      = get_current_user_id();
+			wp_set_current_user( 0 );
+			$body    = json_decode( (string) ( $args['body'] ?? '{}' ), true );
+			$request = new WP_REST_Request( 'POST', "/be/v1/{$m[1]}/transfers/{$m[2]}/{$m[3]}" );
+			foreach ( (array) $body as $key => $value ) {
+				$request->set_param( $key, $value );
+			}
+			$response = rest_get_server()->dispatch( $request );
+			wp_set_current_user( $as );
 		} else {
 			return $preempt;
 		}
@@ -84,7 +94,7 @@ class TransferApprovalWorkflowTest extends WP_UnitTestCase {
 		] );
 		$this->assertSame( 200, $sent->get_status(), wp_json_encode( $sent->get_data() ) );
 		$home_row = $sent->get_data()['transfer'];
-		$this->assertSame( 'pending', $home_row->state );
+		$this->assertSame( 'offered', $home_row->state );
 
 		// Host by Night has an offer, not a character; its Storyteller is told, its player is not.
 		$offer = Transfer::find_open( Character::find( $traveller )->uuid, 'inbound' );
@@ -106,13 +116,14 @@ class TransferApprovalWorkflowTest extends WP_UnitTestCase {
 		$this->assertSame( 1, Character::count_for_game( $this->host ) );
 		$this->assertSame( $this->home, Character::find( $traveller )->owner_slug, 'the home character never moves' );
 
-		// The home Storyteller marks it received abroad.
-		wp_set_current_user( $home_st );
-		$this->assertSame( 'abroad', $this->request( 'POST', "/be/v1/{$this->home}/transfers/{$home_row->id}/acknowledge" )->get_data()->state );
+		// The host's own accept calls home directly, and home's row moves by itself. The character shows active at
+		// home the whole time (a visit never takes it away).
+		$this->assertSame( 'visiting', Transfer::find( (int) $home_row->id )->state );
 
-		// The visit ends.
+		// The visit ends, and home learns it ended too.
 		wp_set_current_user( $host_st );
-		$this->assertSame( 'sent_home', $this->request( 'POST', "/be/v1/{$this->host}/transfers/{$offer->id}/send-home" )->get_data()->state );
+		$this->assertSame( 'ended', $this->request( 'POST', "/be/v1/{$this->host}/transfers/{$offer->id}/send-home" )->get_data()->state );
+		$this->assertSame( 'ended', Transfer::find( (int) $home_row->id )->state );
 
 		remove_filter( 'pre_http_request', [ $this, 'loopback' ], 10 );
 		remove_filter( 'pre_wp_mail', [ $this, 'capture_mail' ], 10 );

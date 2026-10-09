@@ -3,6 +3,10 @@
  */
 import { useEffect, useRef } from '@wordpress/element';
 import AiAssistButton from './AiAssistButton';
+import {
+	siteTinymceDefaults,
+	withoutTables,
+} from '../../lib/siteEditorDefaults';
 import './HtmlEditor.css';
 
 // window.wp.editor's type is declared in types/wp-media.d.ts, alongside window.wp.media.
@@ -28,8 +32,8 @@ export interface HtmlEditorProps {
 }
 
 /**
- * Initializes WordPress's classic TinyMCE editor on a textarea identified by `id`, with a bold/italic/lists/link
- * toolbar and optional quicktags and media-button support.
+ * Initializes WordPress's classic TinyMCE editor on a textarea identified by `id`, with the site's own real editor
+ * toolbar and plugins, optional quicktags and media-button support, and table support when asked for.
  */
 export function HtmlEditor( {
 	id,
@@ -49,13 +53,26 @@ export function HtmlEditor( {
 			return;
 		}
 
+		// The site's real, filter-applied settings (its installed editor plugin's toolbar and buttons), falling
+		// back to a minimal fixed set only when the hidden instance hasn't rendered yet (e.g. logged out).
+		const siteDefaults = siteTinymceDefaults();
+		const base = siteDefaults
+			? tables
+				? siteDefaults
+				: withoutTables( siteDefaults )
+			: {
+					plugins: tables
+						? 'lists link paste table'
+						: 'lists link paste',
+					toolbar1: tables
+						? 'bold italic bullist numlist link unlink removeformat table undo redo'
+						: 'bold italic bullist numlist link unlink removeformat undo redo',
+				};
+
 		wp.editor.initialize( id, {
 			tinymce: {
+				...base,
 				wpautop: true,
-				plugins: tables ? 'lists link paste table' : 'lists link paste',
-				toolbar1: tables
-					? 'bold italic bullist numlist link unlink removeformat table undo redo'
-					: 'bold italic bullist numlist link unlink removeformat undo redo',
 				menubar: false,
 				statusbar: false,
 				height: rows * 24,

@@ -487,4 +487,25 @@ return [
 			'wraith-resources'    => [ 'Pathos' => [ 'permanent' => 5, 'temporary' => 5 ], 'Corpus' => [ 'permanent' => 5, 'temporary' => 5 ], 'Willpower' => [ 'permanent' => 4, 'temporary' => 4 ], 'Angst' => [ 'permanent' => 3, 'temporary' => 3 ] ],
 		],
 	],
+
+	// -- Hunter ------------------------------------------------------------------------
+	[
+		'name'        => 'Marcus Chen',
+		'stack_slug'  => 'hunter',
+		'player_name' => 'Stock Sheet',
+		'xp_earned'   => 20,
+		'xp_unspent'  => 4,
+		'sheet_data'  => [
+			'met-archetypes'      => [ 'Nature' => 'Penitent', 'Demeanor' => 'Caregiver' ],
+			'hunter-identity'     => [ 'Creed' => 'Innocence', 'Handle' => 'chemist105' ],
+			'met-physical-traits' => [ [ 'name' => 'Quick', 'count' => 1 ] ],
+			'met-social-traits'   => [ [ 'name' => 'Friendly', 'count' => 2 ], [ 'name' => 'Empathetic', 'count' => 1 ] ],
+			'met-mental-traits'   => [ [ 'name' => 'Observant', 'count' => 2 ], [ 'name' => 'Intuitive', 'count' => 1 ] ],
+			'hunter-abilities'    => [ [ 'name' => 'Academics', 'count' => 2 ], [ 'name' => 'Empathy', 'count' => 2 ], [ 'name' => 'Medicine', 'count' => 1 ] ],
+			'hunter-backgrounds'  => [ [ 'name' => 'Allies', 'count' => 2 ], [ 'name' => 'Contacts', 'count' => 1 ] ],
+			'hunter-virtues'      => [ 'Mercy' => [ 'permanent' => 2, 'temporary' => 0, 'spent' => 1 ], 'Vision' => [ 'permanent' => 1, 'temporary' => 0, 'spent' => 0 ], 'Zeal' => [ 'permanent' => 0, 'temporary' => 0, 'spent' => 0 ] ],
+			'hunter-edges'        => [ [ 'name' => 'Innocence Path', 'power_name' => 'Hide', 'spent_rank' => 'touched', 'spent_cost' => 1, 'spent_pool' => 'Mercy' ] ],
+			'hunter-resources'    => [ 'Willpower' => [ 'permanent' => 3, 'temporary' => 3 ], 'Conviction' => [ 'permanent' => 3, 'temporary' => 3 ] ],
+		],
+	],
 ];

@@ -38,7 +38,7 @@ class Faction_Member {
 	}
 
 	/**
-	 * Every member of one faction, oldest first (so a proposer added first stays first).
+	 * Every member of one faction, oldest first.
 	 *
 	 * @param int $faction_id
 	 * @return object[]
@@ -91,9 +91,10 @@ class Faction_Member {
 	 * @param int  $added_by
 	 * @param bool $is_leader
 	 * @param string|null $rank
+	 * @param bool $is_public Whether the membership shows on the character's public profile.
 	 * @return int|false Insert ID, or false if already a member or the insert failed.
 	 */
-	public static function add( int $faction_id, int $character_id, int $added_by, bool $is_leader = false, ?string $rank = null ) {
+	public static function add( int $faction_id, int $character_id, int $added_by, bool $is_leader = false, ?string $rank = null, bool $is_public = true ) {
 		if ( self::find_for( $faction_id, $character_id ) !== null ) {
 			return false;
 		}
@@ -103,6 +104,7 @@ class Faction_Member {
 			'character_id' => $character_id,
 			'member_rank'  => $rank,
 			'is_leader'    => $is_leader ? 1 : 0,
+			'is_public'    => $is_public ? 1 : 0,
 			'added_by'     => $added_by,
 			'created_at'   => current_time( 'mysql' ),
 		] );
@@ -140,6 +142,21 @@ class Faction_Member {
 			}
 		}
 		return Manager::update( 'faction_members', [ 'is_leader' => $is_leader ? 1 : 0 ], [
+			'faction_id'   => $faction_id,
+			'character_id' => $character_id,
+		] ) !== false;
+	}
+
+	/**
+	 * Sets whether a membership shows on the character's public profile.
+	 *
+	 * @param int  $faction_id
+	 * @param int  $character_id
+	 * @param bool $is_public
+	 * @return bool
+	 */
+	public static function set_public( int $faction_id, int $character_id, bool $is_public ): bool {
+		return Manager::update( 'faction_members', [ 'is_public' => $is_public ? 1 : 0 ], [
 			'faction_id'   => $faction_id,
 			'character_id' => $character_id,
 		] ) !== false;
@@ -189,14 +206,16 @@ class Faction_Member {
 	}
 
 	/**
-	 * Casts a row's `is_leader` flag to a real boolean.
+	 * Casts a row's `is_leader` and `is_public` flags to real booleans.
 	 *
 	 * @param object|null $row
 	 * @return object|null
 	 */
 	private static function decode( $row ) {
-		if ( $row && property_exists( $row, 'is_leader' ) ) {
-			$row->is_leader = (bool) $row->is_leader;
+		foreach ( [ 'is_leader', 'is_public' ] as $flag ) {
+			if ( $row && property_exists( $row, $flag ) ) {
+				$row->$flag = (bool) $row->$flag;
+			}
 		}
 		return $row;
 	}

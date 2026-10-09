@@ -303,7 +303,7 @@ class GamesControllerTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The AST half of the same ruling: an AST does not hold be_manage_chronicle_setup.
+	 * The AST half of the same rule: an AST does not hold be_manage_chronicle_setup.
 	 */
 	public function test_an_ast_cannot_save_the_chronicles_setup_settings(): void {
 		$slug    = $this->create_game( 'thread-test-ast-chronicle-setup-game' )->get_data()->slug;
@@ -322,7 +322,7 @@ class GamesControllerTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The new route only ever reads enabled_stacks/enabled_factions/require_new_character_approval.
+	 * The route only ever reads enabled_stacks/enabled_factions/require_new_character_approval.
 	 */
 	public function test_the_chronicle_setup_route_ignores_fields_it_does_not_own(): void {
 		$slug    = $this->create_game( 'thread-test-chronicle-setup-scope-game' )->get_data()->slug;
@@ -341,6 +341,74 @@ class GamesControllerTest extends WP_UnitTestCase {
 		$this->assertSame( 200, $response->get_status() );
 		$game = \BeyondElysium\Models\Game::find_by_slug( $slug );
 		$this->assertNotSame( 'Renamed by an HST through the narrow route', $game->name );
+	}
+
+	/**
+	 * Only `PUT /games/{slug}` (be_manage_games, site-administrator-only) may ever write settings.demo.
+	 */
+	public function test_the_chronicle_setup_route_refuses_a_demo_flag_outright(): void {
+		$slug    = $this->create_game( 'thread-test-chronicle-setup-demo-refused' )->get_data()->slug;
+		$game_id = \BeyondElysium\Models\Game::find_by_slug( $slug )->id;
+
+		$hst_id = self::factory()->user->create( [ 'role' => 'editor' ] );
+		Game_Member::set_role( (int) $game_id, $hst_id, 'hst' );
+		wp_set_current_user( $hst_id );
+
+		$request = new WP_REST_Request( 'PUT', "/be/v1/{$slug}/chronicle-setup" );
+		$request->set_url_params( [ 'game_slug' => $slug ] );
+		$request->set_param( 'demo', [ 'on' => true ] );
+		$response = rest_get_server()->dispatch( $request );
+
+		$this->assertSame( 400, $response->get_status() );
+		$this->assertSame( 'demo_requires_site_admin', $response->as_error()->get_error_code() );
+	}
+
+	public function test_a_site_administrator_can_turn_on_the_demo_flag_with_real_accounts(): void {
+		$slug        = $this->create_game( 'thread-test-demo-flag-on' )->get_data()->slug;
+		$storyteller = self::factory()->user->create( [ 'role' => 'editor' ] );
+		$player      = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+
+		$request = new WP_REST_Request( 'PUT', "/be/v1/games/{$slug}" );
+		$request->set_url_params( [ 'slug' => $slug ] );
+		$request->set_param( 'settings', [
+			'demo' => [ 'on' => true, 'reset_hours' => 3, 'accounts' => [ 'storyteller' => $storyteller, 'player' => $player ] ],
+		] );
+		$response = rest_get_server()->dispatch( $request );
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertTrue( $response->get_data()->settings->demo->on );
+		$this->assertSame( 3, $response->get_data()->settings->demo->reset_hours );
+	}
+
+	public function test_turning_on_the_demo_flag_with_an_invalid_cadence_is_rejected(): void {
+		$slug        = $this->create_game( 'thread-test-demo-flag-bad-cadence' )->get_data()->slug;
+		$storyteller = self::factory()->user->create( [ 'role' => 'editor' ] );
+		$player      = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+
+		$request = new WP_REST_Request( 'PUT', "/be/v1/games/{$slug}" );
+		$request->set_url_params( [ 'slug' => $slug ] );
+		$request->set_param( 'settings', [
+			'demo' => [ 'on' => true, 'reset_hours' => 5, 'accounts' => [ 'storyteller' => $storyteller, 'player' => $player ] ],
+		] );
+		$response = rest_get_server()->dispatch( $request );
+
+		$this->assertSame( 400, $response->get_status() );
+	}
+
+	public function test_turning_on_the_demo_flag_with_a_fake_account_id_is_rejected(): void {
+		$slug = $this->create_game( 'thread-test-demo-flag-bad-account' )->get_data()->slug;
+
+		$request = new WP_REST_Request( 'PUT', "/be/v1/games/{$slug}" );
+		$request->set_url_params( [ 'slug' => $slug ] );
+		$request->set_param( 'settings', [
+			'demo' => [ 'on' => true, 'accounts' => [ 'storyteller' => 999999999, 'player' => 999999998 ] ],
+		] );
+		$response = rest_get_server()->dispatch( $request );
+
+		$this->assertSame( 400, $response->get_status() );
+
+		$game = \BeyondElysium\Models\Game::find_by_slug( $slug );
+		$this->assertTrue( empty( $game->settings->demo ), 'a rejected write must leave settings.demo unset' );
 	}
 
 	public function test_an_hst_can_save_and_clear_their_own_chronicles_accent_color(): void {

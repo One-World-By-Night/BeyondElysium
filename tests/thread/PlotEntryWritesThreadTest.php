@@ -14,7 +14,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * The generic entries route let any player post an action entry onto another character's action-allocation plot.
+ * The generic entries route's writes: a player cannot post onto another character's action-allocation plot, forged
+ * ledger and allocator rows are refused, and an ordinary action still posts.
  */
 class PlotEntryWritesThreadTest extends WP_UnitTestCase {
 

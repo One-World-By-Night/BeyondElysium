@@ -9,7 +9,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * (found triaging).
+ * A write that did not land is never reported as saved.
  */
 class FailedSaveResponsesThreadTest extends WP_UnitTestCase {
 
@@ -36,7 +36,7 @@ class FailedSaveResponsesThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Fails every write of one kind to one table, as a lost connection or lock timeout would.
+	 * Fails every write of one kind to one table.
 	 */
 	public function break_writes( string $query ): string {
 		global $wpdb;

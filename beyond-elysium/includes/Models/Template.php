@@ -85,9 +85,9 @@ class Template {
 	 * Return a merged template view for a game: every global template, with that game's own overrides replacing the
 	 * global of the same (stack_slug, template_type) pair.
 	 *
-	 * @param int   $game_id
-	 * @param array $args Filters: stack_slug, template_type.
-	 * @return array Rows, each with an added `is_override` boolean.
+	 * @param int                 $game_id
+	 * @param array<string,mixed> $args Filters: stack_slug, template_type.
+	 * @return array<int,object> Rows, each with an added `is_override` boolean.
 	 */
 	public static function for_game( int $game_id, array $args = [] ): array {
 		$globals   = self::rows( [ 'game_id IS NULL' ], [], $args );
@@ -109,8 +109,8 @@ class Template {
 	/**
 	 * Return only global templates (game_id IS NULL).
 	 *
-	 * @param array $args Filters: stack_slug, template_type, per_page, offset.
-	 * @return array
+	 * @param array<string,mixed> $args Filters: stack_slug, template_type, per_page, offset.
+	 * @return array<int,object>
 	 */
 	public static function globals( array $args = [] ): array {
 		return self::rows( [ 'game_id IS NULL' ], [], $args );
@@ -119,8 +119,8 @@ class Template {
 	/**
 	 * Every template row regardless of scope.
 	 *
-	 * @param array $args Filters: stack_slug, template_type.
-	 * @return array
+	 * @param array<string,mixed> $args Filters: stack_slug, template_type.
+	 * @return array<int,object>
 	 */
 	public static function all( array $args = [] ): array {
 		return self::rows( [ '1=1' ], [], $args );
@@ -129,7 +129,7 @@ class Template {
 	/**
 	 * Insert a new template.
 	 *
-	 * @param array $data Fields: game_id, stack_slug, name, template_type, layout.
+	 * @param array<string,mixed> $data Fields: game_id, stack_slug, name, template_type, layout.
 	 * @return int Insert ID, or 0 on failure (including a layout that fails validation).
 	 */
 	public static function create( array $data ): int {
@@ -164,8 +164,8 @@ class Template {
 	/**
 	 * Update a template.
 	 *
-	 * @param int   $id
-	 * @param array $data Fields: name, template_type, layout.
+	 * @param int                 $id
+	 * @param array<string,mixed> $data Fields: name, template_type, layout.
 	 * @return bool False when the template does not exist or a supplied layout is invalid.
 	 */
 	public static function update( int $id, array $data ): bool {
@@ -415,10 +415,10 @@ class Template {
 	/**
 	 * Shared query helper behind globals(), for_game(), and similar callers.
 	 *
-	 * @param string[] $where_extra SQL fragments already ANDed together with placeholders.
-	 * @param array    $values_extra Placeholder values for $where_extra, in order.
-	 * @param array    $args Filters: stack_slug, template_type, per_page, offset.
-	 * @return array
+	 * @param string[]              $where_extra SQL fragments already ANDed together with placeholders.
+	 * @param array<int,int|string> $values_extra Placeholder values for $where_extra, in order.
+	 * @param array<string,mixed>   $args Filters: stack_slug, template_type, per_page, offset.
+	 * @return array<int,object>
 	 */
 	private static function rows( array $where_extra, array $values_extra, array $args ): array {
 		global $wpdb;
@@ -546,7 +546,7 @@ class Template {
 	 *
 	 * @param mixed $layout
 	 * @return mixed The decoded array, or the original value if it was already something
-	 *               other than a JSON string (so validate_layout() reports it uniformly).
+	 *               other than a JSON string.
 	 */
 	private static function to_array_layout( $layout ) {
 		if ( is_string( $layout ) ) {

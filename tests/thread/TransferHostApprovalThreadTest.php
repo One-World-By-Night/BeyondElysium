@@ -71,6 +71,13 @@ class TransferHostApprovalThreadTest extends WP_UnitTestCase {
 				$request->set_param( $key, $value );
 			}
 			$response = rest_get_server()->dispatch( $request );
+		} elseif ( preg_match( '#/([a-z0-9\-]+)/transfers/([^/]+)/(from-host|from-home)#', $url, $m ) ) {
+			$body    = json_decode( (string) ( $args['body'] ?? '{}' ), true );
+			$request = new WP_REST_Request( 'POST', "/be/v1/{$m[1]}/transfers/{$m[2]}/{$m[3]}" );
+			foreach ( (array) $body as $key => $value ) {
+				$request->set_param( $key, $value );
+			}
+			$response = rest_get_server()->dispatch( $request );
 		} else {
 			return $preempt;
 		}
@@ -188,7 +195,7 @@ class TransferHostApprovalThreadTest extends WP_UnitTestCase {
 		$response = $this->post( "/be/v1/{$this->host_slug}/transfers/{$row->id}/refuse" );
 
 		$this->assertSame( 200, $response->get_status() );
-		$this->assertSame( 'declined', Transfer::find( (int) $row->id )->state );
+		$this->assertSame( 'refused', Transfer::find( (int) $row->id )->state );
 		$this->assertNull( Transfer::find( (int) $row->id )->payload );
 		$this->assertSame( 0, Character::count_for_game( $this->host_slug ) );
 	}
@@ -218,7 +225,7 @@ class TransferHostApprovalThreadTest extends WP_UnitTestCase {
 			'character_id' => $this->character_id, 'host_site' => home_url(), 'host_slug' => $this->host_slug,
 		] );
 		$home_row = $initiated->get_data()['transfer'];
-		$this->assertSame( 'pending', $home_row->state, 'the host has not accepted yet' );
+		$this->assertSame( 'offered', $home_row->state, 'the host has not accepted yet' );
 		$offer = Transfer::find_open( $this->character->uuid, 'inbound' );
 		$this->assertSame( 'offered', $offer->state );
 
@@ -246,7 +253,7 @@ class TransferHostApprovalThreadTest extends WP_UnitTestCase {
 		$first  = $visiting();
 		$second = $visiting();
 
-		$this->assertSame( 'sent_home', $this->post( "/be/v1/{$this->host_slug}/transfers/{$first}/send-home" )->get_data()->state );
+		$this->assertSame( 'ended', $this->post( "/be/v1/{$this->host_slug}/transfers/{$first}/send-home" )->get_data()->state );
 		$this->assertSame( 'retained', $this->post( "/be/v1/{$this->host_slug}/transfers/{$second}/retain" )->get_data()->state );
 		$this->assertSame( 409, $this->post( "/be/v1/{$this->host_slug}/transfers/{$first}/retain" )->get_status() );
 	}

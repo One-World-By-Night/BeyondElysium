@@ -14,7 +14,7 @@ wp-admin sidebar → Beyond Elysium → System Config → Games tab.
 
 - A table of every chronicle on the install: **Name**, **Slug**, **Type**, **Created**, and **Actions** (**Edit**, **Delete**). "No games yet. Create the first one below." when none exist.
 - **+ New Game** - opens a form: **Name** (required), **Slug** (optional - derived from the name if left blank), **Game Type** (defaults to `met`), **Description**, and **Save**/**Cancel**. No AI Assist button here - a chronicle you're still creating has nothing yet for it to attach to.
-- **Edit** on a row opens the same form, pre-filled. Its **Description** field gains an **AI Assist** button. Changing **Slug** here shows a warning about what a rename moves.
+- **Edit** on a row opens the same form, pre-filled. Its **Description** field gains an **AI Assist** button. Changing **Slug** here shows a warning about what a rename moves. Below the form, a **Demo chronicle** section turns this chronicle into one that resets itself on a schedule - see [Demo Chronicle](demo-chronicle.md).
 - **Delete** on a row asks one confirmation. If the chronicle holds nothing, it just asks "Delete "X"?"; if it holds real content, the confirmation names what - for example, "Delete "X" and everything in it - 22 characters, 1 plot? This cannot be undone." - and a yes deletes all of it.
 - After a successful rename, a notice names the new slug and how many characters, schema block forks, page references, and Elementor widgets moved with it.
 
@@ -64,6 +64,7 @@ wp-admin sidebar → Beyond Elysium → System Config → Games tab.
 
 ## Related
 
+- [Demo Chronicle](demo-chronicle.md)
 - [Chronicle Setup](chronicle-setup.md)
 - [Chronicle Access](chronicle-access.md)
 - [Action & Rumor Settings](apr-settings.md)

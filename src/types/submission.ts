@@ -48,6 +48,7 @@ export interface Submission {
 	format: 'GVBE' | 'XML';
 	file_hash: string;
 	state: 'waiting' | 'accepted' | 'refused' | 'withdrawn' | 'expired';
+	keep_current: boolean;
 	character_id: number | null;
 	answered_by: number | null;
 	answer_note: string | null;

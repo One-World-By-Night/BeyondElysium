@@ -119,7 +119,7 @@ class Seeder {
 	/**
 	 * Every schema block the plugin seeds: the declared catalog's blocks.
 	 *
-	 * @return array[]
+	 * @return array<int,array<string,mixed>>
 	 */
 	public static function get_blocks_to_seed(): array {
 		return array_values( \BeyondElysium\Services\Catalog_Reader::blocks_to_seed() );
@@ -189,7 +189,7 @@ class Seeder {
 	/**
 	 * Builds the insert array for every system creature stack.
 	 *
-	 * @return array[]
+	 * @return array<int,array<string,mixed>>
 	 */
 	private static function get_stacks_to_seed(): array {
 		return array_values( \BeyondElysium\Services\Catalog_Reader::stacks_to_seed() );
@@ -306,6 +306,10 @@ class Seeder {
 		return $definition;
 	}
 
+	/**
+	 * @param array<int,array<string,mixed>> $levels
+	 * @return array{levels:array<int,array<string,mixed>>,elder:array<string,array<int,array<string,mixed>>>,overflow:array<int,array<string,mixed>>}
+	 */
 	private static function split_levels( string $slug, array $levels ): array {
 		$meta     = self::TIERED_POWER_META[ $slug ] ?? null;
 		$ladder   = $meta['ladder'] ?? [ 'basic' => 2, 'intermediate' => 2, 'advanced' => 1 ];
@@ -339,7 +343,7 @@ class Seeder {
 			$available = $by_rank[ (string) $rank ] ?? [];
 			foreach ( $available as $position => $level ) {
 				if ( $position < (int) $quota ) {
-					// The rung's number is its place on the declared ladder. Nothing infers it.
+					// The rung's number is its place on the declared ladder.
 					$level['level'] = ++$number;
 					$final[]        = $level;
 					continue;
@@ -369,9 +373,9 @@ class Seeder {
 	/**
 	 * Builds a block's `_meta`.
 	 *
-	 * @param string $slug
-	 * @param array  $powers
-	 * @return array
+	 * @param string                         $slug
+	 * @param array<int,array<string,mixed>> $powers
+	 * @return array<string,mixed>
 	 */
 	private static function meta_for( string $slug, array $powers ): array {
 		$declared = self::TIERED_POWER_META[ $slug ] ?? [
@@ -390,7 +394,7 @@ class Seeder {
 	/**
 	 * The per-rank cost a block's own seeded data actually uses, by plurality across every level carrying one.
 	 *
-	 * @param array $powers
+	 * @param array<int,array<string,mixed>> $powers
 	 * @return array<string,int>
 	 */
 	private static function meta_costs_for( array $powers ): array {
@@ -544,8 +548,8 @@ class Seeder {
 	 * Numbers a flat [block_slug, column, display] entry list into full layout sections, assigning a single sequential
 	 * `order` down the whole list.
 	 *
-	 * @param array $entries Each: [ string $block_slug, int $column, string|null $display ].
-	 * @return array[]
+	 * @param array<int,array<int,mixed>> $entries Each: [ string $block_slug, int $column, string|null $display ].
+	 * @return array<int,array<string,mixed>>
 	 */
 	private static function build_layout_sections( array $entries ): array {
 		$sections = [];
@@ -577,7 +581,7 @@ class Seeder {
 	/**
 	 * Per-stack [block_slug, width, display] lists defining each creature stack's default sheet layout.
 	 *
-	 * @return array<string,array>
+	 * @return array<string,array<int,array<int,mixed>>>
 	 */
 	private static function default_template_sections(): array {
 		$dot = 'multiplier_dot';
@@ -642,6 +646,29 @@ class Seeder {
 
 		$fera = $werewolf_like( 'fera' );
 
+		// Hunter pairs Resources (Willpower/Conviction) with its own Health row, and Virtues with its own row; Edges
+		// is its own single full-width power block.
+		$hunter = [
+			[ 'hunter-identity', 'half', null ], [ 'met-archetypes', 'half', null ],
+			[ 'hunter-resources', 'full', null ],
+			[ 'hunter-virtues', 'half', null ], [ 'hunter-health', 'half', null ],
+			[ 'met-physical-traits', 'third', $dot ], [ 'met-social-traits', 'third', $dot ], [ 'met-mental-traits', 'third', $dot ],
+			[ 'met-physical-traits-neg', 'third', null ], [ 'met-social-traits-neg', 'third', null ], [ 'met-mental-traits-neg', 'third', null ],
+			[ 'hunter-abilities', 'half', $dot ], [ 'hunter-backgrounds', 'half', $dot ],
+			[ 'hunter-edges', 'full', null ],
+			[ 'hunter-merits', 'half', null ], [ 'hunter-flaws', 'half', null ], [ 'met-derangements', 'half', null ],
+		];
+
+		// Various has no power section and no Merits/Flaws at all - the generic catch-all carries only the universal pieces.
+		$various = [
+			[ 'various-identity', 'half', null ], [ 'met-archetypes', 'half', null ],
+			[ 'various-tempers', 'half', null ], [ 'various-health', 'half', null ],
+			[ 'met-physical-traits', 'third', $dot ], [ 'met-social-traits', 'third', $dot ], [ 'met-mental-traits', 'third', $dot ],
+			[ 'met-physical-traits-neg', 'third', null ], [ 'met-social-traits-neg', 'third', null ], [ 'met-mental-traits-neg', 'third', null ],
+			[ 'various-abilities', 'half', $dot ], [ 'various-backgrounds', 'half', $dot ],
+			[ 'various-powers', 'full', null ],
+		];
+
 		return [
 			'vampire'    => $vampire,
 			'werewolf'   => $werewolf_like( 'werewolf' ),
@@ -654,6 +681,8 @@ class Seeder {
 			'kueijin'    => $standard( 'kueijin', [ 'kueijin-disciplines' ], $merits_and_flaws( 'kueijin' ) ),
 			'fera'       => $fera,
 			'bete'       => $fera,
+			'hunter'     => $hunter,
+			'various'    => $various,
 		];
 	}
 
@@ -662,9 +691,7 @@ class Seeder {
 	 * fresh install.
 	 *
 	 * @param string $stack_slug
-	 * @return array|null Null if this stack has no shipped-sheet layout (falls back to
-	 *                     Layout_Generator instead, which repair_stale_default_layouts()
-	 *                     does not need since only vampire's shipped layout is affected).
+	 * @return array<string,mixed>|null Null if this stack has no shipped-sheet layout.
 	 */
 	public static function rebuild_default_layout_for_stack( string $stack_slug ): ?array {
 		$ported = self::default_template_sections();
@@ -685,7 +712,7 @@ class Seeder {
 	const DEMO_SEEDED_OPTION = 'be_demo_seeded';
 
 	/**
-	 * The demo character fixtures: 22 characters, two per creature type, in `demo-characters.php`.
+	 * The demo character fixtures, in `demo-characters.php`: two per creature type, one for Hunter.
 	 *
 	 * @return array<int,array<string,mixed>>
 	 */
@@ -713,7 +740,7 @@ class Seeder {
 				'name'        => 'Beyond Elysium Demo',
 				'slug'        => 'be-demo',
 				'game_type'   => 'met',
-				'description' => 'Ships with the plugin so you can see it working immediately - 22 real characters across every supported creature type. Safe to delete once you have your own game running.',
+				'description' => 'Ships with the plugin so you can see it working immediately - 23 real characters across every supported creature type. Safe to delete once you have your own game running.',
 			] );
 			if ( ! $game_id ) {
 				return;

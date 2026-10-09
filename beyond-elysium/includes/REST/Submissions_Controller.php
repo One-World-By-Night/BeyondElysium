@@ -9,12 +9,13 @@ use BeyondElysium\Database\Transaction;
 use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Creature_Stack;
 use BeyondElysium\Models\Game;
-use BeyondElysium\Models\Game_Member;
+use BeyondElysium\Models\Join_Request;
 use BeyondElysium\Models\Submission;
 use BeyondElysium\Models\Transfer;
 use BeyondElysium\Services\GEX_Parser;
 use BeyondElysium\Services\GEX_Xml_Parser;
 use BeyondElysium\Services\GV_Binary_Reader;
+use BeyondElysium\Services\Keep_Current;
 use BeyondElysium\Services\Sheet_Verification;
 use BeyondElysium\Services\St_Visibility;
 
@@ -190,14 +191,27 @@ class Submissions_Controller extends Base_Controller {
 			return $this->error( 'not_allowed', $check, 400 );
 		}
 
-		$user_id     = get_current_user_id();
-		$is_member   = Authorization::can( 'be_edit_own_characters' );
-		if ( ! $is_member && $this->has_pending_join_character( $game, $user_id ) ) {
-			return $this->error(
-				'join_already_requested',
-				__( 'Your character is already waiting for this chronicle\'s Storytellers to approve it.', 'beyond-elysium' ),
-				409
-			);
+		$user_id      = get_current_user_id();
+		$is_member    = Authorization::can( 'be_edit_own_characters' );
+		$join_request = ! $is_member ? Join_Request::find_waiting( (int) $game->id, $user_id ) : null;
+		if ( ! $is_member ) {
+			if ( $join_request && ( ! empty( $join_request->character_id ) || ! empty( $join_request->submission_id ) ) ) {
+				return $this->error(
+					'join_already_requested',
+					__( 'Your character is already waiting for this chronicle\'s Storytellers to approve it.', 'beyond-elysium' ),
+					409
+				);
+			}
+			if ( ! $join_request && $arrival === 'joining' && ! Join_Request::open_on( $game ) ) {
+				return $this->error( 'join_requests_off', __( 'This chronicle is not taking join requests right now.', 'beyond-elysium' ), 403 );
+			}
+			if ( ! $join_request && $this->has_pending_join_character( $game, $user_id ) ) {
+				return $this->error(
+					'join_already_requested',
+					__( 'Your character is already waiting for this chronicle\'s Storytellers to approve it.', 'beyond-elysium' ),
+					409
+				);
+			}
 		}
 
 		if ( Submission::count_waiting( (int) $game->id ) >= self::MAX_WAITING ) {
@@ -251,6 +265,7 @@ class Submissions_Controller extends Base_Controller {
 				'file_hash'            => hash( 'sha256', $xml ),
 				'parsed'               => $encoded_parsed,
 				'verification_source'  => $verification_source,
+				'keep_current'         => (bool) $request->get_param( 'keep_current' ),
 			] );
 		} catch ( \RuntimeException $e ) {
 			return $this->error(
@@ -267,6 +282,9 @@ class Submissions_Controller extends Base_Controller {
 		$row = Submission::find( $id );
 		if ( ! $row ) {
 			return $this->error( 'submission_not_found', __( 'Submission not found.', 'beyond-elysium' ), 404 );
+		}
+		if ( $join_request ) {
+			Join_Request::tie_submission( (int) $join_request->id, (int) $id );
 		}
 		Notifications::submission_received( $game, $row, wp_get_current_user() );
 
@@ -420,10 +438,12 @@ class Submissions_Controller extends Base_Controller {
 
 		// Resolved before the transaction opens.
 		$verified_issuer = null;
+		$verified_code   = null;
 		if ( $pre->verification_source !== null ) {
 			$verification = Sheet_Verification::check( (string) $pre->verification_source, $character );
 			if ( in_array( $verification['status'], [ 'unchanged', 'changed', 'revoked' ], true ) ) {
 				$verified_issuer = $verification['issuer'];
+				$verified_code   = $verification['code'] ?? null;
 			}
 		}
 
@@ -484,12 +504,18 @@ class Submissions_Controller extends Base_Controller {
 				throw new \RuntimeException( 'The submitted file held no character to import.' );
 			}
 
-			Game_Member::ensure_player( (int) $game->id, (int) $row->submitted_by );
+			\BeyondElysium\Services\Chronicle_Players::add( $game, (int) $row->submitted_by );
+			$tied = Join_Request::find_waiting( (int) $game->id, (int) $row->submitted_by );
+			if ( $tied && (int) ( $tied->submission_id ?? 0 ) === (int) $row->id ) {
+				Join_Request::approve( (int) $tied->id, get_current_user_id() );
+				Notifications::join_answered( $game, $tied, true, null );
+			}
 
-			$arrival = in_array( $body_arrival, [ 'joining', 'visiting' ], true ) ? $body_arrival : $row->arrival;
+			$arrival       = in_array( $body_arrival, [ 'joining', 'visiting' ], true ) ? $body_arrival : $row->arrival;
+			$paired_character = null;
 			if ( $arrival === 'visiting' ) {
 				$character_uuid = Character::find( (int) $character_row['id'] )->uuid ?? '';
-				if ( $character_uuid !== '' && Transfer::find_open( $character_uuid, 'inbound' ) === null ) {
+				if ( $character_uuid !== '' && Transfer::find_open_visit( $character_uuid, home_url(), $game->slug, 'inbound' ) === null ) {
 					Transfer::create( [
 						'character_uuid' => $character_uuid,
 						'character_id'   => (int) $character_row['id'],
@@ -504,8 +530,12 @@ class Submissions_Controller extends Base_Controller {
 						'host_chronicle' => $game->name,
 						'payload_hash'   => hash( 'sha256', (string) $row->parsed ),
 						'initiated_by'   => (int) $row->submitted_by,
+						'keep_current'   => $row->keep_current ? 1 : 0,
 						'notes'          => __( 'Arrived with a Grapevine file its player sent in.', 'beyond-elysium' ),
 					] );
+					if ( $row->keep_current && $verified_issuer !== null && $verified_code !== null ) {
+						$paired_character = Character::find( (int) $character_row['id'] );
+					}
 				}
 			}
 
@@ -519,6 +549,16 @@ class Submissions_Controller extends Base_Controller {
 			return $this->error( 'commit_failed', $e->getMessage(), 500 );
 		}
 		Transaction::commit( $savepoint );
+
+		if ( $paired_character !== null ) {
+			Keep_Current::send_pairing_request(
+				$paired_character,
+				(string) ( $verified_issuer['site'] ?? '' ),
+				(string) ( $verified_issuer['slug'] ?? '' ),
+				(string) $verified_code,
+				$game->name
+			);
+		}
 
 		Game_Stats_Controller::invalidate( $game->slug );
 		$final = Submission::find( (int) $row->id );
@@ -608,7 +648,7 @@ class Submissions_Controller extends Base_Controller {
 	public function get_my_submissions( $request ) {
 		$rows = Submission::for_user( get_current_user_id() );
 
-		// Always filtered: this route is not chronicle-scoped.
+		// Always filtered.
 		foreach ( $rows as $row ) {
 			St_Visibility::filter_submission( $row, null, false );
 		}
@@ -674,7 +714,7 @@ class Submissions_Controller extends Base_Controller {
 	private function creation_check( object $game, array $character ): ?string {
 		$stack_slug = (string) ( $character['race'] ?? '' );
 
-		$allowed_stacks = array_column( Creature_Stack::all_for_game( $game->slug ), 'slug' );
+		$allowed_stacks = array_column( Creature_Stack::all_for_game( $game->slug, [], false, \BeyondElysium\Core\Authorization::can( 'be_manage_characters' ) ), 'slug' );
 		if ( ! in_array( $stack_slug, $allowed_stacks, true ) ) {
 			$stack_name = $this->stack_display_name( $stack_slug );
 			return $stack_name === null

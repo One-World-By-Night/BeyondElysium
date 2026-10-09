@@ -48,9 +48,9 @@ class CharacterDeleteCleanupThreadTest extends WP_UnitTestCase {
 		return Transfer::find( $id );
 	}
 
-	public function test_a_pending_transfer_closes_and_its_code_stops_verifying(): void {
+	public function test_an_offered_transfer_closes_and_its_code_stops_verifying(): void {
 		$id       = $this->character();
-		$transfer = $this->outbound( $id, 'pending' );
+		$transfer = $this->outbound( $id, 'offered' );
 
 		Character::delete( $id );
 
@@ -58,9 +58,9 @@ class CharacterDeleteCleanupThreadTest extends WP_UnitTestCase {
 		$this->assertNotNull( Attestation::find( (int) $transfer->attestation_id )->revoked_at, 'a host can no longer accept the offer' );
 	}
 
-	public function test_a_character_abroad_is_released_from_home(): void {
+	public function test_a_character_visiting_elsewhere_is_released_from_home(): void {
 		$id       = $this->character();
-		$transfer = $this->outbound( $id, 'abroad' );
+		$transfer = $this->outbound( $id, 'visiting' );
 
 		Character::delete( $id );
 
@@ -79,7 +79,7 @@ class CharacterDeleteCleanupThreadTest extends WP_UnitTestCase {
 
 		Character::delete( $id );
 
-		$this->assertSame( 'sent_home', Transfer::find( $visit )->state );
+		$this->assertSame( 'ended', Transfer::find( $visit )->state );
 	}
 
 	public function test_a_deleted_characters_allocation_plot_is_not_left_for_other_players_to_read(): void {

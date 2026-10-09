@@ -1,0 +1,25 @@
+.be-add-section {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5rem;
+	margin: 1rem 0;
+}
+
+.be-add-section__status,
+.be-add-section__hint {
+	color: var(--be-gray-9);
+	font-size: 0.85rem;
+}
+
+.be-add-section__hint {
+	flex-basis: 100%;
+	margin: 0;
+}
+
+.be-add-section__error {
+	flex-basis: 100%;
+	margin: 0;
+	color: var(--be-red-6);
+	font-size: 0.85rem;
+}

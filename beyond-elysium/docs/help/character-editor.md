@@ -52,9 +52,26 @@ Shown only to a Storyteller editing an NPC, separate from the sheet above - what
 - Who can see this profile at all - the same audience picker a plot or item uses. An NPC with no profile set up simply doesn't appear in Who's Who for anyone but a Storyteller.
 - **Save Profile**.
 
+### Who's Who Profile (a player's own non-NPC character)
+
+Shown only to a player editing their own character that isn't an NPC - a narrower version of the section above, with no choice of audience beyond showing or hiding the character:
+
+- **Display Name** - shown instead of the character's real name in Who's Who, if set.
+- **Description** - the write-up other players read. A `[ST]...[/ST]` marked passage is stripped out for a non-Storyteller viewer, same as everywhere else.
+- **Show this character in Who's Who** - a checkbox. Unchecked, the default, the character doesn't appear in [Who's Who](whos-who.md) at all, for anyone but a Storyteller.
+- **Name me as the player behind this character** - a checkbox. Checked, your account's own display name shows alongside the character in Who's Who.
+- A portrait, uploaded directly from this screen - separate from the character's main sheet portrait, and separate from an NPC's own Who's Who image.
+- **Save Profile**.
+
+A player can't pick a restricted audience here - a rule-based audience stays a Storyteller's own tool, set from the NPC section above on a character a Storyteller manages.
+
 ### Secrets (NPCs only)
 
 Shown only to a Storyteller editing an NPC, once it already exists - a write-up kept separate from the NPC's own sheet, with its own audience and reveals to specific characters. See [Secrets](secrets.md).
+
+### Hooks (NPCs only)
+
+Shown only to a Storyteller editing an NPC that already exists - a folded panel listing every plot this NPC is connected to, split into **Open** and **Resolved**, each with its latest entry's date. Click a plot's name to open it on the Storyteller Toolkit. An NPC connected to nothing yet shows "None." under both headings.
 
 ### Background and Notes
 
@@ -83,19 +100,31 @@ The rest of the screen is the chronicle's own template, one box per section, in 
 
 See [Resource Pools & Identity Fields](pools-identity-editor.md) for both of the last two in depth.
 
+### Add a section (Various characters)
+
+A Various character's editor lists every creature type's powers from the start, so nothing has to be added before you can pick Obtenebration, a Gift or a Sphere: Disciplines and Blood Magic (Vampire), Gifts (Werewolf and Fera), Arts and Realms (Changeling), Spheres (Mage), Arcanoi (Wraith), Lores (Demon), Edges (Hunter), Disciplines and Shintai (Kuei-Jin), Hekau (Mummy), and Psychic Phenomena, Hedge Magic, Martial Arts, Theurgy, Fomori Powers and Bioenhancements. Abilities, Backgrounds, Merits, Flaws and Tempers are each one list holding every creature type's entries with duplicates removed, and **Other Powers** is for powers you make up. A section with nothing in it is left off the finished sheet.
+
+A Storyteller editing or creating a character whose creature type is **Various** also sees an **Add a section** button under the sections, for everything the editor does not already list (rituals, rotes, combination Disciplines, and the rest). It opens a list of the sections not on the sheet yet, which you can type into to narrow it, grouped under a bold heading for the creature type that owns it (Vampire, Werewolf, Mage, and the rest), then the sections several creature types share, then any that belong to none. Pick one and click **Add**: an empty box for it appears on the sheet, and the first entry you add to it is what keeps it there - a section that holds nothing is not saved. Sections a Various character already holds show on its sheet, in print and in the signed export without being added again. Only a Storyteller sees this button, and only on Various; every other creature type keeps the sections its template lists.
+
+An NPC's Storyteller-only roleplaying-notes section (voice, mannerisms, motivations, and the like) also carries a **Draft roleplaying notes** button beside its heading, disabled once every one of its fields already has text (a field you have never written counts as empty, so a brand-new NPC can be drafted straight away). On a demo chronicle it always stays clickable so it can explain that drafting is switched off. See [AI Writing Assist](writing-assist.md).
+
+### Reordering a List
+
+A trait list or powers section a chronicle has set to let players choose their own order (see [Schema Blocks](schema-blocks.md)) shows flat, in whatever order you last left it, with no grouping - and a **Reorder** button above the list. Click it to drag rows into place, or use the **▲**/**▼** buttons beside each one; **Save order** sends the new order right away, with no approval and no XP cost, since nothing about what you hold is changing. **Cancel** leaves the order exactly as it was. A chronicle that turns this off for a section goes back to the normal grouped display, and the Reorder button disappears.
+
 ### Pending Changes
 
 Everything you change in the sections above queues here instead of touching the sheet immediately:
 
 - A running list, one line per change, naming what changed and, once its price loads, its XP cost and whether it needs Storyteller review. A trait or power that isn't in the catalog reads "Price set by a Storyteller on approval" instead of a cost: it has no price yet, and the total leaves it out until a Storyteller sets one.
 - **Total** XP across everything queued, and **Unspent after** - what your XP would be once it's all applied. As a player, this turns into a warning if it would go negative.
-- **Submit Changes** - sends every queued change to the server. As a player, this is disabled if it would leave you with negative XP.
+- **Submit Changes** - sends everything queued to the server together, in one request. As a player, this is disabled if it would leave you with negative XP.
 - **Discard** - opens a confirmation ("Discard unsaved changes?") before reverting every field to what's on the sheet now and returning you to the character's Sheet.
 
 After submitting, you may see one or both of these:
 
-- A note that some changes saved and some didn't, naming how many of each - review and click **Submit Changes** again to retry only what's still queued.
-- A note that some changes were submitted and are awaiting Storyteller approval - they won't appear on the sheet until then.
+- A note that the submission failed - nothing in it was saved, since the whole set succeeds or fails together. Review it and click **Submit Changes** again to retry.
+- A note that some changes were submitted and are awaiting Storyteller approval - they won't appear on the sheet until then. If your chronicle always waits on a removal, a lower rating, a relabel or a rename (Approval Rules), anything caught by that switch waits together with whatever else you submitted alongside it, even an addition that would otherwise go straight through.
 
 If you leave with anything queued and unsubmitted, your browser warns you before you navigate away, and your edits are saved to this browser automatically. Next time you open the same character here, a banner offers **Restore** or **Discard** for that saved draft.
 
@@ -104,8 +133,8 @@ If you leave with anything queued and unsubmitted, your browser warns you before
 ### Create a new character
 
 1. Open My Chronicle and pick your chronicle, if you play in more than one.
-2. On the **Characters** tab, click **+ New Character**.
-3. Type a **Name** and pick a **Creature Type**.
+2. On the **Characters** tab, click **+ New Character**. A Storyteller can also do this from the Characters tab of the [Storyteller Toolkit](storyteller-toolkit.md), where **+ New NPC** opens the form with the NPC box already ticked.
+3. Type a **Name** and pick a **Creature Type**. A Storyteller also sees **Various**, the creature type that can hold any section from any creature type.
 4. Fill in whichever sections you want the character to start with.
 5. Click **Create Character**.
 
@@ -140,9 +169,12 @@ If you leave with anything queued and unsubmitted, your browser warns you before
 - **Health fills in on its own.** A new character's Health section is pre-filled the moment it's created - it isn't something you build yourself.
 - **Some fields are Storyteller-only, even on your own character.** Your status, your assigned narrator, and your Storyteller's private notes about you never appear here for a player, and can't be changed here even by you.
 - **Numbered powers add up.** Buying a fresh power at level 3 costs levels 1, 2, and 3 together - not level 3 alone.
+- **Some powers spend Traits instead of XP.** A few catalogs (Hunter Edges, for one) price a power in Traits spent from a named pool elsewhere on the sheet, never XP - buying one marks that many dots on the pool "spent" (shown beside its dots) without lowering the pool's own rating, and removing the power frees them again. Buying one needs enough unspent dots in that pool, and some catalogs also require already holding that power's own path at the rank below it.
+- **A pool that reads "Raise with [pool] (N)" doesn't take a dot click.** A few pools (Hunter's Virtues, for one) only rise by converting N temporary points from another named pool - click the button, not the dots, and it refuses if that pool doesn't have enough temporary points right now.
 - **A custom name always needs review.** Typing a name that isn't in the catalog only saves at all where that section allows it, and even then it always goes to a Storyteller for approval, no matter how your chronicle has auto-approval configured.
 - **Dots are all one size** - on this screen, on the sheet, and on a signed PDF. A pool's points and a trait's rating use the same dot.
 - **Drafts are per-device.** Your in-progress edits autosave to this browser as you make them, so a closed tab or a crash doesn't lose your work - but that draft lives only on the device you typed it on, and only until you submit or discard it.
+- **A kept-current visiting copy can't be edited here.** While this character has an open, agreed kept-current visit elsewhere, editing or submitting a change is refused until the visit ends - "Kept current from [chronicle]. Make changes there." Edit it at its real home instead. See [Send Sheet](transfer.md).
 
 ## Troubleshooting
 
@@ -151,7 +183,8 @@ If you leave with anything queued and unsubmitted, your browser warns you before
 - **A name I typed says it isn't in the catalog.** Check the spelling first. If it's genuinely new, this section may not accept custom entries at all - ask a Storyteller.
 - **"Your character is already waiting for this chronicle's Storytellers to approve it."** You already have a join request pending here - wait for a Storyteller to review it before starting another.
 - **I can't open a character I know exists.** Either it isn't linked to your account yet, or it belongs to someone else and you're not a Storyteller here - ask a Storyteller to assign it to you.
-- **Some changes saved and some didn't.** A partial failure - review what's still queued and click **Submit Changes** again to retry just those.
+- **Nothing I submitted saved.** The whole set is submitted together and fails together - review the error, fix what's wrong, and click **Submit Changes** again.
+- **"Kept current from [chronicle]. Make changes there."** This character is a kept-current visiting copy - edit it at the chronicle named instead; it reaches here on its own.
 
 ## Related
 
@@ -160,6 +193,7 @@ If you leave with anything queued and unsubmitted, your browser warns you before
 - [Powers](power-editor.md)
 - [Resource Pools & Identity Fields](pools-identity-editor.md)
 - [Approval Queue](approval-queue.md)
+- [Send Sheet](transfer.md)
 - [AI Writing Assist](writing-assist.md)
 - [Who's Who](whos-who.md)
 - [My Queue](my-queue.md)

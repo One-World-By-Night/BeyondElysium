@@ -736,6 +736,14 @@ export function WaitingForReview( { gameSlug }: WaitingForReviewProps ) {
 					{ verification && (
 						<VerificationNotice verification={ verification } />
 					) }
+					{ submissionReview.submission.keep_current && (
+						<p className="be-incoming-transfers__keep-current-note">
+							{ __(
+								'The player wants this kept current with their home chronicle.',
+								'beyond-elysium'
+							) }
+						</p>
+					) }
 					<p>
 						<label>
 							<input

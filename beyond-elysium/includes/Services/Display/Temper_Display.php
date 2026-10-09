@@ -38,7 +38,7 @@ class Temper_Display {
 				. str_repeat( self::SPENT, max( 0, $permanent - $temporary ) );
 		}
 
-		// Character-based, never byte-based: every dot is three bytes in UTF-8.
+		// Character-based, never byte-based.
 		$groups   = array_chunk( mb_str_split( $dots, 1, 'UTF-8' ), self::GROUP );
 		$rendered = implode( ' ', array_map( static fn( array $group ): string => implode( '', $group ), $groups ) );
 

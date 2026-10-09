@@ -28,7 +28,7 @@ class CatalogTranslationMigrationThreadTest extends WP_UnitTestCase {
 	}
 
 	public function tearDown(): void {
-		// DELETE, never TRUNCATE - the same non-negotiable as setUp()'s own comment.
+		// DELETE, never TRUNCATE.
 		global $wpdb;
 		$wpdb->query( "DELETE FROM {$wpdb->prefix}be_translations" );
 		$wpdb->query( "DELETE FROM {$wpdb->prefix}be_translation_strings" );
@@ -219,8 +219,8 @@ class CatalogTranslationMigrationThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * A real, honest gap, not a silent one: vampire-rituals' items are tradition-prefixed ("Thaumaturgy: Ward Versus
-	 * Ghouls (basic)", build_met_rituals()'s own naming).
+	 * A known gap: vampire-rituals' items are tradition-prefixed ("Thaumaturgy: Ward Versus Ghouls (basic)",
+	 * build_met_rituals()'s own naming).
 	 */
 	public function test_vampire_rituals_has_zero_coverage_via_pass_2_alone(): void {
 		Schema::migrate_catalog_translations_to_table();

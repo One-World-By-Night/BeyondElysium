@@ -3,9 +3,11 @@
 namespace BeyondElysium\Services;
 
 use BeyondElysium\Models\Character;
+use BeyondElysium\Models\Connection;
 use BeyondElysium\Models\Game_Session;
 use BeyondElysium\Models\Plot_Entry;
 use BeyondElysium\Models\Release_Batch;
+use BeyondElysium\Models\World_Object;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -74,12 +76,13 @@ class Downtime_Window {
 	 *
 	 * @param int    $game_id
 	 * @param string $game_date `Y-m-d`.
-	 * @return array[] Each: plot_id, character_id, character_name, player_id, player_name,
+	 * @return array<int,array<string,mixed>> Each: plot_id, character_id, character_name, player_id, player_name,
 	 *                  action_count, last_action_at, answered, answer_release_state, window_state,
-	 *                  assigned_to (null when unassigned).
+	 *                  assigned_to (null when unassigned), connections.
 	 */
 	public static function queue_for_date( int $game_id, string $game_date ): array {
-		$rows = [];
+		$rows     = [];
+		$plot_ids = [];
 
 		foreach ( Action_Allocator::plots_for_date( $game_id, $game_date ) as $plot ) {
 			$character = Character::find( (int) $plot->character_id );
@@ -90,7 +93,8 @@ class Downtime_Window {
 			[ $action_count, $last_action_at, $answer ] = self::last_action_and_answer( (int) $plot->plot_id );
 			$player                                     = $character->wp_user_id ? get_userdata( (int) $character->wp_user_id ) : null;
 
-			$rows[] = [
+			$plot_ids[] = (int) $plot->plot_id;
+			$rows[]     = [
 				'plot_id'              => (int) $plot->plot_id,
 				'character_id'         => (int) $character->id,
 				'character_name'       => (string) $character->name,
@@ -102,8 +106,15 @@ class Downtime_Window {
 				'answer_release_state' => self::answer_release_state( $answer ),
 				'window_state'         => self::state( $game_id, $game_date, (int) $character->id ),
 				'assigned_to'          => $plot->assigned_to !== null ? (int) $plot->assigned_to : null,
+				'connections'          => [],
 			];
 		}
+
+		$connections_by_plot = self::connections_by_plot( $plot_ids );
+		foreach ( $rows as &$row ) {
+			$row['connections'] = $connections_by_plot[ $row['plot_id'] ] ?? [];
+		}
+		unset( $row );
 
 		usort( $rows, static function ( $a, $b ) {
 			if ( $a['answered'] !== $b['answered'] ) {
@@ -116,11 +127,80 @@ class Downtime_Window {
 	}
 
 	/**
+	 * Every plot's own characters, NPCs, items and locations - one connections query for the whole list of plot ids,
+	 * never one per row. Excludes each plot's own primary actor (`Action_Allocator::ACTOR_LABEL`), already carried
+	 * on the row as `character_name`.
+	 *
+	 * @param int[] $plot_ids
+	 * @return array<int,array<int,array{type:string,id:int,name:string}>> Keyed by plot_id.
+	 */
+	private static function connections_by_plot( array $plot_ids ): array {
+		if ( empty( $plot_ids ) ) {
+			return [];
+		}
+
+		$by_plot          = array_fill_keys( $plot_ids, [] );
+		$character_cache  = [];
+		$object_cache     = [];
+
+		foreach ( Connection::for_entities( 'plot', $plot_ids ) as $connection ) {
+			if ( $connection->label === Action_Allocator::ACTOR_LABEL ) {
+				continue;
+			}
+
+			if ( $connection->source_type === 'plot' ) {
+				$plot_id    = (int) $connection->source_id;
+				$other_type = $connection->target_type;
+				$other_id   = (int) $connection->target_id;
+			} elseif ( $connection->target_type === 'plot' ) {
+				$plot_id    = (int) $connection->target_id;
+				$other_type = $connection->source_type;
+				$other_id   = (int) $connection->source_id;
+			} else {
+				continue;
+			}
+			if ( ! isset( $by_plot[ $plot_id ] ) ) {
+				continue;
+			}
+
+			if ( $other_type === 'character' ) {
+				if ( ! array_key_exists( $other_id, $character_cache ) ) {
+					$character_cache[ $other_id ] = Character::find( $other_id );
+				}
+				$character = $character_cache[ $other_id ];
+				if ( $character === null ) {
+					continue;
+				}
+				$by_plot[ $plot_id ][] = [
+					'type' => ! empty( $character->is_npc ) ? 'npc' : 'character',
+					'id'   => $other_id,
+					'name' => (string) $character->name,
+				];
+			} elseif ( $other_type === 'world_object' ) {
+				if ( ! array_key_exists( $other_id, $object_cache ) ) {
+					$object_cache[ $other_id ] = World_Object::find( $other_id );
+				}
+				$object = $object_cache[ $other_id ];
+				if ( $object === null || ! in_array( $object->object_type, [ 'item', 'location' ], true ) ) {
+					continue;
+				}
+				$by_plot[ $plot_id ][] = [
+					'type' => $object->object_type,
+					'id'   => $other_id,
+					'name' => (string) $object->name,
+				];
+			}
+		}
+
+		return $by_plot;
+	}
+
+	/**
 	 * Every unanswered action-allocation plot assigned to one staff member, across every game date.
 	 *
 	 * @param int $wp_user_id
 	 * @param int $game_id
-	 * @return array[] Each: plot_id, character_id, character_name, game_date, action_count, last_action_at.
+	 * @return array<int,array<string,mixed>> Each: plot_id, character_id, character_name, game_date, action_count, last_action_at.
 	 */
 	public static function unanswered_assigned_to( int $wp_user_id, int $game_id ): array {
 		$rows = [];

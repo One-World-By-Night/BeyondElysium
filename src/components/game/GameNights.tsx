@@ -16,6 +16,7 @@ import type {
 import type { NpcProfile } from '../../types/character';
 import type { NpcCasting, EligibleMember } from '../../types/npcCasting';
 import { SignInRoster } from './SignInRoster';
+import { SessionRecapPanel } from './SessionRecapPanel';
 import HelpButton from '../shared/HelpButton';
 import './GameNights.css';
 
@@ -1050,6 +1051,15 @@ export function GameNights( { gameSlug, capabilities }: GameNightsProps ) {
 							</div>
 						</>
 					) }
+
+					<SessionRecapPanel
+						gameSlug={ gameSlug }
+						session={ selected }
+						onSaved={ ( updated ) => {
+							setSelected( updated );
+							load();
+						} }
+					/>
 				</div>
 			) }
 		</div>

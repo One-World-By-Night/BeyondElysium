@@ -67,6 +67,16 @@
         "name": "Theme Statement",
         "field_type": "textarea",
         "required": false
+      },
+      {
+        "name": "Motivations",
+        "field_type": "textarea",
+        "required": false
+      },
+      {
+        "name": "Appearance",
+        "field_type": "textarea",
+        "required": false
       }
     ]
   }

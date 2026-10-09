@@ -69,8 +69,8 @@ WRAITH_SPLIT_FAMILIES = {
 # Mechanics Packet's arrangement (two basics, two intermediate, one advanced) settles it; the
 # Dauntain Agendas come from their own sources.
 CHANGELING_LADDERS = {
-    # Dream Craft per the OWBN packet: Intermediate is "Homestead" and "Attunement". Attunement is
-    # new to BE; Anchor and Dream Riding drop to alternatives on those rungs.
+    # Dream Craft per the OWBN packet: Intermediate is "Homestead" and "Attunement"; Anchor and Dream Riding drop to
+    # alternatives on those rungs.
     'Dream Craft': [('basic', 'Walk the Silver Path'), ('basic', 'The Merry Dance'), ('intermediate', 'Homestead'),
                     ('intermediate', 'Attunement'), ('advanced', 'Dream Weaving')],
     # Chronos per the OWBN packet: Basic Wyrd, Backwards Glance; Intermediate Dreamtime, Permanency;
@@ -329,12 +329,11 @@ IDENTITY_OPTION_STRIP_ARTICLE = {('wraith-identity', 'Legion')}
 
 # --- Rites: the category menus and the Fera species menus ----------------------------------
 #
-# `werewolf-rites` held only the eight tribal menus; Grapevine's "Rites, Werewolf" also lists ten
-# category submenus, and "Rites, Fera" lists twelve species menus (two of them - Bastet and
-# Mokole - nesting their own categories).
+# `werewolf-rites` takes the eight tribal menus; Grapevine's "Rites, Werewolf" also lists ten category submenus, and
+# "Rites, Fera" lists twelve species menus (two of them - Bastet and Mokole - nesting their own categories).
 #
-# **Fera gets its own block.** `fera-rites` is a new block, the Fera and Bete stacks and
-# templates point at it, and the Garou rites stay Garou.
+# **Fera gets its own block.** `fera-rites` is a block of its own, the Fera and Bete stacks and templates point at it,
+# and the Garou rites stay Garou.
 RITE_CATEGORY_MENUS = {        # werewolf-rites: submenu label -> menu, category = the label
     'Accord': 'Rites, Werewolf, Accord', 'Caern': 'Rites, Werewolf, Caern', 'Death': 'Rites, Werewolf, Death',
     'Frontier': 'Rites, Werewolf, Frontier', 'Minor': 'Rites, Werewolf, Minor', 'Mystic': 'Rites, Werewolf, Mystic',
@@ -465,7 +464,7 @@ STACK_SECTION_REPLACEMENTS = {
     'demon': {'demon-lores': [('demon-evocations', 'Lores (Evocations)'), ('demon-rituals', 'Rituals')]},
     'kueijin': {},
 }
-# kueijin-shintai and vampire-bonds are new content: each section is added rather than replacing anything.
+# kueijin-shintai and vampire-bonds: each section is added rather than replacing anything.
 STACK_EXTRA_SECTIONS = {'kueijin': [('kueijin-shintai', 'Shintai', 62)],
                         'vampire': [('vampire-bonds', 'Bonds', 65)]}
 

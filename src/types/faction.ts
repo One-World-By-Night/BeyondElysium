@@ -90,6 +90,10 @@ export interface FactionMember {
 	character_name: string | null;
 	rank: string | null;
 	is_leader: boolean;
+	/**
+	 * Whether the membership shows on the character's public profile.
+	 */
+	is_public: boolean;
 	created_at: string;
 }
 

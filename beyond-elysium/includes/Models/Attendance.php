@@ -43,9 +43,9 @@ class Attendance {
 	 * Records a sign-in: either a real character (character_id) or a visitor (visitor_name, optionally
 	 * visitor_chronicle).
 	 *
-	 * @param int   $session_id
-	 * @param int   $game_id
-	 * @param array $data
+	 * @param int                 $session_id
+	 * @param int                 $game_id
+	 * @param array<string,mixed> $data
 	 * @return int|false
 	 */
 	public static function record( int $session_id, int $game_id, array $data ) {

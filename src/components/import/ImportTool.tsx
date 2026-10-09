@@ -42,7 +42,7 @@ export function ImportTool( { gameSlug }: ImportToolProps ) {
 	const [ result, setResult ] = useState< ImportCommitResult | null >( null );
 	const fileInputRef = useRef< HTMLInputElement >( null );
 
-	// Lifted here, not local to ImportPreview.
+	// State shared with ImportPreview.
 	const {
 		traitResolutions,
 		duplicateActions,

@@ -59,12 +59,9 @@ class Translation_String {
 	/**
 	 * Creates a translation string row and returns its id.
 	 *
-	 * @param array $data source_key (optional - computed from source_text if absent),
+	 * @param array<string,mixed> $data source_key (optional - computed from source_text if absent),
 	 *                     source_text (required), used_in (optional array), first_seen
-	 *                     (optional), last_seen (optional - pass null explicitly
-	 *                     step-4 "CSV-only, never confirmed in the catalog" case; array_key_exists
-	 *                     is used rather than `??` specifically so an explicit null is honored
-	 *                     instead of being silently replaced with "now").
+	 *                     (optional), last_seen (optional - an explicit null is kept rather than replaced with "now").
 	 * @return int|false
 	 */
 	public static function create( array $data ) {
@@ -82,8 +79,8 @@ class Translation_String {
 	}
 
 	/**
-	 * @param int   $id
-	 * @param array $data Any of source_text, used_in, last_seen.
+	 * @param int                 $id
+	 * @param array<string,mixed> $data Any of source_text, used_in, last_seen.
 	 * @return bool
 	 */
 	public static function update( int $id, array $data ): bool {
@@ -116,8 +113,8 @@ class Translation_String {
 	/**
 	 * The write side of a catalog rescan.
 	 *
-	 * @param string $source_text
-	 * @param array  $used_in
+	 * @param string                         $source_text
+	 * @param array<int,array<string,mixed>> $used_in
 	 * @return int|false
 	 */
 	public static function upsert_from_scan( string $source_text, array $used_in ) {
@@ -142,11 +139,11 @@ class Translation_String {
 	/**
 	 * The review list (`GET /translations`): every string, LEFT JOINed to its translation for one locale.
 	 *
-	 * @param string $locale
-	 * @param array  $filters status, block (searches `used_in`), search
+	 * @param string              $locale
+	 * @param array<string,mixed> $filters status, block (searches `used_in`), search
 	 *                        (matches source_text), has_translation (bool).
-	 * @param int    $per_page
-	 * @param int    $offset
+	 * @param int                 $per_page
+	 * @param int                 $offset
 	 * @return object[] Each carries source_key/source_text/used_in plus
 	 *                   translation_id/translation/status for $locale (all
 	 *                   null when untranslated).
@@ -172,8 +169,8 @@ class Translation_String {
 	/**
 	 * Total matching `list_for_review()`'s filters, unpaginated.
 	 *
-	 * @param string $locale
-	 * @param array  $filters Same shape as list_for_review().
+	 * @param string              $locale
+	 * @param array<string,mixed> $filters Same shape as list_for_review().
 	 * @return int
 	 */
 	public static function count_for_review( string $locale, array $filters = [] ): int {
@@ -193,8 +190,8 @@ class Translation_String {
 	/**
 	 * Shared WHERE-clause builder behind list_for_review()/count_for_review().
 	 *
-	 * @param string $locale
-	 * @param array  $filters
+	 * @param string              $locale
+	 * @param array<string,mixed> $filters
 	 * @return array{0: string[], 1: array<int,mixed>} `[$where_clauses, $bind_values]`.
 	 */
 	private static function build_review_where( string $locale, array $filters ): array {

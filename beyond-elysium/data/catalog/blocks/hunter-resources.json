@@ -1,0 +1,30 @@
+{
+  "format": 1,
+  "slug": "hunter-resources",
+  "name": "Hunter Resources",
+  "kind": "block",
+  "section_type": "resource_pool",
+  "provenance": {
+    "sources": [
+      "Mind's Eye Theatre: Laws of the Reckoning (WW05037): Willpower starts at 2 (p.90); Conviction's starting rating is set by creed (p.86-87, see hunter-identity's own creed_conviction map); experience costs p.269 (Willpower 3 XP/Trait; Conviction is never bought with XP at all, only raised by cashing in 10 temporary Conviction Traits to raise a Virtue - see hunter-virtues)."
+    ],
+    "tool": "read directly, 2026-10-04"
+  },
+  "definition": {
+    "pools": [
+      {
+        "name": "Willpower",
+        "value_type": "integer",
+        "default_start": 2,
+        "max": 10,
+        "cost_per_dot": 3
+      },
+      {
+        "name": "Conviction",
+        "value_type": "integer",
+        "default_start": 3,
+        "max": 10
+      }
+    ]
+  }
+}

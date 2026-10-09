@@ -72,6 +72,26 @@ class TraditionAddressingThreadTest extends WP_UnitTestCase {
 		return array_map( static fn( $r ) => "{$r['name']} ({$r['tradition']}) {$r['level']}", $this->rows() );
 	}
 
+	private function warnings_for( int $as ): array {
+		wp_set_current_user( $as );
+		$request = new WP_REST_Request( 'GET', '/be/v1/' . self::GAME . '/characters/' . $this->character );
+		return (array) rest_get_server()->dispatch( $request )->get_data()->sheet_warnings;
+	}
+
+	public function test_a_storyteller_is_told_which_paths_the_sheet_holds_under_two_spellings(): void {
+		$warnings = $this->warnings_for( $this->manager );
+
+		$this->assertSame( [ 'Awakening of the Steel', 'Alchemy' ], array_column( $warnings, 'name' ) );
+	}
+
+	public function test_the_player_is_told_nothing(): void {
+		$this->assertSame( [], $this->warnings_for( $this->player ) );
+	}
+
+	public function test_the_site_scan_names_the_character(): void {
+		$this->assertSame( [ $this->character => 2 ], \BeyondElysium\Services\Repeated_Holdings::in_site() );
+	}
+
 	public function test_a_removal_that_names_a_tradition_removes_only_that_rows(): void {
 		$response = $this->submit( 'remove_trait', [ 'name' => 'Awakening of the Steel', 'tradition' => 'Dur-An-Ki' ] );
 

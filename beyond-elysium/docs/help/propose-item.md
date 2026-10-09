@@ -36,6 +36,10 @@ Pick the kind first: the fields underneath change to match it, because a locatio
 
 Some fields a Storyteller fills in later - availability lists, security traits and similar - so you won't see them here. Leave anything you don't know blank; a Storyteller can finish it when they approve.
 
+## Start from a book entry
+
+If your character's thing is ordinary gear from the Mind's Eye Theatre rulebooks, you don't have to type it in by hand. With **Item** picked, click **Start from a book entry**, search or filter for it, then click **Use this**. The name, description, and every stat the book prints fill in for you - change anything you need, then send it for approval like any other proposal.
+
 ## Writing a good one
 
 The description is the part that gets read. Say what it looks like, where it came from, and what it does in play. A Storyteller deciding on twelve proposals in an evening will approve the one they can picture.

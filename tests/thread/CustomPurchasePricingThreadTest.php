@@ -170,6 +170,80 @@ class CustomPurchasePricingThreadTest extends WP_UnitTestCase {
 		$this->assertTrue( $result['invalid'], 'a row that fails validation must say so, not masquerade as a priced +0 XP purchase' );
 	}
 
+	// --- A list that is never priced (Bonds) ---------------------------------------------
+
+	/** @param array<string,mixed> $extra */
+	private function bond( string $name = 'Gabriel Deveraux', int $count = 7, array $extra = [] ): array {
+		return [ 'name' => $name, 'count' => $count, 'custom' => true ] + $extra;
+	}
+
+	public function test_a_players_bond_is_not_held_for_a_price(): void {
+		$response = $this->submit( $this->player_id, 'vampire-bonds', $this->bond() );
+		$change   = $response->get_data();
+
+		$this->assertSame( 201, $response->get_status() );
+		$this->assertArrayNotHasKey( 'cost_pending', $change->change_data );
+		$this->assertSame( 0.0, (float) $change->xp_cost );
+		$this->assertSame( 'pending', $change->status, 'a name the catalog has never heard of still waits for a Storyteller' );
+	}
+
+	public function test_a_storyteller_approves_a_bond_without_naming_a_price(): void {
+		$change = $this->submit( $this->player_id, 'vampire-bonds', $this->bond() )->get_data();
+
+		$this->assertTrue( Change_Engine::approve( (int) $change->id, $this->st_id, null ) );
+
+		$held = $this->held( 'vampire-bonds' );
+		$this->assertSame( 'Gabriel Deveraux', $held[0]['name'] );
+		$this->assertSame( 7, (int) $held[0]['count'] );
+		$this->assertSame( 20, $this->unspent(), 'a bond takes no XP' );
+	}
+
+	public function test_a_bond_may_be_a_name_from_outside_the_chronicle_at_a_rating_of_ten(): void {
+		$change = $this->submit( $this->player_id, 'vampire-bonds', $this->bond( 'Someone From Another City', 10 ) )->get_data();
+
+		$this->assertTrue( Change_Engine::approve( (int) $change->id, $this->st_id, null ) );
+		$this->assertSame( 10, (int) $this->held( 'vampire-bonds' )[0]['count'] );
+	}
+
+	public function test_a_bond_name_keeps_its_accents_and_punctuation_as_typed(): void {
+		$names = [ 'Sébastien O\'Neill-Núñez (Paris), Anarch', 'SOC: Talos', 'Ünal d’Aubigné & Sons' ];
+		foreach ( $names as $name ) {
+			$change = $this->submit( $this->player_id, 'vampire-bonds', $this->bond( $name, 3 ) )->get_data();
+			$this->assertSame( 'pending', $change->status, $name );
+			$this->assertTrue( Change_Engine::approve( (int) $change->id, $this->st_id, null ), $name );
+		}
+
+		$this->assertEqualsCanonicalizing( $names, array_column( $this->held( 'vampire-bonds' ), 'name' ) );
+	}
+
+	public function test_a_storyteller_adds_a_bond_and_raises_it_with_no_price_step(): void {
+		$added = $this->submit( $this->st_id, 'vampire-bonds', $this->bond( 'Gabriel Deveraux', 2 ) )->get_data();
+		$this->assertArrayNotHasKey( 'cost_pending', $added->change_data );
+		$this->assertTrue( Change_Engine::approve( (int) $added->id, $this->st_id, null ) );
+
+		wp_set_current_user( $this->st_id );
+		$request = new WP_REST_Request( 'POST', "/be/v1/{$this->game_slug}/characters/{$this->character_id}/changes" );
+		$request->set_param( 'change_type', 'modify_trait' );
+		$request->set_param( 'category', 'vampire-bonds' );
+		$request->set_param( 'change_data', [ 'block_slug' => 'vampire-bonds', 'trait' => $this->bond( 'Gabriel Deveraux', 3 ) ] );
+		$raised = $this->dispatch( $request )->get_data();
+
+		$this->assertArrayNotHasKey( 'cost_pending', $raised->change_data );
+		$this->assertTrue( Change_Engine::approve( (int) $raised->id, $this->st_id, null ) );
+		$this->assertSame( 3, (int) $this->held( 'vampire-bonds' )[0]['count'] );
+		$this->assertSame( 20, $this->unspent() );
+	}
+
+	public function test_the_preview_prices_a_bond_at_nothing_rather_than_leaving_it_unpriced(): void {
+		$result = $this->preview( $this->player_id, [
+			[ 'change_type' => 'add_trait', 'change_data' => [ 'block_slug' => 'vampire-bonds', 'trait' => $this->bond() ] ],
+		] )->get_data()['results'][0];
+
+		$this->assertTrue( $result['priced'] );
+		$this->assertNull( $result['unpriced_reason'] );
+		$this->assertSame( 0, $result['xp_cost'] );
+	}
+
 	// --- The Storyteller sets the price at approval -------------------------------------
 
 	private function pending_homebrew( int $count = 3 ): int {
@@ -503,7 +577,7 @@ class CustomPurchasePricingThreadTest extends WP_UnitTestCase {
 		$change = $this->submit( $this->st_id, 'vampire-backgrounds', $this->homebrew( 1, [ 'chosen_cost' => 0 ] ) )->get_data();
 		$id     = (int) $change->id;
 
-		// MySQL reports an UPDATE that writes identical values as zero rows changed.
+		// Updating to the same price still succeeds.
 		$this->assertTrue( Change::update_xp_cost( $id, 0.0 ) );
 		$this->assertTrue( Change::update_xp_cost( $id, 0.0, $change->change_data ) );
 	}

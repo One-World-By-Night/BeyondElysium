@@ -227,12 +227,14 @@ class Release_Batches_Controller extends Base_Controller {
 			return $batch;
 		}
 
+		/** @var array<int,array<string,mixed>> $rumors */
 		$rumors = array_map( static fn( $plot ) => [
 			'type'  => 'plot',
 			'id'    => (int) $plot->id,
 			'title' => $plot->title,
 		], Plot::for_release_batch( (int) $batch->id ) );
 
+		/** @var array<int,array<string,mixed>> $entries */
 		$entries = array_map( static function ( $entry ) {
 			$plot = Plot::find( (int) $entry->plot_id );
 			return [
@@ -244,6 +246,7 @@ class Release_Batches_Controller extends Base_Controller {
 			];
 		}, Plot_Entry::for_release_batch( (int) $batch->id ) );
 
+		/** @var array<int,array<string,mixed>> $reveals */
 		$reveals = array_map( static function ( $reveal ) {
 			$secret    = Secret::find( (int) $reveal->secret_id );
 			$character = Character::find( (int) $reveal->character_id );

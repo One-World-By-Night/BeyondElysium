@@ -13,6 +13,7 @@ use BeyondElysium\Models\Release_Batch;
 use BeyondElysium\Services\Action_Allocator;
 use BeyondElysium\Services\Audience;
 use BeyondElysium\Services\Downtime_Window;
+use BeyondElysium\Services\Keep_Current;
 use BeyondElysium\Services\St_Visibility;
 
 defined( 'ABSPATH' ) || exit;
@@ -182,9 +183,41 @@ class Entries_Controller extends Base_Controller {
 		if ( $entry ) {
 			$this->notify_new_post( $plot, $entry, (string) $request['game_slug'] );
 			Notifications::flush_posts();
+			$entry = $this->share_entry_if_requested( $request, $plot, $entry );
 		}
 
 		return $this->success( $entry, 201 );
+	}
+
+	/**
+	 * Shares an entry back to a visiting character's home chronicle when asked and eligible: the host's plot belongs
+	 * to a character currently visiting (or recently gone home), with a real recorded home to send to. Does nothing
+	 * otherwise.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @param object            $plot
+	 * @param object            $entry
+	 * @return object The entry, re-read if sharing stamped it.
+	 */
+	private function share_entry_if_requested( $request, object $plot, object $entry ): object {
+		if ( ! $request->get_param( 'share_with_home' ) ) {
+			return $entry;
+		}
+
+		$character_id = Action_Allocator::actor_character_id( (int) $plot->id );
+		if ( $character_id === null ) {
+			return $entry;
+		}
+
+		$visit = Keep_Current::shareable_visit_for_character( $character_id );
+		if ( $visit === null ) {
+			return $entry;
+		}
+
+		Keep_Current::forward_note( $visit, wp_strip_all_tags( (string) $entry->content ) );
+		Plot_Entry::mark_shared( (int) $entry->id );
+
+		return Plot_Entry::find( (int) $entry->id ) ?? $entry;
 	}
 
 	/**
@@ -221,7 +254,8 @@ class Entries_Controller extends Base_Controller {
 				return;
 			}
 
-			foreach ( Notifications::staff_including_narrators( $game ) as $user ) {
+			$about = [ 'kind' => 'plot_post', 'entity_type' => 'plot', 'entity_id' => $plot_id ];
+			foreach ( Notifications::staff_including_narrators( $game, $about ) as $user ) {
 				if ( (int) $user->ID === $author_id ) {
 					continue;
 				}
@@ -231,7 +265,7 @@ class Entries_Controller extends Base_Controller {
 		}
 
 		$label = __( 'A Storyteller', 'beyond-elysium' );
-		$link  = Notifications::player_plot_url( $plot_id );
+		$link  = Notifications::player_plot_url( $plot_id, $game_slug );
 		foreach ( Audience::connected_character_ids( $plot, 'plot' ) as $character_id ) {
 			$character = Character::find( $character_id );
 			$wp_user_id = $character ? (int) ( $character->wp_user_id ?? 0 ) : 0;
@@ -356,7 +390,11 @@ class Entries_Controller extends Base_Controller {
 		}
 
 		Plot_Entry::update( (int) $entry->id, $update );
-		return $this->success( Plot_Entry::find( (int) $entry->id ) );
+		$updated = Plot_Entry::find( (int) $entry->id );
+		if ( $updated ) {
+			$updated = $this->share_entry_if_requested( $request, $plot, $updated );
+		}
+		return $this->success( $updated );
 	}
 
 	/**

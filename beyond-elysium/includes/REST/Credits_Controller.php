@@ -66,7 +66,7 @@ class Credits_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Updates the credits text and/or in-memoriam list.
+	 * Updates the credits text. The in-memoriam list has no write path here or anywhere else in the plugin.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -75,21 +75,6 @@ class Credits_Controller extends Base_Controller {
 		$credits_text = $request->get_param( 'credits_text' );
 		if ( is_string( $credits_text ) ) {
 			update_option( self::CREDITS_OPTION, sanitize_textarea_field( $credits_text ) );
-		}
-
-		$in_memoriam = $request->get_param( 'in_memoriam' );
-		if ( is_array( $in_memoriam ) ) {
-			$clean = [];
-			foreach ( $in_memoriam as $entry ) {
-				if ( ! is_array( $entry ) || empty( $entry['name'] ) ) {
-					continue;
-				}
-				$clean[] = [
-					'name' => sanitize_text_field( $entry['name'] ),
-					'note' => sanitize_text_field( $entry['note'] ?? '' ),
-				];
-			}
-			update_option( self::MEMORIAM_OPTION, $clean );
 		}
 
 		return $this->success( [
@@ -102,7 +87,7 @@ class Credits_Controller extends Base_Controller {
 	 * Returns the stored in-memoriam list, seeding it with DEFAULT_MEMORIAM the first time it is ever read before anyone
 	 * has saved their own list.
 	 *
-	 * @return array
+	 * @return array<int,array<string,string>>
 	 */
 	private static function memoriam_list(): array {
 		$stored = get_option( self::MEMORIAM_OPTION, null );

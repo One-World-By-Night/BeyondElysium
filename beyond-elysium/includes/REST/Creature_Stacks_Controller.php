@@ -123,9 +123,12 @@ class Creature_Stacks_Controller extends Base_Controller {
 		];
 
 		// Optional; when omitted, every stack is offered, unchanged.
-		$game_slug = (string) ( $request->get_param( 'game_slug' ) ?? '' );
-		$items     = $game_slug !== '' ? Creature_Stack::all_for_game( $game_slug, $args ) : Creature_Stack::all( $args );
-		$total     = $game_slug !== '' ? count( $items ) : Creature_Stack::count( $args );
+		$game_slug        = (string) ( $request->get_param( 'game_slug' ) ?? '' );
+		$include_disabled = (bool) $request->get_param( 'include_disabled' );
+		$items = $game_slug !== ''
+			? Creature_Stack::all_for_game( $game_slug, $args, $include_disabled, \BeyondElysium\Core\Authorization::can( 'be_manage_characters' ) )
+			: Creature_Stack::all( $args );
+		$total = $game_slug !== '' ? count( $items ) : Creature_Stack::count( $args );
 
 		$response = $this->success( $items );
 		return $this->paginate( $response, $total, $pagination['per_page'], $pagination['page'] );
@@ -142,7 +145,7 @@ class Creature_Stacks_Controller extends Base_Controller {
 
 		if ( $request->get_param( 'resolve' ) ) {
 			$game_slug = (string) ( $request->get_param( 'game_slug' ) ?? '' );
-			$resolved  = Creature_Stack::resolve( $slug, $game_slug );
+			$resolved  = Creature_Stack::resolve( $slug, $game_slug, $this->blocks_held_by( (int) $request->get_param( 'character_id' ), $game_slug ) );
 			if ( ! $resolved ) {
 				return $this->error( 'not_found', __( 'Creature stack not found.', 'beyond-elysium' ), 404 );
 			}
@@ -158,6 +161,26 @@ class Creature_Stacks_Controller extends Base_Controller {
 			return $this->error( 'not_found', __( 'Creature stack not found.', 'beyond-elysium' ), 404 );
 		}
 		return $this->success( $stack );
+	}
+
+	/**
+	 * The block slugs a character holds, for a caller allowed to see that character: a Storyteller, or its own player.
+	 *
+	 * @param int    $character_id
+	 * @param string $game_slug
+	 * @return string[]
+	 */
+	private function blocks_held_by( int $character_id, string $game_slug ): array {
+		if ( $character_id <= 0 ) {
+			return [];
+		}
+		$character = \BeyondElysium\Models\Character::find( $character_id );
+		if ( ! $character || $character->owner_slug !== $game_slug ) {
+			return [];
+		}
+		$may_see = \BeyondElysium\Core\Authorization::can( 'be_manage_characters' )
+			|| (int) $character->wp_user_id === get_current_user_id();
+		return $may_see && is_array( $character->sheet_data ) ? array_map( 'strval', array_keys( $character->sheet_data ) ) : [];
 	}
 
 	/**
@@ -374,7 +397,7 @@ class Creature_Stacks_Controller extends Base_Controller {
 	/**
 	 * Defines the query parameters accepted by the collection endpoint.
 	 *
-	 * @return array
+	 * @return array<string,array<string,mixed>>
 	 */
 	public function get_collection_params(): array {
 		return [
@@ -422,7 +445,7 @@ class Creature_Stacks_Controller extends Base_Controller {
 	 * Defines the request parameters accepted when creating a chronicle's own creature type: the required slug, name,
 	 * and sections, plus an optional game_line and creation_rules.
 	 *
-	 * @return array
+	 * @return array<string,array<string,mixed>>
 	 */
 	private function get_create_params(): array {
 		return [

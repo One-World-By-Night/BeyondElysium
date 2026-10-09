@@ -6,7 +6,9 @@ import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
 import { everyPage } from '../../lib/everyPage';
+import { catalogEntryToDuplicateSource } from '../../lib/catalogItemAdapter';
 import type {
+	CatalogItemEntry,
 	ItemTransferHow,
 	ObjectType,
 	WorldObject,
@@ -15,6 +17,7 @@ import type { Character } from '../../types/character';
 import { WorldObjectList } from './WorldObjectList';
 import { WorldObjectCard } from './WorldObjectCard';
 import { WorldObjectEditor } from './WorldObjectEditor';
+import { BookItemPicker } from './BookItemPicker';
 import './WorldObjectManager.css';
 
 export interface WorldObjectManagerProps {
@@ -32,7 +35,9 @@ type View =
 	| { mode: 'edit'; id: number }
 	| { mode: 'duplicate'; id: number }
 	| { mode: 'copy-for-character'; id: number }
-	| { mode: 'transfer'; id: number };
+	| { mode: 'transfer'; id: number }
+	| { mode: 'from-book' }
+	| { mode: 'create-from-book'; entry: CatalogItemEntry };
 
 /**
  * Renders the world object catalog in a list pane alongside a detail pane that shows either the selected object, a
@@ -71,6 +76,14 @@ export function WorldObjectManager( {
 						) }
 					</button>
 				) }
+				{ showEditor && activeType === 'item' && (
+					<button
+						type="button"
+						onClick={ () => setView( { mode: 'from-book' } ) }
+					>
+						{ __( 'New item from the book', 'beyond-elysium' ) }
+					</button>
+				) }
 				<WorldObjectList
 					key={ refreshKey }
 					gameSlug={ gameSlug }
@@ -88,6 +101,31 @@ export function WorldObjectManager( {
 					<WorldObjectEditor
 						gameSlug={ gameSlug }
 						objectType={ view.type }
+						onSaved={ ( saved ) => {
+							setSelected( saved.id );
+							setView( { mode: 'list' } );
+							refresh();
+						} }
+						onCancel={ () => setView( { mode: 'list' } ) }
+					/>
+				) }
+
+				{ view.mode === 'from-book' && (
+					<BookItemPicker
+						onPick={ ( entry ) =>
+							setView( { mode: 'create-from-book', entry } )
+						}
+						onCancel={ () => setView( { mode: 'list' } ) }
+					/>
+				) }
+
+				{ view.mode === 'create-from-book' && (
+					<WorldObjectEditor
+						gameSlug={ gameSlug }
+						objectType="item"
+						duplicateFrom={ catalogEntryToDuplicateSource(
+							view.entry
+						) }
 						onSaved={ ( saved ) => {
 							setSelected( saved.id );
 							setView( { mode: 'list' } );

@@ -307,6 +307,8 @@ function FactionDetail( {
 	const [ candidateId, setCandidateId ] = useState( '' );
 	const [ editing, setEditing ] = useState( false );
 	const [ error, setError ] = useState< string | null >( null );
+	const canManage =
+		!! window.beyondElysium?.capabilities?.be_manage_characters;
 
 	function load() {
 		api.factions( gameSlug )
@@ -411,6 +413,25 @@ function FactionDetail( {
 		}
 	}
 
+	async function toggleMemberPublic(
+		characterId: number,
+		isPublic: boolean
+	) {
+		try {
+			await api
+				.factions( gameSlug )
+				.updateMember( id, characterId, { is_public: isPublic } );
+			load();
+		} catch {
+			setError(
+				__(
+					"Couldn't change whether this membership shows on public profiles.",
+					'beyond-elysium'
+				)
+			);
+		}
+	}
+
 	async function deleteFaction() {
 		try {
 			await api.factions( gameSlug ).remove( id );
@@ -496,6 +517,14 @@ function FactionDetail( {
 								{ __( 'leader', 'beyond-elysium' ) }
 							</span>
 						) }
+						{ ! member.is_public && (
+							<span className="be-st-badge">
+								{ __(
+									'hidden from profiles',
+									'beyond-elysium'
+								) }
+							</span>
+						) }
 						<input
 							type="text"
 							className="be-faction-manager__rank-input"
@@ -522,6 +551,27 @@ function FactionDetail( {
 								? __( 'Demote', 'beyond-elysium' )
 								: __( 'Make leader', 'beyond-elysium' ) }
 						</button>
+						{ canManage && (
+							<button
+								type="button"
+								onClick={ () =>
+									toggleMemberPublic(
+										member.character_id,
+										! member.is_public
+									)
+								}
+							>
+								{ member.is_public
+									? __(
+											'Hide from profiles',
+											'beyond-elysium'
+										)
+									: __(
+											'Show on profiles',
+											'beyond-elysium'
+										) }
+							</button>
+						) }
 						<button
 							type="button"
 							onClick={ () =>

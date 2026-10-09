@@ -462,6 +462,11 @@ class Apr_Controller extends Base_Controller {
 		return null;
 	}
 
+	/**
+	 * Finds one background-ledger entry of this game, with its plot's game date, or a not-found error.
+	 *
+	 * @return array<string,mixed>|\WP_Error
+	 */
 	private function find_ledger_entry( int $entry_id, object $game ) {
 		$row  = Plot_Entry::find( $entry_id );
 		$plot = $row ? Plot::find( (int) $row->plot_id ) : null;
@@ -481,7 +486,7 @@ class Apr_Controller extends Base_Controller {
 	 * Reports whether the current user owns the character a ledger entry belongs to, for the "is this my own
 	 * not-yet-adjudicated entry" checks update_background_use() and delete_background_use() both apply.
 	 *
-	 * @param array $entry
+	 * @param array<string,mixed> $entry
 	 * @return bool
 	 */
 	private function owns_ledger_entry( array $entry ): bool {
@@ -493,9 +498,9 @@ class Apr_Controller extends Base_Controller {
 	 * Validates an incoming, possibly partial, `apr` settings payload and returns the validated, normalized subset of the
 	 * keys present in the request.
 	 *
-	 * @param array  $incoming
-	 * @param string $game_slug
-	 * @return array|\WP_Error
+	 * @param array<string,mixed> $incoming
+	 * @param string              $game_slug
+	 * @return array<string,mixed>|\WP_Error
 	 */
 	private static function validate_apr_settings( array $incoming, string $game_slug ) {
 		$validated = [];

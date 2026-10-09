@@ -1,0 +1,53 @@
+{
+  "format": 1,
+  "kind": "item_catalog",
+  "slug": "laws-of-the-hunt",
+  "name": "Laws of the Hunt",
+  "book": "Laws of the Hunt",
+  "code": "WW05014",
+  "provenance": {
+    "sources": [
+      "Mind's Eye Theatre: Laws of the Hunt (WW05014), \"Weapon Examples\"/Armor chapter, pp.259-263 - every entry checked against the accumulated catalog so far (Dark Epics, Laws of the Night Revised Edition); a same-name entry whose stats match an already-catalogued one, from either book, is left out of this file.",
+      "Every entry read directly from the book's own page images (not OCR), per reference-wod-scan-ocr-lessons. This copy's own printed page numbers are plain, legible Arabic numerals - no citation uncertainty here, unlike Laws of the Night Revised Edition's own stylized folio font."
+    ],
+    "tool": "read directly, 2026-10-04"
+  },
+  "notes": [
+    "Of this chapter's 15 printed weapon/armor entries, 13 are real duplicates of an already-catalogued entry (Knife/Dagger, Pistol, Heavy Pistol, Chain mail, Plate mail match Dark Epics; Wooden Stake, Club, Ax, Fencing Blades, Longbow, Rifle, Shotgun, Ballistic Vest, Reinforced (Bulletproof) Vest match Laws of the Night Revised Edition) and correctly left out - only Broadsword and Shuriken/Dart carry a real divergence worth its own entry.",
+    "Submachine Gun's own availability text here reads \"semi-automatic\" where Dark Epics prints \"non-automatic\" for the identical legal requirement - read as the same constraint in different words, not a different rule, and left out as a duplicate rather than kept for that wording alone.",
+    "Longbow's own text here adds a real combat nuance (retesting needs the Athletics Ability; without it a character gets only a third of the usual Bonus Traits) that neither this catalog's `properties` schema nor Laws of the Night Revised Edition's own entry captures - a general rule about how the Athletics Ability interacts with bows, not a property of this one printing, so it stays uncaptured here the same way a book's own surrounding rules text always does."
+  ],
+  "items": [
+    {
+      "key": "broadsword",
+      "name": "Broadsword",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Melee",
+        "bonus": 3,
+        "negatives": [ { "name": "Heavy" } ],
+        "concealability": "Trenchcoat (barely)",
+        "damage_amount": 2,
+        "availability": [ { "name": "Broadswords typically must be special-ordered, although cheap and not especially durable versions are sometimes available at military-supply stores or Renaissance festivals" } ]
+      },
+      "description": "Covers every blade of medium length, from western broadswords to scimitars - except the katana, filed under Fencing Blades instead.",
+      "source": { "book": "Laws of the Hunt", "code": "WW05014", "page": 260 }
+    },
+    {
+      "key": "shuriken-dart",
+      "name": "Shuriken/Dart",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Throwing",
+        "bonus": 1,
+        "negatives": [ { "name": "Clumsy" } ],
+        "concealability": "Pocket",
+        "damage_amount": 1,
+        "availability": [ { "name": "Any" } ],
+        "powers": "Spray"
+      },
+      "description": "Negative Trait Clumsy: shuriken and darts are notoriously inaccurate beyond short range. Spray requires at least one level of Athletics, hitting up to three targets within a pace of each other and within 20 feet of the thrower.",
+      "source": { "book": "Laws of the Hunt", "code": "WW05014", "page": 261 }
+    }
+  ]
+}

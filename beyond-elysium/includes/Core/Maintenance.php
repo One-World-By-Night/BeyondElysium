@@ -3,9 +3,13 @@
 namespace BeyondElysium\Core;
 
 use BeyondElysium\Models\Attestation;
+use BeyondElysium\Models\Change;
+use BeyondElysium\Models\Mail_Log;
 use BeyondElysium\Models\Release_Batch;
 use BeyondElysium\Models\Submission;
 use BeyondElysium\Models\Transfer;
+use BeyondElysium\Services\Demo_Chronicle;
+use BeyondElysium\Services\Keep_Current;
 use BeyondElysium\Services\Release_Engine;
 use BeyondElysium\Services\Release_Scheduler;
 
@@ -45,6 +49,13 @@ class Maintenance {
 		add_action( self::RELEASE_SWEEP_HOOK, [ self::class, 'run_release_sweep' ] );
 		add_action( self::RELEASE_SINGLE_HOOK, static function ( int $batch_id ): void {
 			Release_Engine::release( $batch_id );
+		} );
+
+		add_action( Demo_Chronicle::RESET_HOOK, [ Demo_Chronicle::class, 'handle_cron' ] );
+
+		add_action( 'be_character_changed', [ Keep_Current::class, 'on_change' ], 10, 2 );
+		add_action( Keep_Current::DELIVER_HOOK, static function ( int $visit_id ): void {
+			Keep_Current::deliver( $visit_id );
 		} );
 	}
 
@@ -89,7 +100,9 @@ class Maintenance {
 		Transfer::expire_stale();
 		Attestation::sweep_expired();
 		Submission::expire_stale();
+		Change::expire_stale_visit_pairings( Transfer::OFFER_TTL_DAYS );
 		Notifications::send_daily_digests();
+		Mail_Log::prune();
 	}
 
 	/**
@@ -102,5 +115,7 @@ class Maintenance {
 		foreach ( Release_Batch::due() as $batch ) {
 			Release_Engine::release( (int) $batch->id );
 		}
+
+		Keep_Current::sweep();
 	}
 }

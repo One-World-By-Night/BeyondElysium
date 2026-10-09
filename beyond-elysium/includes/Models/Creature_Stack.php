@@ -74,8 +74,8 @@ class Creature_Stack {
 	/**
 	 * Return creature stacks matching optional filters.
 	 *
-	 * @param array $args Filters: game_line, is_system, search, orderby, order, per_page, offset.
-	 * @return array
+	 * @param array<string,mixed> $args Filters: game_line, is_system, search, orderby, order, per_page, offset.
+	 * @return array<int,object>
 	 */
 	public static function all( array $args = [] ): array {
 		global $wpdb;
@@ -115,23 +115,29 @@ class Creature_Stack {
 		}
 
 		$rows = $wpdb->get_results( $sql ) ?: [];
-		return array_map( [ self::class, 'decode_json_fields' ], $rows );
+		/** @var array<int,object> $decoded */
+		$decoded = array_map( [ self::class, 'decode_json_fields' ], $rows );
+		return $decoded;
 	}
 
 	/**
 	 * all() as the given chronicle has it: its layers in place of the book's rows, filtered by its own
 	 * `settings.enabled_stacks`.
 	 *
-	 * @param string $game_slug
-	 * @param array  $args Same filters as all().
-	 * @return array
+	 * @param string              $game_slug
+	 * @param array<string,mixed> $args              Same filters as all().
+	 * @param bool                $include_disabled  Skip the enablement filter - every stack this chronicle could ever
+	 *                                  turn on, not just the ones it currently has.
+	 * @param bool                $can_manage        Whether the caller is a Storyteller: a Storyteller-only creature type is
+	 *                                  offered to them whatever the chronicle has enabled, and to no one else.
+	 * @return array<int,object>
 	 */
-	public static function all_for_game( string $game_slug, array $args = [] ): array {
+	public static function all_for_game( string $game_slug, array $args = [], bool $include_disabled = false, bool $can_manage = false ): array {
 		$stacks = self::all( $args );
 
 		$game = \BeyondElysium\Models\Game::find_by_slug( $game_slug );
 		if ( $game === null ) {
-			return $stacks;
+			return self::without_staff_only( $stacks, $can_manage );
 		}
 
 		foreach ( $stacks as $i => $stack ) {
@@ -143,23 +149,63 @@ class Creature_Stack {
 
 		$stacks = array_merge( $stacks, self::own_creature_types( $game_slug, $args, array_column( $stacks, 'slug' ) ) );
 
-		$enabled = $game->settings->enabled_stacks ?? null;
-		if ( ! is_array( $enabled ) || empty( $enabled ) ) {
-			return $stacks;
+		if ( $include_disabled ) {
+			return self::without_staff_only( $stacks, $can_manage );
 		}
 
-		return array_values( array_filter( $stacks, static function ( $stack ) use ( $enabled ) {
+		$enabled = $game->settings->enabled_stacks ?? null;
+
+		return array_values( array_filter( $stacks, static function ( $stack ) use ( $enabled, $can_manage ): bool {
+			if ( self::is_storyteller_only( $stack ) ) {
+				return $can_manage;
+			}
+			if ( ! is_array( $enabled ) || empty( $enabled ) ) {
+				// No chronicle choice recorded yet: every stack is on except one declaring its own default off.
+				return ( $stack->stack_definition->default_enabled ?? true ) !== false;
+			}
 			return in_array( $stack->slug, $enabled, true );
 		} ) );
+	}
+
+	/**
+	 * Whether a creature type is offered to Storytellers only.
+	 *
+	 * @param object $stack
+	 * @return bool
+	 */
+	public static function is_storyteller_only( object $stack ): bool {
+		return ! empty( $stack->stack_definition->storyteller_only );
+	}
+
+	/**
+	 * Whether a creature type may hold any schema block in the catalog, not only the sections its own template lists.
+	 *
+	 * @param object $stack
+	 * @return bool
+	 */
+	public static function allows_any_block( object $stack ): bool {
+		return ! empty( $stack->stack_definition->any_block );
+	}
+
+	/**
+	 * @param object[] $stacks
+	 * @param bool     $can_manage
+	 * @return object[]
+	 */
+	private static function without_staff_only( array $stacks, bool $can_manage ): array {
+		if ( $can_manage ) {
+			return $stacks;
+		}
+		return array_values( array_filter( $stacks, static fn( $stack ): bool => ! self::is_storyteller_only( $stack ) ) );
 	}
 
 	/**
 	 * A chronicle's own creature types: rows it owns outright with no book counterpart at all, matching the given
 	 * filters.
 	 *
-	 * @param string   $game_slug
-	 * @param array    $args        Same filters as all(): game_line, is_system, search.
-	 * @param string[] $book_slugs  Slugs already covered by the book, excluded here.
+	 * @param string              $game_slug
+	 * @param array<string,mixed> $args        Same filters as all(): game_line, is_system, search.
+	 * @param string[]            $book_slugs  Slugs already covered by the book, excluded here.
 	 * @return object[]
 	 */
 	private static function own_creature_types( string $game_slug, array $args, array $book_slugs ): array {
@@ -192,7 +238,7 @@ class Creature_Stack {
 	/**
 	 * Count creature stacks matching the given filters.
 	 *
-	 * @param array $args Same filters as all().
+	 * @param array<string,mixed> $args Same filters as all().
 	 * @return int
 	 */
 	public static function count( array $args = [] ): int {
@@ -255,11 +301,13 @@ class Creature_Stack {
 	 * Resolve a creature stack into its full definition as a chronicle has it: the stack row itself, plus every schema
 	 * block its sections reference, hidden sections included, keyed by slug.
 	 *
-	 * @param string $slug
-	 * @param string $game_slug
-	 * @return array|null [ 'stack' => object, 'blocks' => array ] or null if not found.
+	 * @param string   $slug
+	 * @param string   $game_slug
+	 * @param string[] $extra_block_slugs Blocks to include beyond the stack's own sections - taken only by a creature
+	 *                                    type that allows any block.
+	 * @return array{stack:object,blocks:array<string,object>}|null Null if the creature type is not found.
 	 */
-	public static function resolve( string $slug, string $game_slug = '' ) {
+	public static function resolve( string $slug, string $game_slug = '', array $extra_block_slugs = [] ) {
 		$stack = self::find_for_game( $slug, $game_slug );
 		if ( ! $stack ) {
 			return null;
@@ -276,6 +324,10 @@ class Creature_Stack {
 			}
 		}
 
+		if ( $extra_block_slugs !== [] && self::allows_any_block( $stack ) ) {
+			$block_slugs = array_merge( $block_slugs, array_map( 'strval', $extra_block_slugs ) );
+		}
+
 		$block_slugs = array_values( array_unique( array_merge( $block_slugs, self::GLOBAL_NPC_BLOCK_SLUGS ) ) );
 		$blocks = Schema_Block::find_by_slugs_for_game( $block_slugs, $game_slug );
 
@@ -290,6 +342,42 @@ class Creature_Stack {
 			'stack'  => $stack,
 			'blocks' => $blocks,
 		];
+	}
+
+	/**
+	 * The layout sections a character needs for every block it holds beyond its creature type's own template, on a
+	 * creature type that allows any block; nothing for any other.
+	 *
+	 * @param object                          $stack
+	 * @param array<int,array<string,mixed>>  $sections   The layout's own sections.
+	 * @param array<string,object>            $blocks     The resolved blocks, by slug.
+	 * @param array<string,mixed>             $sheet_data
+	 * @return array<int,array<string,mixed>> Sections to append to the layout.
+	 */
+	public static function extra_layout_sections( object $stack, array $sections, array $blocks, array $sheet_data ): array {
+		if ( ! self::allows_any_block( $stack ) ) {
+			return [];
+		}
+
+		$placed = array_column( $sections, 'block_slug' );
+		$column = $sections === [] ? 1 : max( array_map( static fn( $s ): int => (int) ( $s['column'] ?? 1 ), $sections ) ) + 1;
+		$order  = 1;
+		$extra  = [];
+		foreach ( array_keys( $sheet_data ) as $slug ) {
+			if ( ! isset( $blocks[ $slug ] ) || in_array( $slug, $placed, true ) ) {
+				continue;
+			}
+			$extra[] = [
+				'block_slug' => (string) $slug,
+				'column'     => $column,
+				'order'      => $order++,
+				'title'      => (string) $blocks[ $slug ]->name,
+				'display'    => null,
+				'collapsed'  => false,
+				'width'      => 'full',
+			];
+		}
+		return $extra;
 	}
 
 	/**
@@ -448,7 +536,7 @@ class Creature_Stack {
 	/**
 	 * Insert a new creature stack.
 	 *
-	 * @param array $data Stack data.
+	 * @param array<string,mixed> $data Stack data.
 	 * @return int|false Insert ID or false on failure.
 	 */
 	public static function create( array $data ) {
@@ -469,10 +557,10 @@ class Creature_Stack {
 
 	/**
 	 * Insert a chronicle's own brand-new creature type: a row it owns outright, with no book counterpart to layer
-	 * over. `find_for_game()` reads it back directly, since a layer lookup matching its own `game_slug` always wins.
+	 * over.
 	 *
-	 * @param string $game_slug
-	 * @param array  $data Stack data: slug, name, game_line, stack_definition, creation_rules.
+	 * @param string              $game_slug
+	 * @param array<string,mixed> $data Stack data: slug, name, game_line, stack_definition, creation_rules.
 	 * @return int|false Insert ID or false on failure.
 	 */
 	public static function create_for_game( string $game_slug, array $data ) {
@@ -498,8 +586,8 @@ class Creature_Stack {
 	/**
 	 * Update the book's row of a creature stack identified by slug.
 	 *
-	 * @param string $slug
-	 * @param array  $data Fields to update.
+	 * @param string              $slug
+	 * @param array<string,mixed> $data Fields to update.
 	 * @return bool
 	 */
 	public static function update( string $slug, array $data ): bool {
@@ -575,8 +663,7 @@ class Creature_Stack {
 	}
 
 	/**
-	 * Updates a chronicle's own creature type directly: it has no book row to layer over or diff against, so there is
-	 * nothing to record as a fork change - the row itself is the only copy.
+	 * Updates a chronicle's own creature type directly; nothing is recorded as a fork change.
 	 *
 	 * @param array<string,mixed> $data `stack_definition` and/or `creation_rules`, each whole.
 	 */
@@ -866,8 +953,9 @@ class Creature_Stack {
 	/**
 	 * Decode a row's stack_definition and creation_rules JSON fields into arrays in place.
 	 *
-	 * @param object|null $row
-	 * @return object|null
+	 * @template T of object|null
+	 * @param T $row
+	 * @return T
 	 */
 	private static function decode_json_fields( $row ) {
 		if ( ! $row ) {

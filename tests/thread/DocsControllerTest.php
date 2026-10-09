@@ -80,4 +80,71 @@ class DocsControllerTest extends WP_UnitTestCase {
 
 		$this->assertSame( 403, $this->dispatch( new WP_REST_Request( 'GET', '/be/v1/docs/help/character-sheet' ) )->get_status() );
 	}
+
+	private function as_portuguese_viewer(): void {
+		wp_set_current_user( self::factory()->user->create( [ 'role' => 'subscriber' ] ) );
+		add_filter( 'locale', static fn(): string => 'pt_BR' );
+	}
+
+	public function test_an_english_viewer_gets_the_english_original(): void {
+		wp_set_current_user( self::factory()->user->create( [ 'role' => 'subscriber' ] ) );
+
+		$help  = $this->dispatch( new WP_REST_Request( 'GET', '/be/v1/docs/help/my-chronicle' ) )->get_data();
+		$guide = $this->dispatch( new WP_REST_Request( 'GET', '/be/v1/docs/player-guide' ) )->get_data();
+
+		$this->assertSame( [ 'en', false ], [ $help['language'], $help['fallback'] ] );
+		$this->assertStringStartsWith( '# My Chronicle', $help['content'] );
+		$this->assertSame( [ 'en', false ], [ $guide['language'], $guide['fallback'] ] );
+		$this->assertStringStartsWith( '# Player Guide', $guide['content'] );
+	}
+
+	public function test_a_portuguese_viewer_gets_the_translated_help_page_and_guide(): void {
+		$this->as_portuguese_viewer();
+
+		$help  = $this->dispatch( new WP_REST_Request( 'GET', '/be/v1/docs/help/my-chronicle' ) )->get_data();
+		$guide = $this->dispatch( new WP_REST_Request( 'GET', '/be/v1/docs/player-guide' ) )->get_data();
+
+		$this->assertSame( [ 'pt_BR', false ], [ $help['language'], $help['fallback'] ] );
+		$this->assertStringStartsWith( '# Minha Crônica', $help['content'] );
+		$this->assertSame( [ 'pt_BR', false ], [ $guide['language'], $guide['fallback'] ] );
+		$this->assertStringStartsWith( '# Guia do Jogador', $guide['content'] );
+	}
+
+	public function test_a_portuguese_viewer_gets_the_english_page_when_it_has_no_translation(): void {
+		$this->as_portuguese_viewer();
+		$page = BE_PLUGIN_DIR . 'docs/help/zz-untranslated-test-page.md';
+		file_put_contents( $page, "# Untranslated\n" );
+
+		try {
+			$response = $this->dispatch( new WP_REST_Request( 'GET', '/be/v1/docs/help/zz-untranslated-test-page' ) );
+		} finally {
+			unlink( $page );
+		}
+
+		$data = $response->get_data();
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( [ 'en', true ], [ $data['language'], $data['fallback'] ] );
+		$this->assertSame( "# Untranslated\n", $data['content'] );
+	}
+
+	public function test_every_guide_reports_whether_the_portuguese_viewer_got_a_translation(): void {
+		$this->as_portuguese_viewer();
+
+		foreach ( [ 'st-guide', 'admin-guide', 'player-guide', 'rest-api' ] as $slug ) {
+			$data       = $this->dispatch( new WP_REST_Request( 'GET', "/be/v1/docs/{$slug}" ) )->get_data();
+			$translated = is_readable( BE_PLUGIN_DIR . "docs/pt_BR/{$slug}.md" );
+
+			$this->assertSame( $translated ? 'pt_BR' : 'en', $data['language'], $slug );
+			$this->assertSame( ! $translated, $data['fallback'], $slug );
+		}
+	}
+
+	public function test_a_page_that_does_not_exist_is_not_found_in_either_language(): void {
+		$this->as_portuguese_viewer();
+
+		foreach ( [ 'no-such-screen', 'st-guide', '..%2Fst-guide', 'Character-Sheet' ] as $key ) {
+			$this->assertSame( 404, $this->dispatch( new WP_REST_Request( 'GET', '/be/v1/docs/help/' . $key ) )->get_status(), $key );
+		}
+		$this->assertSame( 404, $this->dispatch( new WP_REST_Request( 'GET', '/be/v1/docs/../../../etc/passwd' ) )->get_status() );
+	}
 }

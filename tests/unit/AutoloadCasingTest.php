@@ -113,7 +113,7 @@ class AutoloadCasingTest extends TestCase {
 	}
 
 	/**
-	 * The guard itself must detect a mismatch, or it proves nothing.
+	 * The guard detects a mismatch.
 	 */
 	public function test_the_check_actually_detects_a_mismatch(): void {
 		$tmp = sys_get_temp_dir() . '/be-casing-' . uniqid( '', true );

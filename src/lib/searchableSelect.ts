@@ -116,3 +116,49 @@ export function nextSelectableRow(
 export function flattenGroups( groups: OptionGroup[] ): string[] {
 	return groups.flatMap( ( group ) => group.options );
 }
+
+/**
+ * One named group of things to pick from, each with the key it stands for and the label it is offered under.
+ */
+export interface LabelledGroup {
+	label: string;
+	items: Array< { key: string; label: string } >;
+}
+
+export interface PickList {
+	groups: OptionGroup[];
+	keyOf: ( label: string ) => string | undefined;
+	labelOf: ( key: string ) => string;
+}
+
+/**
+ * Groups of keyed items as a searchable select's pick list. A label another item already uses is made unique with its
+ * key, a group with nothing in it is dropped, and a chosen label maps back to its key.
+ */
+export function pickList( groups: LabelledGroup[] ): PickList {
+	const keyByLabel = new Map< string, string >();
+	const labelByKey = new Map< string, string >();
+	const optionGroups: OptionGroup[] = [];
+
+	for ( const group of groups ) {
+		const options: string[] = [];
+		for ( const item of group.items ) {
+			let label = item.label;
+			if ( keyByLabel.has( label ) ) {
+				label = `${ label } [${ item.key }]`;
+			}
+			keyByLabel.set( label, item.key );
+			labelByKey.set( item.key, label );
+			options.push( label );
+		}
+		if ( options.length > 0 ) {
+			optionGroups.push( { label: group.label, options } );
+		}
+	}
+
+	return {
+		groups: optionGroups,
+		keyOf: ( label ) => keyByLabel.get( label ),
+		labelOf: ( key ) => labelByKey.get( key ) ?? '',
+	};
+}

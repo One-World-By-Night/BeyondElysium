@@ -200,7 +200,7 @@ class PlotAudienceThreadTest extends WP_UnitTestCase {
 	}
 
 	// -------------------------------------------------------------------------
-	// get_items() - list + the pagination-safety fix
+	// get_items() - list and pagination
 	// -------------------------------------------------------------------------
 
 	public function test_the_list_never_includes_a_storytellers_only_plot_for_a_player(): void {

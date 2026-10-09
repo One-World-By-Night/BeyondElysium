@@ -187,11 +187,11 @@ class Game_Slug_References {
 	 * Recursively walks an Elementor element tree, rewriting any settings.game_slug value that equals $old, in place, at
 	 * any nesting depth (sections contain columns contain widgets).
 	 *
-	 * @param array $elements
+	 * @param array<int,mixed> $elements
 	 * @param string $old
 	 * @param string $new
 	 * @param bool $changed
-	 * @return array
+	 * @return array<int,mixed>
 	 */
 	private static function rewrite_elements( array $elements, string $old, string $new, bool &$changed ): array {
 		foreach ( $elements as &$element ) {

@@ -7,8 +7,7 @@ use BeyondElysium\Services\Query_Engine;
 use WP_UnitTestCase;
 
 /**
- * Sorting query results called resolve_value() for both sides of every comparison, and each call re-loaded the block
- * definition from the database.
+ * Sorting query results loads each block definition once rather than once per comparison.
  */
 class QueryPerformanceThreadTest extends WP_UnitTestCase {
 

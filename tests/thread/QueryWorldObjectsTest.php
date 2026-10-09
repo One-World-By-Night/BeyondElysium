@@ -95,6 +95,32 @@ class QueryWorldObjectsTest extends WP_UnitTestCase {
 		$this->assertCount( 0, $matches, 'ItemClass.cls:313 - Abilities is NOT atomic, so the walk stops at the first (failing) entry' );
 	}
 
+	public function test_tempers_contains_matches_a_real_item_with_a_gnosis_temper(): void {
+		World_Object::create( [
+			'game_id' => $this->game_id, 'object_type' => 'item', 'name' => 'Spirit-Touched Fetish',
+			'properties' => [ 'tempers' => [ [ 'name' => 'Gnosis', 'count' => 4 ] ] ],
+		] );
+
+		$matches = $this->run_query( [ [ 'field' => 'tempers', 'operator' => 'contains', 'find' => 'Gnosis' ] ], 'AND', 'item' );
+
+		$this->assertCount( 1, $matches );
+		$this->assertSame( 'Spirit-Touched Fetish', $matches[0]->name );
+	}
+
+	public function test_tempers_contains_at_least_on_an_item_does_not_behave_atomically(): void {
+		World_Object::create( [
+			'game_id' => $this->game_id, 'object_type' => 'item', 'name' => 'Doubly-Tempered Fetish',
+			'properties' => [ 'tempers' => [
+				[ 'name' => 'Gnosis', 'count' => 1 ],
+				[ 'name' => 'Gnosis', 'count' => 3 ],
+			] ],
+		] );
+
+		$matches = $this->run_query( [ [ 'field' => 'tempers', 'operator' => 'contains_at_least', 'find' => 'Gnosis', 'value' => 2 ] ], 'AND', 'item' );
+
+		$this->assertCount( 0, $matches, 'ItemClass.cls:312 - TemperList.Initialize\'s own atomic argument is False' );
+	}
+
 	public function test_powers_contains_on_an_item_does_not_throw(): void {
 		World_Object::create( [
 			'game_id' => $this->game_id, 'object_type' => 'item', 'name' => 'Fortifying Fetish',

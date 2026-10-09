@@ -67,11 +67,9 @@ class ItemAttestationThreadTest extends WP_UnitTestCase {
 		$data     = (array) $response->get_data();
 
 		foreach ( $data['cards'] as $card ) {
-			foreach ( $card as [ $label, $value ] ) {
-				if ( $label === 'Verify' ) {
-					// The last card printed for this run belongs to whichever item is currently in scope.
-					return $value;
-				}
+			if ( ! empty( $card['verify'] ) ) {
+				// The last card printed for this run belongs to whichever item is currently in scope.
+				return $card['verify'];
 			}
 		}
 		return null;

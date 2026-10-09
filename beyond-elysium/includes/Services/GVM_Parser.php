@@ -18,7 +18,7 @@ class GVM_Parser {
 	 * Parses a menu file, selecting the binary or XML front end based on the file's opening bytes.
 	 *
 	 * @param string $path Absolute path.
-	 * @return array{version:float,description:string,menus:array}
+	 * @return array{version:float,description:string,menus:array<string,array<string,mixed>>}
 	 * @throws \RuntimeException On an unreadable or unrecognized file.
 	 */
 	public static function parse_file( string $path ): array {
@@ -36,7 +36,7 @@ class GVM_Parser {
 	 * Parses a GVBM binary menu set into the normalized menu structure.
 	 *
 	 * @param GV_Binary_Reader $reader Positioned at the start of the file.
-	 * @return array{version:float,description:string,menus:array}
+	 * @return array{version:float,description:string,menus:array<string,array<string,mixed>>}
 	 * @throws \RuntimeException When the header is wrong or the stream desynchronizes.
 	 */
 	public static function parse_binary( GV_Binary_Reader $reader ): array {
@@ -122,7 +122,7 @@ class GVM_Parser {
 	 * Parses an XML menu set into the same normalized structure the binary front end produces.
 	 *
 	 * @param string $path Absolute path.
-	 * @return array{version:float,description:string,menus:array}
+	 * @return array{version:float,description:string,menus:array<string,array<string,mixed>>}
 	 * @throws \RuntimeException When the file will not parse.
 	 */
 	public static function parse_xml( string $path ): array {

@@ -5,6 +5,7 @@ namespace BeyondElysium\REST;
 use BeyondElysium\Database\Transaction;
 use BeyondElysium\Models\Game;
 use BeyondElysium\Models\Schema_Block;
+use BeyondElysium\Services\In_Type;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -26,6 +27,31 @@ class Approval_Rules_Controller extends Base_Controller {
 	 * create/edit form offers.
 	 */
 	public function register_routes(): void {
+		// Game-less route, registered first.
+		register_rest_route( $this->namespace, '/bylaws/upload', [
+			[
+				'methods'             => 'POST',
+				'callback'            => [ $this, 'upload_bylaws' ],
+				'permission_callback' => $this->permission( 'be_manage_games' ),
+			],
+		] );
+
+		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/bylaws', [
+			[
+				'methods'             => 'GET',
+				'callback'            => [ $this, 'get_bylaws' ],
+				'permission_callback' => $this->permission( 'be_manage_approval_rules' ),
+			],
+		] );
+
+		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/bylaws/refresh', [
+			[
+				'methods'             => 'POST',
+				'callback'            => [ $this, 'refresh_bylaws' ],
+				'permission_callback' => $this->permission( 'be_manage_approval_rules' ),
+			],
+		] );
+
 		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/' . $this->rest_base, [
 			[
 				'methods'             => 'GET',
@@ -92,7 +118,7 @@ class Approval_Rules_Controller extends Base_Controller {
 			array_push( $rules, ...self::extract_rules( $block ) );
 		}
 
-		// Sorted here, in PHP, over the small flattened list.
+		// Sorted in PHP.
 		usort( $rules, fn( $a, $b ) => [ $a['block_name'], $a['target_name'] ] <=> [ $b['block_name'], $b['target_name'] ] );
 
 		return $this->success( $rules );
@@ -124,11 +150,16 @@ class Approval_Rules_Controller extends Base_Controller {
 			return $game;
 		}
 
-		return $this->success( [ 'auto_approve' => ( $game->settings->auto_approve ?? false ) === true ] );
+		return $this->success( [
+			'auto_approve'         => ( $game->settings->auto_approve ?? false ) === true,
+			'approval_on_removal'  => ( $game->settings->approval_on_removal ?? false ) === true,
+			'owbn_bylaws'          => ( $game->settings->owbn_bylaws ?? false ) === true,
+		] );
 	}
 
 	/**
-	 * Sets the chronicle's default approval policy.
+	 * Sets the chronicle's default approval policy, its removal-and-lowering switch, and/or its OWBN Character
+	 * Bylaws switch - any one, any combination, whichever the request names.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -139,18 +170,41 @@ class Approval_Rules_Controller extends Base_Controller {
 			return $game;
 		}
 
-		$auto = $request->get_param( 'auto_approve' );
-		if ( ! is_bool( $auto ) ) {
+		$auto      = $request->get_param( 'auto_approve' );
+		$on_remove = $request->get_param( 'approval_on_removal' );
+		$bylaws    = $request->get_param( 'owbn_bylaws' );
+		if ( $auto === null && $on_remove === null && $bylaws === null ) {
+			return $this->error( 'invalid_param', __( 'auto_approve, approval_on_removal, or owbn_bylaws is required.', 'beyond-elysium' ), 400 );
+		}
+		if ( $auto !== null && ! is_bool( $auto ) ) {
 			return $this->error( 'invalid_param', __( 'auto_approve must be true or false.', 'beyond-elysium' ), 400 );
 		}
+		if ( $on_remove !== null && ! is_bool( $on_remove ) ) {
+			return $this->error( 'invalid_param', __( 'approval_on_removal must be true or false.', 'beyond-elysium' ), 400 );
+		}
+		if ( $bylaws !== null && ! is_bool( $bylaws ) ) {
+			return $this->error( 'invalid_param', __( 'owbn_bylaws must be true or false.', 'beyond-elysium' ), 400 );
+		}
 
-		$settings                 = $game->settings ? (array) $game->settings : [];
-		$settings['auto_approve'] = $auto;
+		$settings = $game->settings ? (array) $game->settings : [];
+		if ( $auto !== null ) {
+			$settings['auto_approve'] = $auto;
+		}
+		if ( $on_remove !== null ) {
+			$settings['approval_on_removal'] = $on_remove;
+		}
+		if ( $bylaws !== null ) {
+			$settings['owbn_bylaws'] = $bylaws;
+		}
 		if ( ! Game::update( $request['game_slug'], [ 'settings' => $settings ] ) ) {
 			return $this->error( 'update_failed', __( 'Failed to save the default approval policy.', 'beyond-elysium' ), 500 );
 		}
 
-		return $this->success( [ 'auto_approve' => $auto ] );
+		return $this->success( [
+			'auto_approve'        => $settings['auto_approve'] ?? false,
+			'approval_on_removal' => $settings['approval_on_removal'] ?? false,
+			'owbn_bylaws'         => $settings['owbn_bylaws'] ?? false,
+		] );
 	}
 
 	/**
@@ -259,8 +313,8 @@ class Approval_Rules_Controller extends Base_Controller {
 	 * Writes a rule onto the chronicle's copy of its block, making the copy when the rule is valid, and returns the block
 	 * as saved.
 	 *
-	 * @param array            $target
-	 * @param \WP_REST_Request $request
+	 * @param array<string,mixed> $target
+	 * @param \WP_REST_Request    $request
 	 * @return object|\WP_Error
 	 */
 	private function save_rule( array $target, \WP_REST_Request $request ) {
@@ -289,8 +343,8 @@ class Approval_Rules_Controller extends Base_Controller {
 	/**
 	 * Applies a rule to a copy of the chronicle's current block.
 	 *
-	 * @param array            $target
-	 * @param \WP_REST_Request $request
+	 * @param array<string,mixed> $target
+	 * @param \WP_REST_Request    $request
 	 * @return object|\WP_Error The fork with the rule applied, ready to save.
 	 */
 	private static function fork_if_valid( array $target, \WP_REST_Request $request ) {
@@ -327,7 +381,7 @@ class Approval_Rules_Controller extends Base_Controller {
 	 * override or a reason, each shaped as a rule the client can display and address by its id.
 	 *
 	 * @param object $block Decoded schema block row.
-	 * @return array[]
+	 * @return array<int,array<string,mixed>>
 	 */
 	private static function extract_rules( $block ): array {
 		$rules      = [];
@@ -393,6 +447,21 @@ class Approval_Rules_Controller extends Base_Controller {
 			}
 		}
 
+		$rules_def = $definition->approval_rules ?? null;
+		if ( $rules_def ) {
+			if ( isset( $rules_def->default ) ) {
+				$rules[] = self::rule_shape( $block, [ 'target_type' => 'block_default', 'target_name' => $block->slug ], $rules_def->default, null );
+			}
+			if ( isset( $rules_def->in_type ) || isset( $rules_def->out_of_type ) ) {
+				$rules[] = self::rule_shape(
+					$block,
+					[ 'target_type' => 'block_in_type', 'target_name' => $block->slug, 'extra' => [ $rules_def->in_type ?? null, $rules_def->out_of_type ?? null ] ],
+					null,
+					null
+				);
+			}
+		}
+
 		return $rules;
 	}
 
@@ -400,11 +469,11 @@ class Approval_Rules_Controller extends Base_Controller {
 	 * Builds one rule's client-facing shape: its addressable id plus enough context (block, target, current values) to
 	 * display and edit it.
 	 *
-	 * @param object     $block
-	 * @param array      $target {target_type, target_name, level?, extra?}
-	 * @param string|null $approval
-	 * @param string|null $reason
-	 * @return array
+	 * @param object              $block
+	 * @param array<string,mixed> $target {target_type, target_name, level?, extra?}
+	 * @param string|null         $approval
+	 * @param string|null         $reason
+	 * @return array<string,mixed>
 	 */
 	private static function rule_shape( $block, array $target, ?string $approval, ?string $reason ): array {
 		return [
@@ -424,11 +493,20 @@ class Approval_Rules_Controller extends Base_Controller {
 	/**
 	 * Re-derives one rule's current shape from a freshly saved block, for the response of a create or update.
 	 *
-	 * @param object $block
-	 * @param array  $target
-	 * @return array|null
+	 * @param object              $block
+	 * @param array<string,mixed> $target
+	 * @return array<string,mixed>|null
 	 */
 	private static function find_rule( $block, array $target ): ?array {
+		// A block-level rule is a singleton per block, matched by target_type alone.
+		if ( in_array( $target['target_type'], [ 'block_default', 'block_in_type' ], true ) ) {
+			foreach ( self::extract_rules( $block ) as $rule ) {
+				if ( $rule['target_type'] === $target['target_type'] ) {
+					return $rule;
+				}
+			}
+			return null;
+		}
 		foreach ( self::extract_rules( $block ) as $rule ) {
 			if ( $rule['id'] === self::encode_id( $target['block_slug'], $target ) ) {
 				return $rule;
@@ -440,8 +518,8 @@ class Approval_Rules_Controller extends Base_Controller {
 	/**
 	 * Encodes a block slug and target into the opaque id used to address one rule in the update and delete routes.
 	 *
-	 * @param string $block_slug
-	 * @param array  $target {target_type, target_name, level?, extra?}
+	 * @param string              $block_slug
+	 * @param array<string,mixed> $target {target_type, target_name, level?, extra?}
 	 * @return string
 	 */
 	private static function encode_id( string $block_slug, array $target ): string {
@@ -458,7 +536,7 @@ class Approval_Rules_Controller extends Base_Controller {
 	 * Decodes an opaque rule id back into its block slug and target.
 	 *
 	 * @param string $id
-	 * @return array|\WP_Error {block_slug, target_type, target_name, level, extra}
+	 * @return array<string,mixed>|\WP_Error {block_slug, target_type, target_name, level, extra}
 	 */
 	private static function decode_id( string $id ) {
 		$padded  = strtr( $id, '-_', '+/' );
@@ -489,7 +567,7 @@ class Approval_Rules_Controller extends Base_Controller {
 	 * or field option within it.
 	 *
 	 * @param \WP_REST_Request $request
-	 * @return array|\WP_Error {block_slug, target_type, target_name, level, extra}
+	 * @return array<string,mixed>|\WP_Error {block_slug, target_type, target_name, level, extra}
 	 */
 	private static function parse_target( \WP_REST_Request $request ) {
 		$block_slug  = (string) $request->get_param( 'block_slug' );
@@ -497,13 +575,21 @@ class Approval_Rules_Controller extends Base_Controller {
 		$target_name = (string) $request->get_param( 'target_name' );
 		$level       = $request->get_param( 'level' );
 
-		if ( $block_slug === '' || $target_name === '' ) {
-			return new \WP_Error( 'invalid_param', __( 'block_slug and target_name are required.', 'beyond-elysium' ), [ 'status' => 400 ] );
+		if ( $block_slug === '' ) {
+			return new \WP_Error( 'invalid_param', __( 'block_slug is required.', 'beyond-elysium' ), [ 'status' => 400 ] );
 		}
-		$valid_types = [ 'item', 'power', 'level', 'item_range', 'pool_range', 'field_option' ];
+		$valid_types = [ 'item', 'power', 'level', 'item_range', 'pool_range', 'field_option', 'block_default', 'block_in_type' ];
 		if ( ! in_array( $target_type, $valid_types, true ) ) {
-			return new \WP_Error( 'invalid_param', __( 'target_type must be item, power, level, item_range, pool_range, or field_option.', 'beyond-elysium' ), [ 'status' => 400 ] );
+			return new \WP_Error( 'invalid_param', __( 'target_type must be item, power, level, item_range, pool_range, field_option, block_default, or block_in_type.', 'beyond-elysium' ), [ 'status' => 400 ] );
 		}
+
+		$block_level_types = [ 'block_default', 'block_in_type' ];
+		if ( in_array( $target_type, $block_level_types, true ) ) {
+			$target_name = $block_slug;
+		} elseif ( $target_name === '' ) {
+			return new \WP_Error( 'invalid_param', __( 'target_name is required.', 'beyond-elysium' ), [ 'status' => 400 ] );
+		}
+
 		if ( $target_type === 'level' && $level === null ) {
 			return new \WP_Error( 'invalid_param', __( 'A level target requires a level number.', 'beyond-elysium' ), [ 'status' => 400 ] );
 		}
@@ -524,7 +610,6 @@ class Approval_Rules_Controller extends Base_Controller {
 			}
 			$extra = $option;
 		}
-
 		return [
 			'block_slug'  => $block_slug,
 			'target_type' => $target_type,
@@ -538,9 +623,9 @@ class Approval_Rules_Controller extends Base_Controller {
 	 * Writes a rule's approval and/or reason fields onto the matched item, power, power level, value range, or field
 	 * option within a block's (already-decoded) definition, mutating it in place.
 	 *
-	 * @param object            $block  Decoded block; its definition is mutated in place.
-	 * @param array             $target {block_slug, target_type, target_name, level, extra}
-	 * @param \WP_REST_Request  $request
+	 * @param object              $block  Decoded block; its definition is mutated in place.
+	 * @param array<string,mixed> $target {block_slug, target_type, target_name, level, extra}
+	 * @param \WP_REST_Request    $request
 	 * @return true|\WP_Error
 	 */
 	private static function apply_target( $block, array $target, \WP_REST_Request $request ) {
@@ -552,6 +637,37 @@ class Approval_Rules_Controller extends Base_Controller {
 		$reason = $request->get_param( 'reason' );
 		if ( is_string( $reason ) ) {
 			$reason = sanitize_textarea_field( $reason );
+		}
+
+		if ( $target['target_type'] === 'block_default' ) {
+			if ( $approval === null || $approval === '' ) {
+				return new \WP_Error( 'invalid_param', __( 'block_default requires an approval level.', 'beyond-elysium' ), [ 'status' => 400 ] );
+			}
+			if ( ! isset( $block->definition->approval_rules ) ) {
+				$block->definition->approval_rules = new \stdClass();
+			}
+			$block->definition->approval_rules->default = $approval;
+			return true;
+		}
+
+		if ( $target['target_type'] === 'block_in_type' ) {
+			if ( $block->section_type !== 'tiered_power' ) {
+				return new \WP_Error( 'invalid_target', __( 'An in-type/out-of-type target requires a tiered_power block.', 'beyond-elysium' ), [ 'status' => 400 ] );
+			}
+			$in_type_level     = (string) $request->get_param( 'in_type' );
+			$out_of_type_level = (string) $request->get_param( 'out_of_type' );
+			if ( ! in_array( $in_type_level, [ 'auto', 'st' ], true ) || ! in_array( $out_of_type_level, [ 'auto', 'st' ], true ) ) {
+				return new \WP_Error( 'invalid_param', __( 'block_in_type requires both an in_type and an out_of_type level.', 'beyond-elysium' ), [ 'status' => 400 ] );
+			}
+			if ( ! In_Type::has_test_for_block( $block->slug, $request['game_slug'] ) ) {
+				return new \WP_Error( 'no_in_type_test', __( 'This block has no in-type test on any creature type in this chronicle.', 'beyond-elysium' ), [ 'status' => 400 ] );
+			}
+			if ( ! isset( $block->definition->approval_rules ) ) {
+				$block->definition->approval_rules = new \stdClass();
+			}
+			$block->definition->approval_rules->in_type     = $in_type_level;
+			$block->definition->approval_rules->out_of_type = $out_of_type_level;
+			return true;
 		}
 
 		if ( $target['target_type'] === 'item' || $target['target_type'] === 'item_range' ) {
@@ -663,10 +779,10 @@ class Approval_Rules_Controller extends Base_Controller {
 	 * Writes (creating if absent) one [from, to] range entry's approval and reason within a trait_list item's or
 	 * resource_pool pool's own approval_by_value array, mutating it in place.
 	 *
-	 * @param array        $ranges Array of {from, to, approval, reason?} objects, mutated in place.
-	 * @param array        $bounds [from, to]
-	 * @param string|null  $approval
-	 * @param string|null  $reason
+	 * @param array<int,object> $ranges Array of {from, to, approval, reason?} objects, mutated in place.
+	 * @param array<int,mixed>  $bounds [from, to]
+	 * @param string|null       $approval
+	 * @param string|null       $reason
 	 * @return true
 	 */
 	private static function apply_range( array &$ranges, array $bounds, ?string $approval, ?string $reason ) {
@@ -698,11 +814,27 @@ class Approval_Rules_Controller extends Base_Controller {
 	/**
 	 * Clears a rule's override fields back to unset, the inverse of apply_target().
 	 *
-	 * @param object $block  Decoded block; its definition is mutated in place.
-	 * @param array  $target {block_slug, target_type, target_name, level, extra}
+	 * @param object              $block  Decoded block; its definition is mutated in place.
+	 * @param array<string,mixed> $target {block_slug, target_type, target_name, level, extra}
 	 * @return bool
 	 */
 	private static function clear_target( $block, array $target ): bool {
+		if ( $target['target_type'] === 'block_default' ) {
+			if ( ! isset( $block->definition->approval_rules->default ) ) {
+				return false;
+			}
+			unset( $block->definition->approval_rules->default );
+			return true;
+		}
+
+		if ( $target['target_type'] === 'block_in_type' ) {
+			if ( ! isset( $block->definition->approval_rules->in_type ) && ! isset( $block->definition->approval_rules->out_of_type ) ) {
+				return false;
+			}
+			unset( $block->definition->approval_rules->in_type, $block->definition->approval_rules->out_of_type );
+			return true;
+		}
+
 		if ( $target['target_type'] === 'item' && $block->section_type === 'trait_list' ) {
 			foreach ( $block->definition->items ?? [] as $item ) {
 				if ( $item->name === $target['target_name'] ) {
@@ -775,8 +907,8 @@ class Approval_Rules_Controller extends Base_Controller {
 	 * Removes one [from, to] range entry from a trait_list item's or resource_pool pool's approval_by_value array,
 	 * matched by its exact bounds.
 	 *
-	 * @param array $ranges Mutated in place.
-	 * @param array $bounds [from, to]
+	 * @param array<int,object> $ranges Mutated in place.
+	 * @param array<int,mixed> $bounds [from, to]
 	 * @return bool
 	 */
 	private static function clear_range( array &$ranges, array $bounds ): bool {
@@ -789,6 +921,111 @@ class Approval_Rules_Controller extends Base_Controller {
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * The reference list: every OWBN Character Bylaw rule, filtered by section, tier, attached status, and a plain
+	 * text search over its subject - "all of it" stays readable, not truncated to the usual listing page size.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function get_bylaws( $request ) {
+		$game = $this->resolve_game( $request['game_slug'] );
+		if ( is_wp_error( $game ) ) {
+			return $game;
+		}
+
+		$ruleset     = \BeyondElysium\Services\Bylaws::effective();
+		$attached_by = [];
+		foreach ( $ruleset['attachments'] as $attachment ) {
+			$attached_by[ (int) ( $attachment['clause_id'] ?? 0 ) ][] = $attachment;
+		}
+
+		$search    = trim( (string) $request->get_param( 'search' ) );
+		$tier      = trim( (string) $request->get_param( 'tier' ) );
+		$attached  = $request->get_param( 'attached' );
+
+		$rows = [];
+		foreach ( $ruleset['rules'] as $rule ) {
+			$own_attachments = $attached_by[ (int) $rule['clause_id'] ] ?? [];
+			if ( $attached !== null && ( $attached === 'true' || $attached === '1' || $attached === true ) !== ( $own_attachments !== [] ) ) {
+				continue;
+			}
+			if ( $search !== '' && stripos( (string) $rule['subject'], $search ) === false ) {
+				continue;
+			}
+			if ( $tier !== '' && stripos( (string) ( $rule['pc'] ?? '' ), $tier ) === false && stripos( (string) ( $rule['npc'] ?? '' ), $tier ) === false ) {
+				continue;
+			}
+			$rule['attachments'] = $own_attachments;
+			$rule['link']        = 'https://council.owbn.net/?p=' . $rule['clause_id'];
+			$rows[]              = $rule;
+		}
+
+		$total               = count( $rows );
+		[ 'page' => $page, 'per_page' => $per_page, 'offset' => $offset ] = $this->get_pagination( $request, 2000 );
+		$page_rows           = array_slice( $rows, $offset, $per_page );
+
+		return $this->paginate( $this->success( $page_rows ), $total, $per_page, $page );
+	}
+
+	/**
+	 * Re-pulls every Character Bylaw rule from council.owbn.net, keeping this site's own attachments for every
+	 * clause that still exists.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function refresh_bylaws( $request ) {
+		$game = $this->resolve_game( $request['game_slug'] );
+		if ( is_wp_error( $game ) ) {
+			return $game;
+		}
+
+		$result = \BeyondElysium\Services\Bylaws::refresh_from_council();
+		if ( is_wp_error( $result ) ) {
+			return $this->error( $result->get_error_code(), $result->get_error_message(), 502 );
+		}
+
+		return $this->success( [
+			'rule_count'        => count( $result['ruleset']['rules'] ),
+			'attachment_count'  => count( $result['ruleset']['attachments'] ),
+			'added'             => $result['added'],
+			'removed'           => $result['removed'],
+			'changed'           => $result['changed'],
+			'generated_at'      => $result['ruleset']['generated_at'],
+		] );
+	}
+
+	/**
+	 * Uploads an already-built bylaws file (the shape `tools/bylaws/build.php` writes), for a site that can't reach
+	 * council.owbn.net directly. Site-wide, not per chronicle.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function upload_bylaws( $request ) {
+		$files = $request->get_file_params();
+		if ( empty( $files['file']['tmp_name'] ) ) {
+			return $this->error( 'invalid_param', __( 'A file is required.', 'beyond-elysium' ), 400 );
+		}
+
+		$decoded = json_decode( (string) file_get_contents( $files['file']['tmp_name'] ), true );
+		if ( ! is_array( $decoded ) ) {
+			return $this->error( 'bylaws_malformed', __( "This file doesn't decode as JSON.", 'beyond-elysium' ), 400 );
+		}
+
+		$result = \BeyondElysium\Services\Bylaws::upload( $decoded );
+		if ( is_wp_error( $result ) ) {
+			return $this->error( $result->get_error_code(), $result->get_error_message(), 400 );
+		}
+
+		$ruleset = \BeyondElysium\Services\Bylaws::effective();
+		return $this->success( [
+			'rule_count'       => count( $ruleset['rules'] ),
+			'attachment_count' => count( $ruleset['attachments'] ),
+		] );
 	}
 
 	/**

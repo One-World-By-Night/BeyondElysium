@@ -127,7 +127,10 @@ class Character_Order_Controller extends Base_Controller {
 		return true;
 	}
 
-	/** @see Export_Controller::resolve_game() - duplicated per project convention. */
+	/**
+	 * @see Export_Controller::resolve_game() - duplicated per project convention.
+	 * @return object|\WP_Error
+	 */
 	protected function resolve_game( string $game_slug ) {
 		$game = Game::find_by_slug( $game_slug );
 		if ( ! $game ) {

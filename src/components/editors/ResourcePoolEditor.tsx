@@ -1,9 +1,11 @@
 /**
  * ResourcePoolEditor renders the editable dot trackers for a resource_pool block.
  */
+import { __ } from '@wordpress/i18n';
 import DotTracker, { type DotTrackerValue } from '../shared/DotTracker';
 import { resolvePoolName } from '../../lib/resolveCrossBlockRef';
 import { trackerMax } from '../../lib/poolMax';
+import { raiseButtonLabel, spentBadgeLabel } from '../../lib/raisedByPool';
 import type { ResourcePoolValue } from '../../lib/displayTemper';
 import type { ResourcePoolDefinition } from '../../types';
 import './ResourcePoolEditor.css';
@@ -21,6 +23,10 @@ export interface ResourcePoolEditorProps {
 	 * The character's full sheet_data, used to resolve a pool's display name from another block's value.
 	 */
 	sheetData?: Record< string, unknown >;
+	/**
+	 * A Storyteller of this chronicle sets any pool directly, bypassing its own max and any raised_by cost.
+	 */
+	isManager?: boolean;
 }
 
 /**
@@ -33,6 +39,7 @@ export function ResourcePoolEditor( {
 	onChange,
 	readOnly,
 	sheetData,
+	isManager,
 }: ResourcePoolEditorProps ) {
 	const setPool = ( poolName: string, next: DotTrackerValue ) => {
 		onChange( blockSlug, { ...data, [ poolName ]: next } );
@@ -45,6 +52,7 @@ export function ResourcePoolEditor( {
 					permanent: pool.default_start,
 					temporary: pool.default_start,
 				};
+				const raisedBy = pool.raised_by;
 
 				return (
 					<div
@@ -57,10 +65,41 @@ export function ResourcePoolEditor( {
 						<DotTracker
 							permanent={ value.permanent }
 							temporary={ value.temporary }
-							max={ trackerMax( pool.max, value ) }
+							max={ trackerMax(
+								isManager ? undefined : pool.max,
+								value
+							) }
 							onChange={ ( next ) => setPool( pool.name, next ) }
-							readOnly={ readOnly }
+							readOnly={
+								readOnly || ( !! raisedBy && ! isManager )
+							}
 						/>
+						{ spentBadgeLabel( value.spent ) && (
+							<span
+								className="be-resource-pool-editor__spent"
+								title={ __(
+									'Marked spent by a purchase elsewhere on the sheet - this never lowers the rating above.',
+									'beyond-elysium'
+								) }
+							>
+								{ spentBadgeLabel( value.spent ) }
+							</span>
+						) }
+						{ raisedBy && (
+							<button
+								type="button"
+								className="be-resource-pool-editor__raise"
+								disabled={ readOnly }
+								onClick={ () =>
+									setPool( pool.name, {
+										permanent: value.permanent + 1,
+										temporary: value.temporary,
+									} )
+								}
+							>
+								{ raiseButtonLabel( raisedBy ) }
+							</button>
+						) }
 					</div>
 				);
 			} ) }

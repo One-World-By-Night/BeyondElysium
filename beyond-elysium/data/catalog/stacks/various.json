@@ -1,0 +1,51 @@
+{
+  "format": 1,
+  "slug": "various",
+  "name": "Various",
+  "kind": "stack",
+  "provenance": {
+    "sources": [
+      "Grapevine 3.01's own `VariousClass` (GV-SOURCEMAP.md): the generic character class for a creature type Grapevine has no dedicated support for. Owner ruling: Various is the Storyteller-only creature type - unpriced (no `creation_rules` document, so the build tally reads zero), offered to a Storyteller in every chronicle and never to a player, and able to hold any block from any creature type, or a custom entry, so a Storyteller can build whatever the story needs. Its sheet lists the merged Abilities, Backgrounds, Merits, Flaws and Tempers (tools/catalog/build_various.py), Derangements, the Storyteller's own Other Powers, and every creature type's base power family."
+    ],
+    "tool": "read directly, 2026-10-04"
+  },
+  "definition": {
+    "game_line": "met",
+    "storyteller_only": true,
+    "any_block": true,
+    "sections": [
+      { "block_slug": "various-identity", "label": "Identity", "display_order": 1, "required": true },
+      { "block_slug": "met-archetypes", "label": "Archetypes", "display_order": 20, "required": false },
+      { "block_slug": "various-abilities", "label": "Abilities", "display_order": 30, "required": false, "replaces": [ "met-abilities" ] },
+      { "block_slug": "various-backgrounds", "label": "Backgrounds", "display_order": 40, "required": false },
+      { "block_slug": "various-merits", "label": "Merits", "display_order": 41, "required": false },
+      { "block_slug": "various-flaws", "label": "Flaws", "display_order": 42, "required": false },
+      { "block_slug": "met-derangements", "label": "Derangements", "display_order": 43, "required": false },
+      { "block_slug": "met-physical-traits", "label": "Physical Traits", "display_order": 50, "required": true, "negative_block_slug": "met-physical-traits-neg" },
+      { "block_slug": "met-social-traits", "label": "Social Traits", "display_order": 51, "required": true, "negative_block_slug": "met-social-traits-neg" },
+      { "block_slug": "met-mental-traits", "label": "Mental Traits", "display_order": 52, "required": true, "negative_block_slug": "met-mental-traits-neg" },
+      { "block_slug": "various-tempers", "label": "Tempers", "display_order": 70, "required": false },
+      { "block_slug": "various-health", "label": "Health", "display_order": 72, "required": false },
+      { "block_slug": "various-powers", "label": "Other Powers", "display_order": 80, "required": false },
+      { "block_slug": "vampire-disciplines", "label": "Disciplines (Vampire)", "display_order": 100, "required": false },
+      { "block_slug": "vampire-blood-magic", "label": "Blood Magic (Vampire)", "display_order": 101, "required": false },
+      { "block_slug": "werewolf-gifts", "label": "Gifts (Werewolf)", "display_order": 102, "required": false },
+      { "block_slug": "fera-gifts", "label": "Gifts (Fera)", "display_order": 103, "required": false },
+      { "block_slug": "changeling-arts", "label": "Arts (Changeling)", "display_order": 104, "required": false },
+      { "block_slug": "changeling-realms", "label": "Realms (Changeling)", "display_order": 105, "required": false },
+      { "block_slug": "mage-spheres", "label": "Spheres (Mage)", "display_order": 106, "required": false },
+      { "block_slug": "wraith-arcanoi", "label": "Arcanoi (Wraith)", "display_order": 107, "required": false },
+      { "block_slug": "demon-evocations", "label": "Lores (Demon)", "display_order": 108, "required": false },
+      { "block_slug": "hunter-edges", "label": "Edges (Hunter)", "display_order": 109, "required": false },
+      { "block_slug": "kueijin-disciplines", "label": "Disciplines (Kuei-Jin)", "display_order": 110, "required": false },
+      { "block_slug": "kueijin-shintai", "label": "Shintai (Kuei-Jin)", "display_order": 111, "required": false },
+      { "block_slug": "mummy-hekau", "label": "Hekau (Mummy)", "display_order": 112, "required": false },
+      { "block_slug": "mortal-psychic", "label": "Psychic Phenomena", "display_order": 113, "required": false },
+      { "block_slug": "mortal-hedge-magic", "label": "Hedge Magic", "display_order": 114, "required": false },
+      { "block_slug": "mortal-martial-arts", "label": "Martial Arts", "display_order": 115, "required": false },
+      { "block_slug": "mortal-theurgy", "label": "Theurgy", "display_order": 116, "required": false },
+      { "block_slug": "mortal-fomori", "label": "Fomori Powers", "display_order": 117, "required": false },
+      { "block_slug": "mortal-bioenhancements", "label": "Bioenhancements", "display_order": 118, "required": false }
+    ]
+  }
+}

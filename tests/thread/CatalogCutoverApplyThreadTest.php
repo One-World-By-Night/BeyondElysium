@@ -94,7 +94,7 @@ class CatalogCutoverApplyThreadTest extends WP_UnitTestCase {
 	}
 
 	public function test_the_shipped_demo_characters_need_nothing_moved(): void {
-		// The 22 demo characters already hold each creature type's own blocks: a plan finds nothing to lose or change.
+		// The demo characters already hold each creature type's own blocks: a plan finds nothing to lose or change.
 		$fixtures = Seeder::demo_fixtures();
 		foreach ( $fixtures as $fixture ) {
 			Character::create( [
@@ -281,7 +281,7 @@ class CatalogCutoverApplyThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 3, $result['rows_respelled'] );
 		$this->assertSame( 0, $result['rows_rekeyed'] );
 
-		// assertEquals: MySQL's JSON column returns an object's keys in its own order.
+		// Compared with assertEquals, which ignores key order.
 		$sheet = Character::find( $id )->sheet_data;
 		$this->assertEquals(
 			[

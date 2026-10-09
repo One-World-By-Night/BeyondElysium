@@ -4,8 +4,7 @@ How a change you submit moves from an edit on your own screen to something real 
 
 ## Who can use this
 
-Every player's submitted changes go through this. Reviewing one - approving or rejecting it
-- is a Storyteller's job (HST and AST); nobody else reviews a change. What actually needs review, and what doesn't, is set by a Storyteller (on Approval Rules or directly on a schema block) or by a site administrator (the chronicle's own overall default).
+Every player's submitted changes go through this. Reviewing one - approving or rejecting it - is a Storyteller's job (HST and AST); nobody else reviews a change. What actually needs review, and what doesn't, is set by a Storyteller (on Approval Rules or directly on a schema block) or by a site administrator (the chronicle's own overall default).
 
 ## How to get there
 
@@ -29,7 +28,7 @@ This isn't a screen of its own. You submit a change from the [Character Editor](
 
 ### Check whether your change is still waiting
 
-1. Open [My Chronicle](my-chronicle.md) → **Dashboard** → **My Pending Changes**.
+1. Open [My Chronicle](my-chronicle.md) → **Dashboard** → **My Changes**.
 2. Still listed there means still waiting. Not listed, but not on the sheet either? Check that character's [Change History](sheet-history.md) for whether it was approved or rejected.
 
 ### See why a specific change needs review (Storyteller)
@@ -56,12 +55,11 @@ This isn't a screen of its own. You submit a change from the [Character Editor](
 - **A resource pool's rule checks its permanent rating only.** Spending or regaining points during play never triggers review - only a permanent, XP-funded increase can.
 - **An identity field's rule checks every value you pick.** For a field that allows more than one choice, the strictest requirement among your picks applies.
 - **Approving several at once (Approve Selected) is the same click, repeated.** It applies the identical approval to every change you've checked - not a separate bulk mechanism with its own rules. The one exception is homebrew that still needs a price: it can't be approved in a batch, because nobody has said what it costs.
-- **Not everything goes through this queue at all.** Some things a Storyteller does directly
-  - an XP award, for instance - are recorded as already decided, since a Storyteller's own action already carries that authority.
+- **Not everything goes through this queue at all.** Some things a Storyteller does directly - an XP award, for instance - are recorded as already decided, since a Storyteller's own action already carries that authority.
 
 ## Troubleshooting
 
-- **My change didn't show up on my sheet.** It's most likely pending Storyteller review - check [My Chronicle](my-chronicle.md) → Dashboard → My Pending Changes, or the character's [Change History](sheet-history.md).
+- **My change didn't show up on my sheet.** It's most likely pending Storyteller review - check [My Chronicle](my-chronicle.md) → Dashboard → My Changes, or the character's [Change History](sheet-history.md).
 - **Submit Changes won't click.** As a player, submitting would leave you with negative XP - reduce what you're buying, or ask a Storyteller for more, first.
 - **A Storyteller says nothing happened when they clicked Approve.** Someone else already reviewed it, or you changed it after the queue loaded - the queue reloads with whatever's actually there now.
 - **A rule doesn't seem to be applying.** Check it addresses the value actually being reached (never a change from before), and that nothing more specific overrides it.

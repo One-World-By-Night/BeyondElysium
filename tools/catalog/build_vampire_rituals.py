@@ -50,7 +50,7 @@ def main(snapshot_dir):
             stats['cost_corrected'] += 1
         note = raw.get('note')
         if note and note.strip().lower().rstrip('.') in TIERS:
-            note = None  # the note was only ever the tier word
+            note = None  # the note is only the tier word
         items.append(OrderedDict([
             ('name', raw['name']),
             ('cost', cost),

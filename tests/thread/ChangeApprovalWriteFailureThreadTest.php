@@ -55,7 +55,7 @@ class ChangeApprovalWriteFailureThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Makes the one write that records an approval fail, the way a missing column does.
+	 * Makes the one write that records an approval fail.
 	 */
 	public function break_the_approval_write( string $query ): string {
 		$records_approval = str_starts_with( $query, 'UPDATE' )

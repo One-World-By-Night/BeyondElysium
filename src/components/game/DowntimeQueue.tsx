@@ -5,12 +5,17 @@ import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
 import { canIn } from '../../lib/chronicleCapabilities';
-import { storytellerTabUrl, STORYTELLER_TABS } from '../../lib/pluginPages';
+import {
+	characterSheetUrl,
+	storytellerTabUrl,
+	STORYTELLER_TABS,
+} from '../../lib/pluginPages';
 import { AssigneePicker } from '../shared/AssigneePicker';
 import TabStrip from '../shared/TabStrip';
 import type { MyCapabilities } from '../../types';
 import type { GameSession } from '../../types/session';
 import type { DowntimeQueueRow } from '../../types/downtime';
+import type { StaffMember } from '../../types/staffQueue';
 import HelpButton from '../shared/HelpButton';
 import './DowntimeQueue.css';
 
@@ -35,6 +40,20 @@ const WINDOW_STATE_LABELS: Record< string, string > = {
 	open: __( 'Open', 'beyond-elysium' ),
 	closed: __( 'Closed', 'beyond-elysium' ),
 };
+
+/**
+ * Where one connected entity links to: a character or NPC's own sheet, or the Items & Locations tab for an item or
+ * location (there is no per-object deep link).
+ */
+function connectionUrl(
+	connection: DowntimeQueueRow[ 'connections' ][ number ],
+	gameSlug: string
+): string {
+	if ( connection.type === 'character' || connection.type === 'npc' ) {
+		return characterSheetUrl( connection.id, gameSlug );
+	}
+	return storytellerTabUrl( STORYTELLER_TABS.worldObjects );
+}
 
 /**
  * "closes in 3 days" / "closed 2 days ago" from a deadline string, or null with nothing to say.
@@ -79,6 +98,17 @@ export function DowntimeQueue( {
 	const [ filter, setFilter ] = useState< 'unanswered' | 'all' >(
 		'unanswered'
 	);
+	const [ staff, setStaff ] = useState< StaffMember[] >( [] );
+	const [ assigneeFilter, setAssigneeFilter ] = useState( 'all' );
+	// This arrives as the string "1", not the number 1.
+	const currentUserId = Number( window.beyondElysium?.currentUserId ?? 0 );
+
+	useEffect( () => {
+		api.myQueue( gameSlug )
+			.staff()
+			.then( setStaff )
+			.catch( () => setStaff( [] ) );
+	}, [ gameSlug ] );
 
 	useEffect( () => {
 		api.sessions( gameSlug )
@@ -157,9 +187,17 @@ export function DowntimeQueue( {
 	const deadlineNote = session
 		? relativeDeadline( session.downtime_deadline_at )
 		: null;
-	const visibleRows = rows.filter(
-		( r ) => filter === 'all' || ! r.answered
-	);
+	const visibleRows = rows
+		.filter( ( r ) => filter === 'all' || ! r.answered )
+		.filter( ( r ) => {
+			if ( assigneeFilter === 'all' ) {
+				return true;
+			}
+			if ( assigneeFilter === 'me' ) {
+				return r.assigned_to === currentUserId;
+			}
+			return r.assigned_to === Number( assigneeFilter );
+		} );
 
 	return (
 		<div className="be-downtime-queue">
@@ -204,6 +242,27 @@ export function DowntimeQueue( {
 						setFilter( key as 'unanswered' | 'all' )
 					}
 				/>
+				<label>
+					{ __( 'Assigned to', 'beyond-elysium' ) }{ ' ' }
+					<select
+						value={ assigneeFilter }
+						onChange={ ( e ) =>
+							setAssigneeFilter( e.target.value )
+						}
+					>
+						<option value="all">
+							{ __( 'All', 'beyond-elysium' ) }
+						</option>
+						<option value="me">
+							{ __( 'Assigned to me', 'beyond-elysium' ) }
+						</option>
+						{ staff.map( ( member ) => (
+							<option key={ member.id } value={ member.id }>
+								{ member.name }
+							</option>
+						) ) }
+					</select>
+				</label>
 			</div>
 
 			{ loading ? (
@@ -267,6 +326,22 @@ export function DowntimeQueue( {
 										row.window_state }
 								</span>
 							</a>
+							{ row.connections.length > 0 && (
+								<span className="be-downtime-queue__connections">
+									{ row.connections.map( ( connection ) => (
+										<a
+											key={ `${ connection.type }-${ connection.id }` }
+											href={ connectionUrl(
+												connection,
+												gameSlug
+											) }
+											className={ `be-downtime-queue__connection be-downtime-queue__connection--${ connection.type }` }
+										>
+											{ connection.name }
+										</a>
+									) ) }
+								</span>
+							) }
 							<span className="be-downtime-queue__assignee">
 								<AssigneePicker
 									gameSlug={ gameSlug }

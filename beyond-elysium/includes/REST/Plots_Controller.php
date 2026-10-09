@@ -3,6 +3,7 @@
 namespace BeyondElysium\REST;
 
 use BeyondElysium\Core\Authorization;
+use BeyondElysium\Core\Notifications;
 use BeyondElysium\Database\Transaction;
 use BeyondElysium\Models\Attachment;
 use BeyondElysium\Models\Character;
@@ -14,7 +15,6 @@ use BeyondElysium\Models\Plot_Entry;
 use BeyondElysium\Models\Release_Batch;
 use BeyondElysium\Services\St_Visibility;
 use BeyondElysium\Services\Action_Allocator;
-use BeyondElysium\Services\Attachment_Storage;
 use BeyondElysium\Services\Audience;
 use BeyondElysium\Services\Query_Engine;
 use BeyondElysium\Services\Rumor_Generator;
@@ -53,7 +53,7 @@ class Plots_Controller extends Base_Controller {
 			],
 		] );
 
-		// Registered before the numeric plot id route so /my/plots is never shadowed.
+		// Registered before the numeric plot id route.
 		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/my/plots', [
 			[
 				'methods'             => 'GET',
@@ -62,7 +62,7 @@ class Plots_Controller extends Base_Controller {
 			],
 		] );
 
-		// Neither route is numeric, so neither collides with the /plots/{id} route below.
+		// Neither route is numeric.
 		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/plots/allocate-actions', [
 			[
 				'methods'             => 'POST',
@@ -377,7 +377,7 @@ class Plots_Controller extends Base_Controller {
 
 		$can_manage = Authorization::can( 'be_manage_plots' );
 
-		// parent_plot_id is validated here to return a clean 400.
+		// parent_plot_id is validated here.
 		$parent_plot_id = $request->get_param( 'parent_plot_id' );
 		if ( $parent_plot_id ) {
 			$parent = Plot::find( (int) $parent_plot_id );
@@ -504,8 +504,45 @@ class Plots_Controller extends Base_Controller {
 		if ( ! $plot ) {
 			return $this->error( 'not_found', __( 'Plot not found in this game.', 'beyond-elysium' ), 404 );
 		}
+
+		// A held plot (a rumor, always, here) reaches nobody yet; its own release batch notifies.
+		$visible_ids = Audience::visible_character_ids( $plot, 'plot', $game->slug );
+		$this->notify_plot_audience_widened( $game, $plot, [], $visible_ids );
+
 		$this->prepare_plot( $plot, $can_manage, "medium", $game );
 		return $this->success( $plot, 201 );
+	}
+
+	/**
+	 * Tells every player newly reached by a plot's audience - every active player character now in `$after_ids` that
+	 * wasn't in `$before_ids`, skipping the acting Storyteller, an NPC, or a character with no player. `$before_ids`
+	 * is `[]` on create.
+	 *
+	 * @param object $game
+	 * @param object $plot
+	 * @param int[]  $before_ids
+	 * @param int[]  $after_ids
+	 * @return void
+	 */
+	private function notify_plot_audience_widened( object $game, object $plot, array $before_ids, array $after_ids ): void {
+		$acting_wp_user_id = get_current_user_id();
+		foreach ( array_diff( $after_ids, $before_ids ) as $character_id ) {
+			$character = Character::find( (int) $character_id );
+			if ( ! $character ) {
+				continue;
+			}
+			Notifications::notify_if_newly_visible(
+				$character,
+				false,
+				true,
+				$game,
+				'plot',
+				(string) $plot->title,
+				Notifications::player_plot_url( (int) $plot->id, (string) ( $game->slug ?? '' ) ),
+				$acting_wp_user_id
+			);
+		}
+		Notifications::flush_visible();
 	}
 
 	/**
@@ -550,7 +587,7 @@ class Plots_Controller extends Base_Controller {
 			}
 		}
 
-		// Validated here so an invalid value returns a 400.
+		// Validated here.
 		if ( isset( $data['status'] ) && ! in_array( $data['status'], Plot::STATUSES, true ) ) {
 			return $this->error( 'invalid_param', sprintf( __( 'status must be one of: %s.', 'beyond-elysium' ), implode( ', ', Plot::STATUSES ) ), 400 );
 		}
@@ -609,6 +646,9 @@ class Plots_Controller extends Base_Controller {
 			}
 		}
 
+		$audience_touched = array_key_exists( 'audience', $data ) || array_key_exists( 'audience_rules', $data );
+		$before_ids       = $audience_touched ? Audience::visible_character_ids( $plot, 'plot', $game->slug ) : [];
+
 		try {
 			if ( ! Plot::update( (int) $plot->id, $data ) && ! empty( $data ) ) {
 				return $this->error( 'update_failed', __( 'Failed to update plot.', 'beyond-elysium' ), 500 );
@@ -621,6 +661,12 @@ class Plots_Controller extends Base_Controller {
 		if ( ! $updated ) {
 			return $this->error( 'not_found', __( 'Plot not found in this game.', 'beyond-elysium' ), 404 );
 		}
+
+		if ( $audience_touched ) {
+			$after_ids = Audience::visible_character_ids( $updated, 'plot', $game->slug );
+			$this->notify_plot_audience_widened( $game, $updated, $before_ids, $after_ids );
+		}
+
 		$this->prepare_plot( $updated, true );
 		return $this->success( $updated );
 	}
@@ -646,11 +692,6 @@ class Plots_Controller extends Base_Controller {
 		$actor = Action_Allocator::actor_character_id( (int) $plot->id );
 		if ( $actor !== null && Character::plot_id( $actor ) === (int) $plot->id ) {
 			return $this->error( 'character_plot', __( "A character's own plot is deleted with the character, not on its own.", 'beyond-elysium' ), 409 );
-		}
-
-		// Deletes the attachment files first.
-		foreach ( Attachment::for_entity( 'plot', (int) $plot->id ) as $attachment ) {
-			Attachment_Storage::delete( $attachment->stored_name, $attachment->original_name );
 		}
 
 		Plot::delete( (int) $plot->id );
@@ -836,6 +877,8 @@ class Plots_Controller extends Base_Controller {
 			return $this->error( 'invalid_candidate', __( 'You may only invite an active, non-NPC character.', 'beyond-elysium' ), 400 );
 		}
 
+		$was_visible = Audience::can_see( $plot, 'plot', (int) ( $character->wp_user_id ?? 0 ), $game->slug, false );
+
 		$connection_id = Connection::create( [
 			'game_id'     => (int) $game->id,
 			'source_type' => 'plot',
@@ -848,6 +891,19 @@ class Plots_Controller extends Base_Controller {
 		if ( ! $connection_id ) {
 			return $this->error( 'create_failed', __( 'Failed to add this character to the plot.', 'beyond-elysium' ), 500 );
 		}
+
+		$now_visible = Audience::can_see( $plot, 'plot', (int) ( $character->wp_user_id ?? 0 ), $game->slug, false );
+		Notifications::notify_if_newly_visible(
+			$character,
+			$was_visible,
+			$now_visible,
+			$game,
+			'plot',
+			(string) $plot->title,
+			Notifications::player_plot_url( (int) $plot->id, $game->slug ),
+			get_current_user_id()
+		);
+		Notifications::flush_visible();
 
 		return $this->success( Connection::find( (int) $connection_id ), 201 );
 	}
@@ -1013,7 +1069,7 @@ class Plots_Controller extends Base_Controller {
 	 * status/initiated_by/search/date_from/date_to/character_plots filters, orderby/order sort controls, and
 	 * page/per_page pagination.
 	 *
-	 * @return array
+	 * @return array<string,array<string,mixed>>
 	 */
 	public function get_collection_params(): array {
 		return [

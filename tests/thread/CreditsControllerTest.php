@@ -7,8 +7,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * The Powered by BeyondElysium (Credits) footer: default seeding, the capability gate and the editable in-memoriam
- * list, backed by two plain options.
+ * The Powered by BeyondElysium (Credits) footer: default seeding, the capability gate, and the credits text's write
+ * path. The in-memoriam list has no write path; it is read-only everywhere.
  */
 class CreditsControllerTest extends WP_UnitTestCase {
 
@@ -59,15 +59,31 @@ class CreditsControllerTest extends WP_UnitTestCase {
 		$this->assertSame( 403, $response->get_status() );
 	}
 
-	public function test_an_administrator_can_replace_the_memoriam_list_and_credits_text(): void {
+	public function test_an_administrator_can_change_the_credits_text(): void {
 		wp_set_current_user( self::factory()->user->create( [ 'role' => 'administrator' ] ) );
+
+		$request = new WP_REST_Request( 'PUT', '/be/v1/credits' );
+		$request->set_body_params( [ 'credits_text' => 'Updated credits line.' ] );
+		$response = $this->dispatch( $request );
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( 'Updated credits line.', $response->get_data()['credits_text'] );
+
+		// Read back with a fresh GET, not just the write response echo.
+		$get_response = $this->dispatch( new WP_REST_Request( 'GET', '/be/v1/credits' ) );
+		$this->assertSame( 'Updated credits line.', $get_response->get_data()['credits_text'] );
+	}
+
+	public function test_a_put_carrying_in_memoriam_leaves_the_stored_list_byte_identical(): void {
+		wp_set_current_user( self::factory()->user->create( [ 'role' => 'administrator' ] ) );
+
+		$before = $this->dispatch( new WP_REST_Request( 'GET', '/be/v1/credits' ) )->get_data()['in_memoriam'];
 
 		$request = new WP_REST_Request( 'PUT', '/be/v1/credits' );
 		$request->set_body_params( [
 			'credits_text' => 'Updated credits line.',
 			'in_memoriam'  => [
-				[ 'name' => 'Arielle M.', 'note' => 'XP Day' ],
-				[ 'name' => 'A New Name', 'note' => '' ],
+				[ 'name' => 'A New Name', 'note' => 'should never be stored' ],
 			],
 		] );
 		$response = $this->dispatch( $request );
@@ -75,29 +91,10 @@ class CreditsControllerTest extends WP_UnitTestCase {
 		$this->assertSame( 200, $response->get_status() );
 		$data = $response->get_data();
 		$this->assertSame( 'Updated credits line.', $data['credits_text'] );
-		$this->assertCount( 2, $data['in_memoriam'], 'a save fully replaces the stored list, not merges into it' );
-		$this->assertSame( 'Arielle M.', $data['in_memoriam'][0]['name'] );
-		$this->assertSame( 'XP Day', $data['in_memoriam'][0]['note'] );
+		$this->assertSame( $before, $data['in_memoriam'], 'a PUT carrying in_memoriam must not change the stored list' );
 
-		// Confirmed for real against a fresh GET, not just the write response echo.
+		// Read back with a fresh GET, not just the write response echo.
 		$get_response = $this->dispatch( new WP_REST_Request( 'GET', '/be/v1/credits' ) );
-		$this->assertCount( 2, $get_response->get_data()['in_memoriam'] );
-	}
-
-	public function test_an_entry_with_no_name_is_dropped_silently(): void {
-		wp_set_current_user( self::factory()->user->create( [ 'role' => 'administrator' ] ) );
-
-		$request = new WP_REST_Request( 'PUT', '/be/v1/credits' );
-		$request->set_body_params( [
-			'in_memoriam' => [
-				[ 'name' => 'Real Name', 'note' => '' ],
-				[ 'name' => '', 'note' => 'no name, should be dropped' ],
-			],
-		] );
-		$response = $this->dispatch( $request );
-
-		$data = $response->get_data();
-		$this->assertCount( 1, $data['in_memoriam'] );
-		$this->assertSame( 'Real Name', $data['in_memoriam'][0]['name'] );
+		$this->assertSame( $before, $get_response->get_data()['in_memoriam'] );
 	}
 }

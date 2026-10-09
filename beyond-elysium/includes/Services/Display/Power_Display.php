@@ -29,11 +29,8 @@ class Power_Display {
 	 *
 	 * @param object                                                                       $definition
 	 * @param array{name:string,level?:int,power_name?:string,tier?:string,tradition?:string} $held
-	 * @param bool $use_pt Whether the caller has already resolved the viewer's locale to
-	 *                     Portuguese - this class makes no WordPress calls of its own (see the
-	 *                     class docblock), so the caller (Sheet_Document, which does) decides
-	 *                     and passes a plain bool, the same shape TieredPowerRenderer.tsx's own
-	 *                     localizedPowerName() import mirrors on the client.
+	 * @param bool $use_pt Whether the viewer's locale is Portuguese, resolved by the caller (this class makes no
+	 *                     WordPress calls).
 	 */
 	public static function elder_label( object $definition, array $held, bool $use_pt = false ): string {
 		$power      = self::find_power( $definition, $held['name'] );

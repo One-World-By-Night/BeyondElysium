@@ -160,8 +160,7 @@ class SheetVerificationThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The loopback resolves every /verify/ call against this same install regardless of the URL's own claimed host
-	 * (matching TransfersControllerThreadTest's own "by path, not host" precedent).
+	 * The loopback resolves every /verify/ call against this same install regardless of the URL's own claimed host.
 	 */
 	public function test_a_base_not_matching_the_real_issuer_reads_issuer_mismatch(): void {
 		$callback = $this->loopback();

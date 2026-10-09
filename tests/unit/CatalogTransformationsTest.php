@@ -58,7 +58,7 @@ class CatalogTransformationsTest extends TestCase {
 	}
 
 	/**
-	 * T-T4, as ruled.
+	 * Path of Blood's Curse is one path and Path of Curses is another.
 	 */
 	public function test_path_of_blood_s_curse_is_one_path_and_path_of_curses_is_another(): void {
 		$bm = $this->powers( 'vampire-blood-magic' );
@@ -83,7 +83,7 @@ class CatalogTransformationsTest extends TestCase {
 			}
 		}
 
-		// B: three copies became one, and the other two names still resolve to it.
+		// Three copies are one family, and the other two names still resolve to it.
 		$this->assertCount( 1, $this->families_holding( 'Ravages of the Beast', [ 'vampire-blood-magic', 'vampire-disciplines' ] ) );
 		$this->assertContains( "Blood's Curse", $bm["Path of Blood's Curse"]['aliases'] );
 		$this->assertContains(
@@ -94,7 +94,7 @@ class CatalogTransformationsTest extends TestCase {
 	}
 
 	/**
-	 * T-T5: Valeren's duplicate opening rungs are gone and Healer/Warrior still stand alone.
+	 * Valeren has no duplicate opening rungs, and Healer and Warrior still stand alone.
 	 */
 	public function test_valeren_loses_its_duplicate_rungs_and_keeps_its_two_paths(): void {
 		$vd = $this->powers( 'vampire-disciplines' );

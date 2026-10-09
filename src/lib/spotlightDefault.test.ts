@@ -2,8 +2,8 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 
 /**
- * `GameNights.tsx` once defaulted its spotlight-days field to 14 while `Spotlight::DEFAULT_SPOTLIGHT_DAYS` (the value
- * actually enforced until a save happened) was 42.
+ * `GameNights.tsx` defaults its spotlight-days field to the value of `Spotlight::DEFAULT_SPOTLIGHT_DAYS`, the value
+ * enforced until a save.
  */
 describe( 'spotlight days default stays in sync with the server', () => {
 	it( 'GameNights.tsx defaults match Spotlight::DEFAULT_SPOTLIGHT_DAYS', () => {

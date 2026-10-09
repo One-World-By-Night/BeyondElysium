@@ -52,7 +52,7 @@ class SubmissionsSendThreadTest extends WP_UnitTestCase {
 
 	/**
 	 * Exports a real database character to a real temp file, in the exact multipart shape the REST server expects an
-	 * upload in (ImportControllerThreadTest's own established pattern).
+	 * upload in.
 	 */
 	private function upload_request( string $route, string $xml, array $params = [], string $filename = 'sheet.gex' ): WP_REST_Request {
 		$tmp = tempnam( sys_get_temp_dir(), 'be-submission-test' );

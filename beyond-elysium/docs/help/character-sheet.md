@@ -28,7 +28,7 @@ The list only offers what you can use:
 - **Point audit** - Storyteller-only. Every held trait, power, and pool priced line by line. See [Point Audit](point-audit.md).
 - **Export to Grapevine (.gex)** - an **Include verification code** checkbox, then **Download .gex file**, which downloads an exchange file for this character.
 
-A travelling or visiting notice appears above the header whenever this character is part of a transfer, whether or not **Send Sheet** is open.
+A travelling or visiting notice appears above the header whenever this character is part of a transfer, whether or not **Send Sheet** is open - naming every other chronicle it's also active at, or where it's visiting from, and whether that visit is kept current, when it last delivered, or that it's gone quiet ("can't reach it"). While a visit here is kept current and agreed on both sides, editing or submitting a change for this character is refused - "Kept current from Kony. Make changes there." - until the visit ends; a Storyteller's own change still goes through, but is forwarded to home rather than applied here. See [Send Sheet](transfer.md).
 
 ### Header
 
@@ -40,7 +40,7 @@ Storyteller-only. Links this character to plots or to other characters. See [Con
 
 ### The sheet body
 
-Every section from the chronicle's own template, in its own box, read-only. Physical, Social, and Mental Traits render side by side as three columns; everything else flows in the template's own column order.
+Every section from the chronicle's own template that has something in it, in its own box, read-only. A section with nothing held - a Mortal's Disciplines or Gifts, an empty Health, a trait list with no entries - is left out, the same as on the printed PDF; it still appears in the editor, where you can add the first entry. Physical, Social, and Mental Traits render side by side as three columns; everything else flows in the template's own column order.
 
 ### Background and Notes
 
@@ -87,11 +87,12 @@ The same change-history list **View history** shows appears inline here once its
 ## Things to know
 
 - Storyteller-only text and NPC-only sections never reach a player's copy of this sheet - on screen or in any export or print - even on their own character.
+- A section the chronicle has set to let players choose their own order (see [Schema Blocks](schema-blocks.md)) shows flat, in the player's own order, here and in the printed PDF alike - never grouped the way the same kind of section normally is. See [Character Editor: Reordering a List](character-editor.md#reordering-a-list) for how a player sets that order.
 - A Quick NPC (see [Character Editor](character-editor.md)) shows its shorter Quick Stats layout here instead of the full sheet, until a Storyteller upgrades it with **Make Full NPC**. This is separate from the [Who's Who](whos-who.md) profile a player might see about the same NPC.
 - Every dot - a trait's rating or a resource pool's point - is drawn the same size everywhere: this sheet, the editor, and a signed PDF. The number always follows the dots too (a resource pool shows "current/permanent" when they differ), and a section whose held items all carry a plain count - most trait lists, never one like Merits or Rituals where each entry stands alone - shows its own total after its title. Combo Disciplines show how many combos you hold there, not the sum of their prices.
 - **Merits and Flaws** show their points, "Ambidextrous 1", "Acute Sense (Hearing) 2".
 - **Virtues** carry the names your Path uses, such as Conviction and Instinct on the Path of Caine, from the Paths of Enlightenment books and the Dark Ages Roads, each Road's own paths included: the Road of Sin uses Conviction and Instinct, its Path of the Devil Conviction and Self-Control. When the sheet doesn't know your Path's virtues, both names show, "Conscience/Conviction". A choice made on the sheet always wins.
-- **Bonds** (a Vampire's Vinculums and blood bonds) have their own section, each with its rating.
+- **Bonds** (a Vampire's Vinculums and blood bonds) have their own section. Each is a name and a rating shown as a number, "Gabriel Deveraux x7", never as circles. The name can be anyone, including a character from another chronicle, and the rating can go as high as you need. A bond costs no XP, and adding one still waits for a Storyteller to approve it.
 - **Combos** always sit under Combo Disciplines with their XP price, never under Disciplines.
 - A power picked above the ladder shows its rank ("elder", "master") only when the catalog knows it.
 - **XP History**, **Full power names**, and **Show XP costs** do double duty: ticking any of them also changes this page, not only the file you print. **Background** and **Notes** only decide what goes into the PDF - both always show at the bottom of this page. **Show XP costs** only affects Combo Disciplines, where the number beside a combo is its flat XP price rather than a rating, so it always reads "Draw Fire (12 XP)". It starts ticked; unticking it drops the price rather than turning it back into dots. While editing, a separate toggle right above your held combos does the same thing and remembers your choice next time.

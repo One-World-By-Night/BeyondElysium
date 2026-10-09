@@ -83,7 +83,7 @@ class QuickNpcThreadTest extends WP_UnitTestCase {
 	}
 
 	public function test_a_non_manager_cannot_flag_their_own_character_quick_even_as_an_npc(): void {
-		// A non-manager's is_npc claim is never trusted either (pre-existing behavior).
+		// A non-manager's is_npc claim is never trusted.
 		$response = $this->create_character( $this->player_id, [
 			'name' => 'Not Really An NPC', 'stack_slug' => 'vampire', 'is_npc' => true, 'npc_detail' => 'quick',
 		] );

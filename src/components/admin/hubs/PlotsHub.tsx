@@ -1,5 +1,5 @@
 /**
- * The wp-admin Plots page gains a Releases tab alongside its existing Plots & Rumors content.
+ * The wp-admin Plots page: a Plots & Rumors tab and a Releases tab.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';

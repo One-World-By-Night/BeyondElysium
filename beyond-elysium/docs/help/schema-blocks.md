@@ -33,10 +33,12 @@ A Narrator, a chronicle's Harpy, and a player never see this screen.
 - **Storyteller only** - hides this whole section, and every value a character holds in it, from every player: on the sheet, in the editor, and in any export or print.
 - The definition editor matching the Section Type you picked:
   - **Trait list** (Merits, Backgrounds, Abilities, and similar) - global flags **Allow
-    multiple selections**, **Allow custom entries**, **Alphabetize**, **Negative list
-    (flaws-style)** (entries refund XP instead of costing it), **Atomic** (adding the same
-    entry again appends a new one instead of raising its count), **Max per item**, and a
-    **Cost by prerequisite** toggle (below). A table of items: **Name**, **Cost**,
+    multiple selections**, **Allow custom entries**, **Players set their own order**
+    (held entries display and reorder in whatever order the player set, flat - no
+    grouping), **Alphabetize**, **Negative list (flaws-style)** (entries refund XP
+    instead of costing it), **Atomic** (adding the same entry again appends a new one
+    instead of raising its count), **Max per item**, and a **Cost by prerequisite** toggle
+    (below). A table of items: **Name**, **Cost**,
     **Category**, a **Description** button, an **Approval** dropdown, a **Reason** field, an
     **Approval by value** button, an **Allow multiples** override (block default / always /
     never - only shown once "Allow multiple selections" is on above), and **Remove**. Turning
@@ -45,7 +47,9 @@ A Narrator, a chronicle's Harpy, and a player never see this screen.
     used for a rote or a rite whose price follows the Sphere or Rank it requires.
   - **Tiered power** (Disciplines, Gifts, Spheres, and similar) - a **Global settings** panel:
     a **Sequential** flag (holding a level implies every level below it), a **Blood magic**
-    checkbox that adds a block-wide **Traditions** list, and a **Ranks & costs** table - one
+    checkbox that adds a block-wide **Traditions** list, a **Players set their own order**
+    flag (held powers display and reorder in whatever order the player set, flat - no
+    grouping), and a **Ranks & costs** table - one
     row per named rank (Basic, Intermediate, Advanced, Elder, and so on for a block that has
     them) giving that rank's **Cost**, **In-type modifier**, **Out-of-type modifier**, and
     **Ladder rungs** (how many numbered levels belong to it). A **This is an untiered track**
@@ -114,6 +118,7 @@ A Narrator, a chronicle's Harpy, and a player never see this screen.
 - **A rank's In-type and Out-of-type modifiers on a tiered power only apply where a [Creature Stack](creature-stacks.md) section names an In-type test.** With no test declared, everything in that section is in-type and the modifier never fires - the two are declared in different places on purpose, since the same block can be in-type for one creature type's section and untested for another's.
 - **Sliding and Buy down describe two different pricing shapes, not two strengths of the same thing.** Sliding prices each dot at its own step's rate (a growing pool costs more per dot as it rises); Buy down prices a *reduction* from the pool's own starting value, the shape a Storyteller-set Flaw-like pool needs. Checking one always clears the other.
 - **Cost by prerequisite and Derived from block do the same thing on a trait list and a tiered power respectively** - the price follows the tier of an entry in another block, named per-item through the Prerequisites button, rather than a flat number typed here.
+- **Players set their own order is per chronicle, like every other flag here.** Turning it on for your chronicle's own copy of a block never changes another chronicle's copy, or the book. A character's held entries in that block show and reorder flat, in whatever order the player left them, with no grouping - a chronicle that turns it off goes back to the normal grouped display. See [Character Editor: Reordering a List](character-editor.md#reordering-a-list) for what a player sees.
 
 ## Troubleshooting
 

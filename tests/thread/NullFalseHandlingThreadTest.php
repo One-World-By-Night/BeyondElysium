@@ -7,7 +7,8 @@ use BeyondElysium\Services\Query_Engine;
 use WP_UnitTestCase;
 
 /**
- * Lookups and encode results that can be null or false are handled at the places PHPStan level 8 flagged.
+ * A character that is gone, a character in no chronicle and an inventory that does not exist each answer with nothing
+ * rather than failing.
  */
 class NullFalseHandlingThreadTest extends WP_UnitTestCase {
 

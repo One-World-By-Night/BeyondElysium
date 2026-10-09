@@ -72,8 +72,7 @@ Exporting your own character is open to any player. Exporting anyone else's, and
 
 - **"This character's creature type has no Grapevine equivalent, so it cannot be exported or transferred."** An administrator-added creature type with no matching export format - nothing can be done from here.
 - **"This file is not a recognized Grapevine exchange file."** The file isn't a real `.gex` - if it's a full chronicle file, use Full Game File instead.
-- **My export doesn't have my Storyteller-only text in it.** Expected on a player's own export
-  - a Storyteller can include it on their own export of the same character.
+- **My export doesn't have my Storyteller-only text in it.** Expected on a player's own export - a Storyteller can include it on their own export of the same character.
 - **A traded character seems to be missing something.** Check What Doesn't Travel above before assuming something went wrong - some things are never carried by design.
 
 ## Related

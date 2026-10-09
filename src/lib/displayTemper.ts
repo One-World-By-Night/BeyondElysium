@@ -5,6 +5,10 @@
 export interface ResourcePoolValue {
 	permanent: number;
 	temporary: number;
+	/**
+	 * Dots marked spent in place by a `spent_from` purchase elsewhere on the sheet - never lowers `permanent`.
+	 */
+	spent?: number;
 }
 
 /**

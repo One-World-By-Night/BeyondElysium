@@ -400,8 +400,7 @@ class ReportsControllerThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 200, $response->get_status() );
 		$data = $response->get_data();
 		$this->assertCount( 1, $data['cards'] );
-		$names = array_column( $data['cards'][0], 1 );
-		$this->assertContains( 'Silver Dagger', $names );
+		$this->assertSame( 'Silver Dagger', $data['cards'][0]['name'] );
 	}
 
 	public function test_a_player_can_request_their_own_characters_item_cards(): void {

@@ -19,7 +19,7 @@ class Location_Link {
 	const LABELS = [ self::OWNER, self::DOMAIN, self::HAVEN, self::BASED_AT ];
 
 	/**
-	 * Source entity types a location link may come from today.
+	 * Source entity types a location link may come from.
 	 *
 	 * @var string[]
 	 */

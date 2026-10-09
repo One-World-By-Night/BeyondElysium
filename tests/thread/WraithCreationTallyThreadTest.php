@@ -135,7 +135,7 @@ class WraithCreationTallyThreadTest extends WP_UnitTestCase {
 		] );
 		$tally = $response->get_data();
 
-		// Castigate is the Pardoner's own Guild Arcanos, so the same uncovered rung's -1 discount now applies: 4 - 1 = 3.
+		// Castigate is the Pardoner's own Guild Arcanos, so the same uncovered rung's -1 discount applies: 4 - 1 = 3.
 		$this->assertSame( 3, $tally['xp']['needed'] );
 	}
 }

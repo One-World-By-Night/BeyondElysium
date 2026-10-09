@@ -53,9 +53,9 @@ class Plot_Entry {
 	/**
 	 * Return the entries belonging to one plot, ordered oldest first.
 	 *
-	 * @param int   $plot_id
-	 * @param array $args Filters: entry_type.
-	 * @return array
+	 * @param int                 $plot_id
+	 * @param array<string,mixed> $args Filters: entry_type.
+	 * @return array<int,object>
 	 */
 	public static function for_plot( int $plot_id, array $args = [] ): array {
 		global $wpdb;
@@ -74,9 +74,29 @@ class Plot_Entry {
 	}
 
 	/**
+	 * Every entry across every one of a chronicle's plots whose own `event_date` is the given date - a game
+	 * night's own real plot activity, for a recap draft to read.
+	 *
+	 * @param int    $game_id
+	 * @param string $date `Y-m-d`.
+	 * @return array<int,object>
+	 */
+	public static function for_game_on_date( int $game_id, string $date ): array {
+		global $wpdb;
+		$entries_table = Manager::table( 'plot_entries' );
+		$plots_table   = Manager::table( 'plots' );
+		$sql = $wpdb->prepare(
+			"SELECT pe.* FROM {$entries_table} pe INNER JOIN {$plots_table} p ON p.id = pe.plot_id WHERE p.game_id = %d AND pe.event_date = %s ORDER BY pe.created_at ASC, pe.id ASC",
+			$game_id,
+			$date
+		);
+		return array_map( [ self::class, 'decode_row' ], $wpdb->get_results( $sql ) ?: [] );
+	}
+
+	/**
 	 * Insert a new plot entry.
 	 *
-	 * @param array $data
+	 * @param array<string,mixed> $data
 	 * @return int|false Insert ID, or false if the entry type or audience is not recognized.
 	 */
 	public static function create( array $data ) {
@@ -130,8 +150,8 @@ class Plot_Entry {
 	/**
 	 * Update a plot entry's content, event_date, audience, and audience_character_ids fields.
 	 *
-	 * @param int   $id
-	 * @param array $data
+	 * @param int                 $id
+	 * @param array<string,mixed> $data
 	 * @return bool
 	 */
 	public static function update( int $id, array $data ): bool {
@@ -172,6 +192,16 @@ class Plot_Entry {
 
 		$result = Manager::update( 'plot_entries', $update, [ 'id' => $id ] );
 		return $result !== false;
+	}
+
+	/**
+	 * Stamps an entry as shared with its character's home chronicle, just now.
+	 *
+	 * @param int $id
+	 * @return bool
+	 */
+	public static function mark_shared( int $id ): bool {
+		return Manager::update( 'plot_entries', [ 'shared_at' => current_time( 'mysql' ) ], [ 'id' => $id ] ) !== false;
 	}
 
 	/**

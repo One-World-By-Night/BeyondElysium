@@ -304,7 +304,7 @@ class Query_Controller extends Base_Controller {
 	 *
 	 * @param string $inventory
 	 * @param object $game
-	 * @return array
+	 * @return array<string,mixed>
 	 */
 	private function visibility_options( string $inventory, $game ): array {
 		if ( $inventory !== 'char' || Authorization::can( 'be_manage_characters' ) ) {

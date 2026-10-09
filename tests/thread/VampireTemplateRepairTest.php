@@ -13,7 +13,7 @@ use WP_UnitTestCase;
 class VampireTemplateRepairTest extends WP_UnitTestCase {
 
 	/**
-	 * A layout in the pre-width shape.
+	 * A layout whose sections carry no width.
 	 */
 	private function stale_layout(): array {
 		return [

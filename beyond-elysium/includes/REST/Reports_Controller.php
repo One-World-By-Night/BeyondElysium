@@ -49,6 +49,7 @@ class Reports_Controller extends Base_Controller {
 					'stat_field'   => [ 'type' => 'string', 'required' => false ],
 					'stat_type'    => [ 'type' => 'string', 'required' => false ],
 					'character_id' => [ 'type' => 'integer', 'required' => false ],
+					'object_id'    => [ 'type' => 'integer', 'required' => false ],
 				],
 			],
 		] );
@@ -64,6 +65,7 @@ class Reports_Controller extends Base_Controller {
 					'stat_field'   => [ 'type' => 'string', 'required' => false ],
 					'stat_type'    => [ 'type' => 'string', 'required' => false ],
 					'character_id' => [ 'type' => 'integer', 'required' => false ],
+					'object_id'    => [ 'type' => 'integer', 'required' => false ],
 				],
 			],
 		] );
@@ -194,6 +196,11 @@ class Reports_Controller extends Base_Controller {
 			$filters['character_id'] = (int) $character_id;
 		}
 
+		$object_id = $request->get_param( 'object_id' );
+		if ( $object_id !== null && $object_id !== '' ) {
+			$filters['object_id'] = (int) $object_id;
+		}
+
 		$document = Report_Document::build(
 			$report_key,
 			$request['game_slug'],
@@ -223,7 +230,8 @@ class Reports_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Whether a character's resolved stack includes a given block among its own `stack_definition->sections`.
+	 * Whether a character's resolved stack includes a given block among its own `stack_definition->sections`, or the
+	 * character holds it on a creature type that allows any block.
 	 *
 	 * @param object $character
 	 * @param string $block_slug
@@ -237,7 +245,10 @@ class Reports_Controller extends Base_Controller {
 				return true;
 			}
 		}
-		return false;
+		return $stack !== null
+			&& Creature_Stack::allows_any_block( $stack )
+			&& is_array( $character->sheet_data )
+			&& array_key_exists( $block_slug, $character->sheet_data );
 	}
 
 	/**

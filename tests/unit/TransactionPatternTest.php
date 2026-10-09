@@ -5,7 +5,8 @@ namespace BeyondElysium\Tests\Unit;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Moved every "am I already inside a transaction" decision into `Database\Transaction`'s call-depth counter.
+ * Every "am I already inside a transaction" decision is made by `Database\Transaction`'s call-depth counter; no other
+ * class manages transactions.
  */
 class TransactionPatternTest extends TestCase {
 

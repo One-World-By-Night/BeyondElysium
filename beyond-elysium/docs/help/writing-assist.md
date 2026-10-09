@@ -45,6 +45,7 @@ There's no page of its own - look for an **AI Assist** button next to any long-f
 
 ## Things to know
 
+- **On a demo chronicle the button explains instead of drafting.** It still shows, and clicking it says AI drafting is switched off on the public demo and that nothing was sent. The same goes for Draft roleplaying notes, Draft from a premise and Draft recap.
 - **Nothing is saved by this modal itself.** Accept only fills the field - you still have to click that field's own Save or Submit.
 - **Your chronicle has to turn this on first.** Even with a key configured for the whole site, a chronicle-scoped field (character, plot, rumor, item, location, approval reason) does nothing until an HST or AST enables AI Assist for that chronicle - see the [Admin Guide](../admin-guide.md#ai-writing-assist).
 - **Limited to 20 suggestions a minute, per person.** Asking faster than that gets a wait-and-retry message instead of a result.

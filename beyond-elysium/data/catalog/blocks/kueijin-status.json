@@ -1,0 +1,41 @@
+{
+  "format": 1,
+  "slug": "kueijin-status",
+  "name": "Kuei-Jin Status",
+  "kind": "block",
+  "section_type": "trait_list",
+  "provenance": {
+    "sources": [
+      "Mind's Eye Theatre: Laws of the East (WW05016), \"Status\", read directly: \"Status is the measure of a vampire's reputation, and it is measured in Traits... most often, it usually stems from an office held among the local Kuei-jin, from ancestor to mandarin to thunder.\" Sample Status Traits, quoted in full: Acknowledged, Admired, Adored, Cherished, Esteemed, Exalted, Famous, Faultless, Feared, Honorable, Influential, Just, Praised, Respected, Revered, Trustworthy, Well-Connected, Well-Known, Wise. \"Troupes should feel free to invent new Status Traits to suit their own stories\" - allow_custom on."
+    ],
+    "tool": "read directly, 2026-10-04"
+  },
+  "definition": {
+    "alphabetize": true,
+    "allow_custom": true,
+    "allow_multiples": false,
+    "print_rings": false,
+    "items": [
+      { "name": "Acknowledged", "cost": null, "tier": null, "group": null, "subgroup": null },
+      { "name": "Admired", "cost": null, "tier": null, "group": null, "subgroup": null },
+      { "name": "Adored", "cost": null, "tier": null, "group": null, "subgroup": null },
+      { "name": "Cherished", "cost": null, "tier": null, "group": null, "subgroup": null },
+      { "name": "Esteemed", "cost": null, "tier": null, "group": null, "subgroup": null },
+      { "name": "Exalted", "cost": null, "tier": null, "group": null, "subgroup": null },
+      { "name": "Famous", "cost": null, "tier": null, "group": null, "subgroup": null },
+      { "name": "Faultless", "cost": null, "tier": null, "group": null, "subgroup": null },
+      { "name": "Feared", "cost": null, "tier": null, "group": null, "subgroup": null },
+      { "name": "Honorable", "cost": null, "tier": null, "group": null, "subgroup": null },
+      { "name": "Influential", "cost": null, "tier": null, "group": null, "subgroup": null },
+      { "name": "Just", "cost": null, "tier": null, "group": null, "subgroup": null },
+      { "name": "Praised", "cost": null, "tier": null, "group": null, "subgroup": null },
+      { "name": "Respected", "cost": null, "tier": null, "group": null, "subgroup": null },
+      { "name": "Revered", "cost": null, "tier": null, "group": null, "subgroup": null },
+      { "name": "Trustworthy", "cost": null, "tier": null, "group": null, "subgroup": null },
+      { "name": "Well-Connected", "cost": null, "tier": null, "group": null, "subgroup": null },
+      { "name": "Well-Known", "cost": null, "tier": null, "group": null, "subgroup": null },
+      { "name": "Wise", "cost": null, "tier": null, "group": null, "subgroup": null }
+    ],
+    "display": "simple"
+  }
+}

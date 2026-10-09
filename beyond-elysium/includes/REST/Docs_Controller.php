@@ -5,11 +5,17 @@ namespace BeyondElysium\REST;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * REST controller that serves the plugin's shipped documentation files.
+ * REST controller that serves the plugin's shipped documentation files, in the viewer's language when it has a
+ * translation.
  */
 class Docs_Controller extends Base_Controller {
 
 	protected $rest_base = 'docs';
+
+	/**
+	 * The one translation shipped: its folder under `docs/`, and the locale a viewer must be in to be served it.
+	 */
+	const PORTUGUESE = 'pt_BR';
 
 	/**
 	 * The allowed document slugs, used directly in the route's own regex.
@@ -38,7 +44,7 @@ class Docs_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Returns one screen's help page.
+	 * Returns one screen's help page, in the viewer's language when a translation of it exists.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -49,12 +55,31 @@ class Docs_Controller extends Base_Controller {
 			return $this->error( 'not_found', __( 'That document was not found.', 'beyond-elysium' ), 404 );
 		}
 
-		$content = file_get_contents( BE_PLUGIN_DIR . 'docs/help/' . $key . '.md' );
+		[ $path, $language, $fallback ] = self::resolve_file( 'help/' . $key );
+		$content = file_get_contents( $path );
 		if ( $content === false ) {
 			return $this->error( 'read_failed', __( 'That document could not be read.', 'beyond-elysium' ), 500 );
 		}
 
-		return $this->success( [ 'key' => $key, 'content' => $content ] );
+		return $this->success( [ 'key' => $key, 'content' => $content, 'language' => $language, 'fallback' => $fallback ] );
+	}
+
+	/**
+	 * The file to serve for one document, named relative to `docs/` without its extension: the Portuguese (Brazil)
+	 * translation when the viewer's language is Portuguese (Brazil) and one exists, otherwise the English original.
+	 *
+	 * @return array{0:string,1:string,2:bool} The path, its language, and whether the viewer's own language had no
+	 *                                         translation of it.
+	 */
+	private static function resolve_file( string $name ): array {
+		$wants_portuguese = determine_locale() === self::PORTUGUESE;
+		if ( $wants_portuguese ) {
+			$translated = BE_PLUGIN_DIR . 'docs/' . self::PORTUGUESE . '/' . $name . '.md';
+			if ( is_readable( $translated ) ) {
+				return [ $translated, self::PORTUGUESE, false ];
+			}
+		}
+		return [ BE_PLUGIN_DIR . 'docs/' . $name . '.md', 'en', $wants_portuguese ];
 	}
 
 	/**
@@ -77,17 +102,16 @@ class Docs_Controller extends Base_Controller {
 	 */
 	public function get_item( $request ) {
 		$slug = (string) $request['slug'];
-		$path = BE_PLUGIN_DIR . 'docs/' . $slug . '.md';
-
-		if ( ! file_exists( $path ) ) {
+		if ( ! file_exists( BE_PLUGIN_DIR . 'docs/' . $slug . '.md' ) ) {
 			return $this->error( 'not_found', __( 'That document was not found.', 'beyond-elysium' ), 404 );
 		}
 
+		[ $path, $language, $fallback ] = self::resolve_file( $slug );
 		$content = file_get_contents( $path );
 		if ( $content === false ) {
 			return $this->error( 'read_failed', __( 'That document could not be read.', 'beyond-elysium' ), 500 );
 		}
 
-		return $this->success( [ 'slug' => $slug, 'content' => $content ] );
+		return $this->success( [ 'slug' => $slug, 'content' => $content, 'language' => $language, 'fallback' => $fallback ] );
 	}
 }

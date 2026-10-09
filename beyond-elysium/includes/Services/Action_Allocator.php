@@ -34,7 +34,7 @@ class Action_Allocator {
 	 *
 	 * @param int    $character_id
 	 * @param string $game_date `Y-m-d`.
-	 * @return array[] Each: name, level, total, unused, growth, spent, over_budget.
+	 * @return array<int,array<string,mixed>> Each: name, level, total, unused, growth, spent, over_budget.
 	 */
 	public static function allocate( int $character_id, string $game_date ): array {
 		$character = Character::find( $character_id );
@@ -68,9 +68,9 @@ class Action_Allocator {
 	 * Builds the "Personal" subaction, seeded for every character at the game's `personal_actions` total regardless of
 	 * any trait.
 	 *
-	 * @param array $apr
-	 * @param array $prior Prior allocation, keyed by subaction name.
-	 * @return array
+	 * @param array<string,mixed> $apr
+	 * @param array<string,array<string,mixed>> $prior Prior allocation, keyed by subaction name.
+	 * @return array<string,mixed>
 	 */
 	public static function build_personal_subaction( array $apr, array $prior ): array {
 		$total  = $apr['personal_actions'];
@@ -96,11 +96,11 @@ class Action_Allocator {
 	/**
 	 * Resolves the set of Influence and Background subactions for a character.
 	 *
-	 * @param array $chosen         The character's `{stack}-backgrounds` sheet_data: `[{name, count}, ...]`.
-	 * @param array $source_by_name Catalog name -> source ('Influences', 'Backgrounds', ...).
-	 * @param array $apr
-	 * @param array $prior
-	 * @return array[]
+	 * @param array<int,array<string,mixed>> $chosen         The character's `{stack}-backgrounds` sheet_data: `[{name, count}, ...]`.
+	 * @param array<string,string> $source_by_name Catalog name -> source ('Influences', 'Backgrounds', ...).
+	 * @param array<string,mixed> $apr
+	 * @param array<string,array<string,mixed>> $prior
+	 * @return array<int,array<string,mixed>>
 	 */
 	public static function resolve_common_subactions( array $chosen, array $source_by_name, array $apr, array $prior ): array {
 		$subactions = [];
@@ -130,11 +130,11 @@ class Action_Allocator {
 	/**
 	 * Builds one Influence or Background subaction.
 	 *
-	 * @param string $name
-	 * @param int    $count
-	 * @param array  $apr
-	 * @param array  $prior
-	 * @return array
+	 * @param string                            $name
+	 * @param int                               $count
+	 * @param array<string,mixed>               $apr
+	 * @param array<string,array<string,mixed>> $prior
+	 * @return array<string,mixed>
 	 */
 	public static function build_common_subaction( string $name, int $count, array $apr, array $prior ): array {
 		$total = 2 * $count;
@@ -234,6 +234,11 @@ class Action_Allocator {
 		return $character && (int) $character->wp_user_id === $wp_user_id;
 	}
 
+	/**
+	 * The character's most recent earlier allocation, keyed by subaction name.
+	 *
+	 * @return array<string,array<string,mixed>>
+	 */
 	private static function most_recent_allocation( int $character_id, string $game_date ): array {
 		$plot_id = self::find_prior_plot_id( $character_id, $game_date );
 		if ( ! $plot_id ) {
@@ -278,16 +283,14 @@ class Action_Allocator {
 	}
 
 	/**
-	 * Persists an allocation: one plot per character/date pair, with one `action` entry per subaction.
+	 * Persists an allocation: one plot per character/date pair, with one `action` entry per subaction. All of it is
+	 * written or none of it.
 	 *
 	 * @param int      $character_id
 	 * @param string   $game_date
 	 * @param int|null $parent_plot_id Nests this action under a chosen plot.
 	 *                 Only applied when creating a new allocation plot - re-running for an
-	 *                 already-allocated character/date never silently reparents it.
-	 * All of it is written or none of it, and one allocation for a character
-	 * runs at a time, so two at once can't each make the date's plot
-	 * .
+	 *                 already-allocated character/date never reparents it.
 	 *
 	 * @return int Plot ID, or 0 when a write failed and nothing was kept.
 	 */
@@ -533,7 +536,7 @@ class Action_Allocator {
 	/**
 	 * Encodes a subaction as JSON for storage in `plot_entries.content`.
 	 *
-	 * @param array $subaction
+	 * @param array<string,mixed> $subaction
 	 * @return string
 	 */
 	private static function encode_allocator_entry( array $subaction ): string {

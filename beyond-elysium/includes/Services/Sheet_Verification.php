@@ -67,6 +67,9 @@ class Sheet_Verification {
 	 * @return array<string,mixed>
 	 */
 	private static function resolve( string $base, string $code, string $xml, array $character ): array {
+		if ( Remote_Site::is_link_local( $base ) ) {
+			return [ 'status' => 'unreachable', 'base' => $base, 'code' => $code ];
+		}
 		// Fetches with wp_safe_remote_get().
 		$response = wp_safe_remote_get(
 			untrailingslashit( $base ) . '/wp-json/be/v1/verify/' . rawurlencode( $code ),

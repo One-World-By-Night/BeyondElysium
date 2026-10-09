@@ -79,7 +79,7 @@ class Npc_Casting {
 	/**
 	 * Creates a casting.
 	 *
-	 * @param array $data
+	 * @param array<string,mixed> $data
 	 * @return int|false
 	 */
 	public static function create( array $data ) {
@@ -102,8 +102,8 @@ class Npc_Casting {
 	/**
 	 * Updates a casting's wp_user_id and/or brief.
 	 *
-	 * @param int   $id
-	 * @param array $data
+	 * @param int                 $id
+	 * @param array<string,mixed> $data
 	 * @return bool
 	 */
 	public static function update( int $id, array $data ): bool {

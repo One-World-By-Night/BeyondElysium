@@ -3,10 +3,15 @@
 namespace BeyondElysium\REST;
 
 use BeyondElysium\Database\Manager;
+use BeyondElysium\Models\Attachment;
 use BeyondElysium\Models\Change;
 use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Creature_Stack;
 use BeyondElysium\Models\Game;
+use BeyondElysium\Models\Connection;
+use BeyondElysium\Models\Join_Request;
+use BeyondElysium\Models\Plot;
+use BeyondElysium\Models\Plot_Entry;
 use BeyondElysium\Models\Schema_Block;
 use BeyondElysium\Models\Transfer;
 use BeyondElysium\Services\Change_Engine;
@@ -81,6 +86,15 @@ class Characters_Controller extends Base_Controller {
 			],
 		] );
 
+		// The plots a character is connected to, open and resolved, each with its own latest entry's date.
+		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/characters/(?P<id>\d+)/hooks', [
+			[
+				'methods'             => 'GET',
+				'callback'            => [ $this, 'get_hooks' ],
+				'permission_callback' => $this->permission( 'be_manage_characters' ),
+			],
+		] );
+
 		// Retrieves, updates, or deletes a single character.
 		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/characters/(?P<id>\d+)', [
 			[
@@ -126,14 +140,17 @@ class Characters_Controller extends Base_Controller {
 	 * @return \WP_REST_Response
 	 */
 	public function search_wp_users( $request ) {
-		$search = trim( (string) $request->get_param( 'search' ) );
+		$search  = trim( (string) $request->get_param( 'search' ) );
+		$include = trim( (string) $request->get_param( 'include' ) );
 
 		$args = [
 			'number'  => 50,
 			'orderby' => 'display_name',
 			'order'   => 'ASC',
 		];
-		if ( $search !== '' ) {
+		if ( $include !== '' ) {
+			$args['include'] = array_map( 'intval', array_filter( explode( ',', $include ) ) );
+		} elseif ( $search !== '' ) {
 			$args['search']         = '*' . $search . '*';
 			$args['search_columns'] = [ 'display_name', 'user_email', 'user_login' ];
 		}
@@ -257,6 +274,56 @@ class Characters_Controller extends Base_Controller {
 	}
 
 	/**
+	 * Every plot a character is connected to, split into Open (status `active`) and Resolved (`resolved` or
+	 * `archived`), each with its own latest entry's date.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function get_hooks( $request ) {
+		$game = $this->resolve_game( $request['game_slug'] );
+		if ( is_wp_error( $game ) ) {
+			return $game;
+		}
+		$character = Character::find( (int) $request['id'] );
+		if ( ! $character || $character->owner_slug !== $request['game_slug'] ) {
+			return $this->error( 'character_not_found', __( 'Character not found in this game.', 'beyond-elysium' ), 404 );
+		}
+
+		$open     = [];
+		$resolved = [];
+		foreach ( Connection::for_entity( 'character', (int) $character->id ) as $connection ) {
+			if ( $connection->label === \BeyondElysium\Services\Action_Allocator::ACTOR_LABEL ) {
+				// The character's own home plot (action-allocation bookkeeping), not a story hook.
+				continue;
+			}
+			$plot_id = $connection->source_type === 'plot' ? (int) $connection->source_id : ( $connection->target_type === 'plot' ? (int) $connection->target_id : 0 );
+			if ( $plot_id === 0 ) {
+				continue;
+			}
+			$plot = Plot::find( $plot_id );
+			if ( ! $plot || (int) $plot->game_id !== (int) $game->id ) {
+				continue;
+			}
+			$latest = null;
+			foreach ( Plot_Entry::for_plot( $plot_id ) as $entry ) {
+				$date = $entry->event_date ?: substr( (string) $entry->created_at, 0, 10 );
+				if ( $date && ( $latest === null || $date > $latest ) ) {
+					$latest = $date;
+				}
+			}
+			$row = [ 'plot_id' => $plot_id, 'title' => $plot->title, 'latest_entry_date' => $latest ];
+			if ( $plot->status === 'active' ) {
+				$open[] = $row;
+			} else {
+				$resolved[] = $row;
+			}
+		}
+
+		return $this->success( [ 'open' => $open, 'resolved' => $resolved ] );
+	}
+
+	/**
 	 * Lists characters for a game with optional filters and pagination.
 	 *
 	 * @param \WP_REST_Request $request
@@ -299,12 +366,13 @@ class Characters_Controller extends Base_Controller {
 
 		$items = Character::all_for_game( $request['game_slug'], $args );
 
-		// The newest open transfer per uuid for the page.
-		$travel_states = Transfer::open_states_for_game( $request['game_slug'] );
+		// Every open visit per uuid for the page.
+		$open_visits = Transfer::open_states_for_game( $request['game_slug'] );
 
 		foreach ( $items as $item ) {
 			$item->image_url = $item->image_id ? wp_get_attachment_image_url( (int) $item->image_id, 'thumbnail' ) : null;
-			$item->travelling_status = $travel_states[ $item->uuid ] ?? null;
+			$item->visits = self::visits_shape( $open_visits[ $item->uuid ] ?? [] );
+			$item->visiting_from = self::visiting_from_shape( $open_visits[ $item->uuid ] ?? [] );
 			self::apply_computed_player_fields( $item, $can_manage );
 		}
 
@@ -362,9 +430,19 @@ class Characters_Controller extends Base_Controller {
 			? wp_get_attachment_image_url( (int) $character->image_id, 'medium' )
 			: null;
 
-		$character->travelling_status = Transfer::open_states_for_game( $request['game_slug'] )[ $character->uuid ] ?? null;
+		$open_visits = Transfer::open_states_for_game( $request['game_slug'] )[ $character->uuid ] ?? [];
+		$character->visits = self::visits_shape( $open_visits );
+		$character->visiting_from = self::visiting_from_shape( $open_visits );
 
 		self::apply_computed_player_fields( $character, $can_manage );
+
+		// What a Storyteller should look at on this sheet; nothing for anyone else.
+		$traditions                = \BeyondElysium\Services\Blood_Magic_Refile::catalog_traditions( (string) $character->owner_slug );
+		$character->sheet_warnings = $can_manage && is_array( $character->sheet_data )
+			? \BeyondElysium\Services\Repeated_Holdings::in_sheet( $character->sheet_data, $traditions['known'], $traditions['aliases'] )
+			: [];
+
+		$character->attachments = array_map( [ Attachment::class, 'public_shape' ], Attachment::for_entity( 'character', (int) $character->id ) );
 
 		return $this->success( $character );
 	}
@@ -391,6 +469,52 @@ class Characters_Controller extends Base_Controller {
 		}
 
 		return $this->success( $items );
+	}
+
+	/**
+	 * The public `visits` shape: every other chronicle a character is also currently active at, from its own
+	 * outbound rows - "Also active at Boston, BBF."
+	 *
+	 * @param array<int,array<string,mixed>> $open_visits One character's own rows from `Transfer::open_states_for_game()`.
+	 * @return array<int,array{host_chronicle:?string,host_site:?string,keep_current:bool,delivered_at:?string}>
+	 */
+	private static function visits_shape( array $open_visits ): array {
+		$visits = [];
+		foreach ( $open_visits as $visit ) {
+			if ( $visit['direction'] !== 'outbound' ) {
+				continue;
+			}
+			$visits[] = [
+				'host_chronicle'    => $visit['chronicle'],
+				'host_site'         => $visit['host_site'],
+				'keep_current'      => $visit['keep_current'],
+				'delivered_at'      => $visit['delivered_at'],
+				'unreachable_since' => $visit['unreachable_since'],
+			];
+		}
+		return $visits;
+	}
+
+	/**
+	 * Whether this character row is itself a visitor here right now, from an open inbound row - the chronicle it came
+	 * from, for the sheet's own notice. At most one.
+	 *
+	 * @param array<int,array<string,mixed>> $open_visits One character's own rows from `Transfer::open_states_for_game()`.
+	 * @return array{home_chronicle:?string,since:string,unreachable_since:?string}|null
+	 */
+	private static function visiting_from_shape( array $open_visits ): ?array {
+		foreach ( $open_visits as $visit ) {
+			if ( $visit['direction'] === 'inbound' ) {
+				return [
+					'home_chronicle'    => $visit['chronicle'],
+					'since'             => $visit['since'],
+					'keep_current'      => $visit['keep_current'],
+					'delivered_at'      => $visit['delivered_at'],
+					'unreachable_since' => $visit['unreachable_since'],
+				];
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -442,7 +566,7 @@ class Characters_Controller extends Base_Controller {
 		}
 
 		// Refuses a creature type this chronicle has not enabled.
-		$allowed_stacks = array_column( Creature_Stack::all_for_game( $request['game_slug'] ), 'slug' );
+		$allowed_stacks = array_column( Creature_Stack::all_for_game( $request['game_slug'], [], false, \BeyondElysium\Core\Authorization::can( 'be_manage_characters' ) ), 'slug' );
 		if ( ! in_array( $stack_slug, $allowed_stacks, true ) ) {
 			return $this->error(
 				'invalid_param',
@@ -469,19 +593,29 @@ class Characters_Controller extends Base_Controller {
 		}
 
 		// A newcomer with no membership or accessSchema grant asks to join.
-		$joining = ! $is_manager && ! \BeyondElysium\Core\Authorization::can( 'be_edit_own_characters' );
+		$joining       = ! $is_manager && ! \BeyondElysium\Core\Authorization::can( 'be_edit_own_characters' );
+		$join_request  = $joining ? Join_Request::find_waiting( (int) $game->id, get_current_user_id() ) : null;
 		if ( $joining ) {
-			$waiting = Manager::get_var(
-				'SELECT COUNT(*) FROM ' . Manager::table( 'characters' ) . " WHERE owner_type = 'chronicle' AND owner_slug = %s AND wp_user_id = %d AND status = 'pending'",
-				$request['game_slug'],
-				get_current_user_id()
-			);
-			if ( (int) $waiting > 0 ) {
+			// An open request already carrying a character or file: a second one is refused.
+			if ( $join_request && ( ! empty( $join_request->character_id ) || ! empty( $join_request->submission_id ) ) ) {
 				return $this->error( 'join_already_requested', __( 'Your character is already waiting for this chronicle\'s Storytellers to approve it.', 'beyond-elysium' ), 409 );
 			}
-			// A waiting Grapevine file for this chronicle blocks a second request.
-			if ( \BeyondElysium\Models\Submission::has_waiting( (int) $game->id, get_current_user_id() ) ) {
-				return $this->error( 'join_already_requested', __( 'Your character is already waiting for this chronicle\'s Storytellers to approve it.', 'beyond-elysium' ), 409 );
+			// No open request at all: the two checks for a site not using the Join panel.
+			if ( ! $join_request ) {
+				if ( ! Join_Request::open_on( $game ) ) {
+					return $this->error( 'join_requests_off', __( 'This chronicle is not taking join requests right now.', 'beyond-elysium' ), 403 );
+				}
+				$waiting = Manager::get_var(
+					'SELECT COUNT(*) FROM ' . Manager::table( 'characters' ) . " WHERE owner_type = 'chronicle' AND owner_slug = %s AND wp_user_id = %d AND status = 'pending'",
+					$request['game_slug'],
+					get_current_user_id()
+				);
+				if ( (int) $waiting > 0 ) {
+					return $this->error( 'join_already_requested', __( 'Your character is already waiting for this chronicle\'s Storytellers to approve it.', 'beyond-elysium' ), 409 );
+				}
+				if ( \BeyondElysium\Models\Submission::has_waiting( (int) $game->id, get_current_user_id() ) ) {
+					return $this->error( 'join_already_requested', __( 'Your character is already waiting for this chronicle\'s Storytellers to approve it.', 'beyond-elysium' ), 409 );
+				}
 			}
 		}
 
@@ -506,7 +640,7 @@ class Characters_Controller extends Base_Controller {
 		}
 		$sheet_data = $sheet_data ?: [];
 
-		$resolved = Creature_Stack::resolve( $stack_slug, $request['game_slug'] );
+		$resolved = Creature_Stack::resolve( $stack_slug, $request['game_slug'], array_keys( $sheet_data ) );
 		if ( ! $resolved ) {
 			return $this->error( 'invalid_param', __( 'stack_slug does not resolve to a real creature stack.', 'beyond-elysium' ), 400 );
 		}
@@ -624,7 +758,12 @@ class Characters_Controller extends Base_Controller {
 			return $this->error( 'character_not_found', __( 'Character not found.', 'beyond-elysium' ), 404 );
 		}
 		if ( $joining ) {
-			\BeyondElysium\Core\Notifications::join_requested( $game, $character, wp_get_current_user() );
+			if ( $join_request ) {
+				// Already asked through the Join panel - tie the character to it, no second email.
+				Join_Request::tie_character( (int) $join_request->id, $id );
+			} else {
+				\BeyondElysium\Core\Notifications::join_requested_legacy( $game, $character, wp_get_current_user() );
+			}
 			$character->join_pending = true;
 		}
 		return $this->success( $character, 201 );
@@ -656,6 +795,13 @@ class Characters_Controller extends Base_Controller {
 		}
 
 		$is_manager = \BeyondElysium\Core\Authorization::can( 'be_manage_characters' );
+
+		if ( ! $is_manager ) {
+			$refusal = $this->host_copy_edit_refusal( $character );
+			if ( $refusal !== null ) {
+				return $refusal;
+			}
+		}
 
 		// A player edits their own character's story and portrait.
 		$allowed_fields = [ 'name', 'biography', 'notes', 'player_name', 'start_date', 'image_id' ];
@@ -690,7 +836,7 @@ class Characters_Controller extends Base_Controller {
 			return $this->error( 'invalid_param', __( 'npc_detail must be one of: full, quick.', 'beyond-elysium' ), 400 );
 		}
 
-		// Manager-only; uses has_param() to distinguish an omitted field from an explicit unassign.
+		// Manager-only; an omitted field and an explicit unassign are different.
 		if ( $is_manager && $request->has_param( 'wp_user_id' ) ) {
 			$raw = $request->get_param( 'wp_user_id' );
 			if ( $raw === null || $raw === '' || (int) $raw === 0 ) {
@@ -704,7 +850,7 @@ class Characters_Controller extends Base_Controller {
 			}
 		}
 
-		// Manager-only; uses the same has_param() tri-state handling as wp_user_id.
+		// Manager-only; handled like wp_user_id.
 		if ( $is_manager && $request->has_param( 'pending_player_email' ) ) {
 			$raw = trim( (string) $request->get_param( 'pending_player_email' ) );
 			if ( $raw === '' ) {
@@ -839,7 +985,7 @@ class Characters_Controller extends Base_Controller {
 	/**
 	 * Defines the query parameters accepted by the collection endpoint.
 	 *
-	 * @return array
+	 * @return array<string,array<string,mixed>>
 	 */
 	public function get_collection_params(): array {
 		return [

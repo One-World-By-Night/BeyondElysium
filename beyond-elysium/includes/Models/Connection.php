@@ -22,10 +22,40 @@ class Connection {
 	 * @return object|null
 	 */
 	public static function find( int $id ) {
-		return Manager::get_row(
+		return self::decode( Manager::get_row(
 			'SELECT * FROM ' . Manager::table( 'connections' ) . ' WHERE id = %d',
 			$id
-		);
+		) );
+	}
+
+	/**
+	 * A connection row with its ids as integers (a missing target stays null).
+	 *
+	 * @param object|null $row
+	 * @return object|null
+	 */
+	private static function decode( ?object $row ): ?object {
+		return $row === null ? null : self::cast_ids( $row );
+	}
+
+	/**
+	 * @param array<int,object>|null $rows
+	 * @return array<int,object>
+	 */
+	private static function decode_all( $rows ): array {
+		return array_map( [ self::class, 'cast_ids' ], is_array( $rows ) ? $rows : [] );
+	}
+
+	private static function cast_ids( object $row ): object {
+		foreach ( [ 'id', 'game_id', 'source_id', 'created_by' ] as $field ) {
+			if ( isset( $row->$field ) ) {
+				$row->$field = (int) $row->$field;
+			}
+		}
+		if ( isset( $row->target_id ) ) {
+			$row->target_id = (int) $row->target_id;
+		}
+		return $row;
 	}
 
 	/**
@@ -33,14 +63,14 @@ class Connection {
 	 *
 	 * @param string $type
 	 * @param int    $id
-	 * @return array
+	 * @return array<int,object>
 	 */
 	public static function for_source( string $type, int $id ): array {
-		return Manager::get_results(
+		return self::decode_all( Manager::get_results(
 			'SELECT * FROM ' . Manager::table( 'connections' ) . ' WHERE source_type = %s AND source_id = %d ORDER BY created_at DESC',
 			$type,
 			$id
-		);
+		) );
 	}
 
 	/**
@@ -48,14 +78,14 @@ class Connection {
 	 *
 	 * @param string $type
 	 * @param int    $id
-	 * @return array
+	 * @return array<int,object>
 	 */
 	public static function for_target( string $type, int $id ): array {
-		return Manager::get_results(
+		return self::decode_all( Manager::get_results(
 			'SELECT * FROM ' . Manager::table( 'connections' ) . ' WHERE target_type = %s AND target_id = %d ORDER BY created_at DESC',
 			$type,
 			$id
-		);
+		) );
 	}
 
 	/**
@@ -63,7 +93,7 @@ class Connection {
 	 *
 	 * @param string $type
 	 * @param int    $id
-	 * @return array
+	 * @return array<int,object>
 	 */
 	public static function for_entity( string $type, int $id ): array {
 		global $wpdb;
@@ -75,15 +105,38 @@ class Connection {
 			$type,
 			$id
 		);
-		return $wpdb->get_results( $sql ) ?: [];
+		return self::decode_all( $wpdb->get_results( $sql ) );
+	}
+
+	/**
+	 * Every connection touching any of several entities of one type, whether as the source or the target.
+	 *
+	 * @param string $type
+	 * @param int[]  $ids
+	 * @return array<int,object>
+	 */
+	public static function for_entities( string $type, array $ids ): array {
+		$ids = array_values( array_unique( array_map( 'intval', $ids ) ) );
+		if ( empty( $ids ) ) {
+			return [];
+		}
+
+		global $wpdb;
+		$table        = Manager::table( 'connections' );
+		$placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+		$sql          = $wpdb->prepare(
+			"SELECT * FROM {$table} WHERE (source_type = %s AND source_id IN ({$placeholders})) OR (target_type = %s AND target_id IN ({$placeholders}))", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			array_merge( [ $type ], $ids, [ $type ], $ids )
+		);
+		return self::decode_all( $wpdb->get_results( $sql ) );
 	}
 
 	/**
 	 * Return every connection belonging to a game.
 	 *
-	 * @param int   $game_id
-	 * @param array $args Filters: source_type, target_type.
-	 * @return array
+	 * @param int                 $game_id
+	 * @param array<string,mixed> $args Filters: source_type, target_type.
+	 * @return array<int,object>
 	 */
 	public static function for_game( int $game_id, array $args = [] ): array {
 		global $wpdb;
@@ -102,13 +155,13 @@ class Connection {
 
 		$sql = 'SELECT * FROM ' . $table . ' WHERE ' . implode( ' AND ', $where ) . ' ORDER BY created_at DESC';
 		$sql = $wpdb->prepare( $sql, $values );
-		return $wpdb->get_results( $sql ) ?: [];
+		return self::decode_all( $wpdb->get_results( $sql ) );
 	}
 
 	/**
 	 * Create a connection between two entities.
 	 *
-	 * @param array $data
+	 * @param array<string,mixed> $data
 	 * @return int|false Insert ID (new or existing) on success, false on validation failure.
 	 */
 	public static function create( array $data ) {
@@ -234,8 +287,8 @@ class Connection {
 	/**
 	 * Update a connection's label and notes.
 	 *
-	 * @param int   $id
-	 * @param array $data
+	 * @param int                 $id
+	 * @param array<string,mixed> $data
 	 * @return bool
 	 */
 	public static function update( int $id, array $data ): bool {

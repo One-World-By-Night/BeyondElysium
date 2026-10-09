@@ -40,7 +40,7 @@ class Item_Event {
 	/**
 	 * Records one event.
 	 *
-	 * @param array $data
+	 * @param array<string,mixed> $data
 	 * @return int|false
 	 */
 	public static function record( array $data ) {

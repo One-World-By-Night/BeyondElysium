@@ -56,7 +56,7 @@ class Translation {
 	/**
 	 * Creates a translation row and returns its id, or false when string_id or locale is missing.
 	 *
-	 * @param array $data string_id, locale, translation, status (default 'draft'), context (default null),
+	 * @param array<string,mixed> $data string_id, locale, translation, status (default 'draft'), context (default null),
 	 *                    updated_by (default the current user, or null outside a request).
 	 * @return int|false
 	 */
@@ -80,8 +80,8 @@ class Translation {
 	}
 
 	/**
-	 * @param int   $id
-	 * @param array $data Any of translation, status, updated_by.
+	 * @param int                 $id
+	 * @param array<string,mixed> $data Any of translation, status, updated_by.
 	 * @return bool
 	 */
 	public static function update( int $id, array $data ): bool {

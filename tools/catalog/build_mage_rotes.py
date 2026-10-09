@@ -1,4 +1,4 @@
-"""Backfills `group` on the 134 previously-ungrouped mage-rotes items and
+"""Backfills `group` on the mage-rotes items that carry none and
 emits data/catalog/blocks/mage-rotes.json, a trait_list block.
 
 Offline tooling: not part of the plugin, not run at runtime, not run by

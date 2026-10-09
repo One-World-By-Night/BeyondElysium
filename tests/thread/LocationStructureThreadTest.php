@@ -315,9 +315,9 @@ class LocationStructureThreadTest extends WP_UnitTestCase {
 		$response = $this->send( 'GET', '/reports/location-cards' );
 		$this->assertSame( 200, $response->get_status() );
 
-		$card  = current( array_filter( $response->get_data()['cards'], static fn( $c ) => $c[0][1] === 'Elysium' ) );
-		$owner_field = current( array_filter( $card, static fn( $f ) => $f[0] === 'Owner' ) );
+		$card        = current( array_filter( $response->get_data()['cards'], static fn( $c ) => $c['name'] === 'Elysium' ) );
+		$owner_field = current( array_filter( $card['fields'], static fn( $f ) => $f['label'] === 'Owner' ) );
 
-		$this->assertSame( 'Prince Marcus', $owner_field[1] );
+		$this->assertSame( 'Prince Marcus', $owner_field['value'] );
 	}
 }

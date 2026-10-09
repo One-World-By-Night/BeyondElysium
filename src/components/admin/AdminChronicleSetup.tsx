@@ -225,6 +225,15 @@ export function AdminChronicleSetup() {
 			.catch( saveFailed );
 	}
 
+	function saveSecretPassing( mode: 'off' | 'approval' | 'immediate' ) {
+		setSavingRow( 'secret_passing' );
+		setSaveError( null );
+		api.games
+			.updateChronicleSetup( gameSlug, { secret_passing: mode } )
+			.then( applySaved )
+			.catch( saveFailed );
+	}
+
 	function saveAccentColor( color: string ) {
 		setSavingRow( 'accent_color' );
 		setSaveError( null );
@@ -290,7 +299,7 @@ export function AdminChronicleSetup() {
 		if (
 			! window.confirm(
 				__(
-					'Delete the demo chronicle and all 22 sample characters? This cannot be undone.',
+					'Delete the demo chronicle and all 23 sample characters? This cannot be undone.',
 					'beyond-elysium'
 				)
 			)
@@ -323,6 +332,9 @@ export function AdminChronicleSetup() {
 	const settings = currentGame?.settings;
 	const approvalChoice = settings?.require_new_character_approval as
 		boolean | undefined;
+	const secretPassingChoice =
+		( settings?.secret_passing as
+			'off' | 'approval' | 'immediate' | undefined ) ?? 'approval';
 
 	const catalogRow = status?.items.find(
 		( item ) => item.id === 'catalog_customisation'
@@ -378,6 +390,31 @@ export function AdminChronicleSetup() {
 					/>
 					{ __( 'Active immediately', 'beyond-elysium' ) }
 				</label>
+			</div>
+		),
+		secret_passing: (
+			<div className="be-chronicle-setup__approval-toggle">
+				{ (
+					[
+						[ 'off', __( 'Off', 'beyond-elysium' ) ],
+						[
+							'approval',
+							__( 'Needs a Storyteller', 'beyond-elysium' ),
+						],
+						[ 'immediate', __( 'Immediate', 'beyond-elysium' ) ],
+					] as const
+				 ).map( ( [ value, label ] ) => (
+					<label key={ value }>
+						<input
+							type="radio"
+							name="secret_passing"
+							checked={ secretPassingChoice === value }
+							onChange={ () => saveSecretPassing( value ) }
+							disabled={ savingRow === 'secret_passing' }
+						/>
+						{ label }
+					</label>
+				) ) }
 			</div>
 		),
 		starting_xp: (

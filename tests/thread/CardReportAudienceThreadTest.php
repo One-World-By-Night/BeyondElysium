@@ -61,7 +61,7 @@ class CardReportAudienceThreadTest extends WP_UnitTestCase {
 	}
 
 	private function names_from( \WP_REST_Response $response ): array {
-		return array_map( static fn( $card ) => $card[0][1], $response->get_data()['cards'] );
+		return array_map( static fn( $card ) => $card['name'], $response->get_data()['cards'] );
 	}
 
 	private function dispatch( WP_REST_Request $request ) {
@@ -105,5 +105,38 @@ class CardReportAudienceThreadTest extends WP_UnitTestCase {
 			$names,
 			'holding an item is its own authorization for Print My Items, independent of the general audience'
 		);
+	}
+
+	public function test_object_id_prints_exactly_one_item_card(): void {
+		$this->make_item( 'First Item', Audience::EVERYONE );
+		$wanted = $this->make_item( 'Wanted Item', Audience::EVERYONE );
+		$this->make_item( 'Third Item', Audience::EVERYONE );
+
+		wp_set_current_user( self::factory()->user->create( [ 'role' => 'administrator' ] ) );
+		$request = new WP_REST_Request( 'GET', "/be/v1/{$this->game_slug}/reports/item-cards" );
+		$request->set_param( 'object_id', $wanted );
+
+		$this->assertSame( [ 'Wanted Item' ], $this->names_from( $this->dispatch( $request ) ) );
+	}
+
+	public function test_object_id_prints_exactly_one_location_card(): void {
+		World_Object::create( [ 'game_id' => $this->game_id, 'object_type' => 'location', 'name' => 'Other Place', 'audience' => Audience::EVERYONE, 'created_by' => 1 ] );
+		$wanted = (int) World_Object::create( [ 'game_id' => $this->game_id, 'object_type' => 'location', 'name' => 'Wanted Place', 'audience' => Audience::EVERYONE, 'created_by' => 1 ] );
+
+		wp_set_current_user( self::factory()->user->create( [ 'role' => 'administrator' ] ) );
+		$request = new WP_REST_Request( 'GET', "/be/v1/{$this->game_slug}/reports/location-cards" );
+		$request->set_param( 'object_id', $wanted );
+
+		$this->assertSame( [ 'Wanted Place' ], $this->names_from( $this->dispatch( $request ) ) );
+	}
+
+	public function test_object_id_does_not_open_a_storytellers_only_item_to_a_player(): void {
+		$hidden = $this->make_item( 'Secret Relic', Audience::STORYTELLERS );
+
+		wp_set_current_user( $this->make_player() );
+		$request = new WP_REST_Request( 'GET', "/be/v1/{$this->game_slug}/reports/item-cards" );
+		$request->set_param( 'object_id', $hidden );
+
+		$this->assertSame( [], $this->names_from( $this->dispatch( $request ) ) );
 	}
 }

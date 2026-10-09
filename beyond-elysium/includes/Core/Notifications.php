@@ -4,6 +4,7 @@ namespace BeyondElysium\Core;
 
 use BeyondElysium\Models\Game;
 use BeyondElysium\Models\Game_Member;
+use BeyondElysium\Models\Mail_Log;
 use BeyondElysium\Models\Notification_Queue;
 
 defined( 'ABSPATH' ) || exit;
@@ -15,37 +16,93 @@ defined( 'ABSPATH' ) || exit;
 class Notifications {
 
 	/**
-	 * wp_user_id => list of { character_name, game_name, label, status }
+	 * wp_user_id => list of { character_name, game_id, game_name, label, status }
+	 *
+	 * @var array<int,list<array<string,mixed>>>
 	 */
 	private static array $pending = [];
 
 	/**
-	 * wp_user_id => [ batch_id => { game_name, character_names: string[], rumor_count, entry_count } ]
+	 * wp_user_id => [ batch_id => { game_id, game_name, character_names: string[], rumor_count, entry_count } ]
+	 *
+	 * @var array<int,array<int,array<string,mixed>>>
 	 */
 	private static array $pending_release = [];
 
 	/**
-	 * wp_user_id => [ plot_id => { game_name, plot_title, posted_by: string[], link } ]
+	 * wp_user_id => [ plot_id => { game_id, game_name, plot_title, posted_by: string[], link } ]
+	 *
+	 * @var array<int,array<int,array<string,mixed>>>
 	 */
 	private static array $pending_posts = [];
 
 	/**
+	 * wp_user_id => list of { game_id, game_name, kind, title, link }
+	 *
+	 * @var array<int,array<int,array{game_id:int,game_name:string,kind:string,title:string,link:string}>>
+	 */
+	private static array $pending_visible = [];
+
+	/**
 	 * Whether a player should receive a notification email at all: not opted out
 	 * (User_Settings::NOTIFICATIONS_OPT_OUT_META), and not on a game that has notifications turned off
-	 * (be_games.notifications_enabled).
+	 * (be_games.notifications_enabled), and not on a demo chronicle.
 	 *
 	 * @param int         $wp_user_id
 	 * @param object|null $game
 	 * @return bool
 	 */
-	private static function should_notify( int $wp_user_id, $game ): bool {
+	public static function should_notify( int $wp_user_id, $game ): bool {
+		return self::skip_reason( $wp_user_id, $game ) === null;
+	}
+
+	/**
+	 * Why a user gets no notification email on a chronicle, or null when they do.
+	 *
+	 * @param int         $wp_user_id
+	 * @param object|null $game
+	 * @return string|null A Mail_Log REASON_ constant.
+	 */
+	public static function skip_reason( int $wp_user_id, $game ): ?string {
 		if ( get_user_meta( $wp_user_id, User_Settings::NOTIFICATIONS_OPT_OUT_META, true ) === '1' ) {
-			return false;
+			return Mail_Log::REASON_OPTED_OUT;
 		}
 		if ( $game && isset( $game->notifications_enabled ) && ! (int) $game->notifications_enabled ) {
-			return false;
+			return Mail_Log::REASON_CHRONICLE_OFF;
 		}
-		return true;
+		if ( $game && \BeyondElysium\Services\Demo_Chronicle::is_demo( $game ) ) {
+			return Mail_Log::REASON_DEMO;
+		}
+		return null;
+	}
+
+	/**
+	 * Whether to go on and notify one user, recording an email that won't be sent and why.
+	 *
+	 * @param int         $wp_user_id
+	 * @param object|null $game
+	 * @param array{kind:string,entity_type?:string,entity_id?:int,subject?:string} $about What the email would have been.
+	 * @return bool
+	 */
+	private static function allowed( int $wp_user_id, $game, array $about ): bool {
+		$reason = self::skip_reason( $wp_user_id, $game );
+		if ( $reason === null ) {
+			return true;
+		}
+		Mailer::skipped( self::meta( $game, $wp_user_id, $about ), $reason );
+		return false;
+	}
+
+	/**
+	 * What the mail log needs to know about one email.
+	 *
+	 * @param object|null $game
+	 * @param int         $wp_user_id
+	 * @param array<string,mixed> $about kind, and optionally entity_type, entity_id, subject.
+	 * @return array<string,mixed>
+	 */
+	private static function meta( $game, int $wp_user_id, array $about ): array {
+		return array_merge( [ 'game_id' => (int) ( $game->id ?? 0 ), 'wp_user_id' => $wp_user_id ], $about );
 	}
 
 	/**
@@ -63,12 +120,13 @@ class Notifications {
 		}
 
 		$game = Game::find_by_slug( (string) ( $character->owner_slug ?? '' ) );
-		if ( ! self::should_notify( $wp_user_id, $game ) ) {
+		if ( ! self::allowed( $wp_user_id, $game, [ 'kind' => 'change_outcome' ] ) ) {
 			return;
 		}
 
 		self::$pending[ $wp_user_id ][] = [
 			'character_name' => (string) ( $character->name ?? '' ),
+			'game_id'        => (int) ( $game->id ?? 0 ),
 			'game_name'      => (string) ( $game->name ?? $character->owner_slug ?? '' ),
 			'label'          => self::label_for( $change ),
 			'status'         => (string) ( $change->status ?? '' ),
@@ -105,11 +163,12 @@ class Notifications {
 	 * @return void
 	 */
 	public static function enqueue_release( int $wp_user_id, $game, int $batch_id, array $character_names, string $kind ): void {
-		if ( ! $wp_user_id || ! self::should_notify( $wp_user_id, $game ) ) {
+		if ( ! $wp_user_id || ! self::allowed( $wp_user_id, $game, [ 'kind' => 'release', 'entity_type' => 'release_batch', 'entity_id' => $batch_id ] ) ) {
 			return;
 		}
 
 		$bucket = self::$pending_release[ $wp_user_id ][ $batch_id ] ?? [
+			'game_id'         => (int) ( $game->id ?? 0 ),
 			'game_name'       => (string) ( $game->name ?? '' ),
 			'character_names' => [],
 			'rumor_count'     => 0,
@@ -141,11 +200,19 @@ class Notifications {
 	public static function flush_release(): void {
 		foreach ( self::$pending_release as $wp_user_id => $by_batch ) {
 			$user = get_userdata( (int) $wp_user_id );
-			if ( ! $user || ! $user->user_email ) {
-				continue;
-			}
-			foreach ( $by_batch as $entry ) {
-				wp_mail( $user->user_email, self::release_subject( $entry ), self::release_body( $user, $entry ) );
+			foreach ( $by_batch as $batch_id => $entry ) {
+				$meta = [
+					'game_id'     => $entry['game_id'],
+					'wp_user_id'  => (int) $wp_user_id,
+					'kind'        => 'release',
+					'entity_type' => 'release_batch',
+					'entity_id'   => (int) $batch_id,
+				];
+				if ( ! $user || ! $user->user_email ) {
+					Mailer::skipped( $meta, Mail_Log::REASON_NO_EMAIL );
+					continue;
+				}
+				Mailer::send( $user->user_email, self::release_subject( $entry ), self::release_body( $user, $entry ), $meta );
 			}
 		}
 
@@ -172,18 +239,23 @@ class Notifications {
 	 * @param int         $plot_id
 	 * @param string      $plot_title
 	 * @param string      $posted_by_label "A Storyteller", or a character's own name.
-	 * @param string      $link            Where the email points - the caller decides, since it
-	 *                                      already knows whether this recipient reads the post
-	 *                                      as a Storyteller or as a player.
+	 * @param string      $link            Where the email points - the caller decides.
 	 * @return void
 	 */
 	public static function notify_post( int $wp_user_id, $game, int $plot_id, string $plot_title, string $posted_by_label, string $link ): void {
-		if ( ! $wp_user_id || ! self::should_notify( $wp_user_id, $game ) ) {
+		$about = [
+			'kind'        => 'plot_post',
+			'entity_type' => 'plot',
+			'entity_id'   => $plot_id,
+			'subject'     => self::post_subject( [ 'game_name' => (string) ( $game->name ?? '' ), 'plot_title' => $plot_title, 'posted_by' => [] ] ),
+		];
+		if ( ! $wp_user_id || ! self::allowed( $wp_user_id, $game, $about ) ) {
 			return;
 		}
 
 		$preference = self::plot_notify_preference( $wp_user_id );
 		if ( $preference === 'off' ) {
+			Mailer::skipped( self::meta( $game, $wp_user_id, $about ), Mail_Log::REASON_PREFERENCE_OFF );
 			return;
 		}
 
@@ -194,10 +266,12 @@ class Notifications {
 				'posted_by'  => $posted_by_label,
 				'link'       => $link,
 			] );
+			Mailer::queued( self::meta( $game, $wp_user_id, $about ) );
 			return;
 		}
 
 		$bucket = self::$pending_posts[ $wp_user_id ][ $plot_id ] ?? [
+			'game_id'    => (int) ( $game->id ?? 0 ),
 			'game_name'  => (string) ( $game->name ?? '' ),
 			'plot_title' => $plot_title,
 			'posted_by'  => [],
@@ -217,11 +291,20 @@ class Notifications {
 	public static function flush_posts(): void {
 		foreach ( self::$pending_posts as $wp_user_id => $by_plot ) {
 			$user = get_userdata( (int) $wp_user_id );
-			if ( ! $user || ! $user->user_email ) {
-				continue;
-			}
-			foreach ( $by_plot as $entry ) {
-				wp_mail( $user->user_email, self::post_subject( $entry ), self::post_body( $user, $entry ) );
+			foreach ( $by_plot as $plot_id => $entry ) {
+				$meta = [
+					'game_id'     => $entry['game_id'],
+					'wp_user_id'  => (int) $wp_user_id,
+					'kind'        => 'plot_post',
+					'entity_type' => 'plot',
+					'entity_id'   => (int) $plot_id,
+					'subject'     => self::post_subject( $entry ),
+				];
+				if ( ! $user || ! $user->user_email ) {
+					Mailer::skipped( $meta, Mail_Log::REASON_NO_EMAIL );
+					continue;
+				}
+				Mailer::send( $user->user_email, self::post_subject( $entry ), self::post_body( $user, $entry ), $meta );
 			}
 		}
 
@@ -267,8 +350,175 @@ class Notifications {
 	}
 
 	/**
-	 * Sends one digest email per user with anything queued, listing every plot that got a new post since their last
-	 * digest.
+	 * Notifies one recipient that a plot, item or location (or, for `secret_told`, a secret) became visible to one of
+	 * their characters: immediately, in tomorrow's digest, or not at all, per their plot-notify preference (the same
+	 * choice `notify_post()` reads).
+	 *
+	 * @param int         $wp_user_id
+	 * @param object|null $game  Decoded Game row - id, name, notifications_enabled.
+	 * @param string      $kind  `plot`, `item`, `location`, or `secret_told`.
+	 * @param string      $title The entity's own name or title.
+	 * @param string      $link  The player's own view of it.
+	 * @return void
+	 */
+	public static function notify_visible( int $wp_user_id, $game, string $kind, string $title, string $link ): void {
+		$entry = [
+			'game_id'   => (int) ( $game->id ?? 0 ),
+			'game_name' => (string) ( $game->name ?? '' ),
+			'kind'      => $kind,
+			'title'     => $title,
+			'link'      => $link,
+		];
+		$about = [ 'kind' => 'visible', 'subject' => self::visible_subject( [ $entry ] ) ];
+		if ( ! $wp_user_id || ! self::allowed( $wp_user_id, $game, $about ) ) {
+			return;
+		}
+
+		$preference = self::plot_notify_preference( $wp_user_id );
+		if ( $preference === 'off' ) {
+			Mailer::skipped( self::meta( $game, $wp_user_id, $about ), Mail_Log::REASON_PREFERENCE_OFF );
+			return;
+		}
+
+		if ( $preference === 'daily' ) {
+			Notification_Queue::create( $wp_user_id, (int) ( $game->id ?? 0 ), 'visible', $entry );
+			Mailer::queued( self::meta( $game, $wp_user_id, $about ) );
+			return;
+		}
+
+		self::$pending_visible[ $wp_user_id ][] = $entry;
+	}
+
+	/**
+	 * Notifies one connected character's player only when a plot, item or location just became visible to them that
+	 * wasn't already - never when they could already see it, never for the player who made the change themselves,
+	 * never for a character with no player. Takes `$was_visible` and `$now_visible` already resolved.
+	 *
+	 * @param object $character         Decoded Character row - wp_user_id.
+	 * @param bool   $was_visible       Whether this character could already see it, checked before the change.
+	 * @param bool   $now_visible       Whether this character can see it now, checked after the change.
+	 * @param object $game
+	 * @param string $kind              `plot`, `item`, `location`, or `secret_told` - the notification's own kind.
+	 * @param string $title
+	 * @param string $link
+	 * @param int    $acting_wp_user_id The user making the change; never notified about their own action.
+	 * @return void
+	 */
+	public static function notify_if_newly_visible(
+		object $character,
+		bool $was_visible,
+		bool $now_visible,
+		object $game,
+		string $kind,
+		string $title,
+		string $link,
+		int $acting_wp_user_id
+	): void {
+		if ( $was_visible || ! $now_visible ) {
+			return;
+		}
+
+		$wp_user_id = (int) ( $character->wp_user_id ?? 0 );
+		if ( ! $wp_user_id || $wp_user_id === $acting_wp_user_id ) {
+			return;
+		}
+
+		self::notify_visible( $wp_user_id, $game, $kind, $title, $link );
+	}
+
+	/**
+	 * Sends one summary email per recipient with anything queued ("3 new things your characters can see in Kony"),
+	 * then empties the queue.
+	 *
+	 * @return void
+	 */
+	public static function flush_visible(): void {
+		foreach ( self::$pending_visible as $wp_user_id => $entries ) {
+			$user = get_userdata( (int) $wp_user_id );
+			$meta = [
+				'game_ids'   => array_column( $entries, 'game_id' ),
+				'wp_user_id' => (int) $wp_user_id,
+				'kind'       => 'visible',
+				'subject'    => self::visible_subject( $entries ),
+			];
+			if ( ! $user || ! $user->user_email ) {
+				Mailer::skipped( $meta, Mail_Log::REASON_NO_EMAIL );
+				continue;
+			}
+			Mailer::send( $user->user_email, self::visible_subject( $entries ), self::visible_body( $user, $entries ), $meta );
+		}
+
+		self::$pending_visible = [];
+	}
+
+	/**
+	 * @param array<int,array{game_name:string,kind:string,title:string,link:string}> $entries
+	 * @return string
+	 */
+	private static function visible_subject( array $entries ): string {
+		if ( count( $entries ) === 1 ) {
+			return sprintf(
+				/* translators: 1: kind label (Plot, Item, Location), 2: its title */
+				__( '[Beyond Elysium] New %1$s you can see: %2$s', 'beyond-elysium' ),
+				self::kind_label( $entries[0]['kind'] ),
+				$entries[0]['title']
+			);
+		}
+		return sprintf(
+			/* translators: 1: number of things, 2: chronicle name */
+			__( '[Beyond Elysium] %1$d new things your characters can see in %2$s', 'beyond-elysium' ),
+			count( $entries ),
+			$entries[0]['game_name']
+		);
+	}
+
+	/**
+	 * @param \WP_User                                                                     $user
+	 * @param array<int,array{game_name:string,kind:string,title:string,link:string}> $entries
+	 * @return string
+	 */
+	private static function visible_body( \WP_User $user, array $entries ): string {
+		$lines   = [];
+		$lines[] = sprintf(
+			/* translators: %s: display name */
+			__( 'Hi %s,', 'beyond-elysium' ),
+			$user->display_name
+		);
+		$lines[] = '';
+
+		foreach ( $entries as $entry ) {
+			$lines[] = sprintf(
+				'- %1$s: %2$s (%3$s)',
+				self::kind_label( $entry['kind'] ),
+				$entry['title'],
+				$entry['game_name']
+			);
+			$lines[] = '  ' . $entry['link'];
+		}
+
+		return implode( "\n", $lines );
+	}
+
+	/**
+	 * @param string $kind `plot`, `item`, `location`, or `secret_told`.
+	 * @return string
+	 */
+	private static function kind_label( string $kind ): string {
+		switch ( $kind ) {
+			case 'item':
+				return __( 'Item', 'beyond-elysium' );
+			case 'location':
+				return __( 'Location', 'beyond-elysium' );
+			case 'secret_told':
+				return __( 'Secret', 'beyond-elysium' );
+			default:
+				return __( 'Plot', 'beyond-elysium' );
+		}
+	}
+
+	/**
+	 * Sends one digest email per user with anything queued: new plot posts, and new things their characters can see,
+	 * as two separate sections.
 	 *
 	 * @return void
 	 */
@@ -278,39 +528,60 @@ class Notifications {
 			if ( empty( $rows ) ) {
 				continue;
 			}
+			$posts   = array_values( array_filter( $rows, static fn( $row ) => $row->kind === 'plot_post' ) );
+			$visible = array_values( array_filter( $rows, static fn( $row ) => $row->kind !== 'plot_post' ) );
+
 			$user = get_userdata( $wp_user_id );
+			$meta = [
+				'game_ids'   => array_map( static fn( $row ) => (int) $row->game_id, $rows ),
+				'wp_user_id' => $wp_user_id,
+				'kind'       => 'digest',
+				'subject'    => self::digest_subject( $posts, $visible ),
+			];
 			if ( $user && $user->user_email ) {
-				wp_mail( $user->user_email, self::digest_subject( $rows ), self::digest_body( $user, $rows ) );
+				Mailer::send( $user->user_email, self::digest_subject( $posts, $visible ), self::digest_body( $user, $posts, $visible ), $meta );
+			} else {
+				Mailer::skipped( $meta, Mail_Log::REASON_NO_EMAIL );
 			}
 			Notification_Queue::delete_ids( array_map( static fn( $row ) => (int) $row->id, $rows ) );
 		}
 	}
 
 	/**
-	 * @param object[] $rows Decoded Notification_Queue rows.
+	 * @param object[] $posts   Decoded Notification_Queue rows, kind `plot_post`.
+	 * @param object[] $visible Decoded Notification_Queue rows, every other kind.
 	 * @return string
 	 */
-	private static function digest_subject( array $rows ): string {
-		if ( count( $rows ) === 1 ) {
-			return sprintf(
-				/* translators: %s: plot title */
-				__( '[Beyond Elysium] New post on %s', 'beyond-elysium' ),
-				(string) ( $rows[0]->payload['plot_title'] ?? '' )
-			);
+	private static function digest_subject( array $posts, array $visible ): string {
+		$total = count( $posts ) + count( $visible );
+		if ( $total === 1 ) {
+			return ! empty( $posts )
+				? sprintf(
+					/* translators: %s: plot title */
+					__( '[Beyond Elysium] New post on %s', 'beyond-elysium' ),
+					(string) ( $posts[0]->payload['plot_title'] ?? '' )
+				)
+				: sprintf(
+					/* translators: 1: kind label, 2: title */
+					__( '[Beyond Elysium] New %1$s you can see: %2$s', 'beyond-elysium' ),
+					self::kind_label( (string) ( $visible[0]->payload['kind'] ?? '' ) ),
+					(string) ( $visible[0]->payload['title'] ?? '' )
+				);
 		}
 		return sprintf(
-			/* translators: %d: number of plots with new posts */
-			__( '[Beyond Elysium] %d plots with new posts', 'beyond-elysium' ),
-			count( $rows )
+			/* translators: %d: total number of posts and new things */
+			__( '[Beyond Elysium] %d new posts and things your characters can see', 'beyond-elysium' ),
+			$total
 		);
 	}
 
 	/**
 	 * @param \WP_User $user
-	 * @param object[] $rows Decoded Notification_Queue rows.
+	 * @param object[] $posts   Decoded Notification_Queue rows, kind `plot_post`.
+	 * @param object[] $visible Decoded Notification_Queue rows, every other kind.
 	 * @return string
 	 */
-	private static function digest_body( \WP_User $user, array $rows ): string {
+	private static function digest_body( \WP_User $user, array $posts, array $visible ): string {
 		$lines   = [];
 		$lines[] = sprintf(
 			/* translators: %s: display name */
@@ -319,16 +590,36 @@ class Notifications {
 		);
 		$lines[] = '';
 
-		foreach ( $rows as $row ) {
-			$payload = $row->payload;
-			$lines[] = sprintf(
-				'- %1$s (%2$s): %3$s',
-				(string) ( $payload['plot_title'] ?? '' ),
-				(string) ( $payload['game_name'] ?? '' ),
-				(string) ( $payload['posted_by'] ?? '' )
-			);
-			if ( ! empty( $payload['link'] ) ) {
-				$lines[] = '  ' . $payload['link'];
+		if ( ! empty( $posts ) ) {
+			$lines[] = __( 'New posts:', 'beyond-elysium' );
+			foreach ( $posts as $row ) {
+				$payload = $row->payload;
+				$lines[] = sprintf(
+					'- %1$s (%2$s): %3$s',
+					(string) ( $payload['plot_title'] ?? '' ),
+					(string) ( $payload['game_name'] ?? '' ),
+					(string) ( $payload['posted_by'] ?? '' )
+				);
+				if ( ! empty( $payload['link'] ) ) {
+					$lines[] = '  ' . $payload['link'];
+				}
+			}
+			$lines[] = '';
+		}
+
+		if ( ! empty( $visible ) ) {
+			$lines[] = __( 'New things your characters can see:', 'beyond-elysium' );
+			foreach ( $visible as $row ) {
+				$payload = $row->payload;
+				$lines[] = sprintf(
+					'- %1$s: %2$s (%3$s)',
+					self::kind_label( (string) ( $payload['kind'] ?? '' ) ),
+					(string) ( $payload['title'] ?? '' ),
+					(string) ( $payload['game_name'] ?? '' )
+				);
+				if ( ! empty( $payload['link'] ) ) {
+					$lines[] = '  ' . $payload['link'];
+				}
 			}
 		}
 
@@ -347,8 +638,44 @@ class Notifications {
 	/**
 	 * The front-end "My Plots & Rumors" tab URL, one plot's own thread.
 	 */
-	public static function player_plot_url( int $plot_id ): string {
-		return self::player_plots_url() . '&plot_id=' . $plot_id;
+	public static function player_plot_url( int $plot_id, string $game_slug = '' ): string {
+		return self::player_page_url( 'plots', $game_slug ) . '&plot_id=' . $plot_id;
+	}
+
+	/**
+	 * The front-end "Sheet" tab URL for one connected character - where an item or location notification points, since
+	 * neither has a player-facing page of its own.
+	 */
+	public static function player_item_url( int $character_id, string $game_slug ): string {
+		return self::player_page_url( 'sheet', $game_slug ) . '&character_id=' . $character_id;
+	}
+
+	/**
+	 * The front-end "Sheet" tab URL for one connected character - where a location notification points, same as an
+	 * item's.
+	 */
+	public static function player_location_url( int $character_id, string $game_slug ): string {
+		return self::player_item_url( $character_id, $game_slug );
+	}
+
+	/**
+	 * The front-end "What I Know" tab URL, where a `secret_told` notification points.
+	 */
+	public static function player_what_i_know_url( string $game_slug ): string {
+		return self::player_page_url( 'what-i-know', $game_slug );
+	}
+
+	/**
+	 * The front-end "My Plots & Rumors"/"Sheet"/"What I Know" page, one tab, optionally scoped to a chronicle.
+	 */
+	private static function player_page_url( string $tab, string $game_slug = '' ): string {
+		$page = get_page_by_path( \BeyondElysium\Core\Page_Provisioner::PLAYER_SLUG, OBJECT, 'page' );
+		$base = $page ? get_permalink( $page ) : home_url( '/' . \BeyondElysium\Core\Page_Provisioner::PLAYER_SLUG . '/' );
+		$url  = $base . ( strpos( (string) $base, '?' ) === false ? '?' : '&' ) . 'tab=' . $tab;
+		if ( $game_slug !== '' ) {
+			$url .= '&game_slug=' . rawurlencode( $game_slug );
+		}
+		return $url;
 	}
 
 	/**
@@ -458,11 +785,18 @@ class Notifications {
 	public static function flush(): void {
 		foreach ( self::$pending as $wp_user_id => $items ) {
 			$user = get_userdata( (int) $wp_user_id );
+			$meta = [
+				'game_ids'   => array_column( $items, 'game_id' ),
+				'wp_user_id' => (int) $wp_user_id,
+				'kind'       => 'change_outcome',
+				'subject'    => self::subject( $items ),
+			];
 			if ( ! $user || ! $user->user_email ) {
+				Mailer::skipped( $meta, Mail_Log::REASON_NO_EMAIL );
 				continue;
 			}
 
-			wp_mail( $user->user_email, self::subject( $items ), self::body( $user, $items ) );
+			Mailer::send( $user->user_email, self::subject( $items ), self::body( $user, $items ), $meta );
 		}
 
 		self::$pending = [];
@@ -472,7 +806,7 @@ class Notifications {
 	 * Builds the email subject line: names the single change's approve/ reject status when there is exactly one queued
 	 * item, or states a count of changes reviewed when there is more than one.
 	 *
-	 * @param array $items
+	 * @param array<int,array<string,mixed>> $items
 	 * @return string
 	 */
 	private static function subject( array $items ): string {
@@ -494,8 +828,8 @@ class Notifications {
 	 * Builds the plain-text email body: a greeting line followed by one line per queued change, naming the character,
 	 * game, what changed, and its approved/rejected status.
 	 *
-	 * @param \WP_User $user
-	 * @param array    $items
+	 * @param \WP_User                       $user
+	 * @param array<int,array<string,mixed>> $items
 	 * @return string
 	 */
 	private static function body( \WP_User $user, array $items ): string {
@@ -529,7 +863,8 @@ class Notifications {
 	 * @return void
 	 */
 	public static function transfer_offered( object $game, object $transfer ): void {
-		foreach ( self::storytellers( $game ) as $user ) {
+		$about = [ 'kind' => 'transfer_offered', 'entity_type' => 'transfer', 'entity_id' => (int) ( $transfer->id ?? 0 ) ];
+		foreach ( self::storytellers( $game, $about ) as $user ) {
 			$character = (string) ( $transfer->character_name ?? '' ) !== '' ? (string) $transfer->character_name : __( 'A character', 'beyond-elysium' );
 			$lines     = [
 				sprintf(
@@ -549,27 +884,27 @@ class Notifications {
 				admin_url( 'admin.php?page=beyond-elysium-import' ),
 			];
 
-			wp_mail(
-				$user->user_email,
-				sprintf(
-					/* translators: 1: character name, 2: receiving chronicle */
-					__( '[Beyond Elysium] Transfer waiting for review: %1$s to %2$s', 'beyond-elysium' ),
-					$character,
-					(string) $game->name
-				),
-				implode( "\n", $lines )
+			$subject = sprintf(
+				/* translators: 1: character name, 2: receiving chronicle */
+				__( '[Beyond Elysium] Transfer waiting for review: %1$s to %2$s', 'beyond-elysium' ),
+				$character,
+				(string) $game->name
 			);
+			Mailer::send( $user->user_email, $subject, implode( "\n", $lines ), self::meta( $game, (int) $user->ID, $about + [ 'subject' => $subject ] ) );
 		}
 	}
 
 	/**
+	 * A newcomer asked to join by creating a character directly, with no open join request.
+	 *
 	 * @param object   $game      The chronicle's row.
 	 * @param object   $character The pending character.
 	 * @param \WP_User $applicant
 	 * @return void
 	 */
-	public static function join_requested( object $game, object $character, \WP_User $applicant ): void {
-		foreach ( self::storytellers( $game ) as $user ) {
+	public static function join_requested_legacy( object $game, object $character, \WP_User $applicant ): void {
+		$about = [ 'kind' => 'join_requested', 'entity_type' => 'character', 'entity_id' => (int) ( $character->id ?? 0 ) ];
+		foreach ( self::storytellers( $game, $about ) as $user ) {
 			$lines = [
 				sprintf(
 					/* translators: %s: display name */
@@ -587,17 +922,163 @@ class Notifications {
 				admin_url( 'admin.php?page=beyond-elysium-characters' ),
 			];
 
-			wp_mail(
-				$user->user_email,
-				sprintf(
-					/* translators: 1: chronicle, 2: character name */
-					__( '[Beyond Elysium] Request to join %1$s: %2$s', 'beyond-elysium' ),
-					(string) $game->name,
-					(string) $character->name
-				),
-				implode( "\n", $lines )
+			$subject = sprintf(
+				/* translators: 1: chronicle, 2: character name */
+				__( '[Beyond Elysium] Request to join %1$s: %2$s', 'beyond-elysium' ),
+				(string) $game->name,
+				(string) $character->name
 			);
+			Mailer::send( $user->user_email, $subject, implode( "\n", $lines ), self::meta( $game, (int) $user->ID, $about + [ 'subject' => $subject ] ) );
 		}
+	}
+
+	/**
+	 * A newcomer opened a join request, carrying a message and, optionally, a character or file still to come.
+	 *
+	 * @param object   $game    The chronicle's row.
+	 * @param \WP_User $applicant
+	 * @param string   $message
+	 * @return void
+	 */
+	public static function join_requested( object $game, \WP_User $applicant, string $message ): void {
+		$about = [ 'kind' => 'join_requested' ];
+		foreach ( self::storytellers( $game, $about ) as $user ) {
+			$lines = [
+				sprintf(
+					/* translators: %s: display name */
+					__( 'Hi %s,', 'beyond-elysium' ),
+					$user->display_name
+				),
+				'',
+				sprintf(
+					/* translators: 1: applicant's display name, 2: chronicle */
+					__( '%1$s asked to join %2$s:', 'beyond-elysium' ),
+					$applicant->display_name,
+					(string) $game->name
+				),
+				'',
+				$message,
+				'',
+				admin_url( 'admin.php?page=beyond-elysium-chronicle-setup-hub&tab=players' ),
+			];
+
+			$subject = sprintf(
+				/* translators: %s: chronicle */
+				__( '[Beyond Elysium] Request to join %s', 'beyond-elysium' ),
+				(string) $game->name
+			);
+			Mailer::send( $user->user_email, $subject, implode( "\n", $lines ), self::meta( $game, (int) $user->ID, $about + [ 'subject' => $subject ] ) );
+		}
+	}
+
+	/**
+	 * Emails the applicant that their join request was approved or refused.
+	 *
+	 * @param object      $game
+	 * @param object      $join_request Decoded `be_join_requests` row - `wp_user_id`.
+	 * @param bool        $approved
+	 * @param string|null $note Only ever shown on a refusal.
+	 * @return void
+	 */
+	public static function join_answered( object $game, object $join_request, bool $approved, ?string $note ): void {
+		$wp_user_id = (int) $join_request->wp_user_id;
+		$about      = [ 'kind' => 'join_answered', 'entity_type' => 'join_request', 'entity_id' => (int) ( $join_request->id ?? 0 ) ];
+		if ( ! self::allowed( $wp_user_id, $game, $about ) ) {
+			return;
+		}
+		$applicant = get_userdata( $wp_user_id );
+		if ( ! $applicant || ! $applicant->user_email ) {
+			Mailer::skipped( self::meta( $game, $wp_user_id, $about ), Mail_Log::REASON_NO_EMAIL );
+			return;
+		}
+
+		$lines = [
+			sprintf(
+				/* translators: %s: display name */
+				__( 'Hi %s,', 'beyond-elysium' ),
+				$applicant->display_name
+			),
+			'',
+			$approved
+				? sprintf(
+					/* translators: %s: chronicle */
+					__( 'Your request to join %s was approved - welcome aboard.', 'beyond-elysium' ),
+					(string) $game->name
+				)
+				: sprintf(
+					/* translators: %s: chronicle */
+					__( 'Your request to join %s was not approved this time.', 'beyond-elysium' ),
+					(string) $game->name
+				),
+		];
+		if ( ! $approved && $note ) {
+			$lines[] = '';
+			$lines[] = $note;
+		}
+
+		$subject = $approved
+			/* translators: %s: chronicle */
+			? sprintf( __( '[Beyond Elysium] Your request to join %s was approved', 'beyond-elysium' ), (string) $game->name )
+			/* translators: %s: chronicle */
+			: sprintf( __( '[Beyond Elysium] Your request to join %s was not approved', 'beyond-elysium' ), (string) $game->name );
+
+		Mailer::send( $applicant->user_email, $subject, implode( "\n", $lines ), self::meta( $game, $wp_user_id, $about + [ 'subject' => $subject ] ) );
+	}
+
+	/**
+	 * Emails the chronicle's HSTs, ASTs and narrators that a player told another player's character a secret on an
+	 * Immediate-pass chronicle - the recipient can already read it, but passing it on waits for one of them to approve
+	 * it.
+	 *
+	 * @param object $game
+	 * @param object $secret           Decoded Secret row - title.
+	 * @param string $teller_name
+	 * @param string $recipient_name
+	 * @return void
+	 */
+	public static function secret_told_staff( object $game, object $secret, string $teller_name, string $recipient_name ): void {
+		$link  = self::staff_page_url( 'approval-queue', (string) ( $game->slug ?? '' ) );
+		$about = [ 'kind' => 'secret_told', 'entity_type' => 'secret', 'entity_id' => (int) ( $secret->id ?? 0 ) ];
+
+		foreach ( self::staff_including_narrators( $game, $about ) as $user ) {
+			$lines = [
+				sprintf(
+					/* translators: %s: display name */
+					__( 'Hi %s,', 'beyond-elysium' ),
+					$user->display_name
+				),
+				'',
+				sprintf(
+					/* translators: 1: teller's character, 2: recipient's character, 3: secret title */
+					__( '%1$s told %2$s a secret: %3$s. It waits for a Storyteller to approve before they can pass it on.', 'beyond-elysium' ),
+					$teller_name,
+					$recipient_name,
+					(string) ( $secret->title ?? '' )
+				),
+				$link,
+			];
+
+			$subject = sprintf(
+				/* translators: 1: chronicle, 2: secret title */
+				__( '[Beyond Elysium] Secret told in %1$s: %2$s', 'beyond-elysium' ),
+				(string) ( $game->name ?? '' ),
+				(string) ( $secret->title ?? '' )
+			);
+			Mailer::send( $user->user_email, $subject, implode( "\n", $lines ), self::meta( $game, (int) $user->ID, $about + [ 'subject' => $subject ] ) );
+		}
+	}
+
+	/**
+	 * The front-end Storyteller Toolkit, one tab, optionally scoped to a chronicle.
+	 */
+	private static function staff_page_url( string $tab, string $game_slug = '' ): string {
+		$page = get_page_by_path( \BeyondElysium\Core\Page_Provisioner::STORYTELLER_SLUG, OBJECT, 'page' );
+		$base = $page ? get_permalink( $page ) : home_url( '/' . \BeyondElysium\Core\Page_Provisioner::STORYTELLER_SLUG . '/' );
+		$url  = $base . ( strpos( (string) $base, '?' ) === false ? '?' : '&' ) . 'tab=' . $tab;
+		if ( $game_slug !== '' ) {
+			$url .= '&game_slug=' . rawurlencode( $game_slug );
+		}
+		return $url;
 	}
 
 	/**
@@ -611,8 +1092,9 @@ class Notifications {
 	public static function submission_received( object $game, object $submission, \WP_User $sender ): void {
 		$character = (string) ( $submission->character_name ?? '' ) !== '' ? (string) $submission->character_name : __( 'A character', 'beyond-elysium' );
 		$arriving  = self::arrival_phrase( $submission );
+		$about     = [ 'kind' => 'submission_received', 'entity_type' => 'submission', 'entity_id' => (int) ( $submission->id ?? 0 ) ];
 
-		foreach ( self::storytellers( $game ) as $user ) {
+		foreach ( self::storytellers( $game, $about ) as $user ) {
 			$lines = [
 				sprintf(
 					/* translators: %s: display name */
@@ -631,16 +1113,13 @@ class Notifications {
 				admin_url( 'admin.php?page=beyond-elysium-import' ),
 			];
 
-			wp_mail(
-				$user->user_email,
-				sprintf(
-					/* translators: 1: chronicle, 2: character name */
-					__( '[Beyond Elysium] Sheet to review for %1$s: %2$s', 'beyond-elysium' ),
-					(string) $game->name,
-					$character
-				),
-				implode( "\n", $lines )
+			$subject = sprintf(
+				/* translators: 1: chronicle, 2: character name */
+				__( '[Beyond Elysium] Sheet to review for %1$s: %2$s', 'beyond-elysium' ),
+				(string) $game->name,
+				$character
 			);
+			Mailer::send( $user->user_email, $subject, implode( "\n", $lines ), self::meta( $game, (int) $user->ID, $about + [ 'subject' => $subject ] ) );
 		}
 	}
 
@@ -653,11 +1132,13 @@ class Notifications {
 	 */
 	public static function submission_answered( object $game, object $submission ): void {
 		$sender_id = (int) $submission->submitted_by;
-		if ( ! self::should_notify( $sender_id, $game ) ) {
+		$about     = [ 'kind' => 'submission_answered', 'entity_type' => 'submission', 'entity_id' => (int) ( $submission->id ?? 0 ) ];
+		if ( ! self::allowed( $sender_id, $game, $about ) ) {
 			return;
 		}
 		$sender = get_userdata( $sender_id );
 		if ( ! $sender || ! $sender->user_email ) {
+			Mailer::skipped( self::meta( $game, $sender_id, $about ), Mail_Log::REASON_NO_EMAIL );
 			return;
 		}
 
@@ -698,7 +1179,7 @@ class Notifications {
 			}
 		}
 
-		wp_mail( $sender->user_email, $subject, $body );
+		Mailer::send( $sender->user_email, $subject, $body, self::meta( $game, $sender_id, $about + [ 'subject' => $subject ] ) );
 	}
 
 	/**
@@ -720,20 +1201,21 @@ class Notifications {
 
 	/**
 	 * The chronicle's HSTs and ASTs who should get a staff notification: each once, with an email address, not opted out,
-	 * on a chronicle with notifications on.
+	 * on a chronicle with notifications on. Each one left out is recorded in the mail log with the reason.
 	 *
-	 * @param object $game
+	 * @param object              $game
+	 * @param array<string,mixed> $about What the email is: kind, and optionally entity_type and entity_id.
 	 * @return array<int,\WP_User>
 	 */
-	private static function storytellers( object $game ): array {
+	private static function storytellers( object $game, array $about ): array {
 		$users = [];
 		foreach ( Game_Member::for_game( (int) $game->id ) as $member ) {
 			$wp_user_id = (int) $member->wp_user_id;
-			if ( ! in_array( $member->role, [ 'hst', 'ast' ], true ) || isset( $users[ $wp_user_id ] ) || ! self::should_notify( $wp_user_id, $game ) ) {
+			if ( ! in_array( $member->role, [ 'hst', 'ast' ], true ) || isset( $users[ $wp_user_id ] ) ) {
 				continue;
 			}
-			$user = get_userdata( $wp_user_id );
-			if ( $user && $user->user_email ) {
+			$user = self::recipient( $wp_user_id, $game, $about );
+			if ( $user ) {
 				$users[ $wp_user_id ] = $user;
 			}
 		}
@@ -741,21 +1223,44 @@ class Notifications {
 	}
 
 	/**
-	 * The fallback recipients for an unassigned player post: every hst, ast and narrator member, each once, with an email
-	 * address, not opted out, on a chronicle with notifications on.
+	 * One user as the recipient of an email: their account, or null when they should get none. An email that won't go is
+	 * recorded in the mail log with why.
 	 *
-	 * @param object $game
+	 * @param int                 $wp_user_id
+	 * @param object|null         $game
+	 * @param array<string,mixed> $about
+	 * @return \WP_User|null
+	 */
+	private static function recipient( int $wp_user_id, $game, array $about ): ?\WP_User {
+		if ( ! self::allowed( $wp_user_id, $game, $about ) ) {
+			return null;
+		}
+		$user = get_userdata( $wp_user_id );
+		if ( ! $user || ! $user->user_email ) {
+			Mailer::skipped( self::meta( $game, $wp_user_id, $about ), Mail_Log::REASON_NO_EMAIL );
+			return null;
+		}
+		return $user;
+	}
+
+	/**
+	 * The fallback recipients for an unassigned player post: every hst, ast and narrator member, each once, with an email
+	 * address, not opted out, on a chronicle with notifications on. Each one left out is recorded in the mail log with the
+	 * reason when `$about` says what the email is.
+	 *
+	 * @param object              $game
+	 * @param array<string,mixed> $about kind, and optionally entity_type and entity_id.
 	 * @return array<int,\WP_User>
 	 */
-	public static function staff_including_narrators( object $game ): array {
+	public static function staff_including_narrators( object $game, array $about = [] ): array {
 		$users = [];
 		foreach ( Game_Member::staff_for_game( (int) $game->id ) as $member ) {
 			$wp_user_id = (int) $member->wp_user_id;
-			if ( isset( $users[ $wp_user_id ] ) || ! self::should_notify( $wp_user_id, $game ) ) {
+			if ( isset( $users[ $wp_user_id ] ) ) {
 				continue;
 			}
-			$user = get_userdata( $wp_user_id );
-			if ( $user && $user->user_email ) {
+			$user = self::recipient( $wp_user_id, $game, $about );
+			if ( $user ) {
 				$users[ $wp_user_id ] = $user;
 			}
 		}

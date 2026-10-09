@@ -14,9 +14,9 @@ class Snapshot {
 	/**
 	 * Return the snapshots belonging to one character.
 	 *
-	 * @param int   $character_id
-	 * @param array $args Filters: per_page, offset, order.
-	 * @return array
+	 * @param int                 $character_id
+	 * @param array<string,mixed> $args Filters: per_page, offset, order.
+	 * @return array<int,object>
 	 */
 	public static function for_character( int $character_id, array $args = [] ): array {
 		global $wpdb;
@@ -32,7 +32,9 @@ class Snapshot {
 		}
 
 		$rows = $wpdb->get_results( $sql ) ?: [];
-		return array_map( [ self::class, 'decode_snapshot_data' ], $rows );
+		/** @var array<int,object> $decoded */
+		$decoded = array_map( [ self::class, 'decode_snapshot_data' ], $rows );
+		return $decoded;
 	}
 
 	/**
@@ -110,8 +112,9 @@ class Snapshot {
 	/**
 	 * Decode a row's snapshot_data JSON field into an array in place.
 	 *
-	 * @param object|null $row Row from the database, or null when the query found nothing.
-	 * @return object|null The same row, or null when null was passed in.
+	 * @template T of object|null
+	 * @param T $row Row from the database, or null when the query found nothing.
+	 * @return T The same row, or null when null was passed in.
 	 */
 	private static function decode_snapshot_data( $row ) {
 		if ( $row && isset( $row->snapshot_data ) && is_string( $row->snapshot_data ) ) {

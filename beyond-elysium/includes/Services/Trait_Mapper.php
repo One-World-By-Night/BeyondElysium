@@ -310,7 +310,7 @@ class Trait_Mapper {
 	 * @param string      $chosen_name
 	 * @param object|null $block  Set only for a tiered_power resolution.
 	 * @param object[]    $blocks Set only for a trait_list resolution.
-	 * @return array
+	 * @return array<string,mixed>
 	 */
 	public static function resolve_chosen( string $raw_name, string $raw_total, string $chosen_name, $block, array $blocks ): array {
 		if ( $block !== null ) {

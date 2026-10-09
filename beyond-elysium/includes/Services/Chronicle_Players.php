@@ -3,6 +3,7 @@
 namespace BeyondElysium\Services;
 
 use BeyondElysium\Core\Authorization;
+use BeyondElysium\Core\Page_Provisioner;
 use BeyondElysium\Models\Game_Member;
 
 defined( 'ABSPATH' ) || exit;
@@ -37,10 +38,7 @@ class Chronicle_Players {
 			return [ 'status' => 'staff', 'role' => (string) $existing->role ];
 		}
 
-		$site_added = false;
-		if ( is_multisite() && ! is_user_member_of_blog( $wp_user_id, get_current_blog_id() ) ) {
-			$site_added = add_user_to_blog( get_current_blog_id(), $wp_user_id, 'subscriber' ) === true;
-		}
+		$site_added = self::ensure_site_membership( $wp_user_id );
 
 		Game_Member::ensure_player( (int) $game->id, $wp_user_id );
 
@@ -78,6 +76,35 @@ class Chronicle_Players {
 			'status' => $existing ? 'removed' : 'not_member',
 			'asc'    => self::revoke( $game, $user ),
 		];
+	}
+
+	/**
+	 * Adds an account to this site as a subscriber, on a network, when it holds no role here yet - the site-only half
+	 * of `add()`, usable on its own before a chronicle membership is granted.
+	 *
+	 * @param int $wp_user_id
+	 * @return bool Whether the account was newly added to the site.
+	 */
+	public static function ensure_site_membership( int $wp_user_id ): bool {
+		if ( is_multisite() && ! is_user_member_of_blog( $wp_user_id, get_current_blog_id() ) ) {
+			return add_user_to_blog( get_current_blog_id(), $wp_user_id, 'subscriber' ) === true;
+		}
+		return false;
+	}
+
+	/**
+	 * The public link that opens this chronicle's Join panel, carrying `auth=sso` only when the chronicle is linked
+	 * to an OWbN player role.
+	 *
+	 * @param object $game
+	 * @return string
+	 */
+	public static function join_link( object $game ): string {
+		$args = [ 'join_slug' => (string) $game->slug, 'join' => '1' ];
+		if ( Authorization::asc_role_path( $game, 'player' ) !== null ) {
+			$args['auth'] = 'sso';
+		}
+		return add_query_arg( $args, home_url( '/' . Page_Provisioner::PLAYER_SLUG . '/' ) );
 	}
 
 	/**

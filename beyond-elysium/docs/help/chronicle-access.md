@@ -19,7 +19,7 @@ wp-admin sidebar → Beyond Elysium → Chronicle Setup → Chronicle Access tab
   - **Export all data** - downloads every chronicle, character, and catalog as one JSON file.
 - **Chronicle** - a dropdown of every chronicle on the install. Defaults to the first real chronicle rather than the seeded demo, unless a link named one directly.
 - **"[Chronicle]'s accessSchema path"** - the stored path shown in a code style, or "(not set)", with an **Edit** button that reveals a text box (placeholder "Chronicle/KONY") and **Save**/**Cancel**.
-- **"[Chronicle]'s notifications"** - a checkbox, "Email a player when their submitted change is approved or rejected."
+- **"[Chronicle]'s notifications"** - a checkbox, "Email a player when their submitted change is approved or rejected." Every email this chronicle skips because the box is off is listed in its [Email Log](email-log.md) as "Email is switched off for this chronicle".
 - **Members** - a table of Name, Email, Role, and Actions for this chronicle:
   - **Role** is a dropdown per member offering **HST**, **AST**, **Narrator**, **Harpy (boons)**,
     or **Player** - what each can do is under Things to know below. Changing it saves

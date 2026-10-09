@@ -23,9 +23,9 @@ class Spotlight {
 	const DEFAULT_SPOTLIGHT_DAYS = 42;
 
 	/**
-	 * @param int    $game_id
-	 * @param string $game_slug
-	 * @param array  $settings The game's own `settings` array (for `sessions.spotlight_days`).
+	 * @param int                 $game_id
+	 * @param string              $game_slug
+	 * @param array<string,mixed> $settings The game's own `settings` array (for `sessions.spotlight_days`).
 	 * @return array<int,array<string,mixed>>
 	 */
 	public static function for_game( int $game_id, string $game_slug, array $settings ): array {
@@ -64,9 +64,9 @@ class Spotlight {
 	/**
 	 * How many characters on the flagged list would show right now.
 	 *
-	 * @param int    $game_id
-	 * @param string $game_slug
-	 * @param array  $settings
+	 * @param int                 $game_id
+	 * @param string              $game_slug
+	 * @param array<string,mixed> $settings
 	 * @return int
 	 */
 	public static function flagged_count( int $game_id, string $game_slug, array $settings ): int {

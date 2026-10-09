@@ -2,8 +2,10 @@
 
 namespace BeyondElysium\Models;
 
+use BeyondElysium\Core\Notifications;
 use BeyondElysium\Database\Manager;
 use BeyondElysium\Database\Transaction;
+use BeyondElysium\Services\Chronicle_Players;
 use BeyondElysium\Utils\Uuid;
 
 defined( 'ABSPATH' ) || exit;
@@ -63,9 +65,9 @@ class Character {
 	/**
 	 * Return characters belonging to one game's chronicle.
 	 *
-	 * @param string $game_slug
-	 * @param array  $args Filters: status, stack_slug, is_npc, wp_user_id, search, per_page, offset, orderby, order.
-	 * @return array
+	 * @param string              $game_slug
+	 * @param array<string,mixed> $args Filters: status, stack_slug, is_npc, wp_user_id, search, per_page, offset, orderby, order.
+	 * @return array<int,object>
 	 */
 	public static function all_for_game( string $game_slug, array $args = [] ): array {
 		global $wpdb;
@@ -87,14 +89,16 @@ class Character {
 
 		$sql  = $wpdb->prepare( $sql, $values );
 		$rows = $wpdb->get_results( $sql ) ?: [];
-		return array_map( [ self::class, 'decode_sheet' ], $rows );
+		/** @var array<int,object> $decoded */
+		$decoded = array_map( [ self::class, 'decode_sheet' ], $rows );
+		return $decoded;
 	}
 
 	/**
 	 * Count the characters belonging to one game's chronicle that match the given filters.
 	 *
-	 * @param string $game_slug
-	 * @param array  $args Same filters as all_for_game() (no pagination).
+	 * @param string              $game_slug
+	 * @param array<string,mixed> $args Same filters as all_for_game() (no pagination).
 	 * @return int
 	 */
 	public static function count_for_game( string $game_slug, array $args = [] ): int {
@@ -110,8 +114,8 @@ class Character {
 	/**
 	 * The shared WHERE-clause builder behind `all_for_game()` and `count_for_game()`.
 	 *
-	 * @param string $game_slug
-	 * @param array  $args
+	 * @param string              $game_slug
+	 * @param array<string,mixed> $args
 	 * @return array{0: string[], 1: array<int,mixed>} `[$where_clauses, $bind_values]`.
 	 */
 	private static function build_where( string $game_slug, array $args ): array {
@@ -206,7 +210,7 @@ class Character {
 	/**
 	 * Insert a new character row.
 	 *
-	 * @param array $data Character data.
+	 * @param array<string,mixed> $data Character data.
 	 * @return int Insert ID, or 0 on failure.
 	 */
 	public static function create( array $data ): int {
@@ -361,15 +365,37 @@ class Character {
 	private static function ensure_player_membership( string $owner_slug, int $wp_user_id ): void {
 		$game = Game::find_by_slug( $owner_slug );
 		if ( $game ) {
-			Game_Member::ensure_player( (int) $game->id, $wp_user_id );
+			Chronicle_Players::add( $game, $wp_user_id );
 		}
+	}
+
+	/**
+	 * Closes this account's waiting join request on this chronicle, tied to the character just activated, and emails
+	 * it was approved.
+	 *
+	 * @param string $owner_slug
+	 * @param int    $wp_user_id
+	 * @param int    $character_id
+	 * @return void
+	 */
+	private static function close_join_request( string $owner_slug, int $wp_user_id, int $character_id ): void {
+		$game = Game::find_by_slug( $owner_slug );
+		if ( ! $game ) {
+			return;
+		}
+		$waiting = Join_Request::find_waiting( (int) $game->id, $wp_user_id );
+		if ( ! $waiting || (int) ( $waiting->character_id ?? 0 ) !== $character_id ) {
+			return;
+		}
+		Join_Request::approve( (int) $waiting->id, get_current_user_id() );
+		Notifications::join_answered( $game, $waiting, true, null );
 	}
 
 	/**
 	 * Update a character's header fields.
 	 *
-	 * @param int   $id
-	 * @param array $data Fields to update.
+	 * @param int                 $id
+	 * @param array<string,mixed> $data Fields to update.
 	 * @return bool
 	 */
 	public static function update_header( int $id, array $data ): bool {
@@ -379,6 +405,7 @@ class Character {
 			'narrator', 'player_name', 'start_date', 'is_npc', 'image_id', 'wp_user_id',
 			'pending_player_email', 'assigned_to', 'npc_detail',
 			'public_name', 'public_description', 'public_image_id', 'profile_audience', 'profile_audience_rules',
+			'profile_show_player',
 		];
 
 		$update = [];
@@ -421,6 +448,7 @@ class Character {
 			if ( $plot && $plot->title === self::plot_title( (string) $old_name, $id ) ) {
 				Plot::update( (int) $plot_id, [ 'title' => self::plot_title( (string) $update['name'], $id ) ] );
 			}
+			do_action( 'be_character_changed', $id, 'name' );
 		}
 
 		if ( $result !== false && ! empty( $update['wp_user_id'] ) ) {
@@ -444,6 +472,7 @@ class Character {
 			);
 			if ( ! empty( $owner['wp_user_id'] ) ) {
 				self::ensure_player_membership( (string) $owner['owner_slug'], (int) $owner['wp_user_id'] );
+				self::close_join_request( (string) $owner['owner_slug'], (int) $owner['wp_user_id'], $id );
 			}
 		}
 
@@ -453,8 +482,8 @@ class Character {
 	/**
 	 * Replace a character's sheet_data column with a new JSON-encoded payload.
 	 *
-	 * @param int   $id
-	 * @param array $sheet_data
+	 * @param int                 $id
+	 * @param array<string,mixed> $sheet_data
 	 * @return bool
 	 */
 	public static function update_sheet_data( int $id, array $sheet_data ): bool {
@@ -463,6 +492,9 @@ class Character {
 			'updated_at' => current_time( 'mysql' ),
 		];
 		$result = Manager::update( 'characters', $update, [ 'id' => $id ] );
+		if ( $result !== false ) {
+			do_action( 'be_character_changed', $id, 'sheet_data' );
+		}
 		return $result !== false;
 	}
 
@@ -533,6 +565,9 @@ class Character {
 				$id
 			)
 		);
+		if ( $result !== false ) {
+			do_action( 'be_character_changed', $id, 'xp' );
+		}
 		return $result !== false;
 	}
 
@@ -552,6 +587,7 @@ class Character {
 		}
 
 		Connection::delete_for_entity( 'character', $id );
+		Attachment::delete_for_entity( 'character', $id );
 		Change::delete_for_character( $id );
 		Snapshot::delete_for_character( $id );
 		Sheet_Style::delete_for_character( $id );
@@ -587,26 +623,24 @@ class Character {
 	}
 
 	/**
-	 * Closes the transfers still in motion for a character being deleted.
+	 * Closes every visit still open for a character being deleted, both directions - one can be open per host.
 	 *
 	 * @param object $character
 	 */
 	private static function close_transfers( object $character ): void {
-		$outbound = Transfer::find_open( (string) $character->uuid, 'outbound' );
-		if ( $outbound !== null && $outbound->home_slug === $character->owner_slug ) {
-			if ( $outbound->state === 'pending' ) {
-				Transfer::transition( (int) $outbound->id, 'declined' );
-				if ( ! empty( $outbound->attestation_id ) ) {
-					Attestation::revoke( (int) $outbound->attestation_id );
+		foreach ( Transfer::open_visits_for_character( (string) $character->uuid ) as $visit ) {
+			if ( $visit->direction === 'outbound' && $visit->home_slug === $character->owner_slug ) {
+				if ( $visit->state === 'offered' ) {
+					Transfer::transition( (int) $visit->id, 'declined' );
+					if ( ! empty( $visit->attestation_id ) ) {
+						Attestation::revoke( (int) $visit->attestation_id );
+					}
+				} elseif ( $visit->state === 'visiting' ) {
+					Transfer::transition( (int) $visit->id, 'released' );
 				}
-			} elseif ( $outbound->state === 'abroad' ) {
-				Transfer::transition( (int) $outbound->id, 'released' );
+			} elseif ( $visit->direction === 'inbound' && (int) $visit->character_id === (int) $character->id && $visit->state === 'visiting' ) {
+				Transfer::transition( (int) $visit->id, 'ended' );
 			}
-		}
-
-		$inbound = Transfer::find_open( (string) $character->uuid, 'inbound' );
-		if ( $inbound !== null && (int) $inbound->character_id === (int) $character->id && $inbound->state === 'visiting' ) {
-			Transfer::transition( (int) $inbound->id, 'sent_home' );
 		}
 	}
 
@@ -633,7 +667,7 @@ class Character {
 	 *
 	 * @param int    $wp_user_id
 	 * @param string $game_slug
-	 * @return array
+	 * @return array<int,object>
 	 */
 	public static function find_for_user( int $wp_user_id, string $game_slug ): array {
 		global $wpdb;
@@ -644,14 +678,17 @@ class Character {
 			$game_slug
 		);
 		$rows  = $wpdb->get_results( $sql ) ?: [];
-		return array_map( [ self::class, 'decode_sheet' ], $rows );
+		/** @var array<int,object> $decoded */
+		$decoded = array_map( [ self::class, 'decode_sheet' ], $rows );
+		return $decoded;
 	}
 
 	/**
 	 * Decode a row's sheet_data JSON field into an array in place, and cast is_npc to a real boolean.
 	 *
-	 * @param object|null $row Row from the database, or null when the query found nothing.
-	 * @return object|null The same row, or null when null was passed in.
+	 * @template T of object|null
+	 * @param T $row Row from the database, or null when the query found nothing.
+	 * @return T The same row, or null when null was passed in.
 	 */
 	private static function decode_sheet( $row ) {
 		if ( $row && isset( $row->sheet_data ) && is_string( $row->sheet_data ) ) {
@@ -662,6 +699,9 @@ class Character {
 		}
 		if ( $row && isset( $row->is_npc ) ) {
 			$row->is_npc = (bool) $row->is_npc;
+		}
+		if ( $row && isset( $row->profile_show_player ) ) {
+			$row->profile_show_player = (bool) $row->profile_show_player;
 		}
 		if ( $row && property_exists( $row, 'profile_audience_rules' ) && is_string( $row->profile_audience_rules ) ) {
 			$decoded = json_decode( $row->profile_audience_rules, true );

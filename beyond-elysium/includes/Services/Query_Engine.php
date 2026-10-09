@@ -51,10 +51,10 @@ class Query_Engine {
 	/**
 	 * Evaluate one condition against one already-resolved value.
 	 *
-	 * @param string     $type      One of: field, num, date, bool, list.
-	 * @param mixed      $value     The character's value for this field.
-	 * @param array      $condition `{operator, find?, value?, not?}`.
-	 * @param bool $atomic Whether the trait list is atomic ("Atomic").
+	 * @param string              $type      One of: field, num, date, bool, list.
+	 * @param mixed               $value     The character's value for this field.
+	 * @param array<string,mixed> $condition `{operator, find?, value?, not?}`.
+	 * @param bool                $atomic Whether the trait list is atomic ("Atomic").
 	 * @return array{match: bool, match_value: string}
 	 */
 	public static function evaluate_clause( string $type, $value, array $condition, bool $atomic = false ): array {
@@ -84,6 +84,9 @@ class Query_Engine {
 
 	/**
 	 * Evaluates a `field`-type condition (a plain string value) against the `contains` or `equals` operator.
+	 *
+	 * @param array<string,mixed> $condition
+	 * @return array{match:bool,match_value:string}
 	 */
 	private static function evaluate_field( string $value, string $operator, array $condition, bool $not ): array {
 		$find = (string) ( $condition['find'] ?? '' );
@@ -101,6 +104,10 @@ class Query_Engine {
 	/**
 	 * Evaluates a `num`-type condition (a numeric value) against one of the five numeric comparison operators: equals,
 	 * at_least, greater, less, or no_more.
+	 *
+	 * @param mixed $value
+	 * @param array<string,mixed> $condition
+	 * @return array{match:bool,match_value:string}
 	 */
 	private static function evaluate_num( $value, string $operator, array $condition, bool $not ): array {
 		$number = (float) ( $condition['value'] ?? 0 );
@@ -124,6 +131,9 @@ class Query_Engine {
 	/**
 	 * Evaluates a `date`-type condition against one of the five comparison operators: equals, at_least, greater, less, or
 	 * no_more.
+	 *
+	 * @param array<string,mixed> $condition
+	 * @return array{match:bool,match_value:string}
 	 */
 	private static function evaluate_date( string $value, string $operator, array $condition, bool $not ): array {
 		$find = (string) ( $condition['find'] ?? '' );
@@ -151,6 +161,9 @@ class Query_Engine {
 
 	/**
 	 * Evaluates a `bool`-type condition against the `is_true` or `is_false` operator.
+	 *
+	 * @param mixed $value
+	 * @return array{match:bool,match_value:string}
 	 */
 	private static function evaluate_bool( $value, string $operator, bool $not ): array {
 		$v = (bool) $value;
@@ -169,11 +182,11 @@ class Query_Engine {
 	 * list's own length, `contains` and `contains_note` search by name or note text, and the five `contains_*` operators
 	 * compare counts.
 	 *
-	 * @param array  $list  `{name, count, note?}` entries.
-	 * @param string $operator
-	 * @param array  $condition
-	 * @param bool   $not
-	 * @param bool   $atomic
+	 * @param array<int,array<string,mixed>> $list  `{name, count, note?}` entries.
+	 * @param string                         $operator
+	 * @param array<string,mixed>            $condition
+	 * @param bool                           $not
+	 * @param bool                           $atomic
 	 * @return array{match: bool, match_value: string}
 	 */
 	private static function evaluate_list( array $list, string $operator, array $condition, bool $not, bool $atomic ): array {
@@ -223,12 +236,12 @@ class Query_Engine {
 	/**
 	 * Evaluates the five "count comparison" trait operators.
 	 *
-	 * @param array  $list
-	 * @param string $operator
-	 * @param string $find
-	 * @param int    $number
-	 * @param bool   $not
-	 * @param bool   $atomic
+	 * @param array<int,array<string,mixed>> $list
+	 * @param string                         $operator
+	 * @param string                         $find
+	 * @param int                            $number
+	 * @param bool                           $not
+	 * @param bool                           $atomic
 	 * @return array{match: bool, match_value: string}
 	 */
 	private static function evaluate_named_count( array $list, string $operator, string $find, int $number, bool $not, bool $atomic ): array {
@@ -283,7 +296,7 @@ class Query_Engine {
 	 * Formats a trait entry as a readable match-reason label: `"Name xCount"` when a count greater than 1 is present, or
 	 * plain `Name`.
 	 *
-	 * @param array $entry
+	 * @param array<string,mixed> $entry
 	 * @return string
 	 */
 	private static function display_trait( array $entry ): string {
@@ -405,10 +418,10 @@ class Query_Engine {
 	 * Normalizes a block's held items to `{name, count, note?}` regardless of whether it is a `trait_list` (`count`) or
 	 * `tiered_power` (`level`) block.
 	 *
-	 * @param array  $items
-	 * @param string $block
-	 * @param string $game_slug The character's chronicle, whose fork of the block wins.
-	 * @return array
+	 * @param array<int,array<string,mixed>> $items
+	 * @param string                         $block
+	 * @param string                         $game_slug The character's chronicle, whose fork of the block wins.
+	 * @return array<int,array<string,mixed>>
 	 */
 	private static function normalize_list( array $items, string $block, string $game_slug = '' ): array {
 		if ( self::section_type( $block, $game_slug ) !== 'tiered_power' ) {
@@ -513,8 +526,8 @@ class Query_Engine {
 	 * Beyond Elysium equivalent, is queryable, and that its operator applies to the field's type with whatever
 	 * `find`/`value` it requires.
 	 *
-	 * @param array[] $conditions
-	 * @param string  $inventory One of Field_Registry::QUERYABLE_INVENTORIES.
+	 * @param array<int,array<string,mixed>> $conditions
+	 * @param string                         $inventory One of Field_Registry::QUERYABLE_INVENTORIES.
 	 * @return array{index: int, message: string}|null Null when every condition is valid.
 	 */
 	public static function validate_conditions( array $conditions, string $inventory = 'char' ): ?array {
@@ -593,12 +606,12 @@ class Query_Engine {
 	/**
 	 * Runs a query against every row of an inventory in a game.
 	 *
-	 * @param string $game_slug
-	 * @param array  $conditions
-	 * @param string $logic     'AND' or 'OR'.
-	 * @param array  $paging    `{sort: {field, direction}, page, per_page, all}`. `per_page` is held to 100; `all` returns every match, sorted, with no page limit.
-	 * @param string $inventory One of Field_Registry::QUERYABLE_INVENTORIES.
-	 * @param array  $options   See find_matches(): `exclude_npcs`, `prepare_row`.
+	 * @param string                         $game_slug
+	 * @param array<int,array<string,mixed>> $conditions
+	 * @param string                         $logic     'AND' or 'OR'.
+	 * @param array<string,mixed>            $paging    `{sort: {field, direction}, page, per_page, all}`. `per_page` is held to 100; `all` returns every match, sorted, with no page limit.
+	 * @param string                         $inventory One of Field_Registry::QUERYABLE_INVENTORIES.
+	 * @param array<string,mixed>            $options   See find_matches(): `exclude_npcs`, `prepare_row`.
 	 * @return array{results: object[], total: int}
 	 */
 	public static function execute( string $game_slug, array $conditions, string $logic, array $paging = [], string $inventory = 'char', array $options = [] ): array {
@@ -679,11 +692,11 @@ class Query_Engine {
 	 * Builds the unpaginated match set for a query, shared by `execute()` (which sorts and pages it) and `statistics()`
 	 * (which aggregates over the whole set).
 	 *
-	 * @param string $game_slug
-	 * @param array  $conditions
-	 * @param string $logic
-	 * @param string $inventory One of Field_Registry::QUERYABLE_INVENTORIES.
-	 * @param array  $options   `{exclude_npcs?: bool, prepare_row?: callable}`.
+	 * @param string                         $game_slug
+	 * @param array<int,array<string,mixed>> $conditions
+	 * @param string                         $logic
+	 * @param string                         $inventory One of Field_Registry::QUERYABLE_INVENTORIES.
+	 * @param array<string,mixed>            $options   `{exclude_npcs?: bool, prepare_row?: callable}`.
 	 * @return object[]
 	 */
 	private static function find_matches( string $game_slug, array $conditions, string $logic, string $inventory = 'char', array $options = [] ): array {
@@ -748,7 +761,7 @@ class Query_Engine {
 	private static function rows_for_characters( string $game_slug ): array {
 		global $wpdb;
 		$table = Manager::table( 'characters' );
-		// A statement timeout guards against one bad query holding a connection open.
+		// The query carries a five-second statement timeout.
 		$sql = $wpdb->prepare(
 			"SELECT /*+ MAX_EXECUTION_TIME(5000) */ * FROM {$table} WHERE owner_type = 'chronicle' AND owner_slug = %s",
 			$game_slug
@@ -802,15 +815,15 @@ class Query_Engine {
 	/**
 	 * Runs one of the five statistic types over a query's full, unpaginated match set.
 	 *
-	 * @param string      $game_slug
-	 * @param array       $conditions
-	 * @param string      $logic
-	 * @param string      $key       Field-registry key to examine.
-	 * @param string      $stat_type One of self::STATISTIC_TYPES.
-	 * @param bool $ok_zero Whether `0`/`"(none)"` buckets count - the two distribution types only.
-	 * @param string|null $trait     Named trait, required for `specific_distribution`.
-	 * @param string      $inventory One of Field_Registry::QUERYABLE_INVENTORIES.
-	 * @param array       $options   See find_matches(): `exclude_npcs`, `prepare_row`.
+	 * @param string                         $game_slug
+	 * @param array<int,array<string,mixed>> $conditions
+	 * @param string                         $logic
+	 * @param string                         $key       Field-registry key to examine.
+	 * @param string                         $stat_type One of self::STATISTIC_TYPES.
+	 * @param bool                           $ok_zero Whether `0`/`"(none)"` buckets count - the two distribution types only.
+	 * @param string|null                    $trait     Named trait, required for `specific_distribution`.
+	 * @param string                         $inventory One of Field_Registry::QUERYABLE_INVENTORIES.
+	 * @param array<string,mixed>            $options   See find_matches(): `exclude_npcs`, `prepare_row`.
 	 * @return array{buckets: array<string,float>, match_sets: array<string,string[]>, total: float, maximum: float}
 	 */
 	public static function statistics( string $game_slug, array $conditions, string $logic, string $key, string $stat_type, bool $ok_zero = true, ?string $trait = null, string $inventory = 'char', array $options = [] ): array {
@@ -838,13 +851,13 @@ class Query_Engine {
 	/**
 	 * The statistic aggregation core.
 	 *
-	 * @param array       $resolved         `{name, value}` pairs - one per character examined, value already resolved via `resolve_value()`.
-	 * @param string      $field_type       One of: field, num, date, bool, list.
-	 * @param string      $field_title      The field's display title (for scalar Maxima/Sums bucket labels and non-field Distribution relabeling).
-	 * @param string      $stat_type        One of self::STATISTIC_TYPES.
-	 * @param bool        $ok_zero
-	 * @param string|null $trait
-	 * @param int         $characters_examined Count of all characters the query matched, for `distinct_distribution`'s `Total`.
+	 * @param array<int,array<string,mixed>> $resolved         `{name, value}` pairs - one per character examined, value already resolved via `resolve_value()`.
+	 * @param string                         $field_type       One of: field, num, date, bool, list.
+	 * @param string                         $field_title      The field's display title (for scalar Maxima/Sums bucket labels and non-field Distribution relabeling).
+	 * @param string                         $stat_type        One of self::STATISTIC_TYPES.
+	 * @param bool                           $ok_zero
+	 * @param string|null                    $trait
+	 * @param int                            $characters_examined Count of all characters the query matched, for `distinct_distribution`'s `Total`.
 	 * @return array{buckets: array<string,float>, match_sets: array<string,string[]>, total: float, maximum: float}
 	 */
 	public static function aggregate( array $resolved, string $field_type, string $field_title, string $stat_type, bool $ok_zero, ?string $trait, int $characters_examined ): array {
@@ -893,14 +906,14 @@ class Query_Engine {
 	 * Accumulates one character's list-type field value into the running buckets/match_sets/total for whichever statistic
 	 * type is being computed.
 	 *
-	 * @param string      $stat_type
-	 * @param array       $list        Normalized `{name, count}` entries.
-	 * @param string      $char_name
-	 * @param string|null $trait
-	 * @param bool        $ok_zero
-	 * @param array       $buckets     By reference.
-	 * @param array       $match_sets  By reference.
-	 * @param float       $total       By reference.
+	 * @param string                          $stat_type
+	 * @param array<int,array<string,mixed>>  $list        Normalized `{name, count}` entries.
+	 * @param string                          $char_name
+	 * @param string|null                     $trait
+	 * @param bool                            $ok_zero
+	 * @param array<string,float>             $buckets     By reference.
+	 * @param array<string,array<int,string>> $match_sets  By reference.
+	 * @param float                           $total       By reference.
 	 * @return void
 	 */
 	private static function accumulate_list_statistic( string $stat_type, array $list, string $char_name, ?string $trait, bool $ok_zero, array &$buckets, array &$match_sets, float &$total ): void {
@@ -939,14 +952,14 @@ class Query_Engine {
 	/**
 	 * Accumulates one character's scalar field value into the running buckets/match_sets/total.
 	 *
-	 * @param string $stat_type
-	 * @param mixed  $value
-	 * @param string $char_name
-	 * @param string $field_title
-	 * @param bool   $ok_zero
-	 * @param array  $buckets     By reference.
-	 * @param array  $match_sets  By reference.
-	 * @param float  $total       By reference.
+	 * @param string                          $stat_type
+	 * @param mixed                           $value
+	 * @param string                          $char_name
+	 * @param string                          $field_title
+	 * @param bool                            $ok_zero
+	 * @param array<string,float>             $buckets     By reference.
+	 * @param array<string,array<int,string>> $match_sets  By reference.
+	 * @param float                           $total       By reference.
 	 * @return void
 	 */
 	private static function accumulate_scalar_statistic( string $stat_type, $value, string $char_name, string $field_title, bool $ok_zero, array &$buckets, array &$match_sets, float &$total ): void {
@@ -977,12 +990,12 @@ class Query_Engine {
 	 * Adds one character to a distribution bucket, incrementing the bucket's count and the running total, and recording
 	 * the character's name in that bucket's match set.
 	 *
-	 * @param string $bucket
-	 * @param string $char_name
-	 * @param bool   $ok_zero
-	 * @param array  $buckets     By reference.
-	 * @param array  $match_sets  By reference.
-	 * @param float  $total       By reference.
+	 * @param string                          $bucket
+	 * @param string                          $char_name
+	 * @param bool                            $ok_zero
+	 * @param array<string,float>             $buckets     By reference.
+	 * @param array<string,array<int,string>> $match_sets  By reference.
+	 * @param float                           $total       By reference.
 	 * @return void
 	 */
 	private static function bucket_distribution( string $bucket, string $char_name, bool $ok_zero, array &$buckets, array &$match_sets, float &$total ): void {
@@ -997,12 +1010,12 @@ class Query_Engine {
 	/**
 	 * Relabels buckets after aggregation: `specific_distribution` buckets become `"<Trait> x<N>"`.
 	 *
-	 * @param string $stat_type
-	 * @param string $field_type
-	 * @param string $field_title
-	 * @param string $trait
-	 * @param array  $buckets
-	 * @param array  $match_sets
+	 * @param string                          $stat_type
+	 * @param string                          $field_type
+	 * @param string                          $field_title
+	 * @param string                          $trait
+	 * @param array<string,float>             $buckets
+	 * @param array<string,array<int,string>> $match_sets
 	 * @return array{0: array<string,float>, 1: array<string,string[]>}
 	 */
 	private static function relabel_buckets( string $stat_type, string $field_type, string $field_title, string $trait, array $buckets, array $match_sets ): array {
@@ -1044,13 +1057,11 @@ class Query_Engine {
 		return $row;
 	}
 
-	// Resolves a plot's target_query to the character IDs it reaches.
-
 	/**
 	 * Resolves a plot's `target_query` to the character IDs it reaches.
 	 *
-	 * @param string     $game_slug
-	 * @param array|null $target_query `{field, operator, value}` or null.
+	 * @param string                   $game_slug
+	 * @param array<string,mixed>|null $target_query `{field, operator, value}` or null.
 	 * @return int[] Character IDs.
 	 */
 	public static function resolve_target_query( string $game_slug, ?array $target_query ): array {
@@ -1067,7 +1078,7 @@ class Query_Engine {
 	 * Widens a `{field, operator, value}` target_query into the condition shape `evaluate_clause()`'s own type-specific
 	 * evaluators actually read.
 	 *
-	 * @param array $target_query `{field, operator, value}`.
+	 * @param array<string,mixed> $target_query `{field, operator, value}`.
 	 * @return array{field: mixed, operator: mixed, find: mixed, value: mixed}
 	 */
 	public static function target_query_to_condition( array $target_query ): array {
@@ -1105,8 +1116,8 @@ class Query_Engine {
 	/**
 	 * Resolves an audience's `rules` to the character IDs it reaches.
 	 *
-	 * @param string     $game_slug
-	 * @param array|null $rules `{logic: 'AND'|'OR', conditions: array}` or null.
+	 * @param string                   $game_slug
+	 * @param array<string,mixed>|null $rules `{logic: 'AND'|'OR', conditions: array}` or null.
 	 * @return int[] Character IDs.
 	 */
 	public static function resolve_audience_rules( string $game_slug, ?array $rules ): array {

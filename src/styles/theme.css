@@ -55,6 +55,10 @@
 	--be-blue-6: #eef4ff;
 	--be-blue-7: #f0f6fc;
 
+	/* a plain blue link/border drawn straight on the page, never a filled background - the one that needs its own
+	   dark-mode value, where --be-blue-4 itself stays as a filled-button background with white text on top. */
+	--be-link-blue: var(--be-blue-4);
+
 	/* purple, plum - one real call site each. */
 	--be-purple-1: #f5f0ff;
 	--be-plum-1: #a3225a;
@@ -95,4 +99,44 @@
 	--be-shadow-3: rgba(0, 0, 0, 0.25);
 	--be-shadow-4: rgba(0, 0, 0, 0.3);
 	--be-shadow-5: rgba(0, 0, 0, 0.5);
+}
+
+/* The Storyteller Toolkit tokens every widget can read, declared on each widget root so a dark-mode value of
+   --be-red-1 or --be-gray-6 there reaches them. */
+[data-be-widget] {
+	--be-st-accent: var(--be-red-1);
+	--be-st-border-strong: var(--be-gray-16);
+	--be-st-muted: var(--be-gray-6);
+}
+
+/* wp-dark-mode/wp-dark-mode-ultimate toggle this class on <html>; every BE widget root opts out of their own
+   automatic color inversion (`.wp-dark-mode-ignore`, added in src/index.tsx), so a token read against the page
+   background needs its own explicit dark value here. A token used only inside a surface that carries its own
+   background (a filled button, a colored notice box) never needs one. */
+html.wp-dark-mode-active [data-be-widget] {
+	--be-red-1: #f0566a;
+	--be-gray-6: var(--be-gray-15);
+	--be-link-blue: #6ab0f3;
+}
+
+html.wp-dark-mode-active [data-be-widget] input,
+html.wp-dark-mode-active [data-be-widget] select,
+html.wp-dark-mode-active [data-be-widget] textarea {
+	background: var(--be-gray-3);
+	color: var(--be-gray-24);
+	border-color: var(--be-gray-10);
+}
+
+/* A `[ST]...[/ST]` span, only ever reached by a viewer who holds the matching manage capability - a non-manager's
+   copy is stripped server-side before it ever carries the raw markers. */
+mark.be-st-marker {
+	background: var(--be-gold-16);
+	color: inherit;
+	border-bottom: 1px dashed var(--be-gold-8);
+	padding: 0 0.1em;
+}
+
+html.wp-dark-mode-active [data-be-widget] mark.be-st-marker {
+	background: var(--be-gold-5);
+	border-bottom-color: var(--be-gold-11);
 }

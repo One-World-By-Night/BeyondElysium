@@ -156,3 +156,28 @@ export function displayTrait(
 			return trait.name;
 	}
 }
+
+/**
+ * The modes that draw a count as circles beside the name.
+ */
+const CIRCLE_MODES: readonly DisplayType[] = [
+	'multiplier_dot',
+	'dot',
+	'dot_separate',
+	'simple_dots',
+];
+
+/**
+ * The mode a list that prints no circles renders at: a mode that draws circles becomes the plain multiplier, the text
+ * the printed sheet uses.
+ */
+export function withoutCircles( mode: DisplayType ): DisplayType {
+	return CIRCLE_MODES.includes( mode ) ? 'multiplier' : mode;
+}
+
+/**
+ * The number a list that prints no circles shows beside a row's name: "x7", and nothing at 1.
+ */
+export function numberBesideName( total: number ): string {
+	return displayTrait( { name: '', total }, 'multiplier' ).trim();
+}

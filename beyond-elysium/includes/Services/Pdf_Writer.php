@@ -23,13 +23,7 @@ class Pdf_Writer {
 	private const SECTION_TITLE_SIZE = 9.5;
 	private const BODY_SIZE          = 8.5;
 	private const FOOTNOTE_SIZE      = 7;
-	private const RING_SIZE          = 2.6; // mm across
-	private const RING_STEP          = 3.1; // mm from one ring to the next
-	private const RING_STROKE        = 0.15;
-	private const RING_GREY          = 120; // 0 is black, 255 white
-	private const RING_ROW           = 5;   // rings to a row beside a trait
 	private const RING_TEXT_GAP      = 1.5; // between a trait's rings and its text
-	private const RING_GROUP_GAP     = 1.2; // between groups of five in a pool's rings
 	private const MAX_LINE_RINGS     = 20;
 	private const MAX_POOL_RINGS     = 60;
 
@@ -181,7 +175,7 @@ class Pdf_Writer {
 					$pdf->writeHTMLCell( $column, 0, $x, $y, $html, 0, 1, false, true, 'L' );
 					$bottom = $pdf->GetY();
 					if ( isset( $pair[2] ) && (int) $pair[2] > 0 ) {
-						$bottom = self::draw_pool_rings( $pdf, (int) $pair[2], $x, $bottom + 0.3, $column ) + 1.0;
+						$bottom = Pdf_Rings::pool_rings( $pdf, (int) $pair[2], $x, $bottom + 0.3, $column, self::MAX_POOL_RINGS ) + 1.0;
 					}
 					$row_bottom = max( $row_bottom, $bottom );
 				}
@@ -448,7 +442,7 @@ class Pdf_Writer {
 		if ( $line['circles'] === null ) {
 			return $text;
 		}
-		return max( $text, self::first_line_height( $pdf ) + ( self::ring_rows( $line['circles'], self::RING_ROW ) - 1 ) * self::RING_STEP );
+		return max( $text, self::first_line_height( $pdf ) + ( Pdf_Rings::rows( $line['circles'], Pdf_Rings::RING_ROW ) - 1 ) * Pdf_Rings::RING_STEP );
 	}
 
 	/**
@@ -462,8 +456,8 @@ class Pdf_Writer {
 		$pdf->setFont( self::FONT, $line['label'] ? 'I' : '', self::BODY_SIZE );
 
 		if ( $line['circles'] !== null && $line['circles'] > 0 ) {
-			$top = $y + ( self::first_line_height( $pdf ) - self::RING_SIZE ) / 2;
-			self::draw_rings( $pdf, $line['circles'], $x + $indent, $top, self::RING_ROW, false, self::MAX_LINE_RINGS );
+			$top = $y + ( self::first_line_height( $pdf ) - Pdf_Rings::RING_SIZE ) / 2;
+			Pdf_Rings::rings( $pdf, $line['circles'], $x + $indent, $top, Pdf_Rings::RING_ROW, false, self::MAX_LINE_RINGS );
 		}
 
 		$pdf->MultiCell( $width - $indent - $gutter, $height, $line['text'], 0, 'L', false, 1, $x + $indent + $gutter, $y, true, 0, false, true, 0, 'T' );
@@ -483,7 +477,7 @@ class Pdf_Writer {
 	 * The width a trait's rings take, with the gap before its text.
 	 */
 	private static function ring_column(): float {
-		return self::RING_ROW * self::RING_STEP + self::RING_TEXT_GAP;
+		return Pdf_Rings::RING_ROW * Pdf_Rings::RING_STEP + self::RING_TEXT_GAP;
 	}
 
 	/**
@@ -494,51 +488,6 @@ class Pdf_Writer {
 		return $pdf->getStringHeight( 1000.0, 'X' );
 	}
 
-	/**
-	 * How many rows of rings `$count` rings take, `$per_row` to a row.
-	 */
-	private static function ring_rows( int $count, int $per_row ): int {
-		return max( 1, intdiv( max( 0, $count ) + $per_row - 1, $per_row ) );
-	}
-
-	/**
-	 * Draws `$count` empty rings from `$top` down, `$per_row` to a row, with a gap after every fifth ring when `$grouped`.
-	 *
-	 * @return float The bottom edge of the last row.
-	 */
-	private static function draw_rings( \TCPDF $pdf, int $count, float $x, float $top, int $per_row, bool $grouped, int $limit ): float {
-		$count = min( max( 0, $count ), $limit );
-		$pdf->setLineWidth( self::RING_STROKE );
-		$pdf->setDrawColor( self::RING_GREY );
-		for ( $i = 0; $i < $count; $i++ ) {
-			$column = $i % $per_row;
-			$left   = $x + $column * self::RING_STEP + ( $grouped ? intdiv( $column, 5 ) * self::RING_GROUP_GAP : 0.0 );
-			$pdf->Circle(
-				$left + self::RING_SIZE / 2,
-				$top + intdiv( $i, $per_row ) * self::RING_STEP + self::RING_SIZE / 2,
-				self::RING_SIZE / 2,
-				0,
-				360,
-				'D',
-				[],
-				[],
-				2
-			);
-		}
-		$pdf->setDrawColor( 0 );
-		return $top + ( self::ring_rows( $count, $per_row ) - 1 ) * self::RING_STEP + self::RING_SIZE;
-	}
-
-	/**
-	 * A pool's rings in groups of five, as many whole groups to a line as fit the width.
-	 *
-	 * @return float The bottom edge of the last row.
-	 */
-	private static function draw_pool_rings( \TCPDF $pdf, int $count, float $x, float $top, float $width ): float {
-		$group  = self::RING_ROW * self::RING_STEP;
-		$groups = max( 1, (int) floor( ( $width + self::RING_GROUP_GAP ) / ( $group + self::RING_GROUP_GAP ) ) );
-		return self::draw_rings( $pdf, $count, $x, $top, $groups * self::RING_ROW, true, self::MAX_POOL_RINGS );
-	}
 
 	/**
 	 * How much room a section needs to start: its title and its first line.
@@ -633,7 +582,7 @@ class Pdf_Writer {
 	}
 
 	/**
-	 * `wp_kses()` unwraps a disallowed tag but keeps its inner text.
+	 * Strips script and style blocks, then removes disallowed tags and keeps their text.
 	 */
 	private static function sanitize_prose( string $html ): string {
 		$html = (string) preg_replace( '@<(script|style)[^>]*?>.*?</\\1>@si', '', $html );

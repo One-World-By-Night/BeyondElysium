@@ -40,6 +40,40 @@ abstract class Base_Controller extends \WP_REST_Controller {
 	}
 
 	/**
+	 * A non-manager's edit or submitted change against a host's own copy: refused while an open, agreed
+	 * keep-current visit makes it read-only here, and refused again after the visit ends, until another one
+	 * reopens it.
+	 *
+	 * @param object $character
+	 * @return \WP_Error|null Null when editing here is allowed.
+	 */
+	protected function host_copy_edit_refusal( object $character ): ?\WP_Error {
+		$open_visit = \BeyondElysium\Services\Keep_Current::inbound_kept_current_visit( (int) $character->id );
+		if ( $open_visit !== null ) {
+			return $this->error(
+				'kept_current_elsewhere',
+				sprintf(
+					/* translators: %s: the character's own real home chronicle */
+					__( 'Kept current from %s. Make changes there.', 'beyond-elysium' ),
+					$open_visit->home_chronicle ?: __( 'its home chronicle', 'beyond-elysium' )
+				),
+				403
+			);
+		}
+
+		$last_visit = \BeyondElysium\Models\Transfer::most_recent_inbound_visit( (int) $character->id );
+		if ( $last_visit !== null && $last_visit->state === 'ended' ) {
+			return $this->error(
+				'visit_ended',
+				__( 'This character went home. It can\'t be played here until it visits again.', 'beyond-elysium' ),
+				403
+			);
+		}
+
+		return null;
+	}
+
+	/**
 	 * The refusal of a change to the book: the catalog, creature types and sheet templates as released, which change for
 	 * a chronicle only.
 	 *
@@ -74,10 +108,10 @@ abstract class Base_Controller extends \WP_REST_Controller {
 	 * @param string[] $capabilities
 	 * @return callable
 	 */
-	protected function permission_any( array $capabilities ): callable {
-		return function ( \WP_REST_Request $request ) use ( $capabilities ) {
+	protected function permission_any( array $capabilities, bool $allow_bootstrap = false ): callable {
+		return function ( \WP_REST_Request $request ) use ( $capabilities, $allow_bootstrap ) {
 			foreach ( $capabilities as $capability ) {
-				if ( Authorization::check_request( $capability, $request ) ) {
+				if ( Authorization::check_request( $capability, $request, $allow_bootstrap ) ) {
 					return true;
 				}
 			}
@@ -129,7 +163,7 @@ abstract class Base_Controller extends \WP_REST_Controller {
 	protected function paginate( \WP_REST_Response $response, int $total, int $per_page, int $page ): \WP_REST_Response {
 		$total_pages = (int) ceil( $total / $per_page );
 
-		// WP_HTTP_Response::header() expects string values.
+		// Header values are cast to strings.
 		$response->header( 'X-WP-Total', (string) $total );
 		$response->header( 'X-WP-TotalPages', (string) $total_pages );
 

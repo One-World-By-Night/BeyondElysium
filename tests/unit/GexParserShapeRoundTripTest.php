@@ -6,8 +6,8 @@ use BeyondElysium\Services\GEX_Parser;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Proves `GEX_Parser`'s twelve `parse_character_*` methods, now driven by `gv-exchange-shape.php`'s shared
- * `trait_lists` loop.
+ * Proves `GEX_Parser`'s twelve `parse_character_*` methods, which read through `gv-exchange-shape.php`'s shared
+ * `trait_lists` loop, consume a buffer built from the shape table.
  */
 class GexParserShapeRoundTripTest extends TestCase {
 

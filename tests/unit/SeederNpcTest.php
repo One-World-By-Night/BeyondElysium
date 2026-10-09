@@ -6,8 +6,9 @@ use BeyondElysium\Database\Seeder;
 use PHPUnit\Framework\TestCase;
 
 /**
- * The NPC blocks: the roleplaying-notes block carries three agenda fields ahead of its eight notes fields, and the
- * npc-quick-stats block, which is not storyteller-only, backs the condensed npc_quick template.
+ * The NPC blocks: the roleplaying-notes block carries three agenda fields, eight notes fields and two drafting
+ * fields (Motivations, Appearance), and the npc-quick-stats block, which is not storyteller-only, backs the
+ * condensed npc_quick template.
  */
 class SeederNpcTest extends TestCase {
 
@@ -26,10 +27,10 @@ class SeederNpcTest extends TestCase {
 	}
 
 	// -------------------------------------------------------------------------
-	// npc-roleplaying-notes: agenda fields prepended, original eight kept.
+	// npc-roleplaying-notes: agenda fields first, then the eight notes fields and two drafting fields.
 	// -------------------------------------------------------------------------
 
-	public function test_roleplaying_notes_has_eleven_fields_agenda_first(): void {
+	public function test_roleplaying_notes_has_thirteen_fields_agenda_first(): void {
 		$this->assertSame(
 			[
 				'Wants',
@@ -43,6 +44,8 @@ class SeederNpcTest extends TestCase {
 				'Combat Style',
 				'Philosophy & Beliefs',
 				'Theme Statement',
+				'Motivations',
+				'Appearance',
 			],
 			self::field_names( 'npc-roleplaying-notes' )
 		);
@@ -60,7 +63,7 @@ class SeederNpcTest extends TestCase {
 	}
 
 	// -------------------------------------------------------------------------
-	// npc-quick-stats: a new, shared, non-storyteller-only block.
+	// npc-quick-stats: a shared, non-storyteller-only block.
 	// -------------------------------------------------------------------------
 
 	public function test_quick_stats_block_exists_with_nine_fields(): void {

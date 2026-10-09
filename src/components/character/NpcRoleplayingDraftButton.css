@@ -1,0 +1,20 @@
+.be-npc-draft-button__preview {
+	max-height: 400px;
+	overflow-y: auto;
+}
+
+.be-npc-draft-button__field {
+	border: 1px solid var(--be-gray-19);
+	border-radius: 4px;
+	padding: 0.5rem 0.75rem;
+	margin-top: 0.5rem;
+}
+
+.be-npc-draft-button__field p {
+	white-space: pre-wrap;
+	margin: 0.25rem 0 0;
+}
+
+.be-npc-draft-button__error {
+	color: var(--be-red-8);
+}

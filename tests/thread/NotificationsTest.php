@@ -99,7 +99,7 @@ class NotificationsTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The behavioral heart of 4d.
+	 * An auto-approved change sends no mail.
 	 */
 	public function test_an_auto_approved_change_sends_no_mail(): void {
 		wp_set_current_user( $this->st_id );

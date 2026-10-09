@@ -32,7 +32,7 @@ class DeclaredCatalogIngestionThreadTest extends WP_UnitTestCase {
 	}
 
 	// -------------------------------------------------------------------------
-	// Vampire Disciplines - the one genre whose out-of-type surcharge already worked under the GVM path
+	// Vampire Disciplines
 	// -------------------------------------------------------------------------
 
 	public function test_vampire_disciplines_seeds_from_the_declared_file_not_gvm(): void {
@@ -46,7 +46,7 @@ class DeclaredCatalogIngestionThreadTest extends WP_UnitTestCase {
 	public function test_celerity_ceiling_prices_identically_to_the_unit_fixture(): void {
 		$result = Cost_Engine::price_held_tiered_power( $this->definition( 'vampire-disciplines' ), [ 'name' => 'Celerity', 'level' => 5 ], true );
 
-		// Matches CostEngineHeldPricingTest::test_a_stored_level_at_the_ceiling_is_unaffected_by_c1.
+		// Matches the stored-level ceiling case in CostEngineHeldPricingTest.
 		$this->assertSame( 27, $result['xp'] );
 		$this->assertSame( 'sequential_sum', $result['basis'] );
 	}
@@ -62,7 +62,7 @@ class DeclaredCatalogIngestionThreadTest extends WP_UnitTestCase {
 	public function test_celerity_elder_pick_precision_prices_from_the_declared_elder_cost(): void {
 		$result = Cost_Engine::price_held_tiered_power( $this->definition( 'vampire-disciplines' ), [ 'name' => 'Celerity', 'power_name' => 'Precision' ], true );
 
-		// Matches CostEngineHeldPricingTest::test_a_named_pick_survives_the_declared_ladder_split.
+		// Matches the named-pick-after-ladder-split case in CostEngineHeldPricingTest.
 		$this->assertSame( 12, $result['xp'] );
 		$this->assertSame( 'elder_pick', $result['basis'] );
 	}
@@ -73,7 +73,7 @@ class DeclaredCatalogIngestionThreadTest extends WP_UnitTestCase {
 		$definition = $this->definition( 'wraith-arcanoi' );
 
 		$this->assertSame( [ 'innate', 'basic', 'intermediate', 'advanced' ], (array) $definition->_meta->ranks );
-		// assertEquals, not assertSame - same key-order note as above.
+		// Compared with assertEquals.
 		$this->assertEquals( [ 'basic' => 2, 'intermediate' => 2, 'advanced' => 1 ], (array) $definition->_meta->ladder );
 		$this->assertSame( 2, $definition->_meta->costs->innate, 'Oblivion p.165: Innate now prices, never free' );
 		// out_of_type is not flat (innate is exempt at +0, every other rank is -1 for the Guild).

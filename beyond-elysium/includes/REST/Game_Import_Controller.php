@@ -207,7 +207,7 @@ class Game_Import_Controller extends Base_Controller {
 				if ( $name === '' ) {
 					$name = 'Imported Chronicle';
 				}
-				// extended_health: stored so the file's value survives.
+				// extended_health: stored from the file.
 				$new_game_id = Game::create( [
 					'name'     => $name,
 					'settings' => [ 'extended_health' => (bool) ( $parsed['extended_health'] ?? false ) ],
@@ -273,11 +273,9 @@ class Game_Import_Controller extends Base_Controller {
 		return array_merge( $preview, [
 			'chronicle_title' => $parsed['chronicle_title'],
 			'existing_games'  => $existing_games,
+			// Plots, rumors and actions are counted in `counts` and `narrative`.
 			'skipped'         => [
 				'queries'          => count( $parsed['queries'] ),
-				'actions'          => count( $parsed['actions'] ),
-				'plots'            => count( $parsed['plots'] ),
-				'rumors'           => count( $parsed['rumors'] ),
 				'xp_awards'        => count( $parsed['experience_awards'] ),
 				'templates'        => count( $parsed['templates'] ),
 				'calendar_entries' => count( $parsed['calendar']['entries'] ?? [] ),

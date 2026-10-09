@@ -75,7 +75,7 @@ class GameDeleteWithContentTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Nine real content kinds `delete_with_content()` silently left behind.
+	 * Nine real content kinds `delete_with_content()` removes.
 	 */
 	public function test_delete_with_content_removes_the_nine_kinds_d1_found_missing(): void {
 		$slug    = 'thread-test-d1-delete-with-content-' . wp_generate_password( 8, false );
@@ -159,6 +159,32 @@ class GameDeleteWithContentTest extends WP_UnitTestCase {
 		$this->assertNull( self::table_find( 'notification_queue', $notification_id ) );
 		$this->assertNull( self::table_find( 'npc_castings', $casting_id ) );
 		$this->assertNull( self::table_find( 'after_game_reports', $report_id ) );
+	}
+
+	public function test_clear_content_keeps_the_game_row_but_removes_everything_else(): void {
+		$slug    = 'thread-test-clear-content-' . wp_generate_password( 8, false );
+		$game_id = $this->make_game( $slug );
+		Game::update( $slug, [ 'settings' => [ 'demo' => [ 'on' => true ] ] ] );
+
+		$character_id = Character::create( [
+			'name' => 'Clear Content Test Character', 'stack_slug' => 'vampire',
+			'owner_type' => 'chronicle', 'owner_slug' => $slug,
+		] );
+		$plot_id = Plot::create( [ 'game_id' => $game_id, 'title' => 'Clear Content Test Plot' ] );
+
+		$this->assertTrue( Game::clear_content( $game_id ) );
+
+		$this->assertNull( Character::find( $character_id ), 'character must be gone' );
+		$this->assertNull( Plot::find( $plot_id ), 'plot must be gone' );
+
+		$game = Game::find( $game_id );
+		$this->assertNotNull( $game, 'the game row itself must survive' );
+		$this->assertSame( $slug, $game->slug, 'the slug must survive unchanged' );
+		$this->assertTrue( $game->settings->demo->on, 'settings must survive unchanged' );
+	}
+
+	public function test_clear_content_on_an_unknown_game_id_fails_without_touching_anything(): void {
+		$this->assertFalse( Game::clear_content( 999999999 ) );
 	}
 
 	public function test_world_object_delete_removes_its_own_item_events(): void {

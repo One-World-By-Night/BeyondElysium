@@ -11,6 +11,7 @@ import { groupCatalogItems } from '../../lib/catalogGroups';
 import { identityGroupValues } from '../../lib/identityGroups';
 import { costChoices } from '../../lib/costChoices';
 import { DOT } from '../../lib/displayTemper';
+import { numberBesideName } from '../../lib/displayTrait';
 import { useCostVisibility } from '../../lib/costDisplayMode';
 import {
 	moveUp,
@@ -61,6 +62,23 @@ export interface TraitListEditorProps {
 	 * first.
 	 */
 	sheetData?: Record< string, unknown >;
+}
+
+/**
+ * How a row shows its count: as a price, as a number beside the name (a list that declares no rings), or as circles.
+ */
+export type RowRatingStyle = 'cost' | 'number' | 'circles';
+
+/**
+ * Chooses how a list's rows show their count.
+ */
+export function rowRatingStyle(
+	definition: TraitListDefinition
+): RowRatingStyle {
+	if ( definition.count_is_cost ) {
+		return 'cost';
+	}
+	return definition.print_rings === false ? 'number' : 'circles';
 }
 
 /**
@@ -376,6 +394,8 @@ export function TraitListEditor( {
 		}
 	};
 
+	const ratingStyle = rowRatingStyle( definition );
+
 	const renderRow = ( row: EditableTrait & { index: number } ) => (
 		<li
 			key={ `${ row.name }-${ row.index }` }
@@ -390,8 +410,7 @@ export function TraitListEditor( {
 				</span>
 				{ typeof row.count === 'number' &&
 					row.count > 0 &&
-					// A count_is_cost row's number is a price.
-					( definition.count_is_cost ? (
+					( ratingStyle === 'cost' ? (
 						showCost && (
 							<span className="be-trait-list-editor__summary-detail">
 								{ sprintf(
@@ -400,6 +419,15 @@ export function TraitListEditor( {
 									row.count
 								) }
 							</span>
+						)
+					) : ratingStyle === 'number' ? (
+						numberBesideName( row.count ) !== '' && (
+							<>
+								{ ' ' }
+								<span className="be-trait-list-editor__number">
+									{ numberBesideName( row.count ) }
+								</span>
+							</>
 						)
 					) : (
 						<span className="be-trait-list-editor__dots">

@@ -1,0 +1,144 @@
+.be-relationship-chart {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
+.be-relationship-chart__error {
+	color: var(--be-red-7);
+}
+
+.be-relationship-chart__controls {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1rem;
+	align-items: center;
+}
+
+.be-relationship-chart__controls label {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	font-size: 0.85rem;
+}
+
+.be-relationship-chart__controls label.be-relationship-chart__toggle {
+	flex-direction: row;
+	align-items: center;
+}
+
+.be-relationship-chart__svg {
+	display: block;
+	width: 100%;
+	max-width: 600px;
+	height: auto;
+	margin: 0 auto;
+}
+
+.be-relationship-chart__edge {
+	stroke: var(--be-gray-13);
+	stroke-width: 1.5;
+}
+
+.be-relationship-chart__node {
+	cursor: pointer;
+	text-decoration: none;
+}
+
+.be-relationship-chart__node-circle {
+	stroke: var(--be-gray-29);
+	stroke-width: 1.5;
+}
+
+.be-relationship-chart__node-circle--focus {
+	stroke: var(--be-gray-2);
+	stroke-width: 2;
+}
+
+.be-relationship-chart__node-label {
+	font-size: 12px;
+	fill: var(--be-gray-4);
+	text-decoration: none;
+}
+
+.be-relationship-chart__node:hover .be-relationship-chart__node-label,
+.be-relationship-chart__node:focus .be-relationship-chart__node-label {
+	text-decoration: underline;
+}
+
+html.wp-dark-mode-active [data-be-widget] .be-relationship-chart__node-label {
+	fill: var(--be-gray-24);
+}
+
+html.wp-dark-mode-active .be-relationship-chart__node-circle--focus {
+	stroke: var(--be-gray-29);
+}
+
+.be-relationship-chart__edge-group {
+	cursor: pointer;
+}
+
+.be-relationship-chart__edge-hit {
+	stroke: transparent;
+	stroke-width: 14;
+	fill: none;
+	pointer-events: stroke;
+}
+
+.be-relationship-chart__edge-group:hover .be-relationship-chart__edge,
+.be-relationship-chart__edge-group:focus .be-relationship-chart__edge {
+	stroke: var(--be-gold-9);
+	stroke-width: 2.5;
+}
+
+.be-relationship-chart__edge-group:focus {
+	outline: none;
+}
+
+.be-relationship-chart__connections {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
+.be-relationship-chart__connections li {
+	border-bottom: 1px solid var(--be-gray-21);
+	padding-bottom: 0.5rem;
+}
+
+.be-relationship-chart__connections p {
+	margin: 0 0 0.25rem;
+}
+
+.be-relationship-chart__connection-notes {
+	white-space: pre-wrap;
+}
+
+.be-relationship-chart__list-heading {
+	margin: 1rem 0 0.25rem;
+}
+
+.be-relationship-chart__list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.15rem;
+}
+
+.be-relationship-chart__list-button.be-relationship-chart__list-button {
+	background: none;
+	border: 0;
+	padding: 0.2rem 0;
+	color: var(--be-link-blue);
+	font: inherit;
+	text-align: left;
+	text-decoration: underline;
+	white-space: normal;
+	overflow-wrap: anywhere;
+	cursor: pointer;
+}

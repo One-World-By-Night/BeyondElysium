@@ -30,7 +30,7 @@ class Template_Titles {
 			}
 
 			foreach ( Template::globals( [ 'stack_slug' => $stack_slug, 'template_type' => $template_type ] ) as $template ) {
-				/** @var object{id:int,is_system:int,layout:array} $template */
+				/** @var object{id:int,is_system:int,layout:array<string,mixed>} $template */
 				if ( empty( $template->is_system ) ) {
 					continue;
 				}

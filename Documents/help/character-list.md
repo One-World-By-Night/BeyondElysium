@@ -19,7 +19,7 @@ My Chronicle → Characters tab.
   | Column | Shows |
   | --- | --- |
   | (portrait) | A thumbnail, when the character has one |
-  | Name | Links to the Sheet tab; carries a Travelling or Visiting badge while the character is part of a chronicle transfer |
+  | Name | Links to the Sheet tab; carries an "Also active elsewhere" badge while the character has an open visit to another chronicle - "Can't reach a visit" instead if one has gone quiet |
   | Type | Creature type |
   | Status | active, inactive, retired, dead, or pending |
   | XP Earned | Total experience earned |
@@ -75,7 +75,7 @@ My Chronicle → Characters tab.
 - As a player, this tab shows only characters linked to your account - not the rest of the chronicle's roster.
 - The **Type** filter only offers creature types this chronicle has enabled.
 - Deleting a character (Storyteller) can't be undone - it takes the character's change history, snapshots, sheet style, and connections with it.
-- A Travelling or Visiting badge next to a name means that character is currently part of a chronicle transfer - see [Send Sheet](transfer.md).
+- An "Also active elsewhere"/"Can't reach a visit" badge next to a name means that character has an open visit to another chronicle - hovering it names every chronicle it's active at. A character hosted here from another chronicle shows no badge on this list - its own sheet carries the "Visiting from ..." notice instead. See [Send Sheet](transfer.md).
 
 ## Troubleshooting
 

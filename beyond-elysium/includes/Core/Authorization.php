@@ -47,9 +47,9 @@ class Authorization {
 	/**
 	 * Records this plugin's REST request as the one being served.
 	 *
-	 * @param mixed            $response
-	 * @param array            $handler
-	 * @param \WP_REST_Request $request
+	 * @param mixed               $response
+	 * @param array<string,mixed> $handler
+	 * @param \WP_REST_Request    $request
 	 * @return mixed
 	 */
 	public static function push_request( $response, $handler, $request ) {
@@ -62,9 +62,9 @@ class Authorization {
 	/**
 	 * Drops the request push_request() recorded, once its callbacks are done.
 	 *
-	 * @param mixed            $response
-	 * @param array            $handler
-	 * @param \WP_REST_Request $request
+	 * @param mixed               $response
+	 * @param array<string,mixed> $handler
+	 * @param \WP_REST_Request    $request
 	 * @return mixed
 	 */
 	public static function pop_request( $response, $handler, $request ) {
@@ -88,6 +88,17 @@ class Authorization {
 	/**
 	 * Reports whether accessSchema-based authorization is enabled for this site.
 	 */
+	/**
+	 * Whether an account has a waiting join request on this chronicle.
+	 *
+	 * @param object $game
+	 * @param int    $wp_user_id
+	 * @return bool
+	 */
+	public static function is_applicant( object $game, int $wp_user_id ): bool {
+		return \BeyondElysium\Models\Join_Request::find_waiting( (int) $game->id, $wp_user_id ) !== null;
+	}
+
 	public static function asc_enabled(): bool {
 		return (bool) get_option( 'be_asc_enabled', false );
 	}

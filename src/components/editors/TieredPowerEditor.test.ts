@@ -207,7 +207,7 @@ describe( 'ladderRungLabel (checklist labels, no synthetic ladder for a custom p
 	} );
 
 	/**
-	 * Amending this case.
+	 * A tied rung is named once and the rest are carried as alternates, never comma-joined.
 	 */
 	it( 'names a tied rung once and carries the rest as alternates, never comma-joined', () => {
 		const tied: TieredPower = {
@@ -391,6 +391,33 @@ describe( 'pickOptionsFor / groupPickOptions (E2 - rank-grouped, elder container
 				( o ) => o.family === 'Fortitude'
 			)
 		).toBe( false );
+	} );
+
+	it( 'offers a ladder-less family from the start - nothing held yet, no rung to buy first', () => {
+		const def: TieredPowerDefinition = {
+			sequential: false,
+			powers: [
+				{
+					name: 'Innocence Path',
+					levels: [],
+					elder: {
+						touched: [
+							{
+								level: null,
+								tier: 'touched',
+								power_name: 'Hide',
+							},
+						],
+					},
+				},
+			],
+		};
+
+		const options = pickOptionsFor( def, [] );
+
+		expect( options.map( ( o ) => o.value ) ).toEqual( [
+			'Innocence Path: Hide',
+		] );
 	} );
 
 	it( 'excludes a pick already held, but still offers a sibling pick in the same family and rank', () => {

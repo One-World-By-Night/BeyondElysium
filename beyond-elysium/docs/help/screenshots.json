@@ -1,0 +1,1110 @@
+{
+	"chronicle": "be-demo",
+	"viewport": {
+		"width": 1280,
+		"height": 800
+	},
+	"fixturePages": [
+		{
+			"slug": "help-house-rules",
+			"title": "House Rules",
+			"content": "[be_house_rules game=\"be-demo\"]"
+		}
+	],
+	"pages": {
+		"admin-characters": [
+			{
+				"heading": "Admin Characters",
+				"path": "/wp-admin/admin.php?page=beyond-elysium-characters&game=be-demo",
+				"account": "admin",
+				"steps": [
+					{
+						"select": ".be-admin__filters select",
+						"value": "be-demo"
+					}
+				],
+				"alt": {
+					"en": "The Characters page in wp-admin: a game picker, a toggle for NPCs, the New Character button and the roster table with an Apply XP column.",
+					"pt_BR": "A página Personagens no wp-admin: um seletor de jogo, uma opção para NPCs, o botão Novo Personagem e a tabela do elenco com uma coluna Aplicar XP."
+				}
+			}
+		],
+		"admin-dashboard": [
+			{
+				"heading": "Admin Dashboard",
+				"path": "/wp-admin/admin.php?page=beyond-elysium&game=be-demo",
+				"account": "admin",
+				"alt": {
+					"en": "The Beyond Elysium landing page in wp-admin: what each page does, with the front-end pages and widgets listed below.",
+					"pt_BR": "A página inicial do Beyond Elysium no wp-admin: o que cada página faz, com as páginas do front-end e os widgets listados abaixo."
+				}
+			}
+		],
+		"admin-docs": [
+			{
+				"heading": "Docs",
+				"path": "/wp-admin/admin.php?page=beyond-elysium-docs&game=be-demo",
+				"account": "admin",
+				"alt": {
+					"en": "The Docs page in wp-admin: tabs for the Storyteller, Admin and Player guides and the REST reference, with the Storyteller Guide open.",
+					"pt_BR": "A página Documentação no wp-admin: abas para os guias do Narrador, do Administrador e do Jogador e a referência da REST, com o Guia do Narrador aberto."
+				}
+			}
+		],
+		"admin-game-nights": [
+			{
+				"heading": "Admin Game Nights",
+				"path": "/wp-admin/admin.php?page=beyond-elysium-game-nights&game=be-demo",
+				"account": "admin",
+				"steps": [
+					{
+						"select": ".be-admin__filters select",
+						"value": "be-demo"
+					}
+				],
+				"alt": {
+					"en": "The Game Nights page in wp-admin: the Spotlight and Session settings buttons and a calendar of sessions.",
+					"pt_BR": "A página Noites de Jogo no wp-admin: os botões Destaque e Configurações de sessão e um calendário de sessões."
+				}
+			}
+		],
+		"admin-plots": [
+			{
+				"heading": "Admin Plots",
+				"path": "/wp-admin/admin.php?page=beyond-elysium-plots&tab=plots&game=be-demo",
+				"account": "admin",
+				"steps": [
+					{
+						"select": ".be-admin__filters select",
+						"value": "be-demo"
+					}
+				],
+				"alt": {
+					"en": "The Plots page in wp-admin with its Plots and Releases tabs and the Storyteller Toolkit tools.",
+					"pt_BR": "A página Tramas no wp-admin com as abas Tramas e Lançamentos e as ferramentas do Kit de Ferramentas do Narrador."
+				}
+			}
+		],
+		"admin-release-batches": [
+			{
+				"heading": "Admin Releases",
+				"path": "/wp-admin/admin.php?page=beyond-elysium-plots&tab=releases&game=be-demo",
+				"account": "admin",
+				"steps": [
+					{
+						"select": ".be-admin__filters select",
+						"value": "be-demo"
+					}
+				],
+				"alt": {
+					"en": "The Releases tab in wp-admin: the release schedule and the New batch button.",
+					"pt_BR": "A aba Lançamentos no wp-admin: o cronograma de lançamentos e o botão Novo lote."
+				}
+			}
+		],
+		"after-game-report": [
+			{
+				"heading": "After-Game Report",
+				"path": "/be-player/?game_slug=be-demo&tab=after-game-report",
+				"account": "player",
+				"alt": {
+					"en": "The After-Game Report tab: the session and character pickers that start a report.",
+					"pt_BR": "A aba Relatório Pós-Jogo: os seletores de sessão e de personagem que iniciam um relatório."
+				}
+			}
+		],
+		"allocate-actions": [
+			{
+				"heading": "Allocate Actions",
+				"path": "/be-storyteller/?game_slug=be-demo&tab=plots",
+				"account": "storyteller",
+				"crop": ".be-modal",
+				"steps": [
+					{
+						"click": {
+							"en": "button:has-text(\"Allocate actions\")",
+							"pt_BR": "button:has-text(\"Alocar ações\")"
+						}
+					}
+				],
+				"alt": {
+					"en": "The Allocate actions panel on Plots & Rumors, which turns a character's backgrounds into a game-night action budget.",
+					"pt_BR": "O painel Alocar ações em Tramas e Rumores, que transforma os antecedentes de um personagem em um orçamento de ações para a noite de jogo."
+				}
+			}
+		],
+		"approval-flow": [
+			{
+				"heading": "How Approval Works",
+				"path": "/be-storyteller/?game_slug=be-demo&tab=approval-queue",
+				"account": "storyteller",
+				"alt": {
+					"en": "The Approval Queue, where a submitted change waits for a Storyteller to approve or reject it.",
+					"pt_BR": "A Fila de Aprovação, onde uma mudança enviada espera um Narrador aprovar ou rejeitar."
+				}
+			}
+		],
+		"approval-queue": [
+			{
+				"heading": "Approval Queue",
+				"path": "/be-storyteller/?game_slug=be-demo&tab=approval-queue",
+				"account": "storyteller",
+				"alt": {
+					"en": "The Approval Queue: a table of pending sheet changes with the character, the change, the XP, the approval level, who submitted it, and Approve and Reject buttons.",
+					"pt_BR": "A Fila de Aprovação: uma tabela de mudanças pendentes na ficha com o personagem, a mudança, o XP, o nível de aprovação, quem enviou e os botões Aprovar e Rejeitar."
+				}
+			}
+		],
+		"approval-rules": [
+			{
+				"heading": "Approval Rules",
+				"path": "/wp-admin/admin.php?page=beyond-elysium-system-config&tab=approval-rules&game=be-demo",
+				"account": "admin",
+				"alt": {
+					"en": "The Approval Rules tab: the default approval policy, with options for pending by default or auto-approve.",
+					"pt_BR": "A aba Regras de Aprovação: a política de aprovação padrão, com as opções de pendente por padrão ou aprovação automática."
+				}
+			}
+		],
+		"apr-settings": [
+			{
+				"heading": "Action & Rumor Settings",
+				"path": "/wp-admin/admin.php?page=beyond-elysium-chronicle-setup-hub&tab=apr&game=be-demo",
+				"account": "admin",
+				"alt": {
+					"en": "The Action & Rumor Settings tab: personal actions per character, copy and common action options, and the actions per level table.",
+					"pt_BR": "A aba Configurações de Ação e Rumor: ações pessoais por personagem, as opções de copiar e de ações comuns e a tabela de ações por nível."
+				}
+			}
+		],
+		"background-uses": [
+			{
+				"heading": "Background Uses",
+				"path": "/be-player/?game_slug=be-demo&tab=sheet&character_id={character:Isolde Marchetti}",
+				"account": "player",
+				"steps": [
+					{
+						"select": ".be-character-sheet__action-select",
+						"value": "ledger"
+					},
+					{
+						"click": ".be-character-sheet__action-go"
+					}
+				],
+				"alt": {
+					"en": "The Background uses ledger on a character sheet: what was recorded for each budgeted background action and what is left of the budget.",
+					"pt_BR": "O registro de Usos de antecedente em uma ficha de personagem: o que foi anotado em cada ação de antecedente e o que resta do orçamento."
+				}
+			}
+		],
+		"boon-ledger": [
+			{
+				"heading": "Boon Ledger",
+				"path": "/be-storyteller/?game_slug=be-demo&tab=boon-ledger",
+				"account": "storyteller",
+				"alt": {
+					"en": "The Boon Ledger tab with its Record a boon button and the list of boons owed.",
+					"pt_BR": "A aba Registro de Favores com o botão Registrar um favor e a lista de favores devidos."
+				}
+			}
+		],
+		"branding": [
+			{
+				"heading": "Branding",
+				"path": "/wp-admin/admin.php?page=beyond-elysium-system-config&tab=branding&game=be-demo",
+				"account": "admin",
+				"alt": {
+					"en": "The Branding tab: the site-wide accent color swatch and the Reset to plugin default button.",
+					"pt_BR": "A aba Identidade Visual: a amostra da cor de destaque do site inteiro e o botão para voltar ao padrão do plugin."
+				}
+			}
+		],
+		"character-editor": [
+			{
+				"heading": "Character Editor",
+				"path": "/be-player/?game_slug=be-demo&tab=edit&character_id={character:Isolde Marchetti}",
+				"account": "player",
+				"alt": {
+					"en": "The Edit tab for Isolde Marchetti: the portrait button, the Background field with its editor, and the sections to change below.",
+					"pt_BR": "A aba Editar de Isolde Marchetti: o botão do retrato, o campo Antecedente com seu editor e, abaixo, as seções para alterar."
+				}
+			}
+		],
+		"character-list": [
+			{
+				"heading": "Characters",
+				"path": "/be-player/?game_slug=be-demo&tab=characters",
+				"account": "player",
+				"alt": {
+					"en": "The Characters tab: a table of characters with name, type, status, XP earned, XP unspent and player, above a search box and type and status filters.",
+					"pt_BR": "A aba Personagens: uma tabela de personagens com nome, tipo, status, XP ganho, XP não gasto e jogador, abaixo de uma caixa de busca e de filtros de tipo e status."
+				}
+			}
+		],
+		"character-sheet": [
+			{
+				"heading": "Character Sheet",
+				"path": "/be-player/?game_slug=be-demo&tab=sheet&character_id={character:Isolde Marchetti}",
+				"account": "player",
+				"alt": {
+					"en": "The Sheet tab for Isolde Marchetti, a vampire: a header of name, type, status, player and XP, then the Identity and Archetypes sections.",
+					"pt_BR": "A aba Ficha de Isolde Marchetti, uma vampira: um cabeçalho com nome, tipo, status, jogador e XP, e depois as seções Identidade e Arquétipos."
+				}
+			}
+		],
+		"chronicle-access": [
+			{
+				"heading": "Chronicle Access",
+				"path": "/wp-admin/admin.php?page=beyond-elysium-chronicle-setup-hub&tab=access&game=be-demo",
+				"account": "admin",
+				"alt": {
+					"en": "The Chronicle Access tab: the accessSchema setting, data management, and the chronicle's notification options.",
+					"pt_BR": "A aba Acesso à Crônica: a configuração do accessSchema, o gerenciamento de dados e as opções de notificação da crônica."
+				}
+			}
+		],
+		"chronicle-players": [
+			{
+				"heading": "Players",
+				"path": "/be-storyteller/?game_slug=be-demo&tab=players",
+				"account": "storyteller",
+				"alt": {
+					"en": "The Players tab: join requests, the invite link to share, and the form to invite a player by email.",
+					"pt_BR": "A aba Jogadores: os pedidos para entrar, o link de convite para compartilhar e o formulário para convidar um jogador por e-mail."
+				}
+			}
+		],
+		"chronicle-setup": [
+			{
+				"heading": "Chronicle Setup",
+				"path": "/wp-admin/admin.php?page=beyond-elysium-chronicle-setup-hub&tab=setup&game=be-demo",
+				"account": "admin",
+				"alt": {
+					"en": "The Chronicle Setup checklist: rows for creature types, Storytellers, new character approval, starting experience and pages, each marked done or needing attention.",
+					"pt_BR": "A lista da Configuração da Crônica: linhas para tipos de criatura, Narradores, aprovação de novos personagens, experiência inicial e páginas, cada uma marcada como concluída ou precisando de atenção."
+				}
+			}
+		],
+		"chronicles": [
+			{
+				"heading": "Chronicles",
+				"path": "/wp-admin/admin.php?page=beyond-elysium-system-config&tab=games&game=be-demo",
+				"account": "admin",
+				"alt": {
+					"en": "The Games tab of System Config, which lists every chronicle on the site.",
+					"pt_BR": "A aba Jogos da Configuração do Sistema, que lista todas as crônicas do site."
+				}
+			}
+		],
+		"connections": [
+			{
+				"heading": "Connections",
+				"path": "/be-player/?game_slug=be-demo&tab=sheet&character_id={character:Isolde Marchetti}",
+				"account": "storyteller",
+				"crop": ".be-connection-manager",
+				"alt": {
+					"en": "The Connections section of a character sheet, with the Add connection button and the existing links.",
+					"pt_BR": "A seção Conexões de uma ficha de personagem, com o botão Adicionar conexão e os vínculos existentes."
+				}
+			}
+		],
+		"creature-stacks": [
+			{
+				"heading": "Creature Stacks",
+				"path": "/wp-admin/admin.php?page=beyond-elysium-system-config&tab=creature-stacks&game=be-demo",
+				"account": "admin",
+				"alt": {
+					"en": "The Creature Stacks tab: a table of creature types with their slug, game line and whether each is a system stack.",
+					"pt_BR": "A aba Pilhas de Criatura: uma tabela de tipos de criatura com seu slug, linha de jogo e se cada um é uma pilha do sistema."
+				}
+			}
+		],
+		"credits": [
+			{
+				"heading": "Powered by BeyondElysium",
+				"path": "/be-player/?game_slug=be-demo&tab=dashboard",
+				"account": "player",
+				"crop": ".be-modal",
+				"steps": [
+					{
+						"click": ".be-powered-by__link"
+					}
+				],
+				"alt": {
+					"en": "The credits box that opens from the Powered by BeyondElysium line at the foot of every page.",
+					"pt_BR": "A caixa de créditos que abre a partir da linha Desenvolvido por BeyondElysium no rodapé de cada página."
+				}
+			}
+		],
+		"demo-chronicle": [
+			{
+				"heading": "Demo Chronicle",
+				"path": "/wp-admin/admin.php?page=beyond-elysium-system-config&tab=games&game=be-demo",
+				"account": "admin",
+				"crop": ".be-admin__demo-section",
+				"steps": [
+					{
+						"click": "tr:has(code:text-is(\"be-demo\")) button"
+					}
+				],
+				"alt": {
+					"en": "The Games tab with a chronicle open for editing, where the demo switch is set.",
+					"pt_BR": "A aba Jogos com uma crônica aberta para edição, onde a opção de demonstração é definida."
+				}
+			}
+		],
+		"downtime-queue": [
+			{
+				"heading": "Downtime",
+				"path": "/be-storyteller/?game_slug=be-demo&tab=downtime",
+				"account": "storyteller",
+				"alt": {
+					"en": "The Downtime tab: the game date, an answered filter, an assigned-to filter, and the list of actions still waiting on an answer.",
+					"pt_BR": "A aba Tempo Livre: a data de jogo, um filtro de respondidos, um filtro de responsável e a lista de ações que ainda esperam resposta."
+				}
+			}
+		],
+		"draft-plot": [
+			{
+				"heading": "Draft a Plot from a Premise",
+				"path": "/be-storyteller/?game_slug=be-demo&tab=plots",
+				"account": "storyteller",
+				"crop": ".be-modal",
+				"steps": [
+					{
+						"click": {
+							"en": "button:has-text(\"Draft from a premise\")",
+							"pt_BR": "button:has-text(\"Rascunhar a partir de uma premissa\")"
+						}
+					}
+				],
+				"alt": {
+					"en": "The Draft from a premise panel on Plots & Rumors, where a one-line premise becomes a drafted plot.",
+					"pt_BR": "O painel Rascunhar a partir de uma premissa em Tramas e Rumores, onde uma premissa de uma linha vira o rascunho de uma trama."
+				}
+			}
+		],
+		"elementor-widgets": [
+			{
+				"heading": "Elementor Widgets",
+				"path": "/wp-admin/admin.php?page=beyond-elysium&game=be-demo",
+				"account": "admin",
+				"crop": ".be-admin-dashboard__widget-list",
+				"alt": {
+					"en": "The Widgets and shortcodes list on the Beyond Elysium landing page.",
+					"pt_BR": "A lista de widgets e shortcodes na página inicial do Beyond Elysium."
+				}
+			}
+		],
+		"email-log": [
+			{
+				"heading": "Email Log",
+				"path": "/be-storyteller/?game_slug=be-demo&tab=email-log",
+				"account": "storyteller",
+				"alt": {
+					"en": "The Email Log tab: a table of every email the chronicle sent or held back, with search and filters for kind, result and period.",
+					"pt_BR": "A aba Registro de E-mails: uma tabela de cada e-mail que a crônica enviou ou deixou de enviar, com busca e filtros de tipo, resultado e período."
+				}
+			}
+		],
+		"factions": [
+			{
+				"heading": "Factions",
+				"path": "/be-storyteller/?game_slug=be-demo&tab=factions",
+				"account": "storyteller",
+				"steps": [
+					{
+						"click": ".be-faction-manager__list li button"
+					}
+				],
+				"alt": {
+					"en": "The Factions tab with a faction chosen: its members, leaders and details.",
+					"pt_BR": "A aba Facções com uma facção escolhida: seus membros, líderes e detalhes."
+				}
+			}
+		],
+		"game-dashboard": [
+			{
+				"heading": "Game Dashboard",
+				"path": "/be-storyteller/?game_slug=be-demo&tab=dashboard",
+				"account": "storyteller",
+				"alt": {
+					"en": "The Storyteller Dashboard: cards counting characters, pending changes, waiting items, active plots and characters needing attention, with the character count by creature type.",
+					"pt_BR": "O Painel do Narrador: cartões com o número de personagens, mudanças pendentes, itens aguardando, tramas ativas e personagens precisando de atenção, e a contagem de personagens por tipo de criatura."
+				}
+			}
+		],
+		"game-nights": [
+			{
+				"heading": "Game Nights",
+				"path": "/be-storyteller/?game_slug=be-demo&tab=game-nights",
+				"account": "storyteller",
+				"alt": {
+					"en": "The Game Nights tab: the Spotlight and Session settings buttons, the New session button, and a calendar of scheduled sessions.",
+					"pt_BR": "A aba Noites de Jogo: os botões Destaque e Configurações de sessão, o botão Nova sessão e um calendário de sessões agendadas."
+				}
+			}
+		],
+		"games": [
+			{
+				"heading": "Games",
+				"path": "/wp-admin/admin.php?page=beyond-elysium-system-config&tab=games&game=be-demo",
+				"account": "admin",
+				"alt": {
+					"en": "The Games tab of System Config: a table of chronicles with their slug, type, creation date and Edit and Delete buttons.",
+					"pt_BR": "A aba Jogos da Configuração do Sistema: uma tabela de crônicas com slug, tipo, data de criação e os botões Editar e Excluir."
+				}
+			}
+		],
+		"grapevine": [
+			{
+				"heading": "Grapevine Import/Export",
+				"path": "/wp-admin/admin.php?page=beyond-elysium-import&game=be-demo",
+				"account": "admin",
+				"steps": [
+					{
+						"select": ".be-admin__filters select",
+						"value": "be-demo"
+					}
+				],
+				"alt": {
+					"en": "The Import page, where a Grapevine exchange file is uploaded to bring characters into a chronicle.",
+					"pt_BR": "A página Importar, onde um arquivo de troca do Grapevine é enviado para trazer personagens a uma crônica."
+				}
+			}
+		],
+		"house-rules": [
+			{
+				"heading": "House Rules",
+				"path": "/help-house-rules/",
+				"account": "player",
+				"crop": "[data-be-widget]",
+				"alt": {
+					"en": "The House Rules page: every catalog item the chronicle has added a note or house rule to, grouped by catalog.",
+					"pt_BR": "A página Regras da Casa: cada item do catálogo ao qual a crônica acrescentou uma nota ou regra da casa, agrupado por catálogo."
+				}
+			}
+		],
+		"import": [
+			{
+				"heading": "Import",
+				"path": "/wp-admin/admin.php?page=beyond-elysium-import&game=be-demo",
+				"account": "admin",
+				"steps": [
+					{
+						"select": ".be-admin__filters select",
+						"value": "be-demo"
+					}
+				],
+				"alt": {
+					"en": "The Import page: the five steps from Upload to Commit, and the file chooser for a Grapevine exchange file.",
+					"pt_BR": "A página Importar: as cinco etapas de Enviar até Confirmar e o seletor de arquivo para um arquivo de troca do Grapevine."
+				}
+			}
+		],
+		"joining": [
+			{
+				"heading": "Joining a Chronicle",
+				"path": "/be-player/?game_slug=be-demo&tab=dashboard",
+				"account": "player",
+				"crop": ".be-join-chronicle__panel",
+				"steps": [
+					{
+						"click": ".be-join-chronicle__toggle"
+					},
+					{
+						"click": ".be-join-chronicle__list li:has-text(\"Elsewhere\") .be-join-chronicle__button"
+					}
+				],
+				"alt": {
+					"en": "The list of chronicles a player can ask to join, opened from the join button in My Chronicle.",
+					"pt_BR": "A lista de crônicas em que um jogador pode pedir para entrar, aberta pelo botão de entrada em Minha Crônica."
+				}
+			}
+		],
+		"my-chronicle": [
+			{
+				"heading": "My Chronicle",
+				"path": "/be-player/?game_slug=be-demo&tab=dashboard",
+				"account": "player",
+				"height": 340,
+				"alt": {
+					"en": "The top of My Chronicle: the chronicle picker with the Beyond Elysium Demo chronicle chosen, the demo notice, the join button and the section picker set to Dashboard.",
+					"pt_BR": "O topo de Minha Crônica: o seletor de crônica com a crônica Beyond Elysium Demo escolhida, o aviso de demonstração, o botão para entrar e o seletor de seção em Painel."
+				}
+			}
+		],
+		"my-plots": [
+			{
+				"heading": "My Plots & Rumors",
+				"path": "/be-player/?game_slug=be-demo&tab=plots",
+				"account": "player",
+				"alt": {
+					"en": "The My Plots & Rumors tab: a list of the player's plots, each with its date.",
+					"pt_BR": "A aba Minhas Tramas e Rumores: uma lista das tramas do jogador, cada uma com sua data."
+				}
+			}
+		],
+		"my-queue": [
+			{
+				"heading": "My Queue",
+				"path": "/be-storyteller/?game_slug=be-demo&tab=my-queue",
+				"account": "storyteller",
+				"alt": {
+					"en": "The My Queue tab: groups for downtime, plots, castings and unassigned work, each with what is waiting.",
+					"pt_BR": "A aba Minha Fila: grupos para tempo livre, tramas, escalações e trabalho sem responsável, cada um com o que está esperando."
+				}
+			}
+		],
+		"npc-casting": [
+			{
+				"heading": "NPC Casting Brief",
+				"path": "/be-storyteller/?game_slug=be-demo&tab=my-queue",
+				"account": "storyteller",
+				"crop": ".be-casting-brief",
+				"steps": [
+					{
+						"click": "button:has-text(\"Radu Bathory\")"
+					}
+				],
+				"alt": {
+					"en": "The casting brief a player reads when cast as an NPC for a session: the NPC's name, the session's date and place, and the Storyteller's notes.",
+					"pt_BR": "O resumo de escalação que um jogador lê quando é escalado como NPC em uma sessão: o nome do NPC, a data e o local da sessão e as notas do Narrador."
+				}
+			}
+		],
+		"player-dashboard": [
+			{
+				"heading": "Dashboard",
+				"path": "/be-player/?game_slug=be-demo&tab=dashboard",
+				"account": "player",
+				"alt": {
+					"en": "A player's Dashboard in My Chronicle: the player's own characters listed with their types, their pending changes, and their groups.",
+					"pt_BR": "O Painel de um jogador em Minha Crônica: os personagens do próprio jogador com seus tipos, as mudanças pendentes e os grupos."
+				}
+			}
+		],
+		"player-order": [
+			{
+				"heading": "Your Own Order",
+				"path": "/be-player/?game_slug=be-demo&tab=edit&character_id={character:Isolde Marchetti}",
+				"account": "player",
+				"crop": "details.be-collapsible:has(.be-tiered-power-editor) >> nth=0",
+				"steps": [
+					{
+						"click": ".be-tiered-power-editor__reorder-trigger >> nth=0"
+					}
+				],
+				"alt": {
+					"en": "A section in the character editor whose entries can be put in the player's own order.",
+					"pt_BR": "Uma seção do editor de personagem cujos itens podem ser colocados na ordem do próprio jogador."
+				}
+			}
+		],
+		"plot-manager": [
+			{
+				"heading": "Plots & Rumors",
+				"path": "/be-storyteller/?game_slug=be-demo&tab=plots",
+				"account": "storyteller",
+				"alt": {
+					"en": "The Plots & Rumors tab: the toolbar with Allocate actions, Generate rumors and Draft from a premise, the New plot button, filters, and a grid of plot cards.",
+					"pt_BR": "A aba Tramas e Rumores: a barra com Alocar ações, Gerar rumores e Rascunhar a partir de uma premissa, o botão Nova trama, os filtros e uma grade de cartões de trama."
+				}
+			}
+		],
+		"point-audit": [
+			{
+				"heading": "Point Audit",
+				"path": "/be-player/?game_slug=be-demo&tab=sheet&character_id={character:Isolde Marchetti}",
+				"account": "storyteller",
+				"steps": [
+					{
+						"select": ".be-character-sheet__action-select",
+						"value": "audit"
+					},
+					{
+						"click": ".be-character-sheet__action-go"
+					}
+				],
+				"alt": {
+					"en": "The Point audit panel: every trait, power, pool and identity field on the sheet priced line by line.",
+					"pt_BR": "O painel Auditoria de pontos: cada traço, poder, reserva e campo de identidade da ficha com o preço linha a linha."
+				}
+			}
+		],
+		"pools-identity-editor": [
+			{
+				"heading": "Resource Pools & Identity Fields",
+				"path": "/be-player/?game_slug=be-demo&tab=edit&character_id={character:Isolde Marchetti}",
+				"account": "player",
+				"crop": "details.be-collapsible:has(.be-resource-pool-editor) >> nth=0",
+				"alt": {
+					"en": "The resource pools and identity fields in the character editor: steppers for pools such as Willpower and Blood, and dropdowns for Clan and Nature.",
+					"pt_BR": "As reservas e os campos de identidade no editor de personagem: contadores para reservas como Força de Vontade e Sangue, e listas para Clã e Natureza."
+				}
+			}
+		],
+		"positions": [
+			{
+				"heading": "Positions",
+				"path": "/be-storyteller/?game_slug=be-demo&tab=factions",
+				"account": "storyteller",
+				"steps": [
+					{
+						"select": ".be-tab-strip__select >> nth=1",
+						"value": "positions"
+					},
+					{
+						"click": ".be-tab-strip__go >> nth=1"
+					}
+				],
+				"alt": {
+					"en": "The Factions tab with a faction chosen, where the court's positions are listed.",
+					"pt_BR": "A aba Facções com uma facção escolhida, onde os cargos da corte são listados."
+				}
+			}
+		],
+		"power-editor": [
+			{
+				"heading": "Powers",
+				"path": "/be-player/?game_slug=be-demo&tab=edit&character_id={character:Isolde Marchetti}",
+				"account": "player",
+				"crop": "details.be-collapsible:has(.be-tiered-power-editor) >> nth=0",
+				"alt": {
+					"en": "A tiered power section in the character editor: the Disciplines the character holds, with their levels.",
+					"pt_BR": "Uma seção de poderes em níveis no editor de personagem: as Disciplinas que o personagem possui, com seus níveis."
+				}
+			}
+		],
+		"profile-settings": [
+			{
+				"heading": "Profile Settings",
+				"path": "/wp-admin/profile.php",
+				"account": "admin",
+				"crop": "#your-profile h2:text-is(\"Beyond Elysium\") + table.form-table",
+				"alt": {
+					"en": "The WordPress profile screen with the Beyond Elysium notification options.",
+					"pt_BR": "A tela de perfil do WordPress com as opções de notificação do Beyond Elysium."
+				}
+			}
+		],
+		"propose-item": [
+			{
+				"heading": "Propose an Item",
+				"path": "/be-player/?game_slug=be-demo&tab=propose-item&character_id={character:Isolde Marchetti}",
+				"account": "player",
+				"alt": {
+					"en": "The Propose an Item tab: the form asking what the thing is, its name and its description, for a Storyteller to review.",
+					"pt_BR": "A aba Propor um Item: o formulário que pergunta o que é a coisa, seu nome e sua descrição, para um Narrador revisar."
+				}
+			}
+		],
+		"provisioned-pages": [
+			{
+				"heading": "Front-End Pages",
+				"path": "/wp-admin/admin.php?page=beyond-elysium&game=be-demo",
+				"account": "admin",
+				"crop": ".be-admin-dashboard table.widefat:nth-of-type(2)",
+				"alt": {
+					"en": "The list of front-end pages on the Beyond Elysium landing page: the game dashboard and notifications pages the plugin provisions.",
+					"pt_BR": "A lista de páginas do front-end na página inicial do Beyond Elysium: as páginas de painel do jogo e de notificações que o plugin cria."
+				}
+			}
+		],
+		"query-tool": [
+			{
+				"heading": "Query Tool",
+				"path": "/wp-admin/admin.php?page=beyond-elysium-query-hub&tab=query&game=be-demo",
+				"account": "admin",
+				"steps": [
+					{
+						"select": ".be-admin__filters select",
+						"value": "be-demo"
+					}
+				],
+				"alt": {
+					"en": "The Query Tool: tabs for characters, items, locations and rotes, match options, a field search, a Save as box and the result count.",
+					"pt_BR": "A Ferramenta de Consulta: abas de personagens, itens, locais e rotes, opções de correspondência, uma busca de campos, uma caixa Salvar como e a contagem de resultados."
+				}
+			}
+		],
+		"relationships": [
+			{
+				"heading": "Relationships",
+				"path": "/be-storyteller/?game_slug=be-demo&tab=relationships",
+				"account": "storyteller",
+				"steps": [
+					{
+						"click": "input[type=\"checkbox\"]"
+					}
+				],
+				"alt": {
+					"en": "The Relationships tab: a chart of character relationships with filters for the focus character, faction and creature type.",
+					"pt_BR": "A aba Relacionamentos: um gráfico dos relacionamentos entre personagens com filtros de personagem em foco, facção e tipo de criatura."
+				}
+			}
+		],
+		"release-batches": [
+			{
+				"heading": "Releases",
+				"path": "/be-storyteller/?game_slug=be-demo&tab=releases",
+				"account": "storyteller",
+				"alt": {
+					"en": "The Releases tab: the release schedule, the New batch button, and the scheduled and draft batches.",
+					"pt_BR": "A aba Lançamentos: o cronograma de lançamentos, o botão Novo lote e os lotes agendados e em rascunho."
+				}
+			}
+		],
+		"reports": [
+			{
+				"heading": "Reports",
+				"path": "/wp-admin/admin.php?page=beyond-elysium-query-hub&tab=reports&game=be-demo",
+				"account": "admin",
+				"steps": [
+					{
+						"select": ".be-admin__filters select",
+						"value": "be-demo"
+					}
+				],
+				"alt": {
+					"en": "The Reports tab: a table of ready-made reports, each with a Generate PDF button.",
+					"pt_BR": "A aba Relatórios: uma tabela de relatórios prontos, cada um com um botão Gerar PDF."
+				}
+			}
+		],
+		"roles": [
+			{
+				"heading": "Roles",
+				"path": "/be-storyteller/?game_slug=be-demo&tab=players",
+				"account": "storyteller",
+				"alt": {
+					"en": "The Players tab, where a chronicle's members and their roles are managed.",
+					"pt_BR": "A aba Jogadores, onde se gerenciam os membros de uma crônica e seus papéis."
+				}
+			}
+		],
+		"rumors": [
+			{
+				"heading": "Rumors",
+				"path": "/be-storyteller/?game_slug=be-demo&tab=plots",
+				"account": "storyteller",
+				"crop": ".be-modal",
+				"steps": [
+					{
+						"click": {
+							"en": "button:has-text(\"Generate rumors\")",
+							"pt_BR": "button:has-text(\"Gerar rumores\")"
+						}
+					}
+				],
+				"alt": {
+					"en": "The Generate rumors panel on Plots & Rumors, for adding a rumor by hand or generating them for a game date.",
+					"pt_BR": "O painel Gerar rumores em Tramas e Rumores, para adicionar um rumor à mão ou gerá-los para uma data de jogo."
+				}
+			}
+		],
+		"schema-block-notes": [
+			{
+				"heading": "Catalog Descriptions & Approval Schedules",
+				"path": "/wp-admin/admin.php?page=beyond-elysium-system-config&tab=schema-blocks&game=be-demo",
+				"account": "admin",
+				"crop": ".be-def-editor",
+				"steps": [
+					{
+						"click": ".be-admin__table tbody tr:first-child button"
+					}
+				],
+				"alt": {
+					"en": "A schema block opened from the Schema Blocks table: its fields and flags, and on each row the Description and Approval by value buttons that open the note and schedule editors.",
+					"pt_BR": "Um bloco de esquema aberto a partir da tabela de Blocos de Esquema: seus campos e opções e, em cada linha, os botões Descrição e Aprovação por valor que abrem os editores de nota e de cronograma."
+				}
+			}
+		],
+		"schema-blocks": [
+			{
+				"heading": "Schema Blocks",
+				"path": "/wp-admin/admin.php?page=beyond-elysium-system-config&tab=schema-blocks&game=be-demo",
+				"account": "admin",
+				"alt": {
+					"en": "The Schema Blocks tab: a table of blocks with slug, section type and whether each is a system block, with a View button on each row.",
+					"pt_BR": "A aba Blocos de Esquema: uma tabela de blocos com slug, tipo de seção e se cada um é um bloco do sistema, com um botão Ver em cada linha."
+				}
+			}
+		],
+		"secrets": [
+			{
+				"heading": "Secrets",
+				"path": "/be-storyteller/?game_slug=be-demo&tab=secrets",
+				"account": "storyteller",
+				"alt": {
+					"en": "The Secrets tab: a form for a new secret with a title, what it is attached to, and a rich text editor.",
+					"pt_BR": "A aba Segredos: um formulário para um novo segredo com título, ao que ele está ligado e um editor de texto formatado."
+				}
+			}
+		],
+		"secure-printing": [
+			{
+				"heading": "Secure Printing",
+				"path": "/wp-admin/admin.php?page=beyond-elysium-system-config&tab=secure-printing&game=be-demo",
+				"account": "admin",
+				"alt": {
+					"en": "The Secure Printing tab: the signing status with the certificate, key and passphrase settings, and the option to sign printed sheets and reports.",
+					"pt_BR": "A aba Impressão Segura: o status da assinatura com as configurações de certificado, chave e frase secreta, e a opção de assinar fichas e relatórios impressos."
+				}
+			}
+		],
+		"send-grapevine-file": [
+			{
+				"heading": "Send a Grapevine File",
+				"path": "/be-player/?game_slug=be-demo&tab=send-file",
+				"account": "player",
+				"alt": {
+					"en": "The Send a Grapevine File tab: the chronicle picker, the file chooser, the Send button and the list of files already sent.",
+					"pt_BR": "A aba Enviar um Arquivo do Grapevine: o seletor de crônica, o seletor de arquivo, o botão Enviar e a lista de arquivos já enviados."
+				}
+			}
+		],
+		"sheet-customize": [
+			{
+				"heading": "Customize Appearance",
+				"path": "/be-player/?game_slug=be-demo&tab=sheet&character_id={character:Isolde Marchetti}",
+				"account": "storyteller",
+				"steps": [
+					{
+						"select": ".be-character-sheet__action-select",
+						"value": "appearance"
+					},
+					{
+						"click": ".be-character-sheet__action-go"
+					}
+				],
+				"alt": {
+					"en": "The Customize appearance panel on a character sheet, with the choices for font, colors, background image and section graphics.",
+					"pt_BR": "O painel Personalizar aparência em uma ficha de personagem, com as opções de fonte, cores, imagem de fundo e gráficos de seção."
+				}
+			}
+		],
+		"sheet-history": [
+			{
+				"heading": "Change History",
+				"path": "/be-player/?game_slug=be-demo&tab=sheet&character_id={character:Isolde Marchetti}",
+				"account": "player",
+				"steps": [
+					{
+						"select": ".be-character-sheet__action-select",
+						"value": "history"
+					},
+					{
+						"click": ".be-character-sheet__action-go"
+					}
+				],
+				"alt": {
+					"en": "The change history of a character: every submitted change, newest first, each with its status.",
+					"pt_BR": "O histórico de mudanças de um personagem: cada mudança enviada, da mais recente para a mais antiga, com seu status."
+				}
+			}
+		],
+		"sheet-print-export": [
+			{
+				"heading": "Print / Export",
+				"path": "/be-player/?game_slug=be-demo&tab=sheet&character_id={character:Isolde Marchetti}",
+				"account": "player",
+				"height": 520,
+				"steps": [
+					{
+						"select": ".be-character-sheet__action-select",
+						"value": "print"
+					},
+					{
+						"click": ".be-character-sheet__action-go"
+					}
+				],
+				"alt": {
+					"en": "The Print / Export panel open on a character sheet: checkboxes for background, notes, XP history, full power names and XP costs, a paper size choice and an Open PDF button.",
+					"pt_BR": "O painel Imprimir / Exportar aberto em uma ficha de personagem: caixas para antecedente, notas, histórico de XP, nomes completos de poderes e custos de XP, a escolha do papel e um botão Abrir PDF."
+				}
+			}
+		],
+		"signed-sheets": [
+			{
+				"heading": "Signed Sheets",
+				"path": "/wp-admin/admin.php?page=beyond-elysium-system-config&tab=secure-printing&game=be-demo",
+				"account": "admin",
+				"alt": {
+					"en": "The Secure Printing tab, where the site's signing certificate for printed sheets is set up.",
+					"pt_BR": "A aba Impressão Segura, onde se configura o certificado de assinatura do site para fichas impressas."
+				}
+			}
+		],
+		"storyteller-only": [
+			{
+				"heading": "Storyteller-Only Content",
+				"path": "/be-storyteller/?game_slug=be-demo&tab=secrets",
+				"account": "storyteller",
+				"alt": {
+					"en": "The Secrets tab, where text kept from players is written and attached to a plot, item, location or character.",
+					"pt_BR": "A aba Segredos, onde se escreve o texto mantido longe dos jogadores e se liga a uma trama, item, local ou personagem."
+				}
+			}
+		],
+		"storyteller-toolkit": [
+			{
+				"heading": "Storyteller Toolkit",
+				"path": "/be-storyteller/?game_slug=be-demo&tab=dashboard",
+				"account": "storyteller",
+				"height": 340,
+				"alt": {
+					"en": "The top of the Storyteller Toolkit: the chronicle picker, the demo notice and the section picker set to Dashboard.",
+					"pt_BR": "O topo do Kit de Ferramentas do Narrador: o seletor de crônica, o aviso de demonstração e o seletor de seção em Painel."
+				}
+			}
+		],
+		"templates": [
+			{
+				"heading": "Templates",
+				"path": "/wp-admin/admin.php?page=beyond-elysium-system-config&tab=templates&game=be-demo",
+				"account": "admin",
+				"alt": {
+					"en": "The Templates tab: a table of sheet templates with their type and the creature stack each belongs to.",
+					"pt_BR": "A aba Modelos: uma tabela de modelos de ficha com seu tipo e a pilha de criatura a que cada um pertence."
+				}
+			}
+		],
+		"trait-editor": [
+			{
+				"heading": "Trait Lists",
+				"path": "/be-player/?game_slug=be-demo&tab=edit&character_id={character:Isolde Marchetti}",
+				"account": "player",
+				"crop": "details.be-collapsible >> nth=12",
+				"alt": {
+					"en": "A trait list in the character editor: a list of abilities, each with its name and level, and the controls to add and remove entries.",
+					"pt_BR": "Uma lista de traços no editor de personagem: uma lista de habilidades, cada uma com seu nome e nível, e os controles para adicionar e remover itens."
+				}
+			}
+		],
+		"transfer": [
+			{
+				"heading": "Send Sheet",
+				"path": "/be-player/?game_slug=be-demo&tab=sheet&character_id={character:Isolde Marchetti}",
+				"account": "storyteller",
+				"steps": [
+					{
+						"select": ".be-character-sheet__action-select",
+						"value": "send"
+					},
+					{
+						"click": ".be-character-sheet__action-go"
+					}
+				],
+				"alt": {
+					"en": "The Send Sheet panel on a character sheet, with the controls to send the character to another chronicle and the list of open visits.",
+					"pt_BR": "O painel Enviar Ficha em uma ficha de personagem, com os controles para enviar o personagem a outra crônica e a lista de visitas em aberto."
+				}
+			}
+		],
+		"translations": [
+			{
+				"heading": "Catalog Term Translation",
+				"path": "/wp-admin/admin.php?page=beyond-elysium-system-config&tab=translations&game=be-demo",
+				"account": "admin",
+				"alt": {
+					"en": "The Translations tab: the language list, the progress of translated terms, filters, and a table of English terms with their Brazilian Portuguese translations.",
+					"pt_BR": "A aba Traduções: a lista de idiomas, o progresso dos termos traduzidos, os filtros e uma tabela de termos em inglês com suas traduções em português do Brasil."
+				}
+			}
+		],
+		"verify": [
+			{
+				"heading": "Verify Character",
+				"path": "/be-verify/",
+				"account": "player",
+				"alt": {
+					"en": "The Verify Character page: a box for the verification code printed on a document and a Check button.",
+					"pt_BR": "A página Verificar Personagem: uma caixa para o código de verificação impresso em um documento e um botão Verificar."
+				}
+			}
+		],
+		"what-i-know": [
+			{
+				"heading": "What I Know",
+				"path": "/be-player/?game_slug=be-demo&tab=what-i-know",
+				"account": "player",
+				"alt": {
+					"en": "The What I Know tab: the secrets revealed to the player's characters, each with its plot or place and a button to tell someone.",
+					"pt_BR": "A aba O Que Eu Sei: os segredos revelados aos personagens do jogador, cada um com sua trama ou local e um botão para contar a alguém."
+				}
+			}
+		],
+		"whos-who": [
+			{
+				"heading": "Who's Who",
+				"path": "/be-player/?game_slug=be-demo&tab=whos-who",
+				"account": "player",
+				"alt": {
+					"en": "The Who's Who tab: cards for the chronicle's public characters, with their display names, titles and factions.",
+					"pt_BR": "A aba Quem é Quem: cartões dos personagens públicos da crônica, com nomes de exibição, títulos e facções."
+				}
+			}
+		],
+		"world-objects": [
+			{
+				"heading": "Items & Locations",
+				"path": "/be-storyteller/?game_slug=be-demo&tab=world-objects",
+				"account": "storyteller",
+				"alt": {
+					"en": "The Items & Locations tab: buttons to add an item or one from the book, a list of items with a search box and catalog filter, and the details of the item chosen.",
+					"pt_BR": "A aba Itens e Locais: botões para adicionar um item ou um do livro, uma lista de itens com caixa de busca e filtro de catálogo, e os detalhes do item escolhido."
+				}
+			}
+		],
+		"writing-assist": [
+			{
+				"heading": "AI Writing Assist",
+				"path": "/be-storyteller/?game_slug=be-demo&tab=plots",
+				"account": "storyteller",
+				"height": 330,
+				"crop": ".be-modal",
+				"steps": [
+					{
+						"click": {
+							"en": "button:has-text(\"Generate rumors\")",
+							"pt_BR": "button:has-text(\"Gerar rumores\")"
+						}
+					}
+				],
+				"alt": {
+					"en": "The top of the rumor form on Plots & Rumors, with the AI Assist button beside the title of the rumor.",
+					"pt_BR": "O topo do formulário de rumor em Tramas e Rumores, com o botão Assistência de IA ao lado do título do rumor."
+				}
+			}
+		],
+		"writing-assist-chronicle": [
+			{
+				"heading": "AI Assist Settings (Chronicle)",
+				"path": "/wp-admin/admin.php?page=beyond-elysium-chronicle-setup-hub&tab=ai-assist&game=be-demo",
+				"account": "admin",
+				"steps": [
+					{
+						"select": "select:not(.be-tab-strip__select) >> nth=0",
+						"value": "be-demo"
+					}
+				],
+				"alt": {
+					"en": "The AI Assist tab for a chronicle: the switch for this chronicle, the provider choice and the field for the chronicle's own key.",
+					"pt_BR": "A aba Assistência de IA de uma crônica: a chave para esta crônica, a escolha do provedor e o campo para a chave própria da crônica."
+				}
+			}
+		],
+		"writing-assist-site": [
+			{
+				"heading": "AI Assist Settings (Site)",
+				"path": "/wp-admin/admin.php?page=beyond-elysium-system-config&tab=ai-assist&game=be-demo",
+				"account": "admin",
+				"alt": {
+					"en": "The AI Assist tab of System Config: the site-wide provider, the API key field and the Test Connection button.",
+					"pt_BR": "A aba Assistência de IA da Configuração do Sistema: o provedor do site inteiro, o campo da chave de API e o botão Testar Conexão."
+				}
+			}
+		]
+	}
+}

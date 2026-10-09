@@ -44,7 +44,8 @@ export function IdentityFieldEditor( {
 	readOnly,
 	gameSlug,
 }: IdentityFieldEditorProps ) {
-	const baseId = useId();
+	// Stripped of ":".
+	const baseId = useId().replace( /:/g, '' );
 	const setField = ( name: string, value: IdentityFieldValue ) => {
 		onChange( blockSlug, { ...data, [ name ]: value } );
 	};

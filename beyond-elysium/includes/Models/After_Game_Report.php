@@ -90,7 +90,7 @@ class After_Game_Report {
 	/**
 	 * Creates a new report.
 	 *
-	 * @param array $data
+	 * @param array<string,mixed> $data
 	 * @return int|false
 	 */
 	public static function create( array $data ) {
@@ -110,8 +110,8 @@ class After_Game_Report {
 	/**
 	 * Updates a report's own three text fields.
 	 *
-	 * @param int   $id
-	 * @param array $data
+	 * @param int                 $id
+	 * @param array<string,mixed> $data
 	 * @return bool
 	 */
 	public static function update( int $id, array $data ): bool {

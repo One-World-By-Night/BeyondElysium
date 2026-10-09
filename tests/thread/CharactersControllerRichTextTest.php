@@ -7,7 +7,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * Background and Notes are meant to be real rich text (a htmlarea in the editor).
+ * Background and Notes are rich text (an htmlarea in the editor).
  */
 class CharactersControllerRichTextTest extends WP_UnitTestCase {
 

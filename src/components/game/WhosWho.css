@@ -23,6 +23,20 @@
 	margin: 0 0 0.4rem;
 }
 
+.be-whos-who__group-title {
+	margin: 1.5rem 0 0.75rem;
+}
+
+.be-whos-who__group-title:first-of-type {
+	margin-top: 0;
+}
+
+.be-whos-who__played-by {
+	margin: 0 0 0.4rem;
+	font-size: 0.85rem;
+	color: var(--be-gray-8);
+}
+
 .be-whos-who__meta {
 	margin-top: 0.5rem;
 }

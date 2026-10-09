@@ -90,6 +90,22 @@ class In_Type {
 	}
 
 	/**
+	 * Whether any creature type in the given chronicle declares an in_type test for the given block.
+	 *
+	 * @param string $block_slug
+	 * @param string $game_slug
+	 * @return bool
+	 */
+	public static function has_test_for_block( string $block_slug, string $game_slug ): bool {
+		foreach ( Creature_Stack::all_for_game( $game_slug ) as $stack ) {
+			if ( self::tests_for( $stack, $block_slug ) !== [] ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * The tests on a creature type's section for one block.
 	 *
 	 * @return array<int,mixed>
@@ -107,6 +123,7 @@ class In_Type {
 	 * Whether one test passes for one family.
 	 *
 	 * @param array<string,mixed> $test
+	 * @param array<string,mixed> $sheet
 	 */
 	private static function passes( array $test, string $name, ?object $family, array $sheet, callable $block ): bool {
 		if ( isset( $test['when'] ) && ! self::applies( self::as_array( $test['when'] ), $sheet ) ) {

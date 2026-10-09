@@ -2,6 +2,8 @@ import {
 	characterEditorUrl,
 	characterSheetUrl,
 	isPrintCanvasPath,
+	newCharacterUrl,
+	readNewNpcFromUrl,
 	playerTabUrl,
 	storytellerTabUrl,
 	pluginPageUrl,
@@ -10,6 +12,7 @@ import {
 	preselectedChronicle,
 	writeGameToUrl,
 	sendFileLinkUrl,
+	joinLinkUrl,
 	PLAYER_TABS,
 	STORYTELLER_TABS,
 } from './pluginPages';
@@ -66,7 +69,7 @@ describe( 'pluginPageUrl', () => {
 	} );
 
 	/**
-	 * A payload from before this field existed must still build a usable link.
+	 * A payload without `homeUrl` still builds a usable link.
 	 */
 	it( 'falls back to the origin when homeUrl is absent', () => {
 		window.beyondElysium = {
@@ -121,6 +124,20 @@ describe( 'sendFileLinkUrl', () => {
 	it( 'points at Send a Grapevine File with the URL-encoded chronicle already picked', () => {
 		expect( sendFileLinkUrl( 'kings of new york' ) ).toBe(
 			`${ ORIGIN }/be-player/?tab=send-file&game_slug=kings%20of%20new%20york`
+		);
+	} );
+} );
+
+describe( 'joinLinkUrl', () => {
+	it( 'points at the Dashboard tab with join_slug and join=1', () => {
+		expect( joinLinkUrl( 'kony' ) ).toBe(
+			`${ ORIGIN }/be-player/?tab=dashboard&join_slug=kony&join=1`
+		);
+	} );
+
+	it( 'URL-encodes a game slug with special characters', () => {
+		expect( joinLinkUrl( 'a b' ) ).toBe(
+			`${ ORIGIN }/be-player/?tab=dashboard&join_slug=a%20b&join=1`
 		);
 	} );
 } );
@@ -215,5 +232,36 @@ describe( 'writeGameToUrl', () => {
 			preselectedChronicle( [ { slug: 'kony' }, { slug: 'boston' } ] )
 				?.slug
 		).toBe( 'boston' );
+	} );
+} );
+
+describe( 'newCharacterUrl', () => {
+	it( 'opens the editor on a chronicle with no character chosen', () => {
+		expect( newCharacterUrl( 'kony' ) ).toBe(
+			`${ ORIGIN }/be-player/?tab=edit&game_slug=kony`
+		);
+	} );
+
+	it( 'asks for the NPC box to start ticked', () => {
+		expect( newCharacterUrl( 'kony', { npc: true } ) ).toBe(
+			`${ ORIGIN }/be-player/?tab=edit&game_slug=kony&npc=1`
+		);
+	} );
+
+	it( 'encodes the chronicle slug', () => {
+		expect( newCharacterUrl( 'a b', { npc: true } ) ).toBe(
+			`${ ORIGIN }/be-player/?tab=edit&game_slug=a%20b&npc=1`
+		);
+	} );
+} );
+
+describe( 'readNewNpcFromUrl', () => {
+	it( 'is true only for npc=1', () => {
+		setLocation( `${ ORIGIN }/be-player/?tab=edit&game_slug=kony&npc=1` );
+		expect( readNewNpcFromUrl() ).toBe( true );
+		setLocation( `${ ORIGIN }/be-player/?tab=edit&game_slug=kony&npc=0` );
+		expect( readNewNpcFromUrl() ).toBe( false );
+		setLocation( `${ ORIGIN }/be-player/?tab=edit&game_slug=kony` );
+		expect( readNewNpcFromUrl() ).toBe( false );
 	} );
 } );

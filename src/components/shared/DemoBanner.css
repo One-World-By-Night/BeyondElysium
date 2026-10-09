@@ -1,0 +1,8 @@
+.be-demo-banner {
+	margin: 0 0 1rem;
+	padding: 0.6rem 1rem;
+	border: 1px solid var(--be-gold-11);
+	border-radius: 4px;
+	background: var(--be-gold-17);
+	font-size: 0.9rem;
+}

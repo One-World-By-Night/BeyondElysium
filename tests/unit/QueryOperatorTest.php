@@ -254,7 +254,7 @@ class QueryOperatorTest extends TestCase {
 	}
 
 	// -------------------------------------------------------------------------
-	// Applicability table (a: the UI must never offer what the server rejects)
+	// Applicability table: the UI never offers what the server rejects
 	// -------------------------------------------------------------------------
 
 	public function test_is_applicable_matches_the_full_table(): void {

@@ -214,6 +214,49 @@ class AudienceThreadTest extends WP_UnitTestCase {
 		$this->assertContains( $marcus_id, $ids, 'the direct connection' );
 	}
 
+	public function test_visible_character_ids_includes_a_connected_character_on_a_storytellers_only_item(): void {
+		$connected_id     = $this->character( [ 'name' => 'Connected' ] );
+		$unconnected_id   = $this->character( [ 'name' => 'Unconnected' ] );
+
+		$item_id = World_Object::create( [
+			'game_id'     => $this->game_id,
+			'object_type' => 'item',
+			'name'        => 'A Storyteller-Only Dagger',
+			'audience'    => Audience::STORYTELLERS,
+		] );
+		Connection::create( [
+			'game_id'     => $this->game_id,
+			'source_type' => 'character',
+			'source_id'   => $connected_id,
+			'target_type' => 'world_object',
+			'target_id'   => $item_id,
+			'label'       => 'holds',
+			'created_by'  => 1,
+		] );
+
+		$item = World_Object::find( (int) $item_id );
+		$ids  = Audience::visible_character_ids( $item, 'item', $this->game_slug );
+
+		$this->assertContains( $connected_id, $ids, 'the connected character sees it, whatever its audience' );
+		$this->assertNotContains( $unconnected_id, $ids );
+	}
+
+	public function test_visible_character_ids_is_empty_for_a_held_plot(): void {
+		$character_id = $this->character();
+		global $wpdb;
+		$wpdb->insert( $wpdb->prefix . 'be_plots', [
+			'game_id' => $this->game_id, 'title' => 'A Held Plot', 'audience' => Audience::EVERYONE,
+			'held' => 1, 'release_batch_id' => null,
+			'created_at' => current_time( 'mysql' ), 'updated_at' => current_time( 'mysql' ),
+		] );
+		$plot_id = (int) $wpdb->insert_id;
+		$plot    = \BeyondElysium\Models\Plot::find( $plot_id );
+
+		$ids = Audience::visible_character_ids( $plot, 'plot', $this->game_slug );
+
+		$this->assertSame( [], $ids, 'held with no out batch reaches nobody, same as can_see() would say' );
+	}
+
 	/**
 	 * Seeds a minimal vampire-identity schema block with a Clan field.
 	 */

@@ -3,8 +3,19 @@
 namespace BeyondElysium\REST;
 
 use BeyondElysium\Core\Authorization;
+use BeyondElysium\Database\Transaction;
+use BeyondElysium\Models\After_Game_Report;
+use BeyondElysium\Models\Attendance;
+use BeyondElysium\Models\Character;
+use BeyondElysium\Models\Faction;
 use BeyondElysium\Models\Game;
+use BeyondElysium\Models\Game_Session;
+use BeyondElysium\Models\Plot;
+use BeyondElysium\Models\Plot_Entry;
 use BeyondElysium\Services\Ai_Assist;
+use BeyondElysium\Services\Audience;
+use BeyondElysium\Services\Demo_Chronicle;
+use BeyondElysium\Services\Rumor_Generator;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -22,6 +33,7 @@ class Ai_Assist_Controller extends Base_Controller {
 		'character_biography'      => 'be_manage_characters',
 		'character_notes'          => 'be_manage_characters',
 		'npc_roleplaying_notes'    => 'be_manage_characters',
+		'npc_public_description'   => 'be_manage_characters',
 		'plot_description'         => 'be_manage_plots',
 		'plot_cliffhanger'         => 'be_manage_plots',
 		'plot_st_notes'            => 'be_manage_plots',
@@ -85,6 +97,45 @@ class Ai_Assist_Controller extends Base_Controller {
 			],
 		] );
 
+		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/' . $this->rest_base . '/npc-draft', [
+			[
+				'methods'             => 'POST',
+				'callback'            => [ $this, 'draft_npc' ],
+				'permission_callback' => $this->permission( 'be_manage_characters' ),
+				'args'                => [
+					'character_id' => [ 'type' => 'integer', 'required' => true ],
+					'instruction'  => [ 'type' => 'string', 'default' => '', 'sanitize_callback' => 'sanitize_text_field' ],
+				],
+			],
+		] );
+
+		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/' . $this->rest_base . '/plot-draft', [
+			[
+				'methods'             => 'POST',
+				'callback'            => [ $this, 'draft_plot' ],
+				'permission_callback' => $this->permission( 'be_manage_plots' ),
+				'args'                => [
+					'premise'       => [ 'type' => 'string', 'required' => true, 'sanitize_callback' => 'sanitize_textarea_field' ],
+					'character_ids' => [ 'type' => 'array', 'default' => [], 'items' => [ 'type' => 'integer' ] ],
+					'npc_ids'       => [ 'type' => 'array', 'default' => [], 'items' => [ 'type' => 'integer' ] ],
+					'faction_ids'   => [ 'type' => 'array', 'default' => [], 'items' => [ 'type' => 'integer' ] ],
+					'instruction'   => [ 'type' => 'string', 'default' => '', 'sanitize_callback' => 'sanitize_text_field' ],
+				],
+			],
+		] );
+
+		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/' . $this->rest_base . '/recap-draft', [
+			[
+				'methods'             => 'POST',
+				'callback'            => [ $this, 'draft_recap' ],
+				'permission_callback' => $this->permission( 'be_manage_sessions' ),
+				'args'                => [
+					'session_id'  => [ 'type' => 'integer', 'required' => true ],
+					'instruction' => [ 'type' => 'string', 'default' => '', 'sanitize_callback' => 'sanitize_text_field' ],
+				],
+			],
+		] );
+
 		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/' . $this->rest_base . '/settings', [
 			[
 				'methods'             => 'GET',
@@ -111,7 +162,7 @@ class Ai_Assist_Controller extends Base_Controller {
 	/**
 	 * Defines the request parameters accepted by both "test connection" routes: the exact value to test.
 	 *
-	 * @return array
+	 * @return array<string,array<string,mixed>>
 	 */
 	private function get_test_params(): array {
 		return [
@@ -212,6 +263,13 @@ class Ai_Assist_Controller extends Base_Controller {
 	public function generate( $request ) {
 		$game_slug = $request->get_url_params()['game_slug'] ?? null;
 
+		if ( $game_slug ) {
+			$game = \BeyondElysium\Models\Game::find_by_slug( $game_slug );
+			if ( $game && \BeyondElysium\Services\Demo_Chronicle::is_demo( $game ) ) {
+				return $this->error( 'demo_locked', __( 'AI Assist is not available on a demo chronicle.', 'beyond-elysium' ), 403 );
+			}
+		}
+
 		if ( ! Ai_Assist::within_rate_limit( get_current_user_id() ) ) {
 			return $this->error( 'ai_rate_limited', __( 'Too many suggestions in the last minute - wait a moment and try again.', 'beyond-elysium' ), 429 );
 		}
@@ -232,6 +290,244 @@ class Ai_Assist_Controller extends Base_Controller {
 	}
 
 	/**
+	 * Shared demo-lock and rate-limit check for every structured draft route. Returns null when the request may
+	 * proceed.
+	 *
+	 * @param string $game_slug
+	 * @return \WP_Error|null
+	 */
+	private function check_draft_preconditions( string $game_slug ) {
+		$game = Game::find_by_slug( $game_slug );
+		if ( $game && Demo_Chronicle::is_demo( $game ) ) {
+			return $this->error( 'demo_locked', __( 'AI Assist is not available on a demo chronicle.', 'beyond-elysium' ), 403 );
+		}
+		if ( ! Ai_Assist::within_rate_limit( get_current_user_id() ) ) {
+			return $this->error( 'ai_rate_limited', __( 'Too many suggestions in the last minute - wait a moment and try again.', 'beyond-elysium' ), 429 );
+		}
+		return null;
+	}
+
+	/**
+	 * Every non-empty string among a list's own values, capped at `$max` entries.
+	 *
+	 * @param mixed $value
+	 * @return array<int,string>
+	 */
+	private static function only_strings( $value, int $max ): array {
+		$strings = [];
+		foreach ( (array) $value as $item ) {
+			if ( is_string( $item ) && $item !== '' ) {
+				$strings[] = $item;
+			}
+			if ( count( $strings ) >= $max ) {
+				break;
+			}
+		}
+		return $strings;
+	}
+
+	/**
+	 * Converts a structured-draft failure into the same error-response shape `generate()` already uses.
+	 *
+	 * @param array{ok:bool,code?:string,message?:string} $result
+	 * @return \WP_Error
+	 */
+	private function draft_error( array $result ) {
+		$status = ( $result['code'] ?? '' ) === 'ai_not_configured' ? 503 : 502;
+		return $this->error( $result['code'] ?? 'ai_error', $result['message'] ?? __( 'AI assist failed.', 'beyond-elysium' ), $status );
+	}
+
+	/**
+	 * Drafts Storyteller-only roleplaying notes for one NPC, from that NPC's own data only. Returns the drafted
+	 * fields; nothing is written here - the Storyteller reviews and saves them like any other edit.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function draft_npc( $request ) {
+		$game_slug = (string) $request['game_slug'];
+		$blocked   = $this->check_draft_preconditions( $game_slug );
+		if ( $blocked !== null ) {
+			return $blocked;
+		}
+
+		$character = Character::find( (int) $request->get_param( 'character_id' ) );
+		if ( ! $character || $character->owner_slug !== $game_slug ) {
+			return $this->error( 'not_found', __( 'Character not found in this game.', 'beyond-elysium' ), 404 );
+		}
+
+		$identity = $character->sheet_data[ $character->stack_slug . '-identity' ] ?? [];
+		$current  = $character->sheet_data['npc-roleplaying-notes'] ?? [];
+		$context  = [
+			'name'          => $character->name,
+			'creature_type' => $character->stack_slug,
+			'identity'      => $identity,
+			'public_profile' => (string) ( $character->public_description ?? '' ),
+			'biography'     => (string) ( $character->biography ?? '' ),
+			'notes'         => (string) ( $character->notes ?? '' ),
+			'current_notes' => $current,
+		];
+
+		$result = Ai_Assist::generate_structured( 'npc_roleplaying_draft', $context, (string) $request->get_param( 'instruction' ), $game_slug );
+		if ( ! $result['ok'] ) {
+			return $this->draft_error( $result );
+		}
+		return $this->success( [ 'data' => $result['data'] ] );
+	}
+
+	/**
+	 * Drafts a new Storyteller plot from a premise and optionally-picked characters/NPCs/factions, and writes
+	 * the plot, its Storyteller-only beats and its held rumors in one transaction. Picked characters contribute
+	 * their public profile and identity fields only - nothing Storyteller-only from another character reaches
+	 * the provider.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function draft_plot( $request ) {
+		$game_slug = (string) $request['game_slug'];
+		$blocked   = $this->check_draft_preconditions( $game_slug );
+		if ( $blocked !== null ) {
+			return $blocked;
+		}
+		$game = Game::find_by_slug( $game_slug );
+		if ( ! $game ) {
+			return $this->error( 'not_found', __( 'Game not found.', 'beyond-elysium' ), 404 );
+		}
+
+		$characters = [];
+		$ids        = array_unique( array_merge(
+			(array) $request->get_param( 'character_ids' ),
+			(array) $request->get_param( 'npc_ids' )
+		) );
+		foreach ( $ids as $id ) {
+			$character = Character::find( (int) $id );
+			if ( ! $character || $character->owner_slug !== $game_slug ) {
+				continue;
+			}
+			$characters[] = [
+				'name'           => $character->is_npc ? $character->name : (string) ( $character->public_name ?: $character->name ),
+				'creature_type'  => $character->stack_slug,
+				'identity'       => $character->sheet_data[ $character->stack_slug . '-identity' ] ?? [],
+				'public_profile' => (string) ( $character->public_description ?? '' ),
+			];
+		}
+
+		$factions = [];
+		foreach ( (array) $request->get_param( 'faction_ids' ) as $id ) {
+			$faction = Faction::find( (int) $id );
+			if ( $faction && (int) $faction->game_id === (int) $game->id ) {
+				$factions[] = [ 'name' => $faction->name, 'description' => (string) ( $faction->description ?? '' ), 'goals' => (string) ( $faction->goals ?? '' ) ];
+			}
+		}
+
+		$context = [ 'premise' => (string) $request->get_param( 'premise' ), 'characters' => $characters, 'factions' => $factions ];
+		$result  = Ai_Assist::generate_structured( 'plot_draft', $context, (string) $request->get_param( 'instruction' ), $game_slug );
+		if ( ! $result['ok'] ) {
+			return $this->draft_error( $result );
+		}
+
+		$notes  = self::only_strings( $result['data']['notes'] ?? [], 5 );
+		$rumors = self::only_strings( $result['data']['rumors'] ?? [], 3 );
+		if ( $notes === [] || $rumors === [] ) {
+			return $this->error( 'ai_invalid_reply', __( 'The AI provider replied, but not with the expected structure. Try again.', 'beyond-elysium' ), 502 );
+		}
+
+		$savepoint = Transaction::begin( 'ai_plot_draft' );
+		try {
+			$plot_id = Plot::create( [
+				'game_id'      => $game->id,
+				'title'        => sanitize_text_field( (string) ( $result['data']['title'] ?? '' ) ) ?: __( 'Untitled plot', 'beyond-elysium' ),
+				'description'  => wp_kses_post( (string) ( $result['data']['description'] ?? '' ) ),
+				'st_notes'     => wp_kses_post( (string) ( $result['data']['st_notes'] ?? '' ) ),
+				'cliffhanger'  => wp_kses_post( (string) ( $result['data']['cliffhanger'] ?? '' ) ),
+				'audience'     => Audience::STORYTELLERS,
+				'initiated_by' => 'st',
+			] );
+			if ( ! $plot_id ) {
+				throw new \RuntimeException( 'plot create failed' );
+			}
+			foreach ( $notes as $note ) {
+				if ( ! Plot_Entry::create( [ 'plot_id' => $plot_id, 'entry_type' => 'note', 'content' => wp_kses_post( $note ), 'audience' => Plot_Entry::AUDIENCE_STORYTELLERS ] ) ) {
+					throw new \RuntimeException( 'plot entry create failed' );
+				}
+			}
+			foreach ( $rumors as $rumor_text ) {
+				$rumor_text    = wp_kses_post( $rumor_text );
+				$rumor_plot_id = Plot::create( [ 'game_id' => $game->id, 'title' => sanitize_text_field( wp_trim_words( $rumor_text, 8 ) ), 'description' => $rumor_text, 'audience' => Audience::EVERYONE, 'initiated_by' => 'st' ] );
+				if ( ! $rumor_plot_id || ! Plot::update( $rumor_plot_id, [ 'held' => true ] ) ) {
+					throw new \RuntimeException( 'rumor plot create failed' );
+				}
+				Rumor_Generator::tag_as_rumor( $rumor_plot_id, $game->id );
+			}
+			Transaction::commit( $savepoint );
+		} catch ( \Throwable $e ) {
+			Transaction::rollback( $savepoint );
+			return $this->error( 'draft_failed', __( 'Could not create the drafted plot.', 'beyond-elysium' ), 500 );
+		}
+
+		return $this->success( [ 'plot_id' => $plot_id ] );
+	}
+
+	/**
+	 * Drafts a Storyteller's own recap of one game night, from that night's real attendance, after-game reports
+	 * and dated plot entries. Returns the drafted fields; nothing is written here.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function draft_recap( $request ) {
+		$game_slug = (string) $request['game_slug'];
+		$blocked   = $this->check_draft_preconditions( $game_slug );
+		if ( $blocked !== null ) {
+			return $blocked;
+		}
+		$game = Game::find_by_slug( $game_slug );
+		if ( ! $game ) {
+			return $this->error( 'not_found', __( 'Game not found.', 'beyond-elysium' ), 404 );
+		}
+		$session = Game_Session::find( (int) $request->get_param( 'session_id' ) );
+		if ( ! $session || (int) $session->game_id !== (int) $game->id ) {
+			return $this->error( 'not_found', __( 'Session not found in this game.', 'beyond-elysium' ), 404 );
+		}
+
+		$attendance_names = [];
+		foreach ( Attendance::for_session( $session->id ) as $row ) {
+			$character = $row->character_id ? Character::find( (int) $row->character_id ) : null;
+			$attendance_names[] = $character ? $character->name : (string) ( $row->visitor_name ?? '' );
+		}
+
+		$reports = [];
+		foreach ( After_Game_Report::for_session( $session->id ) as $report ) {
+			$character = Character::find( (int) $report->character_id );
+			$reports[] = [
+				'character' => $character ? $character->name : '',
+				'did'       => (string) ( $report->did ?? '' ),
+				'wants'     => (string) ( $report->wants ?? '' ),
+				'to_staff'  => (string) ( $report->to_staff ?? '' ),
+			];
+		}
+
+		$entries = array_map(
+			static fn( $entry ) => (string) ( $entry->content ?? '' ),
+			Plot_Entry::for_game_on_date( (int) $game->id, (string) $session->game_date )
+		);
+
+		$context = [
+			'game_date'           => $session->game_date,
+			'attendance'          => self::only_strings( $attendance_names, 200 ),
+			'after_game_reports'  => $reports,
+			'plot_entries'        => self::only_strings( $entries, 200 ),
+		];
+
+		$result = Ai_Assist::generate_structured( 'session_recap_draft', $context, (string) $request->get_param( 'instruction' ), $game_slug );
+		if ( ! $result['ok'] ) {
+			return $this->draft_error( $result );
+		}
+		return $this->success( [ 'data' => $result['data'] ] );
+	}
+
+	/**
 	 * Reports the site-wide AI assist configuration: which provider is active and whether each provider's key is
 	 * configured.
 	 *
@@ -242,7 +538,7 @@ class Ai_Assist_Controller extends Base_Controller {
 			'provider'         => get_option( Ai_Assist::SITE_PROVIDER_OPTION, Ai_Assist::DEFAULT_PROVIDER ),
 			'has_openai_key'   => (bool) get_option( Ai_Assist::SITE_OPENAI_KEY_OPTION, '' ),
 			'has_claude_key'   => (bool) get_option( Ai_Assist::SITE_CLAUDE_KEY_OPTION, '' ),
-			// Not secrets - echoed back in plain text, unlike the key fields above.
+			// Not secrets; returned in plain text.
 			'openai_base_url'  => (string) get_option( Ai_Assist::SITE_OPENAI_BASE_URL_OPTION, '' ),
 			'openai_model'     => (string) get_option( Ai_Assist::SITE_OPENAI_MODEL_OPTION, '' ),
 			'claude_base_url'  => (string) get_option( Ai_Assist::SITE_CLAUDE_BASE_URL_OPTION, '' ),
@@ -327,7 +623,7 @@ class Ai_Assist_Controller extends Base_Controller {
 			'provider'        => $settings->ai_provider ?? get_option( Ai_Assist::SITE_PROVIDER_OPTION, Ai_Assist::DEFAULT_PROVIDER ),
 			'has_openai_key'  => ! empty( $settings->ai_openai_key ),
 			'has_claude_key'  => ! empty( $settings->ai_claude_key ),
-			// Not secrets - echoed back in plain text, unlike the key fields above.
+			// Not secrets; returned in plain text.
 			'openai_base_url' => (string) ( $settings->ai_openai_base_url ?? '' ),
 			'openai_model'    => (string) ( $settings->ai_openai_model ?? '' ),
 			'claude_base_url' => (string) ( $settings->ai_claude_base_url ?? '' ),
@@ -362,7 +658,7 @@ class Ai_Assist_Controller extends Base_Controller {
 				$incoming[ $settings_field ] = $value;
 			}
 		}
-		// Not secrets - stored/merged like any other plain setting, no encryption.
+		// Not secrets; stored and merged like any other plain setting.
 		foreach ( [
 			'openai_base_url' => 'ai_openai_base_url',
 			'openai_model'    => 'ai_openai_model',
@@ -390,7 +686,7 @@ class Ai_Assist_Controller extends Base_Controller {
 	/**
 	 * Defines the request parameters accepted by the generate route.
 	 *
-	 * @return array
+	 * @return array<string,array<string,mixed>>
 	 */
 	private function get_generate_params(): array {
 		return [

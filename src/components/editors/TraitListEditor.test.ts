@@ -1,4 +1,8 @@
-import { findTraitRowIndex, saveTraitDraft } from './TraitListEditor';
+import {
+	findTraitRowIndex,
+	rowRatingStyle,
+	saveTraitDraft,
+} from './TraitListEditor';
 import { allowsMultiples, traitRowIdentity } from '../../lib/traitIdentity';
 import type { EditableTrait } from './TraitListEditor';
 import type { TraitListDefinition } from '../../types';
@@ -302,7 +306,7 @@ describe( 'saveTraitDraft - editing', () => {
 	} );
 
 	it( 'leaves two same-named rows alone when an edit changes nothing about identity', () => {
-		// Two rows of one name are not a state this editor can now create.
+		// Two rows of one name are not a state this editor can create.
 		const rows = saveTraitDraft(
 			[
 				{ name: 'Retainers', count: 3 },
@@ -315,5 +319,38 @@ describe( 'saveTraitDraft - editing', () => {
 
 		expect( rows ).toHaveLength( 2 );
 		expect( rows.map( ( row ) => row.count ) ).toEqual( [ 3, 4 ] );
+	} );
+} );
+
+/**
+ * A list that declares no rings (Bonds) shows each row's rating as a number, never as circles.
+ */
+describe( 'rowRatingStyle', () => {
+	const list = ( definition: Partial< TraitListDefinition > ) =>
+		( { items: [], ...definition } ) as TraitListDefinition;
+
+	it( 'is a number for a list that declares no rings', () => {
+		expect(
+			rowRatingStyle(
+				list( { display: 'multiplier', print_rings: false } )
+			)
+		).toBe( 'number' );
+	} );
+
+	it( 'is circles for a list that prints them', () => {
+		expect( rowRatingStyle( list( { display: 'multiplier' } ) ) ).toBe(
+			'circles'
+		);
+		expect( rowRatingStyle( list( { print_rings: true } ) ) ).toBe(
+			'circles'
+		);
+	} );
+
+	it( 'is the price for a list whose count is a price', () => {
+		expect(
+			rowRatingStyle(
+				list( { count_is_cost: true, print_rings: false } )
+			)
+		).toBe( 'cost' );
 	} );
 } );

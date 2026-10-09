@@ -180,6 +180,24 @@
       },
       {
         "order": 18,
+        "title": "Status",
+        "width": "half",
+        "column": 1,
+        "display": "simple",
+        "collapsed": false,
+        "block_slug": "kueijin-status"
+      },
+      {
+        "order": 19,
+        "title": "Guanxi",
+        "width": "half",
+        "column": 1,
+        "display": "multiplier",
+        "collapsed": false,
+        "block_slug": "kueijin-guanxi"
+      },
+      {
+        "order": 20,
         "title": "Roleplaying Notes",
         "width": "full",
         "column": 1,

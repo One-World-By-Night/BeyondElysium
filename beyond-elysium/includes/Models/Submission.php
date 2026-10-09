@@ -31,7 +31,7 @@ class Submission {
 	 * Columns returned by every list/read method that omits the stored file.
 	 */
 	private const SUMMARY_COLUMNS = 'id, game_id, submitted_by, arrival, home_chronicle, character_name, stack_slug,
-		source_file, format, file_hash, state, character_id, answered_by, answer_note, created_at, answered_at';
+		source_file, format, file_hash, state, keep_current, character_id, answered_by, answer_note, created_at, answered_at';
 
 	/**
 	 * Creates a new waiting submission.
@@ -68,6 +68,7 @@ class Submission {
 			'parsed'               => (string) $data['parsed'],
 			'verification_source'  => $data['verification_source'] ?? null,
 			'state'                => 'waiting',
+			'keep_current'         => ! empty( $data['keep_current'] ) ? 1 : 0,
 			'created_at'           => current_time( 'mysql', true ),
 		] );
 
@@ -87,7 +88,7 @@ class Submission {
 	 */
 	public static function find( int $id ): ?object {
 		$table = Manager::table( 'character_submissions' );
-		return Manager::get_row( 'SELECT ' . self::SUMMARY_COLUMNS . " FROM {$table} WHERE id = %d", $id );
+		return self::decode( Manager::get_row( 'SELECT ' . self::SUMMARY_COLUMNS . " FROM {$table} WHERE id = %d", $id ) );
 	}
 
 	/**
@@ -98,7 +99,7 @@ class Submission {
 	 */
 	public static function find_with_file( int $id ): ?object {
 		$table = Manager::table( 'character_submissions' );
-		return Manager::get_row( "SELECT * FROM {$table} WHERE id = %d", $id );
+		return self::decode( Manager::get_row( "SELECT * FROM {$table} WHERE id = %d", $id ) );
 	}
 
 	/**
@@ -109,7 +110,20 @@ class Submission {
 	 */
 	public static function find_for_update( int $id ): ?object {
 		$table = Manager::table( 'character_submissions' );
-		return Manager::get_row( "SELECT * FROM {$table} WHERE id = %d FOR UPDATE", $id );
+		return self::decode( Manager::get_row( "SELECT * FROM {$table} WHERE id = %d FOR UPDATE", $id ) );
+	}
+
+	/**
+	 * Casts `keep_current` to a real boolean.
+	 *
+	 * @param object|null $row
+	 * @return object|null
+	 */
+	private static function decode( ?object $row ): ?object {
+		if ( $row !== null && property_exists( $row, 'keep_current' ) ) {
+			$row->keep_current = (bool) (int) $row->keep_current;
+		}
+		return $row;
 	}
 
 	/**
@@ -161,10 +175,14 @@ class Submission {
 	 */
 	public static function waiting_for_game( int $game_id ): array {
 		$table = Manager::table( 'character_submissions' );
-		return Manager::get_results(
+		$rows  = Manager::get_results(
 			'SELECT ' . self::SUMMARY_COLUMNS . " FROM {$table} WHERE game_id = %d AND state = 'waiting' ORDER BY id DESC",
 			$game_id
 		);
+		foreach ( $rows as $row ) {
+			self::decode( $row );
+		}
+		return $rows;
 	}
 
 	/**

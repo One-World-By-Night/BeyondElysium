@@ -44,7 +44,7 @@ class Data_Management_Controller extends Base_Controller {
 	/**
 	 * Returns whether an uninstall is currently set to delete plugin data.
 	 *
-	 * @param \WP_REST_Request $request Unused - see Authorization_Settings_Controller::get_item() for why the base class still requires it.
+	 * @param \WP_REST_Request $request Unused.
 	 * @return \WP_REST_Response
 	 */
 	public function get_item( $request ) {
@@ -67,7 +67,7 @@ class Data_Management_Controller extends Base_Controller {
 	/**
 	 * Returns every row of every plugin table as one JSON object, keyed by table name.
 	 *
-	 * @param \WP_REST_Request $request Unused - see get_item()'s own note.
+	 * @param \WP_REST_Request $request Unused.
 	 * @return \WP_REST_Response
 	 */
 	public function export( $request ) {

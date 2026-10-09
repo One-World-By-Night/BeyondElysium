@@ -3,7 +3,6 @@
  */
 import { useEffect, useRef, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
-import type { CSSProperties } from 'react';
 import api from '../../api/client';
 import BlockRenderer, { toTraits } from '../renderers/BlockRenderer';
 import SheetStyleEditor from './SheetStyleEditor';
@@ -14,6 +13,8 @@ import { ConnectionManager } from '../apr/ConnectionManager';
 import { BackgroundLedger } from '../apr/BackgroundLedger';
 import { TransferPanel } from './TransferPanel';
 import HelpButton from '../shared/HelpButton';
+import DemoBanner from '../shared/DemoBanner';
+import SheetWarnings from './SheetWarnings';
 import {
 	spanFor,
 	sortedForFlow,
@@ -21,11 +22,16 @@ import {
 } from '../../lib/templateLayout';
 import { resolveSectionTitle } from '../../lib/resolveCrossBlockRef';
 import { characterEditorUrl, isPrintCanvasPath } from '../../lib/pluginPages';
+import { sectionHasContent } from '../../lib/sectionHasContent';
+import { withHeldBlockSections } from '../../lib/heldBlockSections';
+import { sheetStyleVars } from '../../lib/sheetStyleVars';
 import { showsProseSection } from '../../lib/sheetProse';
+import { highlightStMarkers } from '../../lib/highlightStMarkers';
 import { canIn } from '../../lib/chronicleCapabilities';
 import { sheetActions, type SheetAction } from '../../lib/sheetActions';
 import { sectionCount } from '../../lib/sectionTotal';
 import { readCollapsed, setCollapsed } from '../../lib/panelCollapse';
+import { alsoActiveAt, visitingFromSummary } from '../../lib/visitStatus';
 
 /**
  * Sheet sections share the panel-collapse store with every other foldable panel.
@@ -39,31 +45,6 @@ import type {
 } from '../../types';
 import type { Character, SheetStyle } from '../../types/character';
 import './CharacterSheet.css';
-
-/**
- * Converts a character's sheet style into CSS custom properties for the sheet's root element.
- */
-function styleVars( style: SheetStyle ): CSSProperties {
-	const vars: Record< string, string > = {};
-	if ( style.font_family ) {
-		vars[ '--be-sheet-font' ] = style.font_family;
-	}
-	if ( style.accent_color ) {
-		vars[ '--be-sheet-accent' ] = style.accent_color;
-	}
-	if ( style.background_color ) {
-		vars[ '--be-sheet-bg' ] = style.background_color;
-	}
-	if ( style.text_color ) {
-		vars[ '--be-sheet-text' ] = style.text_color;
-	}
-	if ( style.background_image_url ) {
-		vars[ '--be-sheet-bg-image' ] = `url(${ JSON.stringify(
-			style.background_image_url
-		) })`;
-	}
-	return vars as CSSProperties;
-}
 
 export interface CharacterSheetProps {
 	characterId: number;
@@ -193,7 +174,9 @@ export function CharacterSheet( {
 				const [ stack, resolved ] = await Promise.all( [
 					api.creatureStacks.resolve(
 						character.stack_slug,
-						gameSlug
+						gameSlug,
+						undefined,
+						characterId
 					),
 					api
 						.templates( gameSlug )
@@ -338,7 +321,13 @@ export function CharacterSheet( {
 		}
 	};
 
-	const sections = sortedForFlow( resolved.template.layout.sections );
+	const sections = sortedForFlow(
+		withHeldBlockSections(
+			resolved.template.layout.sections,
+			stack,
+			character.sheet_data
+		)
+	);
 	const blockSlugs = sections.map( ( s ) => s.block_slug );
 
 	/**
@@ -359,6 +348,16 @@ export function CharacterSheet( {
 			console.warn(
 				`[BE] Template section references unknown block "${ section.block_slug }" for stack "${ stack.stack.slug }".`
 			);
+			return null;
+		}
+
+		if (
+			! sectionHasContent(
+				block.section_type,
+				block.definition,
+				character.sheet_data[ section.block_slug ]
+			)
+		) {
 			return null;
 		}
 
@@ -484,10 +483,11 @@ export function CharacterSheet( {
 	}
 
 	return (
-		<div className="be-character-sheet" style={ styleVars( style ) }>
+		<div className="be-character-sheet" style={ sheetStyleVars( style ) }>
 			{ /* This chrome never renders on the print-canvas page, which exists only to be printed automatically. */ }
 			{ ! isPrintCanvas && (
 				<>
+					<DemoBanner gameSlug={ gameSlug } />
 					<div className="be-character-sheet__chrome be-character-sheet__toolbar">
 						<select
 							className="be-character-sheet__action-select"
@@ -817,8 +817,9 @@ export function CharacterSheet( {
 									gameSlug={ gameSlug }
 									characterId={ characterId }
 									characterUuid={ character.uuid }
-									travellingStatus={
-										character.travelling_status ?? null
+									visits={ character.visits ?? [] }
+									visitingFrom={
+										character.visiting_from ?? null
 									}
 								/>
 							) }
@@ -827,38 +828,29 @@ export function CharacterSheet( {
 				</>
 			) }
 
-			{ ! isPrintCanvas && character.travelling_status && (
+			{ ! isPrintCanvas &&
+				character.visits &&
+				character.visits.length > 0 && (
+					<div
+						className="be-character-sheet__chrome be-character-sheet__travelling-notice"
+						role="status"
+					>
+						{ alsoActiveAt( character.visits ) + '.' }
+					</div>
+				) }
+
+			{ ! isPrintCanvas && (
+				<div className="be-character-sheet__chrome">
+					<SheetWarnings warnings={ character.sheet_warnings } />
+				</div>
+			) }
+
+			{ ! isPrintCanvas && character.visiting_from && (
 				<div
 					className="be-character-sheet__chrome be-character-sheet__travelling-notice"
 					role="status"
 				>
-					{ character.travelling_status.direction === 'outbound'
-						? sprintf(
-								/* translators: 1: the other chronicle's name, 2: the date the transfer started */
-								__(
-									'Travelling — %1$s since %2$s. Edits are discouraged while this character is away.',
-									'beyond-elysium'
-								),
-								character.travelling_status.chronicle ??
-									__(
-										'no host confirmed yet',
-										'beyond-elysium'
-									),
-								character.travelling_status.since
-							)
-						: sprintf(
-								/* translators: 1: the home chronicle's name, 2: the date the transfer started */
-								__(
-									'Visiting from %1$s since %2$s.',
-									'beyond-elysium'
-								),
-								character.travelling_status.chronicle ??
-									__(
-										'no host confirmed yet',
-										'beyond-elysium'
-									),
-								character.travelling_status.since
-							) }
+					{ visitingFromSummary( character.visiting_from ) }
 				</div>
 			) }
 
@@ -966,7 +958,9 @@ export function CharacterSheet( {
 					</h4>
 					<div
 						dangerouslySetInnerHTML={ {
-							__html: character.biography ?? '',
+							__html: highlightStMarkers(
+								character.biography ?? ''
+							),
 						} }
 					/>
 				</div>
@@ -983,7 +977,7 @@ export function CharacterSheet( {
 					</h4>
 					<div
 						dangerouslySetInnerHTML={ {
-							__html: character.notes ?? '',
+							__html: highlightStMarkers( character.notes ?? '' ),
 						} }
 					/>
 				</div>

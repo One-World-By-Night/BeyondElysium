@@ -8,8 +8,7 @@ use BeyondElysium\Models\World_Object;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * The one place Storyteller-only visibility is decided, extracted from three duplicated call sites in
- * `Characters_Controller` and one in `Templates_Controller`.
+ * The one place Storyteller-only visibility is decided.
  */
 class St_Visibility {
 
@@ -21,9 +20,8 @@ class St_Visibility {
 	 * @param object        $character
 	 * @param object|null   $game      Provides `settings` for `St_Filter`'s per-game markers.
 	 * @param bool          $can_manage
-	 * @param array<string>|null $hidden A caller-computed `storyteller_only_slugs()` result, for a
-	 *                                    caller looping over many characters to avoid an N+1; a
-	 *                                    single-character caller may omit it for a fresh lookup.
+	 * @param array<string>|null $hidden A caller-computed `storyteller_only_slugs()` result, for a caller looping over
+	 *                                   many characters; a single-character caller may omit it.
 	 */
 	public static function filter_character( object $character, ?object $game, bool $can_manage, ?array $hidden = null ): void {
 		if ( $can_manage ) {
@@ -33,6 +31,9 @@ class St_Visibility {
 		unset( $character->rp_notes );
 		$character->biography = St_Filter::strip_html_for_game( (string) ( $character->biography ?? '' ), $game->settings ?? null );
 		$character->notes     = St_Filter::strip_html_for_game( (string) ( $character->notes ?? '' ), $game->settings ?? null );
+		if ( property_exists( $character, 'public_description' ) && $character->public_description !== null ) {
+			$character->public_description = St_Filter::strip_html_for_game( (string) $character->public_description, $game->settings ?? null );
+		}
 		self::strip_blocks( $character, $hidden ?? Schema_Block::storyteller_only_slugs( (string) ( $game->slug ?? '' ) ) );
 	}
 
@@ -139,7 +140,7 @@ class St_Visibility {
 			return;
 		}
 		if ( isset( $casting->brief ) && is_string( $casting->brief ) ) {
-			$casting->brief = St_Filter::strip_for_game( $casting->brief, $game->settings ?? null );
+			$casting->brief = St_Filter::strip_html_for_game( $casting->brief, $game->settings ?? null );
 		}
 	}
 
@@ -155,7 +156,7 @@ class St_Visibility {
 			return;
 		}
 		if ( isset( $secret->content ) && is_string( $secret->content ) ) {
-			$secret->content = St_Filter::strip_for_game( $secret->content, $game->settings ?? null );
+			$secret->content = St_Filter::strip_html_for_game( $secret->content, $game->settings ?? null );
 		}
 	}
 
@@ -173,7 +174,7 @@ class St_Visibility {
 		}
 		foreach ( [ 'did', 'wants', 'to_staff' ] as $field ) {
 			if ( isset( $report->$field ) && is_string( $report->$field ) ) {
-				$report->$field = St_Filter::strip_for_game( $report->$field, $game->settings ?? null );
+				$report->$field = St_Filter::strip_html_for_game( $report->$field, $game->settings ?? null );
 			}
 		}
 	}
@@ -239,6 +240,25 @@ class St_Visibility {
 	 * @param object|null $game       Provides `settings` for `St_Filter`'s per-game markers.
 	 * @param bool        $can_manage
 	 */
+	/**
+	 * Strips `[ST]...[/ST]`-marked text from a join request's own message in place. `note` never reaches this method -
+	 * it is read only through the join-requests review route, which is manager-only by itself.
+	 *
+	 * @param object      $join_request A decoded `be_join_requests` row.
+	 * @param object|null $game         Provides `settings` for `St_Filter`'s per-game markers.
+	 * @param bool        $can_manage
+	 * @return void
+	 */
+	public static function filter_join_request( object $join_request, ?object $game, bool $can_manage ): void {
+		if ( $can_manage ) {
+			return;
+		}
+
+		if ( isset( $join_request->message ) && is_string( $join_request->message ) ) {
+			$join_request->message = St_Filter::strip_for_game( $join_request->message, $game->settings ?? null );
+		}
+	}
+
 	public static function filter_submission( object $submission, ?object $game, bool $can_manage ): void {
 		if ( $can_manage ) {
 			return;
@@ -322,10 +342,7 @@ class St_Visibility {
 	 * @param string              $game_slug The chronicle the layout is shown in - a block is
 	 *                                        Storyteller-only per chronicle.
 	 * @param array<string>|null  $hidden A caller-computed `storyteller_only_slugs()` result,
-	 *                                     for a caller resolving many layouts to avoid an N+1;
-	 *                                     omit for a fresh lookup. Also lets this be exercised
-	 *                                     as a pure unit test, since `storyteller_only_slugs()`
-	 *                                     itself reads `$wpdb`.
+	 *                                     for a caller resolving many layouts; omit for a fresh lookup.
 	 * @param array<string>       $allow_blocks A Storyteller-only block to keep visible anyway -
 	 *                                     the NPC casting brief's own carve-out,
 	 *                                     used only there; every other caller leaves this empty.

@@ -1418,7 +1418,7 @@ POOL_PRICES = {
 def emit_vampire_bonds():
     """The Vampire Bonds list: who the character is bound to and the rating, one row each, as Grapevine keeps it."""
     d = OrderedDict([('alphabetize', True), ('atomic', False), ('allow_custom', True), ('allow_multiples', False),
-                     ('print_rings', False), ('items', []), ('display', 'multiplier')])
+                     ('print_rings', False), ('unpriced', True), ('items', []), ('display', 'multiplier')])
     io.write('blocks', 'vampire-bonds', 'Vampire Bonds', 'block', d,
              ['Grapevine 3.01 VampireClass.cls: BondList.Initialize "Bonds", alphabetized, not negative, not atomic, '
               'multiplier display; each row a name and a rating'],

@@ -1,7 +1,8 @@
 import { batchApproval, toggleSelection } from './queueSelection';
 
 /**
- * Approve Selected looked each ticked change's review token up on the page on screen.
+ * Approve Selected sends each ticked change's review token as it was when the change was ticked, whichever page is on
+ * screen.
  */
 describe( 'queueSelection', () => {
 	it( 'keeps the review token of the version each change was ticked on', () => {

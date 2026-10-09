@@ -47,6 +47,35 @@ class Plot {
 	}
 
 	/**
+	 * Looks up a plot by its title and one date column, for import re-run dedup: a plot by its own
+	 * `start_date`, a rumor (also a plot row) by its `game_date`.
+	 *
+	 * @param int    $game_id
+	 * @param string $title
+	 * @param string $date_column 'start_date' or 'game_date'.
+	 * @param string $date        'Y-m-d', or '' for a null date.
+	 * @return object|null
+	 */
+	public static function find_by_title_and_date( int $game_id, string $title, string $date_column, string $date ) {
+		if ( ! in_array( $date_column, [ 'start_date', 'game_date' ], true ) ) {
+			return null;
+		}
+		$row = $date === ''
+			? Manager::get_row(
+				'SELECT * FROM ' . Manager::table( 'plots' ) . " WHERE game_id = %d AND title = %s AND {$date_column} IS NULL",
+				$game_id,
+				$title
+			)
+			: Manager::get_row(
+				'SELECT * FROM ' . Manager::table( 'plots' ) . " WHERE game_id = %d AND title = %s AND {$date_column} = %s",
+				$game_id,
+				$title,
+				$date
+			);
+		return self::decode_json_columns( $row );
+	}
+
+	/**
 	 * Return the immediate child plots of a given plot via the parent_plot_id hierarchy.
 	 *
 	 * @param int $plot_id
@@ -90,11 +119,11 @@ class Plot {
 	/**
 	 * Return plots belonging to a game.
 	 *
-	 * @param int   $game_id
-	 * @param array $args Filters: status, initiated_by, search, date_from, date_to,
+	 * @param int                 $game_id
+	 * @param array<string,mixed> $args Filters: status, initiated_by, search, date_from, date_to,
 	 *                    exclude_actor_plots_not_owned_by, character_plots (see
 	 *                    character_plot_filter()), per_page, offset, orderby, order.
-	 * @return array
+	 * @return array<int,object>
 	 */
 	public static function for_game( int $game_id, array $args = [] ): array {
 		global $wpdb;
@@ -121,8 +150,8 @@ class Plot {
 	/**
 	 * Count plots belonging to a game that match the given filters.
 	 *
-	 * @param int   $game_id
-	 * @param array $args
+	 * @param int                 $game_id
+	 * @param array<string,mixed> $args
 	 * @return int
 	 */
 	public static function count_for_game( int $game_id, array $args = [] ): int {
@@ -138,8 +167,8 @@ class Plot {
 	/**
 	 * The shared WHERE-clause builder behind `for_game()` and `count_for_game()`.
 	 *
-	 * @param int   $game_id
-	 * @param array $args
+	 * @param int                 $game_id
+	 * @param array<string,mixed> $args
 	 * @return array{0: string[], 1: array<int,mixed>} `[$where_clauses, $bind_values]`.
 	 */
 	private static function build_where( int $game_id, array $args ): array {
@@ -222,7 +251,7 @@ class Plot {
 	 * a character not owned by the given user.
 	 *
 	 * @param int $wp_user_id
-	 * @return array{0:string,1:array} [clause, bound values]
+	 * @return array{0:string,1:array<int,int|string>} [clause, bound values]
 	 */
 	private static function actor_ownership_exclusion( int $wp_user_id ): array {
 		$connections_table = Manager::table( 'connections' );
@@ -245,7 +274,7 @@ class Plot {
 	 *
 	 * @param int $game_id
 	 * @param int $wp_user_id
-	 * @return array
+	 * @return array<int,object>
 	 */
 	public static function for_user( int $game_id, int $wp_user_id ): array {
 		$game = Game::find( $game_id );
@@ -351,7 +380,7 @@ class Plot {
 	/**
 	 * Insert a new plot.
 	 *
-	 * @param array $data
+	 * @param array<string,mixed> $data
 	 * @return int|false Insert ID, or false if status/initiated_by is invalid or a JSON value can't be encoded.
 	 */
 	public static function create( array $data ) {
@@ -433,8 +462,8 @@ class Plot {
 	/**
 	 * Update a plot.
 	 *
-	 * @param int   $id
-	 * @param array $data
+	 * @param int                 $id
+	 * @param array<string,mixed> $data
 	 * @return bool
 	 */
 	public static function update( int $id, array $data ): bool {
@@ -538,7 +567,7 @@ class Plot {
 				) );
 			}
 			if ( in_array( $next, $chain, true ) ) {
-				// Breaks out on a pre-existing cycle.
+				// Stops at a cycle already in the data.
 				break;
 			}
 			$chain[] = $next;
@@ -557,7 +586,6 @@ class Plot {
 
 		Plot_Entry::delete_for_plot( $id );
 		Connection::delete_for_entity( 'plot', $id );
-		// Row only - the file on disk is this class's caller's job (Plots_Controller::delete_item()).
 		Attachment::delete_for_entity( 'plot', $id );
 		$result = Manager::delete( 'plots', [ 'id' => $id ] );
 

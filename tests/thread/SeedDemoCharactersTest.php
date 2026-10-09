@@ -9,8 +9,7 @@ use BeyondElysium\Models\Schema_Block;
 use WP_UnitTestCase;
 
 /**
- * "Port ALL 22 test characters into the DEFAULT instance to demonstrate that it WORKS... make it part of our core
- * install".
+ * The demo characters seeded into the default instance as part of the core install.
  */
 class SeedDemoCharactersTest extends WP_UnitTestCase {
 
@@ -32,18 +31,18 @@ class SeedDemoCharactersTest extends WP_UnitTestCase {
 		$this->assertSame( 'Beyond Elysium Demo', $game->name );
 	}
 
-	public function test_creates_all_22_characters_across_all_11_stacks(): void {
+	public function test_creates_all_23_characters_across_all_12_stacks(): void {
 		Seeder::seed_demo_characters( true );
 
 		global $wpdb;
 		$table = $wpdb->prefix . 'be_characters';
 		$count = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE owner_slug = %s", 'be-demo' ) );
-		$this->assertSame( 22, $count );
+		$this->assertSame( 23, $count );
 
 		$stacks = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT stack_slug FROM {$table} WHERE owner_slug = %s", 'be-demo' ) );
 		sort( $stacks );
 		$this->assertSame(
-			[ 'bete', 'changeling', 'demon', 'fera', 'kueijin', 'mage', 'mortal', 'mummy', 'vampire', 'werewolf', 'wraith' ],
+			[ 'bete', 'changeling', 'demon', 'fera', 'hunter', 'kueijin', 'mage', 'mortal', 'mummy', 'vampire', 'werewolf', 'wraith' ],
 			$stacks
 		);
 	}
@@ -106,7 +105,7 @@ class SeedDemoCharactersTest extends WP_UnitTestCase {
 		global $wpdb;
 		$table = $wpdb->prefix . 'be_characters';
 		$count = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE owner_slug = %s", 'be-demo' ) );
-		$this->assertSame( 22, $count );
+		$this->assertSame( 23, $count );
 	}
 
 	public function test_never_touches_a_real_chronicles_own_game(): void {

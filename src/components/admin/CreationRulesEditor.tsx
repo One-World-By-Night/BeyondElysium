@@ -66,7 +66,7 @@ function defaultStep( kind: CreationStep[ 'kind' ] ): CreationStep {
 
 /**
  * A single `when`, editable as a field plus `is`, `not` or `set`. A step whose `when` is a list of several is shown
- * read-only, since this codebase's own book has never yet needed more than one.
+ * read-only.
  */
 function WhenEditor( {
 	when,

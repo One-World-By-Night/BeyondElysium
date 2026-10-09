@@ -268,4 +268,46 @@ return [
 		],
 	],
 
+	'hunter' => [
+		'identity' => [
+			'block'  => 'hunter-identity',
+			'fields' => [
+				'Creed'  => 'creed',
+				'Handle' => 'handle',
+				// camp has no BE field to receive it.
+			],
+		],
+		'resources' => [
+			[
+				'block'  => 'hunter-resources',
+				'fields' => [
+					'Willpower'  => [ 'willpower', 'temp_willpower' ],
+					'Conviction' => [ 'conviction', 'temp_conviction' ],
+				],
+			],
+			[
+				'block'  => 'hunter-virtues',
+				'fields' => [
+					'Mercy'  => [ 'mercy', 'temp_mercy' ],
+					'Vision' => [ 'vision', 'temp_vision' ],
+					'Zeal'   => [ 'zeal', 'temp_zeal' ],
+				],
+			],
+		],
+	],
+
+	'various' => [
+		'identity' => [
+			'block'  => 'various-identity',
+			'fields' => [
+				'Class'    => 'class',
+				'Subclass' => 'subclass',
+				'Affinity' => 'affinity',
+				'Plane'    => 'plane',
+				'Brood'    => 'brood',
+				'Other'    => 'other',
+			],
+		],
+	],
+
 ];

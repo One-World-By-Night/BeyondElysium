@@ -4,7 +4,7 @@
 import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import api from '../../api/client';
-import type { CreditsResponse, InMemoriamEntry } from '../../api/client';
+import type { CreditsResponse } from '../../api/client';
 import Modal from './Modal';
 import AiAssistButton from './AiAssistButton';
 import HelpButton from './HelpButton';
@@ -37,13 +37,13 @@ export function PoweredByFooter() {
 
 /**
  * The Credits modal itself: loads the current credits text and in-memoriam list, shows them as plain read-only
- * content for every viewer, and additionally shows edit controls for a viewer who holds be_manage_games.
+ * content for every viewer, and additionally shows edit controls for the credits text for a viewer who holds
+ * be_manage_games. The in-memoriam list has no edit path; the owner maintains it outside the plugin.
  */
 function CreditsModal( { onClose }: { onClose: () => void } ) {
 	const [ data, setData ] = useState< CreditsResponse | null >( null );
 	const [ editing, setEditing ] = useState( false );
 	const [ draftText, setDraftText ] = useState( '' );
-	const [ draftList, setDraftList ] = useState< InMemoriamEntry[] >( [] );
 	const [ saving, setSaving ] = useState( false );
 	const [ error, setError ] = useState< string | null >( null );
 
@@ -56,7 +56,6 @@ function CreditsModal( { onClose }: { onClose: () => void } ) {
 			.then( ( result ) => {
 				setData( result );
 				setDraftText( result.credits_text );
-				setDraftList( result.in_memoriam );
 			} )
 			.catch( () =>
 				setError( __( 'Failed to load credits.', 'beyond-elysium' ) )
@@ -69,7 +68,6 @@ function CreditsModal( { onClose }: { onClose: () => void } ) {
 		try {
 			const result = await api.credits.update( {
 				credits_text: draftText,
-				in_memoriam: draftList,
 			} );
 			setData( result );
 			setEditing( false );
@@ -78,22 +76,6 @@ function CreditsModal( { onClose }: { onClose: () => void } ) {
 		} finally {
 			setSaving( false );
 		}
-	}
-
-	function updateEntry( index: number, patch: Partial< InMemoriamEntry > ) {
-		setDraftList( ( list ) =>
-			list.map( ( entry, i ) =>
-				i === index ? { ...entry, ...patch } : entry
-			)
-		);
-	}
-
-	function removeEntry( index: number ) {
-		setDraftList( ( list ) => list.filter( ( _, i ) => i !== index ) );
-	}
-
-	function addEntry() {
-		setDraftList( ( list ) => [ ...list, { name: '', note: '' } ] );
 	}
 
 	return (
@@ -135,45 +117,6 @@ function CreditsModal( { onClose }: { onClose: () => void } ) {
 						/>
 					</label>
 
-					<h4>{ __( 'In Memoriam', 'beyond-elysium' ) }</h4>
-					{ draftList.map( ( entry, i ) => (
-						<div className="be-powered-by__memoriam-row" key={ i }>
-							<input
-								type="text"
-								aria-label={ __( 'Name', 'beyond-elysium' ) }
-								placeholder={ __( 'Name', 'beyond-elysium' ) }
-								value={ entry.name }
-								onChange={ ( e ) =>
-									updateEntry( i, { name: e.target.value } )
-								}
-							/>
-							<input
-								type="text"
-								aria-label={ __(
-									'Note (optional)',
-									'beyond-elysium'
-								) }
-								placeholder={ __(
-									'Note (optional)',
-									'beyond-elysium'
-								) }
-								value={ entry.note ?? '' }
-								onChange={ ( e ) =>
-									updateEntry( i, { note: e.target.value } )
-								}
-							/>
-							<button
-								type="button"
-								onClick={ () => removeEntry( i ) }
-							>
-								{ __( 'Remove', 'beyond-elysium' ) }
-							</button>
-						</div>
-					) ) }
-					<button type="button" onClick={ addEntry }>
-						{ __( '+ Add name', 'beyond-elysium' ) }
-					</button>
-
 					<div className="be-powered-by__edit-actions">
 						<button
 							type="button"
@@ -197,6 +140,19 @@ function CreditsModal( { onClose }: { onClose: () => void } ) {
 				<>
 					<p>{ data.credits_text }</p>
 
+					{ canManage && (
+						<button
+							type="button"
+							onClick={ () => setEditing( true ) }
+						>
+							{ __( 'Edit', 'beyond-elysium' ) }
+						</button>
+					) }
+				</>
+			) }
+
+			{ data && (
+				<>
 					<h4>{ __( 'In Memoriam', 'beyond-elysium' ) }</h4>
 					<ul className="be-powered-by__memoriam-list">
 						{ data.in_memoriam.map( ( entry, i ) => (
@@ -211,15 +167,6 @@ function CreditsModal( { onClose }: { onClose: () => void } ) {
 							</li>
 						) ) }
 					</ul>
-
-					{ canManage && (
-						<button
-							type="button"
-							onClick={ () => setEditing( true ) }
-						>
-							{ __( 'Edit', 'beyond-elysium' ) }
-						</button>
-					) }
 				</>
 			) }
 		</Modal>

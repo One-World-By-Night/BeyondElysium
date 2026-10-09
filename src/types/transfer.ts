@@ -30,20 +30,46 @@ export interface Transfer {
 	acknowledged_at: string | null;
 	returned_at: string | null;
 	notes: string | null;
+	keep_current: boolean;
+	keep_current_accepted: boolean;
+	sequence: number;
+	delivered_at: string | null;
+	unreachable_since: string | null;
+	update_log: UpdateLogEntry[];
 }
 
 /**
- * The derived badge `Characters_Controller` merges onto a character row.
+ * One entry in a visit's own update log - what changed, and what landed custom, the last time a kept-current
+ * sheet update was applied.
  */
-export interface TravellingStatus {
-	character_uuid: string;
-	direction: 'outbound' | 'inbound';
-	state: string;
-	/**
-	 * Null on an outbound row until a host has confirmed.
-	 */
-	chronicle: string | null;
+export interface UpdateLogEntry {
+	when: string;
+	sequence: number;
+	changed: string[];
+	custom: string[];
+}
+
+/**
+ * One chronicle this character is also currently active at - `Characters_Controller` merges a list of these onto a
+ * character row, any number at once, one per host.
+ */
+export interface Visit {
+	host_chronicle: string | null;
+	host_site: string | null;
+	keep_current: boolean;
+	delivered_at: string | null;
+	unreachable_since: string | null;
+}
+
+/**
+ * Set when this character row is itself a visitor here right now, from an open inbound row.
+ */
+export interface VisitingFrom {
+	home_chronicle: string | null;
 	since: string;
+	keep_current: boolean;
+	delivered_at: string | null;
+	unreachable_since: string | null;
 }
 
 /**

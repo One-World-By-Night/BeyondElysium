@@ -193,7 +193,7 @@ class SubmissionsReviewThreadTest extends WP_UnitTestCase {
 
 		$badges = Transfer::open_states_for_game( $this->game_slug );
 		$this->assertArrayHasKey( $character->uuid, $badges );
-		$this->assertSame( 'visiting', $badges[ $character->uuid ]['state'] );
+		$this->assertSame( 'visiting', $badges[ $character->uuid ][0]['state'] );
 	}
 
 	public function test_the_storytellers_arrival_choice_overrides_the_senders_own(): void {

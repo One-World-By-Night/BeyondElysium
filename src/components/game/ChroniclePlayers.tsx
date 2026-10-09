@@ -13,6 +13,7 @@ import type {
 	ChroniclePlayer,
 	ChroniclePlayerList,
 	ChroniclePlayerResult,
+	ChronicleJoinRequest,
 	PlayerInvite,
 } from '../../types';
 import type { Character, WpUserSummary } from '../../types/character';
@@ -261,6 +262,12 @@ export function ChroniclePlayers( { gameSlug }: ChroniclePlayersProps ) {
 	const [ list, setList ] = useState< ChroniclePlayerList | null >( null );
 	const [ invites, setInvites ] = useState< PlayerInvite[] >( [] );
 	const [ characters, setCharacters ] = useState< Character[] >( [] );
+	const [ joinRequests, setJoinRequests ] = useState<
+		ChronicleJoinRequest[]
+	>( [] );
+	const [ refuseNote, setRefuseNote ] = useState< Record< number, string > >(
+		{}
+	);
 	const [ error, setError ] = useState< string | null >( null );
 	const [ messages, setMessages ] = useState< string[] >( [] );
 	const [ busy, setBusy ] = useState< string | null >( null );
@@ -276,6 +283,23 @@ export function ChroniclePlayers( { gameSlug }: ChroniclePlayersProps ) {
 		new Set()
 	);
 	const [ addFilter, setAddFilter ] = useState( '' );
+	const [ linkCopied, setLinkCopied ] = useState( false );
+
+	function copyJoinLink( url: string, inputEl: HTMLInputElement | null ) {
+		const done = () => {
+			setLinkCopied( true );
+			setTimeout( () => setLinkCopied( false ), 3000 );
+		};
+		if ( navigator.clipboard?.writeText ) {
+			navigator.clipboard.writeText( url ).then( done, () => {
+				inputEl?.select();
+			} );
+		} else {
+			inputEl?.select();
+			document.execCommand( 'copy' );
+			done();
+		}
+	}
 
 	function load() {
 		Promise.all( [
@@ -286,11 +310,13 @@ export function ChroniclePlayers( { gameSlug }: ChroniclePlayersProps ) {
 					.characters( gameSlug )
 					.listPaginated( { page, per_page: 100 } )
 			),
+			api.chroniclePlayers( gameSlug ).joinRequests(),
 		] )
-			.then( ( [ players, open, all ] ) => {
+			.then( ( [ players, open, all, requests ] ) => {
 				setList( players );
 				setInvites( open );
 				setCharacters( all );
+				setJoinRequests( requests );
 				setError( null );
 			} )
 			.catch( ( err ) =>
@@ -381,6 +407,64 @@ export function ChroniclePlayers( { gameSlug }: ChroniclePlayersProps ) {
 					errorMessage(
 						err,
 						__( 'Failed to cancel the invite.', 'beyond-elysium' )
+					),
+				] )
+			)
+			.finally( () => setBusy( null ) );
+	}
+
+	function approveJoin( request: ChronicleJoinRequest ) {
+		setBusy( `join-${ request.id }` );
+		api.chroniclePlayers( gameSlug )
+			.approveJoinRequest( request.id )
+			.then( () => {
+				setMessages( [
+					sprintf(
+						/* translators: %s: the applicant's display name */
+						__( '%s is approved to join.', 'beyond-elysium' ),
+						request.display_name ??
+							__( 'That account', 'beyond-elysium' )
+					),
+				] );
+				load();
+			} )
+			.catch( ( err ) =>
+				setMessages( [
+					errorMessage(
+						err,
+						__( 'Failed to approve the request.', 'beyond-elysium' )
+					),
+				] )
+			)
+			.finally( () => setBusy( null ) );
+	}
+
+	function refuseJoin( request: ChronicleJoinRequest ) {
+		setBusy( `join-${ request.id }` );
+		const note = refuseNote[ request.id ] ?? '';
+		api.chroniclePlayers( gameSlug )
+			.refuseJoinRequest( request.id, note )
+			.then( () => {
+				setMessages( [
+					sprintf(
+						/* translators: %s: the applicant's display name */
+						__( '%s is refused.', 'beyond-elysium' ),
+						request.display_name ??
+							__( 'That account', 'beyond-elysium' )
+					),
+				] );
+				setRefuseNote( ( prev ) => {
+					const next = { ...prev };
+					delete next[ request.id ];
+					return next;
+				} );
+				load();
+			} )
+			.catch( ( err ) =>
+				setMessages( [
+					errorMessage(
+						err,
+						__( 'Failed to refuse the request.', 'beyond-elysium' )
 					),
 				] )
 			)
@@ -516,6 +600,159 @@ export function ChroniclePlayers( { gameSlug }: ChroniclePlayersProps ) {
 					) ) }
 				</div>
 			) }
+
+			<section className="be-chronicle-players__join-requests">
+				<h3>
+					{ sprintf(
+						/* translators: %d: how many join requests are waiting */
+						__( 'Join requests (%d)', 'beyond-elysium' ),
+						joinRequests.filter( ( r ) => r.status === 'waiting' )
+							.length
+					) }
+				</h3>
+				{ list?.join_link && (
+					<p className="be-chronicle-players__hint">
+						{ __(
+							'Share this link so people can ask to join this chronicle:',
+							'beyond-elysium'
+						) }
+						<br />
+						<input
+							type="text"
+							readOnly
+							id="be-join-link"
+							value={ list.join_link }
+							onFocus={ ( e ) => e.currentTarget.select() }
+						/>{ ' ' }
+						<button
+							type="button"
+							className="be-chronicle-players__button"
+							onClick={ () =>
+								copyJoinLink(
+									list.join_link,
+									document.getElementById(
+										'be-join-link'
+									) as HTMLInputElement | null
+								)
+							}
+						>
+							{ __( 'Copy link', 'beyond-elysium' ) }
+						</button>
+						{ linkCopied && (
+							<span role="status">
+								{ __( 'Link copied.', 'beyond-elysium' ) }
+							</span>
+						) }
+					</p>
+				) }
+				{ joinRequests.length === 0 ? (
+					<p className="be-chronicle-players__hint">
+						{ __( 'No one has asked to join.', 'beyond-elysium' ) }
+					</p>
+				) : (
+					<ul className="be-chronicle-players__list">
+						{ joinRequests.map( ( request ) => (
+							<li key={ request.id }>
+								<span className="be-chronicle-players__name">
+									{ request.display_name ??
+										__(
+											'(account removed)',
+											'beyond-elysium'
+										) }
+									<span className="be-chronicle-players__email">
+										{ request.message }
+									</span>
+									{ request.character && (
+										<span className="be-chronicle-players__email">
+											{ sprintf(
+												/* translators: %s: a character's name */
+												__(
+													'started a character: %s',
+													'beyond-elysium'
+												),
+												request.character.name
+											) }
+										</span>
+									) }
+									{ request.status !== 'waiting' && (
+										<span className="be-chronicle-players__email">
+											{ request.status === 'approved' &&
+												__(
+													'Approved.',
+													'beyond-elysium'
+												) }
+											{ request.status === 'refused' &&
+												__(
+													'Refused.',
+													'beyond-elysium'
+												) }
+											{ request.status === 'withdrawn' &&
+												__(
+													'Withdrawn.',
+													'beyond-elysium'
+												) }
+										</span>
+									) }
+								</span>
+								{ request.status === 'waiting' && (
+									<span className="be-chronicle-players__actions">
+										{ request.submission_id ? (
+											<span className="be-chronicle-players__hint">
+												{ __(
+													'This request carries a Grapevine file - review and accept it from Import, which closes this request too.',
+													'beyond-elysium'
+												) }
+											</span>
+										) : (
+											<button
+												type="button"
+												className="be-chronicle-players__button"
+												disabled={ busy !== null }
+												onClick={ () =>
+													approveJoin( request )
+												}
+											>
+												{ __(
+													'Approve',
+													'beyond-elysium'
+												) }
+											</button>
+										) }
+										<input
+											type="text"
+											className="be-chronicle-players__search"
+											placeholder={ __(
+												'Note (optional)',
+												'beyond-elysium'
+											) }
+											value={
+												refuseNote[ request.id ] ?? ''
+											}
+											onChange={ ( e ) =>
+												setRefuseNote( ( prev ) => ( {
+													...prev,
+													[ request.id ]:
+														e.target.value,
+												} ) )
+											}
+										/>
+										<button
+											type="button"
+											className="be-chronicle-players__button be-chronicle-players__button--remove"
+											disabled={ busy !== null }
+											onClick={ () =>
+												refuseJoin( request )
+											}
+										>
+											{ __( 'Refuse', 'beyond-elysium' ) }
+										</button>
+									</span>
+								) }
+							</li>
+						) ) }
+					</ul>
+				) }
+			</section>
 
 			<section className="be-chronicle-players__add">
 				<h3>{ __( 'Invite a player', 'beyond-elysium' ) }</h3>

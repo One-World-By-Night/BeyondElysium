@@ -90,7 +90,7 @@ class BooleanFlagTypesThreadTest extends WP_UnitTestCase {
 	}
 
 	// -------------------------------------------------------------------------
-	// Factions, faction_members, positions each added a fresh tinyint(1) column
+	// Factions, faction_members and positions carry tinyint(1) columns
 	// -------------------------------------------------------------------------
 
 	public function test_faction_created_via_proposal_is_a_boolean(): void {
@@ -117,6 +117,18 @@ class BooleanFlagTypesThreadTest extends WP_UnitTestCase {
 		$this->assertSame( true, Faction_Member::find_for( $faction_id, $character_id )->is_leader );
 	}
 
+	public function test_faction_member_is_public_is_a_boolean(): void {
+		$game_id      = (int) Game::create( [ 'slug' => 'thread-flag-faction-public', 'name' => 'Flag Public Game' ] );
+		$faction_id   = (int) Faction::create( [ 'game_id' => $game_id, 'name' => 'A Faction', 'faction_type' => 'other', 'created_by' => $this->admin_id ] );
+		$character_id = (int) \BeyondElysium\Models\Character::create( [
+			'name' => 'A Character', 'stack_slug' => 'vampire', 'owner_type' => 'chronicle',
+			'owner_slug' => 'thread-flag-faction-public', 'created_by' => $this->admin_id,
+		] );
+		Faction_Member::add( $faction_id, $character_id, $this->admin_id, false, null, false );
+
+		$this->assertSame( false, Faction_Member::find_for( $faction_id, $character_id )->is_public );
+	}
+
 	public function test_position_holder_public_is_a_boolean(): void {
 		$game_id     = (int) Game::create( [ 'slug' => 'thread-flag-position', 'name' => 'Flag Position Game' ] );
 		$position_id = (int) Position::create( [
@@ -124,5 +136,99 @@ class BooleanFlagTypesThreadTest extends WP_UnitTestCase {
 		] );
 
 		$this->assertSame( false, Position::find( $position_id )->holder_public );
+	}
+
+	public function test_secret_reveal_approved_is_a_boolean(): void {
+		$game_id      = (int) Game::create( [ 'slug' => 'thread-flag-secret-reveal', 'name' => 'Flag Secret Reveal Game' ] );
+		$character_id = (int) \BeyondElysium\Models\Character::create( [
+			'name' => 'A Character', 'stack_slug' => 'vampire', 'owner_type' => 'chronicle',
+			'owner_slug' => 'thread-flag-secret-reveal', 'created_by' => $this->admin_id,
+		] );
+		$plot_id   = (int) \BeyondElysium\Models\Plot::create( [ 'game_id' => $game_id, 'title' => 'A Plot', 'created_by' => $this->admin_id ] );
+		$secret_id = (int) \BeyondElysium\Models\Secret::create( [
+			'game_id' => $game_id, 'entity_type' => 'plot', 'entity_id' => $plot_id,
+			'title' => 'A Secret', 'created_by' => $this->admin_id,
+		] );
+		$reveal_id = (int) \BeyondElysium\Models\Secret_Reveal::create( [
+			'secret_id' => $secret_id, 'character_id' => $character_id, 'approved' => false,
+			'revealed_by' => $this->admin_id,
+		] );
+
+		$this->assertSame( false, \BeyondElysium\Models\Secret_Reveal::find( $reveal_id )->approved );
+
+		\BeyondElysium\Models\Secret_Reveal::update( $reveal_id, [ 'approved' => true ] );
+		$this->assertSame( true, \BeyondElysium\Models\Secret_Reveal::find( $reveal_id )->approved );
+	}
+
+	public function test_change_auto_approved_is_a_boolean(): void {
+		$game_id      = (int) Game::create( [ 'slug' => 'thread-flag-change', 'name' => 'Flag Change Game' ] );
+		$character_id = (int) \BeyondElysium\Models\Character::create( [
+			'name' => 'A Character', 'stack_slug' => 'vampire', 'owner_type' => 'chronicle',
+			'owner_slug' => 'thread-flag-change', 'created_by' => $this->admin_id,
+		] );
+		$change_id = \BeyondElysium\Models\Change::create( [
+			'character_id' => $character_id, 'change_type' => 'xp_earn', 'change_data' => [ 'amount' => 1 ],
+			'status' => 'pending', 'submitted_by' => $this->admin_id, 'auto_approved' => false,
+		] );
+
+		$this->assertSame( false, \BeyondElysium\Models\Change::find( $change_id )->auto_approved );
+
+		\BeyondElysium\Database\Manager::update( 'character_changes', [ 'auto_approved' => 1 ], [ 'id' => $change_id ] );
+		$this->assertSame( true, \BeyondElysium\Models\Change::find( $change_id )->auto_approved );
+	}
+
+	public function test_character_profile_show_player_is_a_boolean(): void {
+		$character_id = (int) \BeyondElysium\Models\Character::create( [
+			'name' => 'A Character', 'stack_slug' => 'vampire', 'owner_type' => 'chronicle',
+			'owner_slug' => $this->game_slug, 'created_by' => $this->admin_id,
+		] );
+
+		$character = \BeyondElysium\Models\Character::find( $character_id );
+		$this->assertSame( false, $character->profile_show_player );
+
+		\BeyondElysium\Models\Character::update_header( $character_id, [ 'profile_show_player' => 1 ] );
+		$this->assertSame( true, \BeyondElysium\Models\Character::find( $character_id )->profile_show_player );
+	}
+
+	public function test_transfer_keep_current_flags_are_booleans(): void {
+		$game_id      = (int) Game::create( [ 'slug' => 'thread-flag-transfer', 'name' => 'Flag Transfer Game' ] );
+		$character_id = (int) \BeyondElysium\Models\Character::create( [
+			'name' => 'A Character', 'stack_slug' => 'vampire', 'owner_type' => 'chronicle',
+			'owner_slug' => 'thread-flag-transfer', 'created_by' => $this->admin_id,
+		] );
+		$character   = \BeyondElysium\Models\Character::find( $character_id );
+		$transfer_id = \BeyondElysium\Models\Transfer::create( [
+			'character_uuid' => $character->uuid, 'character_id' => $character_id,
+			'direction' => 'outbound', 'state' => 'offered', 'home_slug' => 'thread-flag-transfer',
+			'home_site' => home_url(), 'home_chronicle' => 'Flag Transfer Game',
+			'payload_hash' => str_repeat( 'a', 64 ), 'initiated_by' => $this->admin_id,
+		] );
+
+		$this->assertSame( false, \BeyondElysium\Models\Transfer::find( $transfer_id )->keep_current );
+		$this->assertSame( false, \BeyondElysium\Models\Transfer::find( $transfer_id )->keep_current_accepted );
+
+		$rows = (array) $this->get( '/be/v1/thread-flag-transfer/transfers' )->get_data();
+		$this->assertSame( false, ( (array) $rows[0] )['keep_current'], 'keep_current must be boolean false over REST, not the truthy string "0".' );
+
+		\BeyondElysium\Models\Transfer::transition( $transfer_id, 'offered', [ 'keep_current' => 1, 'keep_current_accepted' => 1 ] );
+		$this->assertSame( true, \BeyondElysium\Models\Transfer::find( $transfer_id )->keep_current );
+		$this->assertSame( true, \BeyondElysium\Models\Transfer::find( $transfer_id )->keep_current_accepted );
+	}
+
+	public function test_submission_keep_current_is_a_boolean(): void {
+		$game_id = (int) Game::create( [ 'slug' => 'thread-flag-submission', 'name' => 'Flag Submission Game' ] );
+
+		$submission_id = \BeyondElysium\Models\Submission::create( [
+			'game_id' => $game_id, 'submitted_by' => $this->admin_id, 'arrival' => 'joining',
+			'character_name' => 'A Character', 'stack_slug' => 'vampire', 'source_file' => 'a.gex',
+			'format' => 'xml', 'file_hash' => str_repeat( 'a', 64 ), 'parsed' => '{}',
+			'keep_current' => true,
+		] );
+
+		$this->assertSame( true, \BeyondElysium\Models\Submission::find( $submission_id )->keep_current );
+		$this->assertSame( true, \BeyondElysium\Models\Submission::find_with_file( $submission_id )->keep_current );
+
+		$rows = \BeyondElysium\Models\Submission::waiting_for_game( $game_id );
+		$this->assertSame( true, $rows[0]->keep_current, 'keep_current must be boolean true, not the truthy string "1".' );
 	}
 }

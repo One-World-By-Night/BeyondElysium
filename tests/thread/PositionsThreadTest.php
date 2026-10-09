@@ -187,7 +187,7 @@ class PositionsThreadTest extends WP_UnitTestCase {
 	}
 
 	// -------------------------------------------------------------------------
-	// `notes` is now an HtmlEditor field
+	// `notes` is an HtmlEditor field
 	// -------------------------------------------------------------------------
 
 	public function test_notes_keeps_real_formatting_on_create(): void {

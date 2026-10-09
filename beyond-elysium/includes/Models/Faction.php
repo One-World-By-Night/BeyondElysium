@@ -25,7 +25,7 @@ class Faction {
 	const STATUSES = [ 'active', 'disbanded' ];
 
 	/**
-	 * Duplicated from `Services\Audience::VALUES`.
+	 * The audience vocabulary, the same values as `Services\Audience::VALUES`.
 	 */
 	const AUDIENCE_VALUES = [ 'everyone', 'storytellers', 'restricted' ];
 
@@ -68,8 +68,8 @@ class Faction {
 	/**
 	 * Creates a faction.
 	 *
-	 * @param array $data
-	 * @param bool  $restrict_type Restricts `faction_type` to `PLAYER_PROPOSABLE_TYPES` (a player proposal).
+	 * @param array<string,mixed> $data
+	 * @param bool                $restrict_type Restricts `faction_type` to `PLAYER_PROPOSABLE_TYPES` (a player proposal).
 	 * @return int|false Insert ID, or false on any validation failure or unencodable JSON.
 	 */
 	public static function create( array $data, bool $restrict_type = false ) {
@@ -113,8 +113,8 @@ class Faction {
 	/**
 	 * Updates a faction's editable fields.
 	 *
-	 * @param int   $id
-	 * @param array $data
+	 * @param int                 $id
+	 * @param array<string,mixed> $data
 	 * @return bool
 	 */
 	public static function update( int $id, array $data ): bool {

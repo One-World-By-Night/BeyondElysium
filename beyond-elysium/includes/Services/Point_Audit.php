@@ -104,7 +104,8 @@ class Point_Audit {
 
 	/**
 	 * @param array{slug:string,label:string,undeclared:bool} $entry
-	 * @param array<string,object>                           $blocks The character's blocks by slug, already loaded.
+	 * @param array<string,object>                            $blocks The character's blocks by slug, already loaded.
+	 * @param mixed                                           $held
 	 * @return array<int,array<string,mixed>>
 	 */
 	private static function lines_for_block( object $character, object $block, array $entry, $held, object $stack, array $blocks ): array {
@@ -129,6 +130,8 @@ class Point_Audit {
 	 * Builds the audit lines for a trait_list section.
 	 *
 	 * @param array<string,object> $blocks The character's blocks by slug, already loaded - threaded through `moved_from` cross-block resolution.
+	 * @param array{slug:string,label:string,undeclared:bool} $entry
+	 * @param array<int|string,mixed> $held_list
 	 * @return array<int,array<string,mixed>>
 	 */
 	private static function trait_list_lines( object $definition, array $entry, array $held_list, array $blocks = [] ): array {
@@ -163,6 +166,8 @@ class Point_Audit {
 	 *
 	 * @param callable(string):bool $is_in_type The block's in-type check, looked up once for every held power.
 	 * @param array<string,object> $blocks The character's blocks by slug, already loaded - threaded through `moved_from` cross-block resolution.
+	 * @param array{slug:string,label:string,undeclared:bool} $entry
+	 * @param array<int|string,mixed> $held_list
 	 * @return array<int,array<string,mixed>>
 	 */
 	private static function tiered_power_lines( callable $is_in_type, object $definition, array $entry, array $held_list, array $blocks = [] ): array {
@@ -207,6 +212,8 @@ class Point_Audit {
 	/**
 	 * Every declared pool gets its own line, held or not.
 	 *
+	 * @param array{slug:string,label:string,undeclared:bool} $entry
+	 * @param array<string,mixed> $held_map
 	 * @return array<int,array<string,mixed>>
 	 */
 	private static function resource_pool_lines( object $definition, array $entry, array $held_map ): array {
@@ -238,6 +245,8 @@ class Point_Audit {
 	/**
 	 * Every declared field is `unpriced`.
 	 *
+	 * @param array{slug:string,label:string,undeclared:bool} $entry
+	 * @param array<string,mixed> $held_map
 	 * @return array<int,array<string,mixed>>
 	 */
 	private static function identity_field_lines( object $definition, array $entry, array $held_map ): array {

@@ -168,7 +168,7 @@ class Snapshots_Controller extends Base_Controller {
 	 * Defines the query parameters accepted by the snapshot collection endpoint: a sort order plus page/per_page
 	 * pagination, each with its allowed values and defaults.
 	 *
-	 * @return array
+	 * @return array<string,array<string,mixed>>
 	 */
 	public function get_collection_params(): array {
 		return [

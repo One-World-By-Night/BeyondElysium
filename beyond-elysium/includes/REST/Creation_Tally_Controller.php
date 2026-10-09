@@ -22,7 +22,7 @@ class Creation_Tally_Controller extends Base_Controller {
 			[
 				'methods'             => 'POST',
 				'callback'            => [ $this, 'tally_draft' ],
-				'permission_callback' => $this->permission_any( [ 'be_edit_own_characters', 'be_manage_characters' ] ),
+				'permission_callback' => $this->permission_any( [ 'be_edit_own_characters', 'be_manage_characters' ], true ),
 			],
 		] );
 		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/characters/(?P<id>\d+)/creation-tally', [

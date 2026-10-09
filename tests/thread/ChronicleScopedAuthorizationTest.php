@@ -103,7 +103,7 @@ class ChronicleScopedAuthorizationTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Same ruling: an AST loses the chronicle's own catalog customization (forking a schema block for their chronicle
+	 * Same rule: an AST loses the chronicle's own catalog customization (forking a schema block for their chronicle
 	 * specifically).
 	 */
 	public function test_ast_cannot_customize_the_chronicles_own_catalog(): void {
@@ -121,7 +121,7 @@ class ChronicleScopedAuthorizationTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Same ruling: an AST loses the chronicle's own template customization too.
+	 * Same rule: an AST loses the chronicle's own template customization too.
 	 */
 	public function test_ast_cannot_customize_the_chronicles_own_templates(): void {
 		$ast_id = self::factory()->user->create( [ 'role' => 'editor' ] );
@@ -137,7 +137,7 @@ class ChronicleScopedAuthorizationTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Same ruling: an AST loses the ability to permanently delete a character.
+	 * Same rule: an AST loses the ability to permanently delete a character.
 	 */
 	public function test_ast_cannot_delete_a_character_but_keeps_bulk_status_changes(): void {
 		global $wpdb;
@@ -173,7 +173,7 @@ class ChronicleScopedAuthorizationTest extends WP_UnitTestCase {
 
 	/**
 	 * Positive control for all three narrowings above: an HST must still be able to do every one of them, in the same
-	 * chronicle, the same way as before.
+	 * chronicle.
 	 */
 	public function test_hst_still_manages_approval_rules_catalog_and_character_deletion(): void {
 		global $wpdb;
@@ -216,7 +216,7 @@ class ChronicleScopedAuthorizationTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The same leak, one layer down: `be_view_characters` is granted to every WP role from subscriber up
+	 * The same check, one layer down: `be_view_characters` is granted to every WP role from subscriber up
 	 * (`Capabilities::CAPS`).
 	 */
 	public function test_player_reaches_their_own_chronicle(): void {
@@ -300,9 +300,8 @@ class ChronicleScopedAuthorizationTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The bootstrap gap found reconciling `feat/0.9a-authz` with `main`: once membership is required for every
-	 * game-scoped capability, a player with no prior relationship to a chronicle could never obtain their first
-	 * membership row.
+	 * Bootstrap: with membership required for every game-scoped capability, a player with no prior relationship to a
+	 * chronicle can still obtain a first membership row.
 	 */
 	public function test_a_brand_new_player_can_ask_to_join_and_a_storyteller_makes_them_a_member(): void {
 		\BeyondElysium\Models\Creature_Stack::create( [
@@ -336,7 +335,7 @@ class ChronicleScopedAuthorizationTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The other half of the same gap: membership has to follow ownership on every assignment.
+	 * Membership follows ownership on every assignment.
 	 */
 	public function test_assigning_an_existing_character_grants_membership_to_the_new_owner(): void {
 		global $wpdb;

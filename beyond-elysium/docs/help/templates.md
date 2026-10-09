@@ -35,9 +35,7 @@ There is no way to create, edit, or delete a shared template directly, from any 
 - **Sections** table - one row per section of the sheet. **+ Add section** appends a new row; **Remove** deletes one.
   - **Block** - which schema block this section renders. Each block can appear only once in a
     template.
-  - **Title** - the section's own heading, with optional **+ Title reference** rows beneath it
-    - pick another Block and its Field name to append that field's resolved value onto this
-    title, for example naming which Discipline a power belongs to.
+  - **Title** - the section's own heading, with optional **+ Title reference** rows beneath it - pick another Block and its Field name to append that field's resolved value onto this title, for example naming which Discipline a power belongs to.
   - **Width** - third, half, or full: how much of a row this section's box takes up.
   - **Column** - which numbered column (1 up to Columns above) this section sits in.
   - **Order** - its position within that column; lower numbers sit higher up.

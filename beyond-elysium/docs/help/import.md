@@ -41,8 +41,7 @@ A five-stage wizard: **1. Upload**, **2. Preview**, **3. Match Players**, **4. R
   - **Flagged Traits** - a raw value the parser couldn't match exactly, with a **Suggestion**
     dropdown of close catalog matches, a **Keep as written** checkbox, and (if you can manage
     the catalog) **Also add to catalog**.
-  - **Unresolved** - a raw value with no catalog match at all, offering only **Keep as
-    written, unmatched** and, if you can manage the catalog, **Also add to catalog**.
+  - **Unresolved** - a raw value with no catalog match at all, offering only **Keep as written, unmatched** and, if you can manage the catalog, **Also add to catalog**. A closed list, such as a creature type's Health Levels, offers neither: a name there has to match one of its entries, and the row says so.
   - **Players Needing a Match** - a player name from the file with no confirmed WordPress
     account yet, and any suggested matches.
 - **Match Players** - the same players-needing-a-match list, or a note that this file's format carries no player identity to match at all (XML), or that everyone already matched.
@@ -53,10 +52,20 @@ A five-stage wizard: **1. Upload**, **2. Preview**, **3. Match Players**, **4. R
 A five-stage wizard: **1. Upload**, **2. Preview**, **3. Choose Target**, **4. Resolve**, **5. Commit**.
 
 - **Upload** - a file picker accepting a `.gv3` file (binary) and **Parse File**.
-- **Preview** - the chronicle's title, the same review content as the `.gex` wizard's Preview stage, and **Not Imported by This Tool**: counts of queries, actions, plots, rumors, XP awards, templates, and calendar entries the file carries (and action/rumor allocation settings, when present) that this tool leaves out.
+- **Preview** - the chronicle's title, the same review content as the `.gex` wizard's Preview stage, a **Plots, Rumors & Actions** section (below), and **Not Imported by This Tool**: counts of queries, XP awards, templates, and calendar entries the file carries (and action/rumor allocation settings, when present) that this tool leaves out.
 - **Choose Target** - **Create a new chronicle** (with a **Name** box) or **Merge into an existing chronicle** (a dropdown of this install's chronicles). Merging never overwrites the existing chronicle wholesale - only records that collide by name need a decision, next.
 - **Resolve** - the preview, re-checked against the target you picked, so any duplicates shown are real for that specific chronicle.
-- **Commit** - the same blocked-count pattern as the `.gex` wizard; once ready, a line naming the job and saying it's creating a new chronicle with the name you gave it, or merging into the chronicle you picked. **Commit** applies it; the result names the chronicle created or merged into and counts of characters, items, locations, and rotes processed.
+- **Commit** - the same blocked-count pattern as the `.gex` wizard; once ready, a line naming the job and saying it's creating a new chronicle with the name you gave it, or merging into the chronicle you picked. **Commit** applies it; the result names the chronicle created or merged into and counts of characters, items, locations, rotes, plots, rumors, and actions processed.
+
+#### Plots, Rumors & Actions
+
+When the file carries any, a checkbox per kind - **Import N plot(s)**, **Import N rumor(s)**, **Import N action(s)** - each ticked by default, with how many of each already exist in the target chronicle (by title and date) and will be skipped either way. A line below names any cast or action character that matches nobody, in the file or the chronicle.
+
+- **Plots** arrive Storyteller-only. Each cast member who matches a real character becomes a connection to that character; a name that matches nobody, and Grapevine's own narrator, go into the plot's Storyteller notes instead. Each development becomes a dated, Storyteller-only note.
+- **Rumors** arrive built the same way the Storyteller Toolkit's own rumor generator builds one: a done rumor arrives delivered, so its targets can already read it (no email - imports never send one); an undone rumor arrives held, in no batch, for a Storyteller to release later. Grapevine's own targeting carries over where it can: a query with one clean condition becomes a real audience rule; MultiKey/MultiMatch rumors carry their level key and match across directly. A query this install can't represent as one rule - more than one condition at once, a "does NOT match" condition, or one needing both a trait name and a count - keeps the rumor Storyteller-only instead, with a note on the plot explaining why.
+- **Actions** match the character the same way everything else in this file does. A match joins that character's own action history for the date (the same record the Downtime Queue already uses), one entry per subaction; a done action marks it resolved. A name matching no character is skipped and listed.
+
+Importing the same file again never duplicates any of the three - a plot or rumor already present by title and date, or an action already recorded for that character and date, is skipped and counted, not recreated.
 
 ## Common tasks
 
@@ -103,7 +112,7 @@ A five-stage wizard: **1. Upload**, **2. Preview**, **3. Choose Target**, **4. R
 ### Review and accept a Grapevine file a player sent in
 
 1. Open Beyond Elysium → Import. A waiting file appears under **Waiting for Review**.
-2. Click **Review**. The sender's name and email, their joining/visiting choice, and a verification note (if the file carries a code) show above the usual preview.
+2. Click **Review**. The sender's name and email, their joining/visiting choice, a verification note (if the file carries a code), and - if they asked for it - "The player wants this kept current with their home chronicle" all show above the usual preview.
 3. Make every decision the preview asks for. A duplicate character already belongs to someone else can be imported as new or refused, never overwritten.
 4. Change **Joining**/**Visiting** if the sender's own choice isn't what you want, then click **Accept Sheet**.
 
@@ -118,13 +127,15 @@ A five-stage wizard: **1. Upload**, **2. Preview**, **3. Choose Target**, **4. R
 - **Nothing is written until you commit or accept.** Every stage before that is preview only, and a commit applies in one all-or-nothing transaction - a failure partway through leaves nothing behind.
 - **Format is detected automatically.** Upload whichever `.gex` you have, binary or XML - you don't pick a format. A `.gv3` uploaded to Characters & World Objects, or a `.gex` uploaded to Full Game File, is rejected with a message telling you which tool to use instead.
 - **A duplicate name is resolved once.** Two entries sharing a name in one file share one decision, so choosing Overwrite can't let a second entry silently overwrite what the first one just wrote.
-- **Some record types have no home yet.** A file's queries, actions, plots, rumors, XP awards, templates, and calendar entries (and, for a full game file, action/rumor allocation settings) are counted and left out rather than guessed at.
+- **Some record types have no home yet.** A full game file's queries, XP awards, templates, and calendar entries (and action/rumor allocation settings, when present) are counted and left out rather than guessed at. Plots, rumors and actions do have a home - see Plots, Rumors & Actions above.
 - **Decisions reset with a fresh file or target.** Clicking Start Over, uploading a new file, or picking a different merge target clears every trait and duplicate decision you'd made - nothing carries over from a different job or a different target.
 - **XML files carry no player identity.** A binary export includes player email addresses Beyond Elysium can match automatically; an XML export doesn't, so every character needs its player assigned by hand afterward, from the roster.
 - **A chronicle's open purchase lists count.** If the chronicle has switched on Abilities, Backgrounds, or Merits and Flaws in [Chronicle Setup](chronicle-setup.md), an entry in the file that only another creature type lists (a Mage-only Ability in a Vampire's file, say) matches as the catalog entry it is, and it is not offered as a custom one that waits for a Storyteller's price. With the list off, it still comes in as custom.
 - **A creature type with no Grapevine equivalent** can still arrive inside an imported file, but can't be exported, transferred, or given a verification code afterward.
+- **A character whose creature type doesn't exist here is refused, not guessed at.** When the file names a creature type this site has never built, or this chronicle has turned off, that one character is named in the preview ("Chimera: there is no Chimera creature type on this site") and skipped at commit - nothing is written for them. Everyone else in the same file still imports normally. Every creature type Grapevine itself supports - including Hunter and Various - ships here and imports normally; this only catches a wholly invented type, or one your chronicle has turned off in [Chronicle Setup](chronicle-setup.md). Various is the exception to "turned off": a Storyteller can always import it, and a file a player sends that names it is refused.
 - **A transfer needs your review too.** Accepting one under Waiting for Review is the same preview-and-decide flow as a file, and nothing is added to this chronicle until you click Accept Transfer.
 - **A player-sent file works the same way, with one extra rule.** A duplicate character that already belongs to someone else can never be overwritten from a player-sent file - only skipped or imported as a new, separate character.
+- **Accepting a kept-current visiting file tries to pair it with its real home.** If the sender asked to keep it current and the file carries a verification code, accepting it as a visit also sends a pairing request to the home chronicle the code names - fire-and-forget, so a home that never answers, or refuses, simply leaves the copy here unpaired rather than failing the acceptance itself.
 
 ## Troubleshooting
 

@@ -103,7 +103,8 @@ class Sheet_Document {
 		St_Visibility::filter_casting( $casting, $game, false );
 
 		// sheet_data is filtered directly, so npc-roleplaying-notes can be kept.
-		$resolved = Creature_Stack::resolve( $character->stack_slug, $game->slug );
+		$sheet_data = is_array( $character->sheet_data ) ? $character->sheet_data : [];
+		$resolved   = Creature_Stack::resolve( $character->stack_slug, $game->slug, array_map( 'strval', array_keys( $sheet_data ) ) );
 		if ( $resolved === null ) {
 			return null;
 		}
@@ -112,9 +113,9 @@ class Sheet_Document {
 		$template_type = self::npc_template_type( $character ) ?? 'npc_full';
 		$template      = Template::resolve( $character->stack_slug, $template_type, (int) $game->id );
 		$layout        = $template->layout ?? ( Layout_Generator::generate_for_stack( $character->stack_slug ) ?? [ 'sections' => [] ] );
+		$layout        = self::with_held_blocks( $layout, $resolved['stack'], $blocks, $sheet_data );
 		$layout        = St_Visibility::filter_layout( $layout, false, $game->slug, null, [ 'npc-roleplaying-notes' ] );
 
-		$sheet_data = is_array( $character->sheet_data ) ? $character->sheet_data : [];
 		$sheet_data = St_Visibility::filter_sheet_data_blocks(
 			$sheet_data,
 			Schema_Block::storyteller_only_slugs( $game->slug ),
@@ -123,7 +124,7 @@ class Sheet_Document {
 
 		$display_name = ( $character->public_name ?? '' ) !== '' ? (string) $character->public_name : $character->name;
 
-		[ $header_pairs, $sections ] = self::header_and_body( $layout['sections'] ?? [], $blocks, $sheet_data, [], $resolved['stack'] ?? null );
+		[ $header_pairs, $sections ] = self::header_and_body( $layout['sections'] ?? [], $blocks, $sheet_data, [], $resolved['stack'] );
 
 		return [
 			'title'  => sprintf( '%s - Casting Brief', $display_name ),
@@ -162,7 +163,8 @@ class Sheet_Document {
 		$can_manage = ! empty( $options['can_manage'] );
 		St_Visibility::filter_character( $character, $game, $can_manage );
 
-		$resolved = Creature_Stack::resolve( $character->stack_slug, $game->slug );
+		$sheet_data = is_array( $character->sheet_data ) ? $character->sheet_data : [];
+		$resolved   = Creature_Stack::resolve( $character->stack_slug, $game->slug, array_map( 'strval', array_keys( $sheet_data ) ) );
 		if ( $resolved === null ) {
 			return null;
 		}
@@ -172,9 +174,9 @@ class Sheet_Document {
 		$template_type = self::npc_template_type( $character ) ?? 'sheet_full';
 		$template      = Template::resolve( $character->stack_slug, $template_type, (int) $game->id );
 		$layout        = $template->layout ?? ( Layout_Generator::generate_for_stack( $character->stack_slug ) ?? [ 'sections' => [] ] );
+		$layout        = self::with_held_blocks( $layout, $stack, $blocks, $sheet_data );
 		$layout        = St_Visibility::filter_layout( $layout, $can_manage, $game->slug );
 
-		$sheet_data = is_array( $character->sheet_data ) ? $character->sheet_data : [];
 
 		[ $header_pairs, $sections ] = self::header_and_body( $layout['sections'] ?? [], $blocks, $sheet_data, $options, $stack );
 
@@ -189,6 +191,25 @@ class Sheet_Document {
 			'xp_history'       => ! empty( $options['xp_history'] ) ? self::build_xp_history( $character_id ) : [],
 			'provenance_lines' => self::build_provenance( $character, $game ),
 		];
+	}
+
+	/**
+	 * A layout with a section appended for every block the character holds that its creature type's template does not
+	 * list, on a creature type that allows any block; any other layout unchanged.
+	 *
+	 * @param array<string,mixed>  $layout
+	 * @param object               $stack
+	 * @param array<string,object> $blocks
+	 * @param array<string,mixed>  $sheet_data
+	 * @return array<string,mixed>
+	 */
+	private static function with_held_blocks( array $layout, object $stack, array $blocks, array $sheet_data ): array {
+		$sections = is_array( $layout['sections'] ?? null ) ? $layout['sections'] : [];
+		$extra    = Creature_Stack::extra_layout_sections( $stack, $sections, $blocks, $sheet_data );
+		if ( $extra !== [] ) {
+			$layout['sections'] = array_merge( $sections, $extra );
+		}
+		return $layout;
 	}
 
 	/**
@@ -600,8 +621,8 @@ class Sheet_Document {
 	}
 
 	/**
-	 * Whether the site's own locale (one install, one language - never a per-user preference) is Portuguese (Brazil), the
-	 * server-side twin of `src/lib/localizeName.ts`'s `isPortugueseLocale()`.
+	 * Whether the site's own locale is Portuguese (Brazil), the server-side twin of `src/lib/localizeName.ts`'s
+	 * `isPortugueseLocale()`.
 	 */
 	private static function use_portuguese(): bool {
 		return get_locale() === 'pt_BR';

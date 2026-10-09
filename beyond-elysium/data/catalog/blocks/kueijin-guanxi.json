@@ -1,0 +1,23 @@
+{
+  "format": 1,
+  "slug": "kueijin-guanxi",
+  "name": "Guanxi",
+  "kind": "block",
+  "section_type": "trait_list",
+  "provenance": {
+    "sources": [
+      "Mind's Eye Theatre: Laws of the East (WW05016), \"The Bonds of Immortality: Kuei-jin & Guanxi\", p.123, read directly: a wu-mate's own named bond rating, formula 5 + (wu-mate's Charisma-related Social Traits) - (your own P'o or Yin, whichever is higher). Named per wu-mate the same way Vampire's own Bonds block names a bond per Kindred - no fixed catalog of names, a rating against each one a chronicle's own play creates."
+    ],
+    "tool": "read directly, 2026-10-04"
+  },
+  "definition": {
+    "alphabetize": true,
+    "atomic": false,
+    "allow_custom": true,
+    "allow_multiples": false,
+    "print_rings": false,
+    "unpriced": true,
+    "items": [],
+    "display": "multiplier"
+  }
+}

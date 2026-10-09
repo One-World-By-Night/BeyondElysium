@@ -58,6 +58,22 @@ class CostEvaluatorsThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
+	 * The same as `priced()`, submitted by the character's own owning player rather than the chronicle's HST - an
+	 * HST's own direct edit is free by design, so pricing math itself can only be exercised by a genuine non-manager.
+	 */
+	private function priced_as_owner( int $player_id, int $character, string $change_type, array $change_data ): int {
+		wp_set_current_user( $player_id );
+		$request = new WP_REST_Request( 'POST', "/be/v1/{$this->slug}/characters/{$character}/changes" );
+		$request->set_header( 'Content-Type', 'application/json' );
+		$request->set_body( (string) wp_json_encode( [
+			'change_type' => $change_type, 'category' => 'test', 'change_data' => $change_data,
+		] ) );
+		$response = rest_get_server()->dispatch( $request );
+		$this->assertSame( 201, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		return (int) $response->get_data()->xp_cost;
+	}
+
+	/**
 	 * Sets this chronicle's out-of-type modifier for Disciplines' basic rank.
 	 */
 	private function house_rule_basic_out_of_type( string $expression ): void {
@@ -74,12 +90,18 @@ class CostEvaluatorsThreadTest extends WP_UnitTestCase {
 		$this->assertObjectNotHasProperty( 'out_of_type_cost_modifier', $definition );
 	}
 
+	/**
+	 * Priced for the character's own owning player - an HST's own direct addition of a real catalog power is free,
+	 * the same standing is_manager exception every rule in Change_Validator and Cost_Engine already gives.
+	 */
 	public function test_a_chronicles_per_rank_modifier_prices_an_out_of_clan_purchase_and_leaves_in_clan_alone(): void {
 		$this->house_rule_basic_out_of_type( '+2' );
+		$player = self::factory()->user->create( [ 'role' => 'subscriber' ] );
 		$brujah = $this->character( 'vampire', [ 'vampire-identity' => [ 'Clan' => 'Brujah' ] ] );
+		Character::update_header( $brujah, [ 'wp_user_id' => $player ] );
 
-		$this->assertSame( 5, $this->priced( $brujah, 'add_trait', [ 'block_slug' => 'vampire-disciplines', 'trait' => [ 'name' => 'Obfuscate', 'level' => 1 ] ] ), '3 and the chronicle\'s +2' );
-		$this->assertSame( 3, $this->priced( $brujah, 'add_trait', [ 'block_slug' => 'vampire-disciplines', 'trait' => [ 'name' => 'Celerity', 'level' => 1 ] ] ) );
+		$this->assertSame( 5, $this->priced_as_owner( $player, $brujah, 'add_trait', [ 'block_slug' => 'vampire-disciplines', 'trait' => [ 'name' => 'Obfuscate', 'level' => 1 ] ] ), '3 and the chronicle\'s +2' );
+		$this->assertSame( 3, $this->priced_as_owner( $player, $brujah, 'add_trait', [ 'block_slug' => 'vampire-disciplines', 'trait' => [ 'name' => 'Celerity', 'level' => 1 ] ] ) );
 	}
 
 	public function test_the_audit_names_how_much_a_modifier_added_and_on_which_side(): void {
@@ -98,17 +120,40 @@ class CostEvaluatorsThreadTest extends WP_UnitTestCase {
 		$this->assertNull( $lines['Celerity 2']['modifier'] );
 	}
 
+	/**
+	 * Priced for the character's own owning player - an HST's own direct addition of a real catalog rote is free,
+	 * the same standing is_manager exception every rule in Change_Validator and Cost_Engine already gives.
+	 */
 	public function test_a_rote_costs_one_for_each_sphere_level_it_uses(): void {
-		$mage = $this->character( 'mage', [] );
+		$player = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+		$mage   = $this->character( 'mage', [] );
+		Character::update_header( $mage, [ 'wp_user_id' => $player ] );
 
-		$this->assertSame( 4, $this->priced( $mage, 'add_trait', [ 'block_slug' => 'mage-rotes', 'trait' => [ 'name' => 'Access This', 'count' => 1 ] ] ), 'Correspondence Initiate and Forces Initiate' );
-		$this->assertSame( 4, $this->priced( $mage, 'add_trait', [ 'block_slug' => 'mage-rotes', 'trait' => [ 'name' => '108 Plum Blossoms', 'count' => 1 ] ] ), 'Forces 2 and Correspondence 2' );
+		$this->assertSame( 4, $this->priced_as_owner( $player, $mage, 'add_trait', [ 'block_slug' => 'mage-rotes', 'trait' => [ 'name' => 'Access This', 'count' => 1 ] ] ), 'Correspondence Initiate and Forces Initiate' );
+		$this->assertSame( 4, $this->priced_as_owner( $player, $mage, 'add_trait', [ 'block_slug' => 'mage-rotes', 'trait' => [ 'name' => '108 Plum Blossoms', 'count' => 1 ] ] ), 'Forces 2 and Correspondence 2' );
 	}
 
+	/**
+	 * Balance has neither `cost_per_dot` nor `raised_by`, so a plain player is refused outright
+	 * (`pool_not_purchasable`); only the chronicle's own HST reaches it, and an HST's direct edit is free. The book's
+	 * per-level cost the catalog declares is checked directly against the pricing function itself.
+	 */
 	public function test_raising_balance_costs_the_level_it_reaches(): void {
 		$mummy = $this->character( 'mummy', [ 'mummy-resources' => [ 'Balance' => [ 'permanent' => 5, 'temporary' => 5 ] ] ] );
 
-		$this->assertSame( 13, $this->priced( $mummy, 'modify_resource', [ 'block_slug' => 'mummy-resources', 'values' => [ 'Balance' => [ 'permanent' => 7, 'temporary' => 7 ] ] ] ), '6 and 7' );
+		$this->assertSame( 0, $this->priced( $mummy, 'modify_resource', [ 'block_slug' => 'mummy-resources', 'values' => [ 'Balance' => [ 'permanent' => 7, 'temporary' => 7 ] ] ] ), 'the HST\'s own direct edit is free' );
+
+		$definition = Schema_Block::find_by_slug( 'mummy-resources' )->definition;
+		$this->assertSame(
+			13,
+			\BeyondElysium\Services\Cost_Engine::price_resource_pool_change(
+				[ 'mummy-resources' => [ 'Balance' => [ 'permanent' => 5, 'temporary' => 5 ] ] ],
+				$definition,
+				'mummy-resources',
+				[ 'values' => [ 'Balance' => [ 'permanent' => 7, 'temporary' => 7 ] ] ]
+			),
+			'6 and 7 - the book\'s own price, unchanged'
+		);
 	}
 
 	public function test_a_held_realm_is_priced_in_the_audit(): void {

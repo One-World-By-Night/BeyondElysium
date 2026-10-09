@@ -1,5 +1,5 @@
 /**
- * Closing the media picker without choosing an image left its promise pending forever.
+ * Closing the media picker without choosing an image resolves its promise with null.
  */
 import { pickMediaImage } from './pickMediaImage';
 

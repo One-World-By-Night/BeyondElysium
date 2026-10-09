@@ -24,6 +24,8 @@ return [
 		'uses_max'       => 'int',
 		'uses_left'      => 'int',
 		'expires_on'     => 'date',
+		// `{book_slug}:{key}` back to the declared item catalog entry a copy started from.
+		'book_ref'       => 'string',
 	],
 	'location' => [
 		'location_type'     => 'string',

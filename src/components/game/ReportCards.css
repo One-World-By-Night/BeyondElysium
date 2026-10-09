@@ -11,8 +11,28 @@
 	border-radius: 4px;
 }
 
+.be-report-cards__name {
+	margin: 0 0 0.5rem;
+	font-size: 1rem;
+}
+
+.be-report-cards__picture {
+	display: block;
+	max-width: 100%;
+	max-height: 10rem;
+	margin-bottom: 0.5rem;
+	object-fit: contain;
+}
+
 .be-report-cards__field {
 	margin-bottom: 0.4rem;
+}
+
+.be-report-cards__uses,
+.be-report-cards__verify {
+	margin: 0.4rem 0 0;
+	font-size: 0.8rem;
+	font-style: italic;
 }
 
 .be-report-cards__field dt {

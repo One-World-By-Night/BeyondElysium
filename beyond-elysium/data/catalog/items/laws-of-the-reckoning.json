@@ -1,0 +1,262 @@
+{
+  "format": 1,
+  "kind": "item_catalog",
+  "slug": "laws-of-the-reckoning",
+  "name": "Laws of the Reckoning",
+  "book": "Laws of the Reckoning",
+  "code": "WW05037",
+  "provenance": {
+    "sources": [
+      "Mind's Eye Theatre: Laws of the Reckoning (WW05037), \"Weapon Examples\"/Armor chapter, pp.249-256 - every entry checked against the accumulated catalog so far (Dark Epics, Laws of the Night Revised Edition, Laws of the Hunt, Laws of the East); a same-name entry whose stats match an already-catalogued one is left out of this file.",
+      "Every entry read directly from the book's own page images (not OCR), per reference-wod-scan-ocr-lessons. This copy's own printed page numbers are plain, legible Arabic numerals."
+    ],
+    "tool": "read directly, 2026-10-04"
+  },
+  "notes": [
+    "This is the Hunter (Imbued) corebook, and it gates most of its own weapon availability through a real, Hunter-specific resource named `Arsenal` instead of the plain \"Any\"/Police/Street/Underworld scale every other MET corebook uses (\"Arsenal x2, Police 4 or Underworld 3\", etc.) - a real mechanical difference, not a rephrasing, so every firearm and most armor printed here is kept as its own entry even where its Bonus/Negative/Damage match an already-catalogued one exactly.",
+    "Club/Ax splits into three weapons here, not two: Cane joins Club and Ax under one shared stat block (\"Bonus Traits: Cane: 1, Club: 2, Ax: 3\") - Club and Ax match the already-catalogued entries from Laws of the Night Revised Edition exactly and are left out; Cane is genuinely new.",
+    "Explosive Grenade's own damage is a multi-range blast mechanic (\"Special (see below)\"), not a flat number this catalog's `damage_amount` can hold - left unset here, with the real mechanic kept in full in `description` rather than reduced to one approximate number."
+  ],
+  "items": [
+    {
+      "key": "broken-bottle",
+      "name": "Broken Bottle",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Melee",
+        "bonus": 1,
+        "negatives": [ { "name": "Fragile" } ],
+        "concealability": "Vest (ouch!)",
+        "damage_amount": 1,
+        "availability": [ { "name": "Any" } ]
+      },
+      "source": { "book": "Laws of the Reckoning", "code": "WW05037", "page": 250 }
+    },
+    {
+      "key": "cane",
+      "name": "Cane",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Melee",
+        "bonus": 1,
+        "negatives": [ { "name": "Clumsy" } ],
+        "concealability": "Trenchcoat",
+        "damage_amount": 1,
+        "availability": [ { "name": "Any" } ]
+      },
+      "description": "Fallen out of favor as a fashion accessory, though some elderly or anachronistic hunters still carry canes - sometimes because they were the only weapon at hand when the imbuing struck. Many canes have the Negative Trait Fragile as well.",
+      "source": { "book": "Laws of the Reckoning", "code": "WW05037", "page": 250 }
+    },
+    {
+      "key": "spear",
+      "name": "Spear",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Melee",
+        "bonus": 3,
+        "negatives": [ { "name": "Clumsy" }, { "name": "Heavy" } ],
+        "concealability": "NA",
+        "damage_amount": 3,
+        "availability": [ { "name": "Any martial arts store, although spears are usually a lot more expensive to purchase than staves, and also a lot harder to explain to any intruding authority figures" } ],
+        "powers": "Staking"
+      },
+      "source": { "book": "Laws of the Reckoning", "code": "WW05037", "page": 250 }
+    },
+    {
+      "key": "molotov-cocktail",
+      "name": "Molotov Cocktail",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Throwing",
+        "bonus": 1,
+        "negatives": [ { "name": "Clumsy" } ],
+        "concealability": "Jacket (unlit), none (lit)",
+        "damage_amount": 1,
+        "availability": [ { "name": "A sock and a bottle of liquor away" } ],
+        "powers": "Incendiary"
+      },
+      "source": { "book": "Laws of the Reckoning", "code": "WW05037", "page": 251 }
+    },
+    {
+      "key": "explosive-grenade",
+      "name": "Explosive Grenade",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Throwing",
+        "bonus": 3,
+        "negatives": [ { "name": "Loud", "count": 2 } ],
+        "concealability": "Pocket",
+        "availability": [ { "name": "Arsenal x4. Alternately, Police x5 or Underworld x5, and even then there'd better be a hefty bribe or extremely plausible cover story involved" } ],
+        "powers": "Blast Radius"
+      },
+      "description": "Blast Radius: inflicts three levels of lethal damage on the target of the challenge and anyone touching the target at the time (even on a win, unless they specify taking cover); two levels on anyone within a pace of the target who fails a Simple Test (half on a success); one level on anyone within two paces who fails or ties a Simple Test. These ranges are not cumulative. Anyone who takes damage from the blast is knocked to the ground and must spend a turn getting up unless they possess exceptional strength or endurance.",
+      "source": { "book": "Laws of the Reckoning", "code": "WW05037", "page": 251 }
+    },
+    {
+      "key": "crossbow",
+      "name": "Crossbow",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Ranged",
+        "bonus": 5,
+        "negatives": [ { "name": "Clumsy" }, { "name": "Heavy" } ],
+        "concealability": "NA",
+        "damage_amount": 3,
+        "availability": [ { "name": "Arsenal x2" } ],
+        "powers": "Armor-Piercing (ignores all armor except reinforced vests), Staking"
+      },
+      "description": "Characters use the Athletics Ability for retests when using crossbows, and those without this Ability receive only half of the usual Bonus Traits (round down).",
+      "source": { "book": "Laws of the Reckoning", "code": "WW05037", "page": 252 }
+    },
+    {
+      "key": "longbow",
+      "name": "Longbow",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Ranged",
+        "bonus": 6,
+        "negatives": [ { "name": "Fragile" }, { "name": "Clumsy" }, { "name": "Heavy" } ],
+        "concealability": "NA",
+        "damage_amount": 2,
+        "availability": [ { "name": "Arsenal x1" } ],
+        "powers": "Armor-Piercing (ignores chain or plate armor), Staking, Destroy Shield"
+      },
+      "description": "Characters use the Athletics Ability for retests when using bows, and those without this Ability receive only half of the usual Bonus Traits (round down). Modern compound bows do not have the Negative Trait Clumsy, but give the user only five Bonus Traits.",
+      "source": { "book": "Laws of the Reckoning", "code": "WW05037", "page": 252 }
+    },
+    {
+      "key": "pistol",
+      "name": "Pistol",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Firearm",
+        "bonus": 2,
+        "negatives": [ { "name": "Loud" } ],
+        "concealability": "Pocket",
+        "damage_amount": 2,
+        "availability": [ { "name": "Arsenal x1, if registered; Arsenal x2, Police x4, Street x3 or Underworld x2 otherwise" } ]
+      },
+      "source": { "book": "Laws of the Reckoning", "code": "WW05037", "page": 253 }
+    },
+    {
+      "key": "heavy-pistol",
+      "name": "Heavy Pistol",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Firearm",
+        "bonus": 2,
+        "negatives": [ { "name": "Loud" } ],
+        "concealability": "Jacket",
+        "damage_amount": 2,
+        "availability": [ { "name": "Arsenal x1, if registered; Arsenal x2, Police x4, Street x4 or Underworld x3 otherwise" } ],
+        "powers": "High-Caliber"
+      },
+      "source": { "book": "Laws of the Reckoning", "code": "WW05037", "page": 253 }
+    },
+    {
+      "key": "rifle",
+      "name": "Rifle",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Firearm",
+        "bonus": 3,
+        "negatives": [ { "name": "Loud" } ],
+        "concealability": "NA",
+        "damage_amount": 2,
+        "availability": [ { "name": "Arsenal x1, if registered; Arsenal x2, Police x4, Street x4 or Underworld x3 otherwise" } ],
+        "powers": "High-Caliber (only with ammunition acquired for it separately)"
+      },
+      "source": { "book": "Laws of the Reckoning", "code": "WW05037", "page": 253 }
+    },
+    {
+      "key": "shotgun",
+      "name": "Shotgun",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Firearm",
+        "bonus": 3,
+        "negatives": [ { "name": "Loud" } ],
+        "concealability": "NA",
+        "damage_amount": 2,
+        "availability": [ { "name": "Arsenal x1, if registered; Arsenal x2, Police x4, Street x4 or Underworld x3 otherwise" } ],
+        "powers": "Spray, Mass-Trauma"
+      },
+      "source": { "book": "Laws of the Reckoning", "code": "WW05037", "page": 253 }
+    },
+    {
+      "key": "submachine-gun",
+      "name": "Submachine Gun",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Firearm",
+        "bonus": 2,
+        "negatives": [ { "name": "Loud" } ],
+        "concealability": "Jacket",
+        "damage_amount": 2,
+        "availability": [ { "name": "Arsenal x3, if registered; Arsenal x4, Police x4, Street x4 or Underworld x3 otherwise" } ],
+        "powers": "Spray, Fully Automatic"
+      },
+      "source": { "book": "Laws of the Reckoning", "code": "WW05037", "page": 253 }
+    },
+    {
+      "key": "assault-rifle",
+      "name": "Assault Rifle",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Firearm",
+        "bonus": 3,
+        "negatives": [ { "name": "Loud" } ],
+        "concealability": "NA",
+        "damage_amount": 3,
+        "availability": [ { "name": "Arsenal x3, if registered and semiautomatic. Arsenal x4, Police x5 or Underworld x5 otherwise" } ],
+        "powers": "Spray, Armor-Piercing (ignores all armor except reinforced vests), High-Caliber (acquired separately), Fully Automatic"
+      },
+      "description": "Designed for infantry soldiers in conventional warfare; the bigger and scarier relatives of submachine guns.",
+      "source": { "book": "Laws of the Reckoning", "code": "WW05037", "page": 254 }
+    },
+    {
+      "key": "flamethrower",
+      "name": "Flamethrower",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Firearm",
+        "bonus": 6,
+        "negatives": [ { "name": "Clumsy" }, { "name": "Heavy" }, { "name": "Loud" } ],
+        "concealability": "NA",
+        "damage_amount": 3,
+        "availability": [ { "name": "Arsenal x5, you wacko" } ],
+        "powers": "Spray, Incendiary, Mass-Trauma"
+      },
+      "description": "Anyone attempting to use one of these weapons without at least three levels of the Firearms Ability must make a Simple Test every time it is fired; on a loss, they accidentally light themselves on fire and must take measures to extinguish themselves.",
+      "source": { "book": "Laws of the Reckoning", "code": "WW05037", "page": 254 }
+    },
+    {
+      "key": "bulletproof-vest",
+      "name": "Bulletproof Vest",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Armor",
+        "item_subtype": "Modern",
+        "level": 2,
+        "negatives": [ { "name": "Heavy" } ],
+        "availability": [ { "name": "Arsenal x2, Police x4 or Underworld x3" } ]
+      },
+      "description": "Health Levels: 2.",
+      "source": { "book": "Laws of the Reckoning", "code": "WW05037", "page": 255 }
+    },
+    {
+      "key": "reinforced-riot-armor",
+      "name": "Reinforced (Riot) Armor",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Armor",
+        "item_subtype": "Modern",
+        "level": 3,
+        "negatives": [ { "name": "Heavy" }, { "name": "Clumsy" } ],
+        "availability": [ { "name": "Arsenal x4, Police x5 or Underworld x4" } ]
+      },
+      "description": "Health Levels: 3. Bodysuits favored by military personnel and law enforcement officers expecting dangerous situations.",
+      "source": { "book": "Laws of the Reckoning", "code": "WW05037", "page": 255 }
+    }
+  ]
+}

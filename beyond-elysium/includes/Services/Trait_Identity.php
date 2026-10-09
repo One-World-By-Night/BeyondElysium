@@ -82,9 +82,9 @@ class Trait_Identity {
 	/**
 	 * The index of the first held row with this identity, or null when the character holds none.
 	 *
-	 * @param object|null $definition
-	 * @param array       $held     `sheet_data[block_slug]`.
-	 * @param string      $identity From `of()` or `of_row()`.
+	 * @param object|null             $definition
+	 * @param array<int|string,mixed> $held     `sheet_data[block_slug]`.
+	 * @param string                  $identity From `of()` or `of_row()`.
 	 * @return int|null
 	 */
 	public static function index_of( $definition, array $held, string $identity ): ?int {
@@ -149,9 +149,9 @@ class Trait_Identity {
 	/**
 	 * Which held row a `modify_trait` or `remove_trait` addresses, as an identity.
 	 *
-	 * @param object|null $definition
-	 * @param array       $trait    The change's own normalized trait.
-	 * @param array|null  $previous The change's `previous` snapshot, when it carries one.
+	 * @param object|null              $definition
+	 * @param array<string,mixed>      $trait    The change's own normalized trait.
+	 * @param array<string,mixed>|null $previous The change's `previous` snapshot, when it carries one.
 	 * @return string|null
 	 */
 	public static function target_of( $definition, array $trait, ?array $previous ): ?string {

@@ -2,9 +2,9 @@ import { readdirSync, readFileSync, statSync } from 'fs';
 import { join } from 'path';
 
 /**
- * Eight editor/shared components (ResourcePoolEditor, TraitListEditor, TieredPowerEditor, IdentityFieldEditor,
- * BlockEditor, SearchableSelect, ConfirmDialog, DotTracker) each had a real, non-trivial CSS file sitting next to
- * them that nothing ever imported.
+ * Every component's stylesheet sitting next to it is imported by something, among them ResourcePoolEditor,
+ * TraitListEditor, TieredPowerEditor, IdentityFieldEditor, BlockEditor, SearchableSelect, ConfirmDialog and
+ * DotTracker.
  */
 
 function findComponentFiles(

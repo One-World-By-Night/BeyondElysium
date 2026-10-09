@@ -26,6 +26,12 @@
         </testsuite>
     </testsuites>
 
+    <groups>
+        <exclude>
+            <group>multisite</group>
+        </exclude>
+    </groups>
+
     <coverage>
         <include>
             <directory suffix=".php">beyond-elysium/includes</directory>

@@ -7,6 +7,7 @@ use BeyondElysium\Models\Creature_Stack;
 use BeyondElysium\Models\Game;
 use BeyondElysium\Models\Schema_Block;
 use BeyondElysium\Services\Cost_Engine;
+use BeyondElysium\Services\In_Type;
 use WP_UnitTestCase;
 
 /**
@@ -200,6 +201,12 @@ class InTypeThreadTest extends WP_UnitTestCase {
 		$this->assertTrue( $this->in_type( $devil, 'demon-evocations', 'Lore of Flame' ) );
 		$this->assertTrue( $this->in_type( $devil, 'demon-evocations', 'Lore of Humanity' ), 'a Common Lore' );
 		$this->assertFalse( $this->in_type( $devil, 'demon-evocations', 'Lore of the Winds' ) );
+	}
+
+	public function test_has_test_for_block_finds_a_book_tests_real_section(): void {
+		$this->assertTrue( In_Type::has_test_for_block( 'vampire-disciplines', $this->slug ) );
+		$this->assertFalse( In_Type::has_test_for_block( 'changeling-arts', $this->slug ) );
+		$this->assertFalse( In_Type::has_test_for_block( 'nonexistent-block', $this->slug ) );
 	}
 
 	public function test_mortal_a_ghouls_potence_and_a_revenants_family_disciplines(): void {

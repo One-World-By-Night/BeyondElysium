@@ -1,0 +1,252 @@
+{
+  "format": 1,
+  "slug": "hunter-edges",
+  "name": "Edges",
+  "kind": "block",
+  "section_type": "tiered_power",
+  "provenance": {
+    "sources": [
+      "Mind's Eye Theatre: Laws of the Reckoning (WW05037), Chapter Four \"Edges\", pp.187-231 - every path and every edge name read directly from the book's own page images, per reference-wod-scan-ocr-lessons. Edge Costs table p.188: Touched 1, Gifted 2, Devoted 3, Inspired 4, Exalted 5 Virtue Traits, cumulative 1/3/6/10/Special unspent Traits required.",
+      "\"Initial Edges\" and \"Gaining New Edges\" (pp.187-188): a hunter may buy any edge path they hold Virtue Traits for, not only their own creed's, at no extra cost - but can never hold more edges in another path than in the one named for their own creed's primary Virtue (\"a Martyr must always have an equal or greater number of Martyrdom edges as he has in any other edge path\"); and must already hold at least one edge of a path's own next-lower rank before buying the rank above it in that same path.",
+      "The Lost Creeds (p.87): Deviance and Isolation are each their own creed (not \"Wayward\"/\"Hermit\", which the book uses only as an informal noun for a member of one)."
+    ],
+    "tool": "read directly, 2026-10-04"
+  },
+  "notes": [
+    "Buying an edge does not advance a rating the way a Discipline level does - each edge is its own named purchase, spending a fixed number of Virtue Traits for that rank (1/2/3/4/5) without lowering the Virtue itself (Change_Engine marks dots spent, never subtracts them). There is therefore no ladder here at all (`_meta.ladder` is empty, pick-only) - every edge at every rank, including Touched, is a pick filed under its own rank, since a character may hold any subset of a rank's edges independently, not a cumulative 1..N progression.",
+    "This catalog carries no mechanical text for what an edge does - only its name, rank and path, the same convention `vampire-disciplines.json` already established for Discipline powers. A Storyteller or player reads the real effect from the book.",
+    "The Lost Edges (p.225): Deviance and Isolation carry only one edge per rank, half of every other path's two; `creed_restricted_to` on those two families is the only path-level creed restriction - every other path is open to any creed, subject to the primary-path edge count and the rank prerequisite above, both of which `Change_Validator::validate_spent_from_purchase()` enforces (`rank_not_unlocked`, `outranks_primary_path`)."
+  ],
+  "definition": {
+    "atomic": true,
+    "allow_custom": false,
+    "allow_multiples": false,
+    "_meta": {
+      "ranks": [ "touched", "gifted", "devoted", "inspired", "exalted" ],
+      "ladder": {},
+      "spent_from": {
+        "pool_block": "hunter-virtues",
+        "by_family_field": "virtue",
+        "rank_cost": { "touched": 1, "gifted": 2, "devoted": 3, "inspired": 4, "exalted": 5 },
+        "creed_check": "hunter-identity.Creed"
+      }
+    },
+    "powers": [
+      {
+        "name": "Innocence Path",
+        "virtue": "Mercy",
+        "levels": [],
+        "elder": {
+          "touched": [
+            { "level": null, "tier": "touched", "power_name": "Hide" },
+            { "level": null, "tier": "touched", "power_name": "Fool's Luck" }
+          ],
+          "gifted": [
+            { "level": null, "tier": "gifted", "power_name": "Illuminate" },
+            { "level": null, "tier": "gifted", "power_name": "Ease" }
+          ],
+          "devoted": [
+            { "level": null, "tier": "devoted", "power_name": "Radiate" },
+            { "level": null, "tier": "devoted", "power_name": "Inspire" }
+          ],
+          "inspired": [
+            { "level": null, "tier": "inspired", "power_name": "Confront" },
+            { "level": null, "tier": "inspired", "power_name": "Bond" }
+          ],
+          "exalted": [
+            { "level": null, "tier": "exalted", "power_name": "Blaze" },
+            { "level": null, "tier": "exalted", "power_name": "Backlash" }
+          ]
+        }
+      },
+      {
+        "name": "Martyrdom Path",
+        "virtue": "Mercy",
+        "levels": [],
+        "elder": {
+          "touched": [
+            { "level": null, "tier": "touched", "power_name": "Demand" },
+            { "level": null, "tier": "touched", "power_name": "Project" }
+          ],
+          "gifted": [
+            { "level": null, "tier": "gifted", "power_name": "Witness" },
+            { "level": null, "tier": "gifted", "power_name": "Revelation" }
+          ],
+          "devoted": [
+            { "level": null, "tier": "devoted", "power_name": "Ravage" },
+            { "level": null, "tier": "devoted", "power_name": "Inflict" }
+          ],
+          "inspired": [
+            { "level": null, "tier": "inspired", "power_name": "Donate" },
+            { "level": null, "tier": "inspired", "power_name": "Ordeal" }
+          ],
+          "exalted": [
+            { "level": null, "tier": "exalted", "power_name": "Payback" },
+            { "level": null, "tier": "exalted", "power_name": "Expiate" }
+          ]
+        }
+      },
+      {
+        "name": "Redemption Path",
+        "virtue": "Mercy",
+        "levels": [],
+        "elder": {
+          "touched": [
+            { "level": null, "tier": "touched", "power_name": "Bluster" },
+            { "level": null, "tier": "touched", "power_name": "Outreach" }
+          ],
+          "gifted": [
+            { "level": null, "tier": "gifted", "power_name": "Insinuate" },
+            { "level": null, "tier": "gifted", "power_name": "Insight" }
+          ],
+          "devoted": [
+            { "level": null, "tier": "devoted", "power_name": "Respire" },
+            { "level": null, "tier": "devoted", "power_name": "Punish" }
+          ],
+          "inspired": [
+            { "level": null, "tier": "inspired", "power_name": "Becalm" },
+            { "level": null, "tier": "inspired", "power_name": "Abjure" }
+          ],
+          "exalted": [
+            { "level": null, "tier": "exalted", "power_name": "Suspend" },
+            { "level": null, "tier": "exalted", "power_name": "Shame" }
+          ]
+        }
+      },
+      {
+        "name": "Visionary Path",
+        "virtue": "Vision",
+        "levels": [],
+        "elder": {
+          "touched": [
+            { "level": null, "tier": "touched", "power_name": "Foresee" },
+            { "level": null, "tier": "touched", "power_name": "Focus" }
+          ],
+          "gifted": [
+            { "level": null, "tier": "gifted", "power_name": "Pinpoint" },
+            { "level": null, "tier": "gifted", "power_name": "Summon" }
+          ],
+          "devoted": [
+            { "level": null, "tier": "devoted", "power_name": "Delve" },
+            { "level": null, "tier": "devoted", "power_name": "Rally" }
+          ],
+          "inspired": [
+            { "level": null, "tier": "inspired", "power_name": "Restore" },
+            { "level": null, "tier": "inspired", "power_name": "Unify" }
+          ],
+          "exalted": [
+            { "level": null, "tier": "exalted", "power_name": "Augur" },
+            { "level": null, "tier": "exalted", "power_name": "Determine" }
+          ]
+        }
+      },
+      {
+        "name": "Deviance Path",
+        "virtue": "Vision",
+        "creed_restricted_to": [ "Deviance" ],
+        "levels": [],
+        "elder": {
+          "touched": [ { "level": null, "tier": "touched", "power_name": "Impart" } ],
+          "gifted": [ { "level": null, "tier": "gifted", "power_name": "Forewarn" } ],
+          "devoted": [ { "level": null, "tier": "devoted", "power_name": "Enrage" } ],
+          "inspired": [ { "level": null, "tier": "inspired", "power_name": "Reap" } ],
+          "exalted": [ { "level": null, "tier": "exalted", "power_name": "Spiral" } ]
+        }
+      },
+      {
+        "name": "Isolation Path",
+        "virtue": "Vision",
+        "creed_restricted_to": [ "Isolation" ],
+        "levels": [],
+        "elder": {
+          "touched": [ { "level": null, "tier": "touched", "power_name": "Reach" } ],
+          "gifted": [ { "level": null, "tier": "gifted", "power_name": "Send" } ],
+          "devoted": [ { "level": null, "tier": "devoted", "power_name": "Edict" } ],
+          "inspired": [ { "level": null, "tier": "inspired", "power_name": "Transcend" } ],
+          "exalted": [ { "level": null, "tier": "exalted", "power_name": "Proclaim" } ]
+        }
+      },
+      {
+        "name": "Defense Path",
+        "virtue": "Zeal",
+        "levels": [],
+        "elder": {
+          "touched": [
+            { "level": null, "tier": "touched", "power_name": "Ward" },
+            { "level": null, "tier": "touched", "power_name": "Alarm" }
+          ],
+          "gifted": [
+            { "level": null, "tier": "gifted", "power_name": "Rejuvenate" },
+            { "level": null, "tier": "gifted", "power_name": "Lock" }
+          ],
+          "devoted": [
+            { "level": null, "tier": "devoted", "power_name": "Brand" },
+            { "level": null, "tier": "devoted", "power_name": "Guard" }
+          ],
+          "inspired": [
+            { "level": null, "tier": "inspired", "power_name": "Champion" },
+            { "level": null, "tier": "inspired", "power_name": "Protect" }
+          ],
+          "exalted": [
+            { "level": null, "tier": "exalted", "power_name": "Burn" },
+            { "level": null, "tier": "exalted", "power_name": "Blast" }
+          ]
+        }
+      },
+      {
+        "name": "Judgment Path",
+        "virtue": "Zeal",
+        "levels": [],
+        "elder": {
+          "touched": [
+            { "level": null, "tier": "touched", "power_name": "Discern" },
+            { "level": null, "tier": "touched", "power_name": "Vigilance" }
+          ],
+          "gifted": [
+            { "level": null, "tier": "gifted", "power_name": "Burden" },
+            { "level": null, "tier": "gifted", "power_name": "Anathema" }
+          ],
+          "devoted": [
+            { "level": null, "tier": "devoted", "power_name": "Balance" },
+            { "level": null, "tier": "devoted", "power_name": "Vow" }
+          ],
+          "inspired": [
+            { "level": null, "tier": "inspired", "power_name": "Pierce" },
+            { "level": null, "tier": "inspired", "power_name": "Confession" }
+          ],
+          "exalted": [
+            { "level": null, "tier": "exalted", "power_name": "Expose" },
+            { "level": null, "tier": "exalted", "power_name": "Imprison" }
+          ]
+        }
+      },
+      {
+        "name": "Vengeance Path",
+        "virtue": "Zeal",
+        "levels": [],
+        "elder": {
+          "touched": [
+            { "level": null, "tier": "touched", "power_name": "Cleave" },
+            { "level": null, "tier": "touched", "power_name": "Impact" }
+          ],
+          "gifted": [
+            { "level": null, "tier": "gifted", "power_name": "Trail" },
+            { "level": null, "tier": "gifted", "power_name": "Muse of Flame" }
+          ],
+          "devoted": [
+            { "level": null, "tier": "devoted", "power_name": "Smolder" },
+            { "level": null, "tier": "devoted", "power_name": "Fuel" }
+          ],
+          "inspired": [
+            { "level": null, "tier": "inspired", "power_name": "Surge" },
+            { "level": null, "tier": "inspired", "power_name": "Firewalk" }
+          ],
+          "exalted": [
+            { "level": null, "tier": "exalted", "power_name": "Smite" },
+            { "level": null, "tier": "exalted", "power_name": "Harpoon" }
+          ]
+        }
+      }
+    ]
+  }
+}

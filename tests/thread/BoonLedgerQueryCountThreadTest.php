@@ -88,8 +88,8 @@ class BoonLedgerQueryCountThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * A party's id came back as text, and the ledger scoped to one character sorts its boons into owed and owed-to by
-	 * comparing that id with the character's number.
+	 * A party's id is a number: the ledger scoped to one character sorts its boons into owed and owed-to by comparing
+	 * that id with the character's number.
 	 */
 	public function test_a_partys_id_is_a_number(): void {
 		$this->add_boons( 1 );

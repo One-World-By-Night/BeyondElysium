@@ -57,6 +57,21 @@
 	font-size: 0.85rem;
 }
 
+.be-downtime-queue__connections {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+	font-size: 0.8rem;
+}
+
+.be-downtime-queue__connection {
+	padding: 0.1rem 0.5rem;
+	border-radius: 999px;
+	border: 1px solid var(--be-gray-18);
+	text-decoration: none;
+	color: inherit;
+}
+
 @media (max-width: 768px) {
 
 	.be-downtime-queue__row {

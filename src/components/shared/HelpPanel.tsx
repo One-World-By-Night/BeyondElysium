@@ -12,6 +12,7 @@ import {
 	helpTarget,
 	pageTitle,
 	uniqueAnchor,
+	websitePageUrl,
 	withoutTitle,
 	type GuideSlug,
 } from '../../lib/helpPage';
@@ -115,6 +116,8 @@ export function HelpPanel( { helpKey, onClose }: HelpPanelProps ) {
 	const [ loaded, setLoaded ] = useState< {
 		title: string;
 		html: string;
+		fallback: boolean;
+		portuguese: boolean;
 	} | null >( null );
 	const [ error, setError ] = useState< string | null >( null );
 	const titleRef = useRef< HTMLHeadingElement >( null );
@@ -140,6 +143,9 @@ export function HelpPanel( { helpKey, onClose }: HelpPanelProps ) {
 					setLoaded( {
 						title: pageTitle( result.content ),
 						html: renderPage( result.content ),
+						fallback: result.fallback,
+						portuguese:
+							result.language === 'pt_BR' || result.fallback,
 					} );
 				}
 			} )
@@ -259,11 +265,38 @@ export function HelpPanel( { helpKey, onClose }: HelpPanelProps ) {
 				{ ! error && ! loaded && (
 					<p>{ __( 'Loading…', 'beyond-elysium' ) }</p>
 				) }
+				{ loaded?.fallback && (
+					<p className="be-help-panel__notice" role="note">
+						{ __(
+							'This page has not been translated yet.',
+							'beyond-elysium'
+						) }
+					</p>
+				) }
 				{ loaded && (
 					<div
 						className="be-help-panel__page"
 						dangerouslySetInnerHTML={ { __html: loaded.html } }
 					/>
+				) }
+				{ loaded && (
+					<p className="be-help-panel__illustrated">
+						<a
+							href={ websitePageUrl(
+								page.kind === 'help'
+									? { kind: 'help', key: page.key }
+									: { kind: 'guide', slug: page.slug },
+								loaded.portuguese
+							) }
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							{ __(
+								'See this page with screenshots',
+								'beyond-elysium'
+							) }
+						</a>
+					</p>
 				) }
 			</div>
 		</div>,

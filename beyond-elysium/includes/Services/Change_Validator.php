@@ -9,6 +9,8 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Validates and normalizes a submitted character change before anything prices, routes, or applies it.
+ *
+ * @phpstan-type Validation array{ok:bool,change_data?:array<string,mixed>,code?:string,message?:string,args?:array<int,string>}
  */
 class Change_Validator {
 
@@ -46,13 +48,13 @@ class Change_Validator {
 	 * Validates one change and returns it normalized: unknown keys dropped, names set to the catalog's exact spelling,
 	 * numbers cast to integers, and `custom` set only where the block genuinely allows a custom entry.
 	 *
-	 * @param array                $change             `change_type` and `change_data`.
+	 * @param array<string,mixed>  $change             `change_type` and `change_data`.
 	 * @param array<string,object> $blocks             The character's stack blocks keyed by slug, each with `section_type` and a decoded `definition`.
-	 * @param array                $sheet_data         The character's current sheet_data.
+	 * @param array<string,mixed>  $sheet_data         The character's current sheet_data.
 	 * @param bool                 $is_manager         Whether the submitter is a Storyteller of this chronicle.
 	 * @param string[]             $protected_fields   "block_slug.Field" identity fields a non-Storyteller may not clear - the ones in-type pricing reads.
 	 * @param string[]             $closed_blocks      Blocks the chronicle's hidden sections show, where nothing new is bought.
-	 * @return array{ok:bool,change_data?:array,code?:string,message?:string}
+	 * @return Validation
 	 */
 	public static function validate( array $change, array $blocks, array $sheet_data, bool $is_manager, array $protected_fields = [], array $closed_blocks = [] ): array {
 		$type = $change['change_type'] ?? '';
@@ -99,6 +101,13 @@ class Change_Validator {
 					$result = self::validate_trait_list( $type, $block_slug, $definition, $held, $data, $is_manager );
 				} elseif ( $block->section_type === 'tiered_power' ) {
 					$result = self::validate_tiered_power( $type, $block_slug, $definition, $held, $data, $is_manager );
+					if ( $result['ok'] && $type !== 'modify_trait' ) {
+						$spent = self::validate_spent_from_purchase( $definition, $sheet_data, (array) $result['change_data'], $type );
+						if ( ! $spent['ok'] ) {
+							return $spent;
+						}
+						$result = $spent;
+					}
 				} else {
 					return self::fail( 'wrong_section_type', 'That change does not fit this section.' );
 				}
@@ -109,6 +118,13 @@ class Change_Validator {
 					return self::fail( 'wrong_section_type', 'That change does not fit this section.' );
 				}
 				$result = self::validate_resource( $block_slug, $definition, $held, $data, $is_manager );
+				if ( $result['ok'] ) {
+					$raised = self::validate_raised_by( $definition, $sheet_data, (array) $result['change_data'], $is_manager );
+					if ( ! $raised['ok'] ) {
+						return $raised;
+					}
+					$result = $raised;
+				}
 				break;
 
 			default: // modify_identity - the only block-based type left after the allowlist check.
@@ -128,10 +144,10 @@ class Change_Validator {
 	 * Whether a validated change buys something: an added entry, a higher count or level than the one held, or a higher
 	 * permanent rating.
 	 *
-	 * @param string               $type
-	 * @param object               $block
-	 * @param array                $held
-	 * @param array<string,mixed>  $data The validated change_data.
+	 * @param string                  $type
+	 * @param object                  $block
+	 * @param array<int|string,mixed> $held
+	 * @param array<string,mixed>     $data The validated change_data.
 	 */
 	private static function buys_something( string $type, object $block, array $held, array $data ): bool {
 		if ( $type === 'add_trait' ) {
@@ -206,8 +222,8 @@ class Change_Validator {
 	/**
 	 * A player's proposed catalog item, location or rote.
 	 *
-	 * @param array $data
-	 * @return array
+	 * @param array<string,mixed> $data
+	 * @return Validation
 	 */
 	private static function validate_proposed_object( array $data ): array {
 		$object_type = $data['object_type'] ?? '';
@@ -255,8 +271,8 @@ class Change_Validator {
 	/**
 	 * A player's proposed faction.
 	 *
-	 * @param array $data
-	 * @return array
+	 * @param array<string,mixed> $data
+	 * @return Validation
 	 */
 	private static function validate_proposed_faction( array $data ): array {
 		$faction_type = (string) ( $data['faction_type'] ?? '' );
@@ -284,14 +300,13 @@ class Change_Validator {
 	}
 
 	/**
-	 * A Storyteller's own `xp_earn`/`xp_adjust` keeps today's shape: any non-zero whole number, an optional reason.
-	 * A player's submission is a request, never a direct adjustment: a positive amount only, a required
-	 * "where you earned it", an optional date no later than today, and optional details - the server builds the
-	 * stored reason itself so `Change_Engine` and every display twin need no change to read it.
+	 * A Storyteller's own `xp_earn`/`xp_adjust`: any non-zero whole number, an optional reason. A player's submission
+	 * is a request, never a direct adjustment: a positive amount only, a required "where you earned it", an optional
+	 * date no later than today, and optional details - the server builds the stored reason itself.
 	 *
-	 * @param array $data
-	 * @param bool  $is_manager
-	 * @return array
+	 * @param array<string,mixed> $data
+	 * @param bool                $is_manager
+	 * @return Validation
 	 */
 	private static function validate_xp( array $data, bool $is_manager ): array {
 		$amount = self::to_int( $data['amount'] ?? null );
@@ -373,13 +388,13 @@ class Change_Validator {
 	}
 
 	/**
-	 * @param string $type
-	 * @param string $block_slug
-	 * @param object $definition
-	 * @param array  $held
-	 * @param array  $data
-	 * @param bool   $is_manager A Storyteller may add a custom entry to any section; a player only where the section allows one.
-	 * @return array
+	 * @param string                  $type
+	 * @param string                  $block_slug
+	 * @param object                  $definition
+	 * @param array<int|string,mixed> $held
+	 * @param array<string,mixed>     $data
+	 * @param bool                    $is_manager A Storyteller may add a custom entry to any section; a player only where the section allows one.
+	 * @return Validation
 	 */
 	private static function validate_trait_list( string $type, string $block_slug, $definition, array $held, array $data, bool $is_manager ): array {
 		$trait = $data['trait'] ?? null;
@@ -463,8 +478,8 @@ class Change_Validator {
 	/**
 	 * The `previous` snapshot narrowed to the one field that identifies.
 	 *
-	 * @param array $data
-	 * @return array|null
+	 * @param array<string,mixed> $data
+	 * @return array<string,mixed>|null
 	 */
 	private static function previous_snapshot( array $data ): ?array {
 		$previous = $data['previous'] ?? null;
@@ -477,12 +492,12 @@ class Change_Validator {
 	/**
 	 * Refuses a change that would leave two held rows the sheet cannot tell apart.
 	 *
-	 * @param string     $type
-	 * @param object     $definition
-	 * @param array      $held
-	 * @param array      $trait    The normalized trait.
-	 * @param array|null $previous The change's `previous` snapshot, which names the row a relabel addresses.
-	 * @return array|null A failure, or null when the change is fine.
+	 * @param string                   $type
+	 * @param object                   $definition
+	 * @param array<int|string,mixed>  $held
+	 * @param array<string,mixed>      $trait    The normalized trait.
+	 * @param array<string,mixed>|null $previous The change's `previous` snapshot, which names the row a relabel addresses.
+	 * @return Validation|null A failure, or null when the change is fine.
 	 */
 	private static function trait_row_conflict( string $type, $definition, array $held, array $trait, ?array $previous = null ): ?array {
 		if ( ! empty( $definition->atomic ) || ! in_array( $type, [ 'add_trait', 'modify_trait' ], true ) ) {
@@ -539,13 +554,13 @@ class Change_Validator {
 	}
 
 	/**
-	 * @param string $type
-	 * @param string $block_slug
-	 * @param object $definition
-	 * @param array  $held
-	 * @param array  $data
-	 * @param bool   $is_manager A Storyteller may add a custom power to any section; a player only where the section allows one.
-	 * @return array
+	 * @param string                  $type
+	 * @param string                  $block_slug
+	 * @param object                  $definition
+	 * @param array<int|string,mixed> $held
+	 * @param array<string,mixed>     $data
+	 * @param bool                    $is_manager A Storyteller may add a custom power to any section; a player only where the section allows one.
+	 * @return Validation
 	 */
 	private static function validate_tiered_power( string $type, string $block_slug, $definition, array $held, array $data, bool $is_manager ): array {
 		$trait = $data['trait'] ?? null;
@@ -746,12 +761,183 @@ class Change_Validator {
 	}
 
 	/**
-	 * @param string $block_slug
-	 * @param object $definition
-	 * @param array  $held
-	 * @param array  $data
-	 * @param bool   $is_manager
-	 * @return array
+	 * Refuses a `spent_from` block's purchase without enough unspent dots in its named Virtue (or similar) pool;
+	 * refuses a purchase of a creed-restricted family (`creed_restricted_to`) for a character of any other creed;
+	 * refuses a rank bought without already holding the same family's own next-lower rank (`rank_not_unlocked`,
+	 * skipped for a family's first rank); and, when `creed_check` is declared, refuses a non-primary family's
+	 * purchase once it would hold more picks than the family named for the character's own creed holds
+	 * (`outranks_primary_path`, the creed name plus " Path").
+	 *
+	 * @param object              $definition
+	 * @param array<string,mixed> $sheet_data The character's whole sheet, to read the pool and the creed check from.
+	 * @param array<string,mixed> $data       The already-resolved `change_data` (real family/pick names).
+	 * @param string              $type       `add_trait` or `remove_trait` - `modify_trait` never reaches here.
+	 * @return array{ok:bool,code?:string,message?:string,args?:array<int,mixed>}
+	 */
+	private static function validate_spent_from_purchase( $definition, array $sheet_data, array $data, string $type ): array {
+		$spent_from = $definition->_meta->spent_from ?? null;
+		if ( $spent_from === null || $type !== 'add_trait' ) {
+			return [ 'ok' => true, 'change_data' => $data ];
+		}
+
+		$trait      = is_array( $data['trait'] ?? null ) ? $data['trait'] : [];
+		$family_name = (string) ( $trait['name'] ?? '' );
+		$power_name  = (string) ( $trait['power_name'] ?? '' );
+		$field       = (string) ( $spent_from->by_family_field ?? '' );
+
+		$family = null;
+		foreach ( ( $definition->powers ?? [] ) as $power ) {
+			if ( isset( $power->name ) && $power->name === $family_name ) {
+				$family = $power;
+				break;
+			}
+		}
+		if ( $family === null || $power_name === '' ) {
+			return [ 'ok' => true, 'change_data' => $data ]; // Resolved elsewhere; nothing more to check here.
+		}
+
+		$creed_check   = (string) ( $spent_from->creed_check ?? '' );
+		$current_creed = null;
+		if ( $creed_check !== '' ) {
+			[ $creed_block, $creed_field ] = array_pad( explode( '.', $creed_check, 2 ), 2, '' );
+			$current_creed = isset( $sheet_data[ $creed_block ][ $creed_field ] ) ? (string) $sheet_data[ $creed_block ][ $creed_field ] : null;
+		}
+		if ( isset( $family->creed_restricted_to ) && is_array( $family->creed_restricted_to ) ) {
+			if ( ! in_array( $current_creed, $family->creed_restricted_to, true ) ) {
+				return self::fail( 'creed_restricted', '%s is restricted to %s.', [ $family_name, implode( ' or ', $family->creed_restricted_to ) ] );
+			}
+		}
+
+		$rank = null;
+		foreach ( (array) ( $family->elder ?? [] ) as $rank_name => $picks ) {
+			foreach ( (array) $picks as $pick ) {
+				if ( isset( $pick->power_name ) && $pick->power_name === $power_name ) {
+					$rank = (string) $rank_name;
+					break 2;
+				}
+			}
+		}
+		$cost = $rank !== null ? (int) ( $spent_from->rank_cost->{$rank} ?? 0 ) : 0;
+		if ( $cost < 1 ) {
+			return [ 'ok' => true, 'change_data' => $data ]; // Unknown rank - nothing this check can price.
+		}
+
+		$block_slug = (string) ( $data['block_slug'] ?? '' );
+		$held       = array_values( array_filter( (array) ( $sheet_data[ $block_slug ] ?? [] ), 'is_array' ) );
+		$ranks      = array_map( 'strval', (array) ( $definition->_meta->ranks ?? [] ) );
+		$rank_index = array_search( $rank, $ranks, true );
+
+		if ( $rank_index !== false && $rank_index > 0 ) {
+			$previous_rank = $ranks[ $rank_index - 1 ];
+			$has_previous  = false;
+			foreach ( $held as $row ) {
+				if ( ( $row['name'] ?? null ) === $family_name && ( $row['spent_rank'] ?? null ) === $previous_rank ) {
+					$has_previous = true;
+					break;
+				}
+			}
+			if ( ! $has_previous ) {
+				return self::fail( 'rank_not_unlocked', '%s needs a %s edge in %s before a %s one.', [ $power_name, (string) $previous_rank, $family_name, (string) $rank ] );
+			}
+		}
+
+		if ( $current_creed !== null && $current_creed !== '' ) {
+			$primary_path = $current_creed . ' Path';
+			if ( $family_name !== $primary_path ) {
+				$in_family  = count( array_filter( $held, static fn( $row ): bool => ( $row['name'] ?? null ) === $family_name ) );
+				$in_primary = count( array_filter( $held, static fn( $row ): bool => ( $row['name'] ?? null ) === $primary_path ) );
+				if ( $in_family + 1 > $in_primary ) {
+					return self::fail( 'outranks_primary_path', '%s would give %s more edges than %s, this hunter\'s own primary path.', [ $power_name, $family_name, $primary_path ] );
+				}
+			}
+		}
+
+		$pool_block = (string) ( $spent_from->pool_block ?? '' );
+		$pool_field = is_string( $family->{$field} ?? null ) ? $family->{$field} : '';
+		$pool_value = $sheet_data[ $pool_block ][ $pool_field ] ?? null;
+		$permanent  = is_array( $pool_value ) ? (int) ( $pool_value['permanent'] ?? 0 ) : (int) $pool_value;
+		$spent      = is_array( $pool_value ) ? (int) ( $pool_value['spent'] ?? 0 ) : 0;
+		$unspent    = $permanent - $spent;
+
+		if ( $unspent < $cost ) {
+			return self::fail( 'not_enough_unspent', '%s needs %d unspent %s Trait(s) - this hunter has %d.', [ $power_name, $cost, $pool_field, max( 0, $unspent ) ] );
+		}
+
+		// Stamped for display only (describeChange.ts / Change_Description.php); never read back for pricing or
+		// mutation.
+		$data['trait']['spent_rank'] = $rank;
+		$data['trait']['spent_cost'] = $cost;
+		$data['trait']['spent_pool'] = $pool_field;
+
+		return [ 'ok' => true, 'change_data' => $data ];
+	}
+
+	/**
+	 * Refuses raising a `raised_by` pool by more than one dot at a time, and refuses it without enough temporary
+	 * points in the pool it converts from. A Storyteller bypasses both - the same `is_manager` exception every other
+	 * rule in this validator already gives (trait_list's allow_custom, tiered_power, identity's protected fields, XP).
+	 *
+	 * @param object              $definition
+	 * @param array<string,mixed> $sheet_data
+	 * @param array<string,mixed> $data       The already-resolved `change_data` (`values`, one pool).
+	 * @param bool                $is_manager
+	 * @return array{ok:bool,code?:string,message?:string,args?:array<int,mixed>}
+	 */
+	private static function validate_raised_by( $definition, array $sheet_data, array $data, bool $is_manager ): array {
+		if ( $is_manager ) {
+			return [ 'ok' => true, 'change_data' => $data ];
+		}
+		$values = is_array( $data['values'] ?? null ) ? $data['values'] : [];
+		foreach ( $values as $pool_name => $new_value ) {
+			$pool_def = null;
+			foreach ( ( $definition->pools ?? [] ) as $pool ) {
+				if ( isset( $pool->name ) && $pool->name === $pool_name ) {
+					$pool_def = $pool;
+					break;
+				}
+			}
+			if ( $pool_def === null || ! isset( $pool_def->raised_by ) ) {
+				continue;
+			}
+
+			$block_slug    = (string) ( $data['block_slug'] ?? '' );
+			$old_value     = $sheet_data[ $block_slug ][ $pool_name ] ?? null;
+			$old_permanent = is_array( $old_value ) ? (int) ( $old_value['permanent'] ?? ( $pool_def->default_start ?? 0 ) ) : (int) ( $old_value ?? ( $pool_def->default_start ?? 0 ) );
+			$new_permanent = is_array( $new_value ) ? (int) ( $new_value['permanent'] ?? $old_permanent ) : (int) $new_value;
+
+			if ( $new_permanent <= $old_permanent ) {
+				continue; // Lowering or unchanged - not a raise, nothing to convert.
+			}
+			if ( $new_permanent - $old_permanent !== 1 ) {
+				return self::fail( 'invalid_param', '%s can only be raised one dot at a time.', [ (string) $pool_name ] );
+			}
+
+			$raised_by  = $pool_def->raised_by;
+			[ $from_block, $from_field ] = array_pad( explode( '.', (string) ( $raised_by->from ?? '' ), 2 ), 2, '' );
+			$from_value = $sheet_data[ $from_block ][ $from_field ] ?? null;
+			$temporary  = is_array( $from_value ) ? (int) ( $from_value['temporary'] ?? 0 ) : 0;
+			$needed     = (int) ( $raised_by->temporary ?? 0 );
+
+			if ( $temporary < $needed ) {
+				return self::fail( 'not_enough_temporary', 'Raising %s needs %d temporary %s Trait(s) - this hunter has %d.', [ (string) $pool_name, $needed, $from_field, $temporary ] );
+			}
+
+			// Stamped for display only (describeChange.ts / Change_Description.php).
+			if ( is_array( $data['values'][ $pool_name ] ) ) {
+				$data['values'][ $pool_name ]['raised_cost'] = $needed;
+				$data['values'][ $pool_name ]['raised_from'] = $from_field;
+			}
+		}
+		return [ 'ok' => true, 'change_data' => $data ];
+	}
+
+	/**
+	 * @param string                  $block_slug
+	 * @param object                  $definition
+	 * @param array<int|string,mixed> $held
+	 * @param array<string,mixed>     $data
+	 * @param bool                    $is_manager
+	 * @return Validation
 	 */
 	private static function validate_resource( string $block_slug, $definition, array $held, array $data, bool $is_manager ): array {
 		$values = $data['values'] ?? null;
@@ -795,8 +981,8 @@ class Change_Validator {
 			}
 		}
 
-		// A pool with no XP price is awarded.
-		if ( ! $is_manager && ! isset( $pools[ $name ]->cost_per_dot ) ) {
+		// A pool with no XP price is awarded - unless it converts another pool's temporary points instead.
+		if ( ! $is_manager && ! isset( $pools[ $name ]->cost_per_dot ) && ! isset( $pools[ $name ]->raised_by ) ) {
 			$new_permanent = is_array( $value ) ? ( $value['permanent'] ?? null ) : $value;
 			$old           = $held[ $name ] ?? null;
 			$old_permanent = is_array( $old ) ? ( $old['permanent'] ?? null ) : $old;
@@ -809,12 +995,12 @@ class Change_Validator {
 	}
 
 	/**
-	 * @param string   $block_slug
-	 * @param object   $definition
-	 * @param array    $data
-	 * @param bool     $is_manager
-	 * @param string[] $protected_fields
-	 * @return array
+	 * @param string              $block_slug
+	 * @param object              $definition
+	 * @param array<string,mixed> $data
+	 * @param bool                $is_manager
+	 * @param string[]            $protected_fields
+	 * @return Validation
 	 */
 	private static function validate_identity( string $block_slug, $definition, array $data, bool $is_manager, array $protected_fields ): array {
 		$fields = $data['fields'] ?? null;
@@ -906,9 +1092,9 @@ class Change_Validator {
 	/**
 	 * Keeps the editor's display-only `previous` snapshot alongside the validated keys.
 	 *
-	 * @param array $data
-	 * @param array $normalized
-	 * @return array
+	 * @param array<string,mixed> $data
+	 * @param array<string,mixed> $normalized
+	 * @return array<string,mixed>
 	 */
 	private static function with_display_keys( array $data, array $normalized ): array {
 		if ( isset( $data['previous'] ) && is_array( $data['previous'] ) ) {

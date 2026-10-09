@@ -29,7 +29,8 @@ class User_Settings {
 	const PLOT_NOTIFY_VALUES = [ 'immediate', 'daily', 'off' ];
 
 	/**
-	 * Hooks the profile-screen field rendering and saving onto WordPress, and grant_from_meta() onto user_has_cap.
+	 * Hooks the profile-screen field rendering and saving onto WordPress, grant_from_meta() onto user_has_cap, and the
+	 * media picker's query restriction.
 	 */
 	public static function register(): void {
 		add_action( 'show_user_profile', [ self::class, 'render_fields' ] );
@@ -37,6 +38,7 @@ class User_Settings {
 		add_action( 'personal_options_update', [ self::class, 'save_fields' ] );
 		add_action( 'edit_user_profile_update', [ self::class, 'save_fields' ] );
 		add_filter( 'user_has_cap', [ self::class, 'grant_from_meta' ], 10, 4 );
+		add_filter( 'ajax_query_attachments_args', [ self::class, 'restrict_media_query_for_non_staff' ], 10, 1 );
 	}
 
 	/**
@@ -108,12 +110,12 @@ class User_Settings {
 			<?php if ( $can_set_notifications ) : ?>
 			<tr>
 				<th scope="row">
-					<?php esc_html_e( 'Plot Post Emails', 'beyond-elysium' ); ?>
+					<?php esc_html_e( 'Plot posts and new things your characters can see', 'beyond-elysium' ); ?>
 				</th>
 				<td>
 					<fieldset>
 						<legend class="screen-reader-text">
-							<?php esc_html_e( 'Plot Post Emails', 'beyond-elysium' ); ?>
+							<?php esc_html_e( 'Plot posts and new things your characters can see', 'beyond-elysium' ); ?>
 						</legend>
 						<label>
 							<input
@@ -143,7 +145,7 @@ class User_Settings {
 							<?php esc_html_e( 'Off', 'beyond-elysium' ); ?>
 						</label>
 						<p class="description">
-							<?php esc_html_e( 'When a plot you can see gets a new post - who posted, on which plot, in which chronicle, with a link. Never the post itself.', 'beyond-elysium' ); ?>
+							<?php esc_html_e( 'When a plot you can see gets a new post, or a plot, item, location or secret newly becomes something one of your characters can see - who posted or what changed, with a link. Never the post or content itself.', 'beyond-elysium' ); ?>
 						</p>
 					</fieldset>
 				</td>
@@ -181,8 +183,8 @@ class User_Settings {
 	}
 
 	/**
-	 * Adds be_customize_sheet to a user's capabilities when their user meta flag is set, regardless of their role's own
-	 * grants.
+	 * Adds be_customize_sheet to a user's capabilities when their user meta flag is set, regardless of their role's
+	 * own grants. Also grants upload_files alongside it, for the sheet style editor's background-image picker.
 	 *
 	 * @param array<string,bool> $allcaps
 	 * @param string[]           $caps
@@ -191,11 +193,30 @@ class User_Settings {
 	 * @return array<string,bool>
 	 */
 	public static function grant_from_meta( array $allcaps, array $caps, array $args, \WP_User $user ): array {
-		if ( in_array( 'be_customize_sheet', $caps, true )
-			&& get_user_meta( $user->ID, self::CUSTOMIZE_SHEET_META, true ) === '1'
-		) {
+		if ( get_user_meta( $user->ID, self::CUSTOMIZE_SHEET_META, true ) !== '1' ) {
+			return $allcaps;
+		}
+		if ( in_array( 'be_customize_sheet', $caps, true ) ) {
 			$allcaps['be_customize_sheet'] = true;
 		}
+		if ( in_array( 'upload_files', $caps, true ) ) {
+			$allcaps['upload_files'] = true;
+		}
 		return $allcaps;
+	}
+
+	/**
+	 * Restricts the media picker's library query to the viewer's own uploads for anyone without
+	 * `edit_others_posts`, such as a player holding upload_files through the grant above.
+	 *
+	 * @param array<string,mixed> $args
+	 * @return array<string,mixed>
+	 */
+	public static function restrict_media_query_for_non_staff( array $args ): array {
+		if ( current_user_can( 'edit_others_posts' ) ) {
+			return $args;
+		}
+		$args['author'] = get_current_user_id();
+		return $args;
 	}
 }

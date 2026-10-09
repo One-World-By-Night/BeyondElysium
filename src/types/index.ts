@@ -119,6 +119,10 @@ export interface MyGame {
 	 * The chronicle is linked to OWbN accessSchema: the site reads it and the chronicle names its role path.
 	 */
 	asc_linked?: boolean;
+	/**
+	 * Resets on its own schedule; destructive actions and AI Assist are locked while this is true.
+	 */
+	demo?: boolean;
 }
 
 /**
@@ -161,6 +165,25 @@ export interface UpdateGameRequest {
 }
 
 /**
+ * A chronicle's `settings.demo` shape.
+ */
+export interface DemoSettings {
+	on: boolean;
+	reset_hours?: 1 | 3 | 6 | 12 | 24;
+	accounts?: { storyteller?: number; player?: number };
+}
+
+/**
+ * Response from `GET /{game_slug}/demo`.
+ */
+export interface DemoStatus {
+	on: boolean;
+	reset_hours: number | null;
+	next_reset: string | null;
+	last_reset: { at: number; counts: Record< string, number > } | null;
+}
+
+/**
  * Request body for the narrower /chronicle-setup route.
  */
 export interface UpdateChronicleSetupRequest {
@@ -181,6 +204,10 @@ export interface UpdateChronicleSetupRequest {
 	 * A non-negative whole number, or '' to clear it back to none.
 	 */
 	starting_xp?: number | string;
+	/**
+	 * Whether players may log what a character learned and tell another character a secret they know.
+	 */
+	secret_passing?: 'off' | 'approval' | 'immediate';
 }
 
 // ---------------------------------------------------------------------------
@@ -265,6 +292,7 @@ export interface PlayerInviteResult extends CharacterLinkResult {
 export interface ChroniclePlayerList {
 	players: ChroniclePlayer[];
 	asc_role_path: string | null;
+	join_link: string;
 }
 
 /**
@@ -282,6 +310,47 @@ export interface ChroniclePlayerResult {
 		role_path?: string;
 		message?: string;
 	};
+}
+
+/**
+ * A chronicle on this site taking join requests that the caller isn't already a member of.
+ */
+export interface JoinableChronicle {
+	slug: string;
+	name: string;
+}
+
+/**
+ * The caller's own join request on one chronicle.
+ */
+export interface MyJoinRequest {
+	id: number;
+	game_id: number;
+	wp_user_id: number;
+	message: string;
+	character_id: number | null;
+	submission_id: number | null;
+	status: 'waiting' | 'approved' | 'refused' | 'withdrawn';
+	note: string | null;
+	reviewed_by: number | null;
+	reviewed_at: string | null;
+	created_at: string;
+}
+
+/**
+ * One join request as the chronicle's Storytellers see it, with the applicant's display name and whatever it
+ * carries.
+ */
+export interface ChronicleJoinRequest {
+	id: number;
+	wp_user_id: number;
+	display_name: string | null;
+	message: string;
+	status: 'waiting' | 'approved' | 'refused' | 'withdrawn';
+	created_at: string;
+	character: NamedCharacter | null;
+	submission_id: number | null;
+	note: string | null;
 }
 
 export interface GameMember {
@@ -586,6 +655,11 @@ export interface TraitListDefinition {
 	 */
 	print_rings?: boolean;
 	/**
+	 * Whether entries are never bought with XP: adding or raising one quotes nothing and never waits for a Storyteller's
+	 * price.
+	 */
+	unpriced?: boolean;
+	/**
 	 * Whether re-adding a held trait appends a new entry.
 	 */
 	atomic?: boolean;
@@ -828,6 +902,14 @@ export interface ResourcePool {
 	 * Drafted Portuguese translation of this pool's own name, display-only.
 	 */
 	label_pt?: string;
+	/**
+	 * Raising this pool's own permanent rating by one dot converts temporary points from another named pool instead
+	 * of costing XP - never a free-form dot click.
+	 */
+	raised_by?: {
+		from: string;
+		temporary: number;
+	};
 }
 
 /**
@@ -1010,6 +1092,18 @@ export type InTypeTest =
 export interface StackDefinition {
 	sections: StackSection[];
 	display_preferences?: Record< string, unknown >;
+	/**
+	 * False for a stack left out of a chronicle's own default `enabled_stacks` set until turned on by hand.
+	 */
+	default_enabled?: boolean;
+	/**
+	 * True for a creature type offered to Storytellers only, in every chronicle.
+	 */
+	storyteller_only?: boolean;
+	/**
+	 * True for a creature type that may hold any schema block in the catalog, not only the sections its template lists.
+	 */
+	any_block?: boolean;
 }
 
 /**
@@ -1327,4 +1421,9 @@ export interface CreatureStackCollectionParams extends CollectionParams {
 	 * Narrows to this chronicle's own settings.enabled_stacks.
 	 */
 	game_slug?: string;
+	/**
+	 * Skips the settings.enabled_stacks/default_enabled narrowing - every stack this chronicle could turn
+	 * on, not just the ones already on. For the picker that sets enabled_stacks itself.
+	 */
+	include_disabled?: boolean;
 }

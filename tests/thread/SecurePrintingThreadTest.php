@@ -117,7 +117,7 @@ class SecurePrintingThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The load-bearing claim of the whole design: generating writes nothing anywhere.
+	 * Generating writes nothing anywhere.
 	 */
 	public function test_generating_a_certificate_stores_nothing(): void {
 		if ( ! Pdf_Signer::can_generate() ) {

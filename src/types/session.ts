@@ -13,6 +13,17 @@ export interface GameSession {
 	start_time: string | null;
 	place: string | null;
 	notes: string | null;
+	/** Storyteller-only; absent entirely for a non-manager viewer. */
+	recap?: {
+		key_events: string;
+		player_decisions: string;
+		npcs_involved: Array< {
+			name: string;
+			status: 'alive' | 'injured' | 'dead' | 'unknown';
+		} >;
+		cliffhanger: string;
+		prep: string;
+	} | null;
 	downtime_opens_at: string | null;
 	downtime_deadline_at: string | null;
 	downtime_extensions: Record< string, unknown > | null;
@@ -54,6 +65,16 @@ export interface CreateSessionRequest {
 	downtime_deadline_at?: string;
 	downtime_extensions?: Record< string, unknown >;
 	default_batch_id?: number;
+	recap?: {
+		key_events: string;
+		player_decisions: string;
+		npcs_involved: Array< {
+			name: string;
+			status: 'alive' | 'injured' | 'dead' | 'unknown';
+		} >;
+		cliffhanger: string;
+		prep: string;
+	};
 }
 
 /**

@@ -6,7 +6,8 @@ use BeyondElysium\Services\GEX_Xml_Parser;
 use PHPUnit\Framework\TestCase;
 
 /**
- * `GEX_Xml_Parser` grows from two character races (`vampire`, `werewolf`) to all twelve, off `gv-exchange-shape.php`.
+ * `GEX_Xml_Parser` reads all twelve character races: ten through the generic reader driven by
+ * `gv-exchange-shape.php`, and `vampire` and `werewolf` through their own readers.
  */
 class GexXmlParserGenericRaceTest extends TestCase {
 
@@ -83,7 +84,7 @@ class GexXmlParserGenericRaceTest extends TestCase {
 
 		foreach ( $def['scalars'] as $scalar ) {
 			if ( in_array( $scalar['key'], [ 'physical_max', 'social_max', 'mental_max' ], true ) ) {
-				continue; // always backfilled, never read from XML - see the generic method's own doc comment
+				continue; // always backfilled, never read from XML
 			}
 			$this->assertArrayHasKey( $scalar['key'], $character, "{$race}/{$scalar['key']}" );
 		}
@@ -110,7 +111,7 @@ class GexXmlParserGenericRaceTest extends TestCase {
 		$data      = GEX_Xml_Parser::parse_string( $this->build_xml( 'wraith' ) );
 		$character = $data['characters'][0];
 
-		// build_xml() used xml_enum[0] ('Wraith') as the test value for every non-bool scalar it couldn't.
+		// The enum string 'Wraith' (xml_enum[0]) reads back as 0.
 		$this->assertSame( 0, $character['ethnos'] );
 	}
 

@@ -1,0 +1,112 @@
+[
+  {
+    "clause_id": 8402,
+    "family": "merits",
+    "name": "Blasphemous Pact"
+  },
+  {
+    "clause_id": 8401,
+    "family": "merits",
+    "name": "Covenant of the Old Ways"
+  },
+  {
+    "clause_id": 8395,
+    "family": "merits",
+    "name": "Demonic Patron"
+  },
+  {
+    "clause_id": 8394,
+    "family": "merits",
+    "name": "Demonic Tutor"
+  },
+  {
+    "clause_id": 8396,
+    "family": "merits",
+    "name": "Unbound Diabolist"
+  },
+  {
+    "clause_id": 8400,
+    "family": "merits",
+    "name": "Unholy Aura"
+  },
+  {
+    "clause_id": 11187,
+    "family": "flaws",
+    "name": "Yulan-Jin"
+  },
+  {
+    "clause_id": 11201,
+    "family": "rotes",
+    "name": "Babel"
+  },
+  {
+    "clause_id": 8989,
+    "family": "merits",
+    "name": "Clan Friendship"
+  },
+  {
+    "clause_id": 8991,
+    "family": "flaws",
+    "name": "Clan Enmity"
+  },
+  {
+    "clause_id": 8992,
+    "family": "merits",
+    "name": "Dual-Blooded"
+  },
+  {
+    "clause_id": 8993,
+    "family": "merits",
+    "name": "Extinct Animal Form"
+  },
+  {
+    "clause_id": 8994,
+    "family": "merits",
+    "name": "Rune-Wise"
+  },
+  {
+    "clause_id": 8997,
+    "family": "merits",
+    "name": "Renascut"
+  },
+  {
+    "clause_id": 9002,
+    "family": "merits",
+    "name": "Blooding by the Code"
+  },
+  {
+    "clause_id": 9003,
+    "family": "merits",
+    "name": "Agent of Prophecy"
+  },
+  {
+    "clause_id": 9028,
+    "family": "flaws",
+    "name": "Nameless"
+  },
+  {
+    "clause_id": 9030,
+    "family": "merits",
+    "name": "Marijava Contact"
+  },
+  {
+    "clause_id": 9031,
+    "family": "flaws",
+    "name": "Shakari Enemy"
+  },
+  {
+    "clause_id": 9041,
+    "family": "merits",
+    "name": "True Celerity"
+  },
+  {
+    "clause_id": 22839,
+    "family": "flaws",
+    "name": "Red List"
+  },
+  {
+    "clause_id": 14980,
+    "family": "combo-disciplines",
+    "name": "Eradication of Secrets"
+  }
+]

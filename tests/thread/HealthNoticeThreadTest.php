@@ -31,7 +31,7 @@ class HealthNoticeThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Whether signing is configured depends on which other thread test class happened to run first in this process.
+	 * The signing notice shows exactly when signing is unavailable.
 	 */
 	public function test_signing_notice_reflects_current_availability(): void {
 		$html = $this->rendered_html();
@@ -59,5 +59,30 @@ class HealthNoticeThreadTest extends WP_UnitTestCase {
 		$html = $this->rendered_html();
 
 		$this->assertStringNotContainsString( 'database tables are missing', $html );
+	}
+
+	public function test_the_site_export_notice_is_silent_on_a_single_site_install(): void {
+		$html = $this->rendered_html();
+
+		$this->assertStringNotContainsString( 'site-export mu-plugin', $html );
+	}
+
+	/**
+	 * @group multisite
+	 */
+	public function test_the_site_export_notice_warns_a_super_admin_when_the_mu_plugin_is_absent(): void {
+		if ( ! is_multisite() ) {
+			self::markTestSkipped( 'Needs a multisite network (WP_MULTISITE=1).' );
+		}
+		grant_super_admin( $this->admin_id );
+
+		$html = $this->rendered_html();
+
+		if ( defined( 'BE_SITE_EXPORT_MU_VERSION' ) ) {
+			$this->assertStringNotContainsString( 'site-export mu-plugin', $html );
+			return;
+		}
+		$this->assertStringContainsString( 'site-export mu-plugin', $html );
+		$this->assertStringContainsString( 'mu-plugin/be-site-export.php', $html );
 	}
 }

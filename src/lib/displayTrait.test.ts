@@ -1,4 +1,10 @@
-import { displayTrait, type Trait, type DisplayType } from './displayTrait';
+import {
+	displayTrait,
+	numberBesideName,
+	withoutCircles,
+	type Trait,
+	type DisplayType,
+} from './displayTrait';
 import input from '../../tests/fixtures/trait-display-input.json';
 import expected from '../../tests/fixtures/trait-display-expected.json';
 
@@ -211,5 +217,44 @@ describe( 'displayTrait — parity with Trait_Display.php', () => {
 						)
 			).toBe( expectedCase.output );
 		} );
+	} );
+} );
+
+describe( 'withoutCircles', () => {
+	it.each( [
+		'multiplier_dot',
+		'dot',
+		'dot_separate',
+		'simple_dots',
+	] as DisplayType[] )(
+		'turns %s, which draws circles, into the plain multiplier',
+		( mode ) => {
+			expect( withoutCircles( mode ) ).toBe( 'multiplier' );
+		}
+	);
+
+	it.each( [
+		'multiplier',
+		'simple',
+		'points',
+		'name_number',
+		'note_only',
+		'cost_xp',
+	] as DisplayType[] )(
+		'leaves %s, which draws no circles, as it is',
+		( mode ) => {
+			expect( withoutCircles( mode ) ).toBe( mode );
+		}
+	);
+} );
+
+describe( 'numberBesideName', () => {
+	it( 'is x and the number', () => {
+		expect( numberBesideName( 7 ) ).toBe( 'x7' );
+		expect( numberBesideName( 10 ) ).toBe( 'x10' );
+	} );
+
+	it( 'is nothing at 1, as the multiplier mode hides it', () => {
+		expect( numberBesideName( 1 ) ).toBe( '' );
 	} );
 } );

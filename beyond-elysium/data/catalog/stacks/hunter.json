@@ -1,0 +1,91 @@
+{
+  "format": 1,
+  "slug": "hunter",
+  "name": "Hunter",
+  "kind": "stack",
+  "provenance": {
+    "sources": [
+      "Mind's Eye Theatre: Laws of the Reckoning (WW05037), Chapter Three \"Character Creation and Traits\" (pp.82-186) and Chapter Five's own Experience section (p.268-269); every value read directly from the book's own page images, per reference-wod-scan-ocr-lessons.",
+      "Quick Character Creation Process (p.85): concept, creed, Nature/Demeanor; prioritize Attributes 6/4/3; five Abilities; five Backgrounds; assign three Virtue Traits; record starting Willpower (2) and Conviction (by creed); choose edges (paid from Virtue Traits); Negative Traits/Flaws; a Derangement (Storyteller permission only); five or more Free Traits and Merits."
+    ],
+    "tool": "read directly, 2026-10-04"
+  },
+  "definition": {
+    "game_line": "met",
+    "sections": [
+      { "block_slug": "hunter-identity", "label": "Identity", "display_order": 1, "required": true },
+      { "block_slug": "met-archetypes", "label": "Archetypes", "display_order": 20, "required": false },
+      { "block_slug": "hunter-abilities", "label": "Abilities", "display_order": 30, "required": true, "replaces": [ "met-abilities" ] },
+      { "block_slug": "hunter-backgrounds", "label": "Backgrounds", "display_order": 40, "required": false },
+      { "block_slug": "met-physical-traits", "label": "Physical Traits", "display_order": 50, "required": true, "negative_block_slug": "met-physical-traits-neg" },
+      { "block_slug": "met-social-traits", "label": "Social Traits", "display_order": 51, "required": true, "negative_block_slug": "met-social-traits-neg" },
+      { "block_slug": "met-mental-traits", "label": "Mental Traits", "display_order": 52, "required": true, "negative_block_slug": "met-mental-traits-neg" },
+      { "block_slug": "hunter-virtues", "label": "Virtues", "display_order": 70, "required": true },
+      { "block_slug": "hunter-edges", "label": "Edges", "display_order": 75, "required": false },
+      { "block_slug": "hunter-resources", "label": "Resources", "display_order": 80, "required": true },
+      { "block_slug": "hunter-health", "label": "Health", "display_order": 82, "required": false },
+      { "block_slug": "hunter-merits", "label": "Merits", "display_order": 90, "required": false, "replaces": [ "met-merits" ] },
+      { "block_slug": "hunter-flaws", "label": "Flaws", "display_order": 91, "required": false, "replaces": [ "met-flaws" ] },
+      { "block_slug": "met-derangements", "label": "Derangements", "display_order": 92, "required": false }
+    ],
+    "creation_rules": {
+      "steps": [
+        {
+          "kind": "prioritized",
+          "label": "Attributes",
+          "sections": [ "met-physical-traits", "met-social-traits", "met-mental-traits" ],
+          "amounts": [ 6, 4, 3 ]
+        },
+        { "kind": "budget", "label": "Abilities", "section": "hunter-abilities", "count": 5 },
+        { "kind": "budget", "label": "Backgrounds", "section": "hunter-backgrounds", "count": 5 },
+        { "kind": "budget", "label": "Virtues", "section": "hunter-virtues", "count": 3 },
+        {
+          "kind": "limit", "label": "Mercy may not exceed the creed's primary Virtue", "section": "hunter-virtues.Mercy",
+          "ceiling": { "map": "hunter-identity.creed_primary_virtue", "by": [ "Creed" ] }
+        },
+        {
+          "kind": "limit", "label": "Vision may not exceed the creed's primary Virtue", "section": "hunter-virtues.Vision",
+          "ceiling": { "map": "hunter-identity.creed_primary_virtue", "by": [ "Creed" ] }
+        },
+        {
+          "kind": "limit", "label": "Zeal may not exceed the creed's primary Virtue", "section": "hunter-virtues.Zeal",
+          "ceiling": { "map": "hunter-identity.creed_primary_virtue", "by": [ "Creed" ] }
+        },
+        { "kind": "start", "label": "Willpower", "target": "hunter-resources.Willpower", "value": 2 },
+        {
+          "kind": "start",
+          "label": "Conviction",
+          "target": "hunter-resources.Conviction",
+          "lookup": { "map": "hunter-identity.creed_conviction", "by": [ "Creed" ] }
+        },
+        {
+          "kind": "earned",
+          "label": "Negative Traits and Flaws",
+          "pool": "Free Traits",
+          "sources": [
+            { "section": "met-physical-traits-neg", "rate": 1 },
+            { "section": "met-social-traits-neg", "rate": 1 },
+            { "section": "met-mental-traits-neg", "rate": 1 },
+            { "section": "hunter-flaws", "rate": "value" }
+          ]
+        },
+        {
+          "kind": "free",
+          "label": "Free Traits",
+          "pool": "Free Traits",
+          "points": 5,
+          "rates": {
+            "met-physical-traits": 1,
+            "met-social-traits": 1,
+            "met-mental-traits": 1,
+            "hunter-abilities": 1,
+            "hunter-backgrounds": 1,
+            "hunter-resources.Willpower": 3,
+            "hunter-resources.Conviction": 1,
+            "hunter-merits": "value"
+          }
+        }
+      ]
+    }
+  }
+}

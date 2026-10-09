@@ -15,7 +15,7 @@ class Rich_Text_Sanitizer {
 	private const SECTIONS = [ 'reference', 'description', 'source' ];
 
 	/**
-	 * `wp_kses()` unwraps a disallowed tag but keeps its inner text.
+	 * The tags kept; any other tag is removed and its text kept.
 	 */
 	private const ALLOWED_TAGS = [
 		'p'          => [],

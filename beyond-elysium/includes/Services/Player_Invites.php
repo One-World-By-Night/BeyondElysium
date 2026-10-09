@@ -2,11 +2,13 @@
 
 namespace BeyondElysium\Services;
 
+use BeyondElysium\Core\Mailer;
 use BeyondElysium\Core\Page_Provisioner;
 use BeyondElysium\Database\Manager;
 use BeyondElysium\Models\Change;
 use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Game;
+use BeyondElysium\Models\Mail_Log;
 use BeyondElysium\Models\Player_Invite;
 
 defined( 'ABSPATH' ) || exit;
@@ -400,11 +402,17 @@ class Player_Invites {
 	 * Emails an invitation: the chronicle's name, who invited them, and an OWbN sign-in link to the chronicle.
 	 */
 	public static function send_invitation( object $game, string $email, int $invited_by ): bool {
+		$about = [ 'game_id' => (int) $game->id, 'kind' => 'invite', 'email' => Player_Invite::normalize( $email ) ];
+		if ( Demo_Chronicle::is_demo( $game ) ) {
+			Mailer::skipped( $about, Mail_Log::REASON_DEMO );
+			return false;
+		}
 		$inviter = get_userdata( $invited_by );
-		$link    = add_query_arg(
-			[ 'game_slug' => (string) $game->slug, 'auth' => 'sso' ],
-			home_url( '/' . Page_Provisioner::PLAYER_SLUG . '/' )
-		);
+		$args    = [ 'game_slug' => (string) $game->slug ];
+		if ( \BeyondElysium\Core\Authorization::asc_role_path( $game, 'player' ) !== null ) {
+			$args['auth'] = 'sso';
+		}
+		$link = add_query_arg( $args, home_url( '/' . Page_Provisioner::PLAYER_SLUG . '/' ) );
 		/* translators: %s: the chronicle's name */
 		$subject = sprintf( __( 'You are invited to play in %s', 'beyond-elysium' ), (string) $game->name );
 		$message = sprintf(
@@ -415,7 +423,7 @@ class Player_Invites {
 			Player_Invite::normalize( $email ),
 			$link
 		);
-		return (bool) wp_mail( Player_Invite::normalize( $email ), $subject, $message );
+		return Mailer::send( Player_Invite::normalize( $email ), $subject, $message, $about + [ 'subject' => $subject ] );
 	}
 
 	// The upgrade.

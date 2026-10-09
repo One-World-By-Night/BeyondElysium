@@ -7,8 +7,8 @@ use BeyondElysium\Services\Player_Invites;
 use WP_UnitTestCase;
 
 /**
- * `Player_Invites::accept_if_invited()`'s per-request memo must not latch on a mere check that finds nothing, since
- * doing so silently blocks a real invite created afterward for the same account within the same process.
+ * `Player_Invites::accept_if_invited()`'s per-request memo does not latch on a check that finds nothing: a real
+ * invite created afterward for the same account within the same process is still accepted.
  */
 class CheckedMemoReproThreadTest extends WP_UnitTestCase {
 

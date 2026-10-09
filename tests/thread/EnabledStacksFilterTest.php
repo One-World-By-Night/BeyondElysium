@@ -70,14 +70,21 @@ class EnabledStacksFilterTest extends WP_UnitTestCase {
 		$this->assertContains( 'werewolf', $slugs, 'Character::all_for_game() must never consult enabled_stacks' );
 	}
 
-	public function test_the_create_picker_offers_exactly_the_enabled_list_via_rest(): void {
+	public function test_the_create_picker_offers_the_enabled_list_via_rest(): void {
+		$player_id = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+		wp_set_current_user( $player_id );
+		$request = new WP_REST_Request( 'GET', '/be/v1/creature-stacks' );
+		$request->set_param( 'game_slug', $this->game_slug );
+		$response = rest_get_server()->dispatch( $request );
+
+		$this->assertSame( [ 'vampire' ], array_column( $response->get_data(), 'slug' ) );
+
 		wp_set_current_user( $this->manager_id );
 		$request = new WP_REST_Request( 'GET', '/be/v1/creature-stacks' );
 		$request->set_param( 'game_slug', $this->game_slug );
 		$response = rest_get_server()->dispatch( $request );
 
-		$slugs = array_column( $response->get_data(), 'slug' );
-		$this->assertSame( [ 'vampire' ], $slugs );
+		$this->assertSame( [ 'vampire', 'various' ], array_column( $response->get_data(), 'slug' ), 'a Storyteller is also offered the Storyteller-only Various' );
 	}
 
 	public function test_creating_a_disabled_stack_character_is_rejected_with_400(): void {

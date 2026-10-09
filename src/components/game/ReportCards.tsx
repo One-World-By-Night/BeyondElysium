@@ -3,19 +3,29 @@
  * shape the signed PDF and the admin Reports page both already use).
  */
 import { useEffect, useState } from '@wordpress/element';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
 import './ReportCards.css';
 
-/**
- * One [label, value] pair.
- */
-type CardField = [ string, string ];
+interface CardField {
+	label: string;
+	value: string;
+	html: boolean;
+}
+
+interface ReportCard {
+	name: string;
+	picture: number | null;
+	fields: CardField[];
+	uses_max: number | null;
+	uses_used: number;
+	verify: string | null;
+}
 
 interface CardsDocument {
 	title: string;
 	shape: 'card';
-	cards: CardField[][];
+	cards: ReportCard[];
 	game: string;
 }
 
@@ -82,17 +92,56 @@ export function ReportCards( {
 	return (
 		<div className="be-report-cards">
 			{ data.cards.map( ( card, i ) => (
-				// A report card has no id of its own - resolve_one() names the row, not a key.
-
-				<dl className="be-report-cards__card" key={ i }>
-					{ card.map( ( [ label, value ] ) => (
-						<div className="be-report-cards__field" key={ label }>
-							<dt>{ label }</dt>
-							{  }
-							<dd dangerouslySetInnerHTML={ { __html: value } } />
-						</div>
-					) ) }
-				</dl>
+				// A report card has no id of its own - its name is not unique across a report.
+				<div className="be-report-cards__card" key={ i }>
+					<h3 className="be-report-cards__name">{ card.name }</h3>
+					{ card.picture !== null && (
+						<img
+							className="be-report-cards__picture"
+							src={ api
+								.attachments( gameSlug )
+								.downloadUrl( card.picture ) }
+							alt=""
+						/>
+					) }
+					<dl>
+						{ card.fields.map( ( field ) => (
+							<div
+								className="be-report-cards__field"
+								key={ field.label }
+							>
+								<dt>{ field.label }</dt>
+								{ field.html ? (
+									<dd
+										dangerouslySetInnerHTML={ {
+											__html: field.value,
+										} }
+									/>
+								) : (
+									<dd>{ field.value }</dd>
+								) }
+							</div>
+						) ) }
+					</dl>
+					{ card.uses_max !== null && (
+						<p className="be-report-cards__uses">
+							{ sprintf(
+								/* translators: %1$d: total uses, %2$d: uses remaining */
+								__(
+									'Count: %1$d (%2$d left)',
+									'beyond-elysium'
+								),
+								card.uses_max,
+								card.uses_max - card.uses_used
+							) }
+						</p>
+					) }
+					{ card.verify && (
+						<p className="be-report-cards__verify">
+							{ card.verify }
+						</p>
+					) }
+				</div>
 			) ) }
 		</div>
 	);

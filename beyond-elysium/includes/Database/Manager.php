@@ -20,8 +20,8 @@ class Manager {
 	/**
 	 * Inserts a row into a plugin table and returns its new ID.
 	 *
-	 * @param string $table Short table name (e.g. 'games', 'characters').
-	 * @param array  $data  Column => value pairs.
+	 * @param string              $table Short table name (e.g. 'games', 'characters').
+	 * @param array<string,mixed> $data  Column => value pairs.
 	 * @return int|false Insert ID on success, false on failure.
 	 */
 	public static function insert( string $table, array $data ) {
@@ -34,9 +34,9 @@ class Manager {
 	/**
 	 * Updates rows in a plugin table that match the given WHERE conditions.
 	 *
-	 * @param string $table Short table name.
-	 * @param array  $data  Column => value pairs to update.
-	 * @param array  $where Column => value pairs for WHERE clause.
+	 * @param string              $table Short table name.
+	 * @param array<string,mixed> $data  Column => value pairs to update.
+	 * @param array<string,mixed> $where Column => value pairs for WHERE clause.
 	 * @return int|false Number of rows updated, or false on error.
 	 */
 	public static function update( string $table, array $data, array $where ) {
@@ -47,8 +47,8 @@ class Manager {
 	/**
 	 * Deletes rows from a plugin table that match the given WHERE conditions.
 	 *
-	 * @param string $table Short table name.
-	 * @param array  $where Column => value pairs for WHERE clause.
+	 * @param string              $table Short table name.
+	 * @param array<string,mixed> $where Column => value pairs for WHERE clause.
 	 * @return int|false Number of rows deleted, or false on error.
 	 */
 	public static function delete( string $table, array $where ) {
@@ -78,7 +78,7 @@ class Manager {
 	 *
 	 * @param string $query SQL with %s/%d placeholders.
 	 * @param mixed  ...$args Values for placeholders.
-	 * @return array Array of row objects.
+	 * @return array<int,object> Array of row objects.
 	 */
 	public static function get_results( string $query, ...$args ): array {
 		global $wpdb;

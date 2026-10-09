@@ -7,7 +7,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * Real security fix, not a UI nicety: `be_view_characters` is granted to every real WP role (Capabilities::CAPS).
+ * `be_view_characters` is granted to every real WP role (Capabilities::CAPS), so a player's character list and
+ * fetches are scoped to their own characters.
  */
 class CharactersControllerOwnVisibilityTest extends WP_UnitTestCase {
 

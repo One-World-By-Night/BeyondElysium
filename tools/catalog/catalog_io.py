@@ -44,7 +44,7 @@ TRAIT_ITEM_ORDER = [
 ]
 TRAIT_DEF_ORDER = [
     '_meta', 'alphabetize', 'atomic', 'allow_custom', 'name_canonicalization', 'allow_multiples',
-    'has_specializations', 'negative', 'print_rings', 'flat_cost', 'categories',
+    'has_specializations', 'negative', 'print_rings', 'unpriced', 'flat_cost', 'categories',
 ]
 LEVEL_ORDER = ['level', 'tier', 'power_name', 'cost', 'note', 'source', 'description', 'alternatives']
 FAMILY_ORDER = [

@@ -58,7 +58,7 @@ class Templates_Controller extends Base_Controller {
 			[
 				'methods'             => 'GET',
 				'callback'            => [ $this, 'resolve_template' ],
-				'permission_callback' => $this->permission( 'be_view_characters' ),
+				'permission_callback' => $this->permission( 'be_view_characters', true ),
 				'args'                => [
 					'stack_slug'    => [ 'type' => 'string', 'required' => true ],
 					'template_type' => [ 'type' => 'string', 'required' => true ],
@@ -386,7 +386,7 @@ class Templates_Controller extends Base_Controller {
 	 * endpoints, from the request's stack_slug, template_type, and pagination parameters.
 	 *
 	 * @param \WP_REST_Request $request
-	 * @return array
+	 * @return array<string,mixed>
 	 */
 	private function collection_args( $request ): array {
 		$pagination = $this->get_pagination( $request );
@@ -402,7 +402,7 @@ class Templates_Controller extends Base_Controller {
 	 * Defines the query parameters accepted by the template listing endpoints: stack_slug and template_type filters plus
 	 * page/per_page pagination, each with its allowed values and defaults.
 	 *
-	 * @return array
+	 * @return array<string,array<string,mixed>>
 	 */
 	public function get_collection_params(): array {
 		return [

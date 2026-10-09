@@ -38,6 +38,8 @@ class Setup_Status {
 			self::row_faction_restrictions( $game ),
 			self::row_purchase_lists( $game ),
 			self::row_grapevine_files( $game ),
+			self::row_join_requests( $game ),
+			self::row_secret_passing( $game ),
 		];
 
 		if ( $game->slug === 'be-demo' ) {
@@ -132,6 +134,46 @@ class Setup_Status {
 					: __( 'A player-created character starts active immediately, with no Storyteller review.', 'beyond-elysium' ) )
 				: __( 'Not chosen yet. Today, unset means a new character goes active immediately with no Storyteller ever seeing it.', 'beyond-elysium' ),
 			'fix'        => [ 'kind' => 'inline', 'capability' => 'be_manage_chronicle_setup' ],
+		];
+	}
+
+	/**
+	 * @return array<string,mixed>
+	 */
+	private static function row_join_requests( object $game ): array {
+		$chosen = isset( $game->settings->join_requests );
+		$on     = $chosen ? (bool) $game->settings->join_requests : true;
+
+		return [
+			'id'     => 'join_requests',
+			'status' => $chosen ? 'ok' : 'info',
+			'title'  => __( 'Join requests', 'beyond-elysium' ),
+			'detail' => $on
+				? __( 'On. Anyone signed in can ask to join from My Chronicle; nothing is granted without a Storyteller\'s approval.', 'beyond-elysium' )
+				: __( 'Off. This chronicle does not appear in the join list, and asking to join is refused.', 'beyond-elysium' ),
+			'fix'    => [ 'kind' => 'inline', 'capability' => 'be_manage_chronicle_setup' ],
+		];
+	}
+
+	/**
+	 * @return array<string,mixed>
+	 */
+	private static function row_secret_passing( object $game ): array {
+		$chosen = isset( $game->settings->secret_passing );
+		$mode   = $chosen ? (string) $game->settings->secret_passing : 'approval';
+
+		$detail = [
+			'off'       => __( 'Off. Players cannot log what their characters learned or tell a secret to another character.', 'beyond-elysium' ),
+			'approval'  => __( 'Needs a Storyteller. A logged claim or a passed secret waits for a Storyteller before it reaches anyone.', 'beyond-elysium' ),
+			'immediate' => __( 'Immediate. A passed secret reaches its recipient right away; a Storyteller still reviews it afterward.', 'beyond-elysium' ),
+		][ $mode ] ?? '';
+
+		return [
+			'id'     => 'secret_passing',
+			'status' => $chosen ? 'ok' : 'info',
+			'title'  => __( 'Players and secrets', 'beyond-elysium' ),
+			'detail' => $detail,
+			'fix'    => [ 'kind' => 'inline', 'capability' => 'be_manage_chronicle_setup' ],
 		];
 	}
 

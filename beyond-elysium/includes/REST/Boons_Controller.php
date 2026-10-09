@@ -110,7 +110,7 @@ class Boons_Controller extends Base_Controller {
 	 * Resolves each boon's two connections into owed_by/owed_to character summaries.
 	 *
 	 * @param int[] $boon_ids
-	 * @return array<int,array{owed_by: array, owed_to: array}> Keyed by boon id.
+	 * @return array<int,array{owed_by: array<string,mixed>, owed_to: array<string,mixed>}> Keyed by boon id.
 	 */
 	private function parties_by_boon( array $boon_ids ): array {
 		if ( $boon_ids === [] ) {
@@ -142,7 +142,7 @@ class Boons_Controller extends Base_Controller {
 		foreach ( $connections as $connection ) {
 			$character = $names[ (int) $connection->target_id ] ?? null;
 			if ( $character !== null ) {
-				// A number, as the ledger compares it with the character it's scoped to.
+				// The character's id as a number.
 				$sides[ (int) $connection->source_id ][ $connection->label ] = [ 'id' => (int) $character->id, 'name' => $character->name ];
 			}
 		}

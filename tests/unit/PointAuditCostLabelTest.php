@@ -7,7 +7,7 @@ use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 
 /**
- * The third place a `count_is_cost` block's stored number was read as a quantity.
+ * A `count_is_cost` block's stored number reads as a price in the point audit, never as a quantity.
  */
 class PointAuditCostLabelTest extends TestCase {
 

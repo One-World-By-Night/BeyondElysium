@@ -1,0 +1,566 @@
+{
+  "format": 1,
+  "slug": "hunter-merits",
+  "name": "Merits",
+  "kind": "block",
+  "section_type": "trait_list",
+  "provenance": {
+    "sources": [
+      "Mind's Eye Theatre: Laws of the Reckoning (WW05037), \"Merits and Flaws\", pp.150-162 - every entry read directly from the book's own page images, per reference-wod-scan-ocr-lessons."
+    ],
+    "tool": "read directly, 2026-10-04"
+  },
+  "definition": {
+    "atomic": true,
+    "allow_custom": true,
+    "allow_multiples": false,
+    "items": [
+      {
+        "name": "Approachable",
+        "cost": "1",
+        "tier": null,
+        "group": "Social",
+        "subgroup": null
+      },
+      {
+        "name": "Early Adopter",
+        "cost": "1",
+        "tier": null,
+        "group": "Social",
+        "subgroup": null
+      },
+      {
+        "name": "Funny",
+        "cost": "1",
+        "tier": null,
+        "group": "Social",
+        "subgroup": null
+      },
+      {
+        "name": "Good Listener",
+        "cost": "1",
+        "tier": null,
+        "group": "Social",
+        "subgroup": null
+      },
+      {
+        "name": "Good Taste",
+        "cost": "1",
+        "tier": null,
+        "group": "Social",
+        "subgroup": null
+      },
+      {
+        "name": "Gossip",
+        "cost": "1",
+        "tier": null,
+        "group": "Social",
+        "subgroup": null
+      },
+      {
+        "name": "Lovestruck",
+        "cost": "1",
+        "tier": null,
+        "group": "Social",
+        "subgroup": null
+      },
+      {
+        "name": "Media Junkie",
+        "cost": "1",
+        "tier": null,
+        "group": "Social",
+        "subgroup": null
+      },
+      {
+        "name": "Natural Leader",
+        "cost": "1",
+        "tier": null,
+        "group": "Social",
+        "subgroup": null,
+        "note": "requires at least six Social Traits"
+      },
+      {
+        "name": "Natural Politician",
+        "cost": "1",
+        "tier": null,
+        "group": "Social",
+        "subgroup": null,
+        "note": "requires at least six Social Traits"
+      },
+      {
+        "name": "Punctual",
+        "cost": "1",
+        "tier": null,
+        "group": "Social",
+        "subgroup": null
+      },
+      {
+        "name": "Smooth",
+        "cost": "1",
+        "tier": null,
+        "group": "Social",
+        "subgroup": null
+      },
+      {
+        "name": "Way With Words",
+        "cost": "1",
+        "tier": null,
+        "group": "Social",
+        "subgroup": null
+      },
+      {
+        "name": "Best Friend",
+        "cost": "2",
+        "tier": null,
+        "group": "Social",
+        "subgroup": null
+      },
+      {
+        "name": "Enchanting Voice",
+        "cost": "2",
+        "tier": null,
+        "group": "Social",
+        "subgroup": null
+      },
+      {
+        "name": "Fashion Sense",
+        "cost": "2",
+        "tier": null,
+        "group": "Social",
+        "subgroup": null
+      },
+      {
+        "name": "Flirt",
+        "cost": "2",
+        "tier": null,
+        "group": "Social",
+        "subgroup": null
+      },
+      {
+        "name": "Good Judge of Character",
+        "cost": "2",
+        "tier": null,
+        "group": "Social",
+        "subgroup": null
+      },
+      {
+        "name": "Great Liar",
+        "cost": "2",
+        "tier": null,
+        "group": "Social",
+        "subgroup": null,
+        "note": "requires at least six Social Traits"
+      },
+      {
+        "name": "Laid-Back Friends",
+        "cost": "2",
+        "tier": null,
+        "group": "Social",
+        "subgroup": null
+      },
+      {
+        "name": "Nurturing Partner",
+        "cost": "2",
+        "tier": null,
+        "group": "Social",
+        "subgroup": null
+      },
+      {
+        "name": "People Person",
+        "cost": "2",
+        "tier": null,
+        "group": "Social",
+        "subgroup": null,
+        "note": "requires at least six Social Traits"
+      },
+      {
+        "name": "Pillar of the Community",
+        "cost": "2",
+        "tier": null,
+        "group": "Social",
+        "subgroup": null
+      },
+      {
+        "name": "Seasoned Traveler",
+        "cost": "2 or 4",
+        "tier": null,
+        "group": "Social",
+        "subgroup": null
+      },
+      {
+        "name": "Socially Aware",
+        "cost": "2",
+        "tier": null,
+        "group": "Social",
+        "subgroup": null
+      },
+      {
+        "name": "Trivia Champ",
+        "cost": "2",
+        "tier": null,
+        "group": "Social",
+        "subgroup": null
+      },
+      {
+        "name": "Upright Citizen",
+        "cost": "2",
+        "tier": null,
+        "group": "Social",
+        "subgroup": null
+      },
+      {
+        "name": "Vibrant Neighborhood",
+        "cost": "2",
+        "tier": null,
+        "group": "Social",
+        "subgroup": null
+      },
+      {
+        "name": "Corporate Savvy",
+        "cost": "3",
+        "tier": null,
+        "group": "Social",
+        "subgroup": null,
+        "note": "requires at least six Social Traits and one level of Finance"
+      },
+      {
+        "name": "Media Savvy",
+        "cost": "3",
+        "tier": null,
+        "group": "Social",
+        "subgroup": null
+      },
+      {
+        "name": "Supportive Family",
+        "cost": "3",
+        "tier": null,
+        "group": "Social",
+        "subgroup": null
+      },
+      {
+        "name": "Lucky",
+        "cost": "4",
+        "tier": null,
+        "group": "Social",
+        "subgroup": null,
+        "note": "cannot be combined with the Innocence edge Fool's Luck"
+      },
+      {
+        "name": "Acute Sense",
+        "cost": "1",
+        "tier": null,
+        "group": "Physical",
+        "subgroup": null,
+        "note": "may be taken once per sense"
+      },
+      {
+        "name": "Ambidextrous",
+        "cost": "1",
+        "tier": null,
+        "group": "Physical",
+        "subgroup": null
+      },
+      {
+        "name": "Good Right/Left Hook",
+        "cost": "1",
+        "tier": null,
+        "group": "Physical",
+        "subgroup": null
+      },
+      {
+        "name": "Hollow Leg",
+        "cost": "1",
+        "tier": null,
+        "group": "Physical",
+        "subgroup": null
+      },
+      {
+        "name": "Light Sleeper",
+        "cost": "1",
+        "tier": null,
+        "group": "Physical",
+        "subgroup": null
+      },
+      {
+        "name": "Natural Runner",
+        "cost": "1",
+        "tier": null,
+        "group": "Physical",
+        "subgroup": null
+      },
+      {
+        "name": "Perfect Balance",
+        "cost": "1",
+        "tier": null,
+        "group": "Physical",
+        "subgroup": null
+      },
+      {
+        "name": "Robust Health",
+        "cost": "1",
+        "tier": null,
+        "group": "Physical",
+        "subgroup": null,
+        "note": "requires at least five Physical Traits"
+      },
+      {
+        "name": "Sea Legs",
+        "cost": "1",
+        "tier": null,
+        "group": "Physical",
+        "subgroup": null
+      },
+      {
+        "name": "Bundle of Energy",
+        "cost": "2",
+        "tier": null,
+        "group": "Physical",
+        "subgroup": null
+      },
+      {
+        "name": "Cat Napper",
+        "cost": "2",
+        "tier": null,
+        "group": "Physical",
+        "subgroup": null
+      },
+      {
+        "name": "Forgettable",
+        "cost": "2",
+        "tier": null,
+        "group": "Physical",
+        "subgroup": null
+      },
+      {
+        "name": "Good Night Vision",
+        "cost": "2",
+        "tier": null,
+        "group": "Physical",
+        "subgroup": null
+      },
+      {
+        "name": "Sexy",
+        "cost": "2",
+        "tier": null,
+        "group": "Physical",
+        "subgroup": null
+      },
+      {
+        "name": "Daredevil",
+        "cost": "3",
+        "tier": null,
+        "group": "Physical",
+        "subgroup": null
+      },
+      {
+        "name": "Huge Size",
+        "cost": "3",
+        "tier": null,
+        "group": "Physical",
+        "subgroup": null
+      },
+      {
+        "name": "Common Sense",
+        "cost": "1",
+        "tier": null,
+        "group": "Mental",
+        "subgroup": null
+      },
+      {
+        "name": "Concentration",
+        "cost": "1",
+        "tier": null,
+        "group": "Mental",
+        "subgroup": null
+      },
+      {
+        "name": "Fast Reader",
+        "cost": "1",
+        "tier": null,
+        "group": "Mental",
+        "subgroup": null
+      },
+      {
+        "name": "Good Map Reader",
+        "cost": "1",
+        "tier": null,
+        "group": "Mental",
+        "subgroup": null
+      },
+      {
+        "name": "Good Recognition",
+        "cost": "1",
+        "tier": null,
+        "group": "Mental",
+        "subgroup": null
+      },
+      {
+        "name": "Healthy Skepticism",
+        "cost": "1",
+        "tier": null,
+        "group": "Mental",
+        "subgroup": null
+      },
+      {
+        "name": "Natural Aptitude",
+        "cost": "1",
+        "tier": null,
+        "group": "Mental",
+        "subgroup": null,
+        "note": "picks one Ability; may be taken more than once, each for a different Ability"
+      },
+      {
+        "name": "Religious Devotion",
+        "cost": "1-3",
+        "tier": null,
+        "group": "Mental",
+        "subgroup": null
+      },
+      {
+        "name": "Time Sense",
+        "cost": "1",
+        "tier": null,
+        "group": "Mental",
+        "subgroup": null
+      },
+      {
+        "name": "Code of Honor",
+        "cost": "2",
+        "tier": null,
+        "group": "Mental",
+        "subgroup": null
+      },
+      {
+        "name": "Determined",
+        "cost": "2",
+        "tier": null,
+        "group": "Mental",
+        "subgroup": null,
+        "note": "requires at least three Willpower Traits"
+      },
+      {
+        "name": "Eidetic Memory",
+        "cost": "2",
+        "tier": null,
+        "group": "Mental",
+        "subgroup": null
+      },
+      {
+        "name": "Internet Savvy",
+        "cost": "2",
+        "tier": null,
+        "group": "Mental",
+        "subgroup": null,
+        "note": "requires at least six Mental Traits or two levels of Computer"
+      },
+      {
+        "name": "Natural Linguist",
+        "cost": "2",
+        "tier": null,
+        "group": "Mental",
+        "subgroup": null
+      },
+      {
+        "name": "Unflappable",
+        "cost": "3",
+        "tier": null,
+        "group": "Mental",
+        "subgroup": null
+      },
+      {
+        "name": "Direction Sense",
+        "cost": "4",
+        "tier": null,
+        "group": "Mental",
+        "subgroup": null
+      },
+      {
+        "name": "Optimistic",
+        "cost": "4",
+        "tier": null,
+        "group": "Mental",
+        "subgroup": null
+      },
+      {
+        "name": "Prodigy/Aging Gracefully",
+        "cost": "2",
+        "tier": null,
+        "group": "Aptitude",
+        "subgroup": null,
+        "note": "picks one Attribute category; may be taken more than once, each for a different category"
+      },
+      {
+        "name": "Specialist Driver's License",
+        "cost": "1",
+        "tier": null,
+        "group": "Legal",
+        "subgroup": null,
+        "note": "requires at least one level of Drive"
+      },
+      {
+        "name": "Dual Nationality",
+        "cost": "2",
+        "tier": null,
+        "group": "Legal",
+        "subgroup": null
+      },
+      {
+        "name": "Firearms License",
+        "cost": "2",
+        "tier": null,
+        "group": "Legal",
+        "subgroup": null
+      },
+      {
+        "name": "Alimony Recipient",
+        "cost": "1-3",
+        "tier": null,
+        "group": "Economic",
+        "subgroup": null
+      },
+      {
+        "name": "Bargain Hound",
+        "cost": "1",
+        "tier": null,
+        "group": "Economic",
+        "subgroup": null
+      },
+      {
+        "name": "Independent Income",
+        "cost": "1-5",
+        "tier": null,
+        "group": "Economic",
+        "subgroup": null
+      },
+      {
+        "name": "Good Credit Rating",
+        "cost": "2",
+        "tier": null,
+        "group": "Economic",
+        "subgroup": null,
+        "note": "requires at least three levels of Resources"
+      },
+      {
+        "name": "Wealthy Partner",
+        "cost": "2",
+        "tier": null,
+        "group": "Economic",
+        "subgroup": null
+      },
+      {
+        "name": "Flexible Job",
+        "cost": "3",
+        "tier": null,
+        "group": "Economic",
+        "subgroup": null
+      },
+      {
+        "name": "Paid Mortgage",
+        "cost": "3",
+        "tier": null,
+        "group": "Economic",
+        "subgroup": null
+      }
+    ]
+  }
+}

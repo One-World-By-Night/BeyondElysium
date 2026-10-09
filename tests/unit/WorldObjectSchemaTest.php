@@ -24,6 +24,11 @@ class WorldObjectSchemaTest extends TestCase {
 		$this->assertNull( $error );
 	}
 
+	public function test_item_accepts_a_book_ref(): void {
+		$error = World_Object::validate_properties( 'item', [ 'book_ref' => 'dark-epics:broken-bottle' ] );
+		$this->assertNull( $error );
+	}
+
 	public function test_location_accepts_its_own_properties(): void {
 		$error = World_Object::validate_properties( 'location', [
 			'location_type' => 'Haven',

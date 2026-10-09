@@ -135,12 +135,6 @@
 	border-color: var(--be-gold-13);
 }
 
-.be-st-badge--visiting {
-	margin-left: 0.4rem;
-	color: var(--be-blue-3);
-	border-color: var(--be-blue-5);
-}
-
 .be-character-list__pending-email {
 	margin-top: 1rem;
 	font-size: 0.85rem;

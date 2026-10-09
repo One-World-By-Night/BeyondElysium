@@ -1,0 +1,56 @@
+{
+  "format": 1,
+  "slug": "hunter-identity",
+  "name": "Hunter Identity",
+  "kind": "block",
+  "section_type": "identity_field",
+  "provenance": {
+    "sources": [
+      "Mind's Eye Theatre: Laws of the Reckoning (WW05037), Creeds table p.86 (the seven regular creeds) and The Lost Creeds p.87 (Deviance, Isolation); every entry read directly from the book's own page images, per reference-wod-scan-ocr-lessons.",
+      "The design's own citation of a \"Camp\" identity field was not found anywhere in this book on a fresh read - dropped rather than invented. \"Handle\" is real: the book's own opening fiction names a hunter-net alias (\"chemist105\", p.83), and the hunter-net FAQ (p.265-267) confirms hunters routinely use one to identify each other online."
+    ],
+    "tool": "read directly, 2026-10-04"
+  },
+  "definition": {
+    "fields": [
+      {
+        "name": "Creed",
+        "field_type": "select",
+        "required": true,
+        "options": [
+          "Defense", "Innocence", "Judgment", "Martyrdom", "Redemption", "Vengeance", "Visionary",
+          "Deviance", "Isolation"
+        ],
+        "note": "Deviance and Isolation are the book's own \"lost creeds\" (p.87) - not available to a player without explicit Storyteller permission."
+      },
+      {
+        "name": "Handle",
+        "field_type": "text",
+        "required": false,
+        "note": "The hunter's own hunter-net alias, if any."
+      }
+    ],
+    "creed_conviction": {
+      "Defense": 3,
+      "Innocence": 3,
+      "Judgment": 3,
+      "Martyrdom": 4,
+      "Redemption": 3,
+      "Vengeance": 4,
+      "Visionary": 3,
+      "Deviance": 4,
+      "Isolation": 3
+    },
+    "creed_primary_virtue": {
+      "Defense": "Zeal",
+      "Innocence": "Mercy",
+      "Judgment": "Zeal",
+      "Martyrdom": "Mercy",
+      "Redemption": "Mercy",
+      "Vengeance": "Zeal",
+      "Visionary": "Vision",
+      "Deviance": "Vision",
+      "Isolation": "Vision"
+    }
+  }
+}

@@ -8,7 +8,7 @@ use BeyondElysium\Services\Query_Engine;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Proves query-inventories.php's 42 entries against two independent authorities.
+ * Proves query-inventories.php's 43 entries against two independent authorities.
  */
 class QueryInventoryMapTest extends TestCase {
 
@@ -70,8 +70,8 @@ class QueryInventoryMapTest extends TestCase {
 		}
 	}
 
-	public function test_the_42_entry_counts_match_the_design_doc(): void {
-		$this->assertCount( 16, Field_Registry::inventory( 'item' )['fields'] );
+	public function test_the_43_entry_counts_match_the_design_doc(): void {
+		$this->assertCount( 17, Field_Registry::inventory( 'item' )['fields'] );
 		$this->assertCount( 18, Field_Registry::inventory( 'loc' )['fields'] );
 		$this->assertCount( 8, Field_Registry::inventory( 'rote' )['fields'] );
 	}
@@ -127,9 +127,9 @@ class QueryInventoryMapTest extends TestCase {
 	}
 
 	/**
-	 * The two known key collisions this feature exists to prove a flat map cannot express: 'notes' means the description
-	 * column for a world object (never the notes column, which be_world_objects does not have), and 'type' means a
-	 * different property per inventory.
+	 * The two key collisions a flat map cannot express: 'notes' means the description column for a world object
+	 * (never the notes column, which be_world_objects does not have), and 'type' means a different property per
+	 * inventory.
 	 */
 	public function test_the_documented_key_collisions_resolve_as_designed(): void {
 		$this->assertSame( 'description', Field_Registry::inventory( 'item' )['fields']['notes']['column'] );

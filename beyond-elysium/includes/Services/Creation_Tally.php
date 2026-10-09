@@ -33,8 +33,8 @@ class Creation_Tally {
 			'sheet_data' => $sheet_data,
 		];
 		// A creature type with no creation_rules document declared at all has nothing to tally against: the starting
-		// sheet is written directly, exactly as it always was before this engine existed. A document that declares a
-		// genuinely empty `steps` list is not this - it is an authored ruling that nothing is budgeted or free.
+		// sheet is written directly. A document that declares an empty `steps` list is different - it is an authored
+		// ruling that nothing is budgeted or free.
 		if ( ! is_object( $stack->creation_rules ?? null ) ) {
 			return [
 				'steps'          => [],
@@ -151,6 +151,9 @@ class Creation_Tally {
 
 	/**
 	 * @param array<string,mixed> $step
+	 * @param array<string,object> $blocks
+	 * @param array<string,mixed> $sheet_data
+	 * @param array<string,mixed> $resolved
 	 * @return array<int,array<string,mixed>>
 	 */
 	private static function grant_entries( array $step, array $blocks, array $sheet_data, array $resolved ): array {
@@ -255,6 +258,7 @@ class Creation_Tally {
 	 * @param array<string,object> $blocks
 	 * @param array<string,mixed>  $sheet_data
 	 * @param array<string,bool>   $covered
+	 * @return array<string,mixed>
 	 */
 	private static function process_prioritized( array $step, bool $applies, array $blocks, array $sheet_data, array &$covered ): array {
 		$sections = self::as_list_of_strings( $step['sections'] ?? [] );
@@ -316,6 +320,7 @@ class Creation_Tally {
 	 * @param array<string,object> $blocks
 	 * @param array<string,mixed>  $sheet_data
 	 * @param array<string,bool>   $covered
+	 * @return array<string,mixed>
 	 */
 	private static function process_budget( array $step, bool $applies, object $character, object $stack, array $blocks, array $sheet_data, array &$covered ): array {
 		$section = (string) ( $step['section'] ?? '' );
@@ -395,10 +400,11 @@ class Creation_Tally {
 	// -------------------------------------------------------------------------
 
 	/**
-	 * @param array<string,mixed>   $step
-	 * @param array<string,object>  $blocks
-	 * @param array<string,mixed>   $sheet_data
+	 * @param array<string,mixed>             $step
+	 * @param array<string,object>            $blocks
+	 * @param array<string,mixed>             $sheet_data
 	 * @param array<string,array<string,int>> $pools
+	 * @return array<string,mixed>
 	 */
 	private static function process_earned( array $step, bool $applies, array $blocks, array $sheet_data, array &$pools ): array {
 		$pool = (string) ( $step['pool'] ?? '' );
@@ -443,13 +449,14 @@ class Creation_Tally {
 	}
 
 	/**
-	 * @param array<string,mixed>   $step
-	 * @param array<int,object>     $sections   The stack's own decoded `stack_definition.sections`.
-	 * @param array<string,object>  $blocks
-	 * @param array<string,mixed>   $sheet_data
-	 * @param array<string,bool>    $covered
-	 * @param array<string,mixed>   $resolved
+	 * @param array<string,mixed>             $step
+	 * @param array<int,object>               $sections   The stack's own decoded `stack_definition.sections`.
+	 * @param array<string,object>            $blocks
+	 * @param array<string,mixed>             $sheet_data
+	 * @param array<string,bool>              $covered
+	 * @param array<string,mixed>             $resolved
 	 * @param array<string,array<string,int>> $pools
+	 * @return array<string,mixed>
 	 */
 	private static function process_free( array $step, bool $applies, object $character, object $stack, array $sections, array $blocks, array $sheet_data, array &$covered, array $resolved, array &$pools ): array {
 		$pool = (string) ( $step['pool'] ?? '' );
@@ -565,7 +572,7 @@ class Creation_Tally {
 					$flags[] = [ 'target' => $slug . '.' . $row_name, 'reason' => 'min_rating', 'value' => $rating, 'min' => (float) $step['min_rating'] ];
 				}
 				if ( isset( $step['ceiling'] ) ) {
-					$ceiling_ref = self::resolve_ceiling( $step['ceiling'], $slug, $sheet_data );
+					$ceiling_ref = self::resolve_ceiling( $step['ceiling'], $slug, $sheet_data, $blocks );
 					if ( $ceiling_ref !== null ) {
 						$ceiling_value = self::target_value( $ceiling_ref, $sheet_data, $resolved, $blocks );
 						if ( $rating > $ceiling_value ) {
@@ -586,6 +593,15 @@ class Creation_Tally {
 				}
 				if ( isset( $step['min_rating'] ) && $value < (float) $step['min_rating'] ) {
 					$flags[] = [ 'target' => $target, 'reason' => 'min_rating', 'value' => $value, 'min' => (float) $step['min_rating'] ];
+				}
+				if ( isset( $step['ceiling'] ) ) {
+					$ceiling_ref = self::resolve_ceiling( $step['ceiling'], $slug, $sheet_data, $blocks );
+					if ( $ceiling_ref !== null && $ceiling_ref !== $target ) {
+						$ceiling_value = self::target_value( $ceiling_ref, $sheet_data, $resolved, $blocks );
+						if ( $value > $ceiling_value ) {
+							$flags[] = [ 'target' => $target, 'reason' => 'ceiling', 'value' => $value, 'ceiling' => $ceiling_value, 'ceiling_target' => $ceiling_ref ];
+						}
+					}
 				}
 			}
 		}
@@ -615,14 +631,19 @@ class Creation_Tally {
 	}
 
 	/**
-	 * @param mixed $ceiling A `"block.Name"` string, or `{named_by: "block.Field"}`.
-	 * @param array<string,mixed> $sheet_data
+	 * @param mixed                $ceiling A `"block.Name"` string, `{named_by: "field"}`, or `{map: "block.mapName", by: [field,...]}`.
+	 * @param array<string,mixed>  $sheet_data
+	 * @param array<string,object> $blocks
 	 */
-	private static function resolve_ceiling( $ceiling, string $default_slug, array $sheet_data ): ?string {
+	private static function resolve_ceiling( $ceiling, string $default_slug, array $sheet_data, array $blocks = [] ): ?string {
 		if ( is_string( $ceiling ) ) {
 			return $ceiling;
 		}
 		$rule = self::as_array( $ceiling );
+		if ( isset( $rule['map'] ) ) {
+			$named = self::map_lookup( (string) $rule['map'], self::as_list_of_strings( $rule['by'] ?? [] ), $sheet_data, $blocks );
+			return $named !== null && $named !== '' ? $default_slug . '.' . $named : null;
+		}
 		if ( ! isset( $rule['named_by'] ) ) {
 			return null;
 		}
@@ -678,6 +699,7 @@ class Creation_Tally {
 	 * @param callable(string):bool $in_type_fn
 	 * @param array<string,object>  $blocks
 	 * @param array<string,mixed>   $resolved
+	 * @param object                $definition
 	 * @return array<int,object>
 	 */
 	private static function section_units( string $slug, ?string $type, $definition, $held, callable $in_type_fn, array $blocks, array $resolved = [] ): array {
@@ -695,6 +717,8 @@ class Creation_Tally {
 
 	/**
 	 * @param array<string,object> $blocks
+	 * @param object $definition
+	 * @param array<int,mixed> $held
 	 * @return array<int,object>
 	 */
 	private static function trait_list_units( string $slug, $definition, array $held, array $blocks ): array {
@@ -731,6 +755,8 @@ class Creation_Tally {
 
 	/**
 	 * @param callable(string):bool $in_type_fn
+	 * @param object $definition
+	 * @param array<int,mixed> $held
 	 * @return array<int,object>
 	 */
 	private static function tiered_power_units( string $slug, $definition, array $held, callable $in_type_fn ): array {
@@ -807,6 +833,7 @@ class Creation_Tally {
 	/**
 	 * @param array<string,mixed> $held_map
 	 * @param array<string,mixed> $resolved
+	 * @param object $definition
 	 * @return array<int,object>
 	 */
 	private static function pool_units( string $slug, $definition, array $held_map, array $resolved ): array {
@@ -901,6 +928,8 @@ class Creation_Tally {
 
 	/**
 	 * The tier vocabulary's index of a named rank, or null when the block declares none.
+	 *
+	 * @param object $definition
 	 */
 	private static function tier_index( $definition, string $tier ): ?int {
 		$ranks = Cost_Engine::meta_ranks( $definition );

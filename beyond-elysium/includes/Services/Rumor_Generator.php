@@ -35,7 +35,7 @@ class Rumor_Generator {
 	 * @param int    $game_id
 	 * @param string $game_date `Y-m-d`.
 	 * @param bool   $commit
-	 * @return array[]|\WP_Error Each: title, category, target_query, description. An error when a commit could not write them, with nothing kept.
+	 * @return array<int,array<string,mixed>>|\WP_Error Each: title, category, target_query, description. An error when a commit could not write them, with nothing kept.
 	 */
 	public static function generate( int $game_id, string $game_date, bool $commit = false ) {
 		$game = Game::find( $game_id );
@@ -115,11 +115,10 @@ class Rumor_Generator {
 	/**
 	 * Generates personal, race, group, subgroup, and influence rumor candidates per character, in Grapevine's order.
 	 *
-	 * @param array[] $characters
-	 * @param array   $toggles
-	 * @param array   $existing Titles already claimed; NOT mutated - a fresh
-	 *                          local copy is used internally so this stays pure.
-	 * @return array[]
+	 * @param array<int,array<string,mixed>> $characters
+	 * @param array<string,bool>             $toggles
+	 * @param array<string,bool>             $existing Titles already claimed; not mutated.
+	 * @return array<int,array<string,mixed>>
 	 */
 	public static function resolve_character_candidates( array $characters, array $toggles, array $existing ): array {
 		$candidates = [];
@@ -206,12 +205,12 @@ class Rumor_Generator {
 	/**
 	 * Adds a candidate to the list if its title is not already claimed for this date.
 	 *
-	 * @param array[] $candidates
-	 * @param array   $existing
-	 * @param string  $title
-	 * @param string  $category
-	 * @param array   $target_query
-	 * @param array   $extra Merged onto the candidate - `rumor_level_key`/`rumor_level_match`
+	 * @param array<int,array<string,mixed>> $candidates
+	 * @param array<string,bool>             $existing
+	 * @param string                         $title
+	 * @param string                         $category
+	 * @param array<string,mixed>            $target_query
+	 * @param array<string,mixed>            $extra Merged onto the candidate - `rumor_level_key`/`rumor_level_match`
 	 *                       for an influence rumor, empty otherwise.
 	 * @return void
 	 */
@@ -262,11 +261,11 @@ class Rumor_Generator {
 	 * Clones the previous rumor-generation date's titles and target queries forward, skipping anything already present at
 	 * `$game_date`.
 	 *
-	 * @param int    $game_id
-	 * @param string $game_date
-	 * @param bool   $copy_previous
-	 * @param array  $existing
-	 * @return array[]
+	 * @param int                $game_id
+	 * @param string             $game_date
+	 * @param bool               $copy_previous
+	 * @param array<string,bool> $existing
+	 * @return array<int,array<string,mixed>>
 	 */
 	private static function previous_date_candidates( int $game_id, string $game_date, bool $copy_previous, array $existing ): array {
 		$previous_date = self::most_recent_rumor_date_before( $game_id, $game_date );
@@ -308,9 +307,9 @@ class Rumor_Generator {
 	/**
 	 * Persists one candidate as a plot row.
 	 *
-	 * @param int    $game_id
-	 * @param string $game_date
-	 * @param array  $candidate
+	 * @param int                 $game_id
+	 * @param string              $game_date
+	 * @param array<string,mixed> $candidate
 	 * @return bool False when the plot, its levels, or its tag could not be written.
 	 */
 	private static function persist_one( int $game_id, string $game_date, array $candidate ): bool {
@@ -463,7 +462,7 @@ class Rumor_Generator {
 	 * returns one boolean per toggle type.
 	 *
 	 * @param object $game
-	 * @return array
+	 * @return array<string,bool>
 	 */
 	public static function rumor_config( $game ): array {
 		$apr = $game->settings->apr ?? null;

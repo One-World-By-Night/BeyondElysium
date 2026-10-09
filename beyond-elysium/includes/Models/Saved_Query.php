@@ -30,7 +30,7 @@ class Saved_Query {
 	 *
 	 * @param int      $game_id
 	 * @param int|null $viewer_id
-	 * @return array
+	 * @return array<int,object>
 	 */
 	public static function for_game( int $game_id, ?int $viewer_id = null ): array {
 		global $wpdb;
@@ -43,13 +43,15 @@ class Saved_Query {
 				$viewer_id
 			);
 		$rows = $wpdb->get_results( $sql ) ?: [];
-		return array_map( [ self::class, 'decode' ], $rows );
+		/** @var array<int,object> $decoded */
+		$decoded = array_map( [ self::class, 'decode' ], $rows );
+		return $decoded;
 	}
 
 	/**
 	 * Insert a new saved query.
 	 *
-	 * @param array $data
+	 * @param array<string,mixed> $data
 	 * @return int|false
 	 */
 	public static function create( array $data ) {
@@ -72,8 +74,8 @@ class Saved_Query {
 	/**
 	 * Update a saved query.
 	 *
-	 * @param int   $id
-	 * @param array $data
+	 * @param int                 $id
+	 * @param array<string,mixed> $data
 	 * @return bool
 	 */
 	public static function update( int $id, array $data ): bool {
@@ -110,11 +112,11 @@ class Saved_Query {
 	/**
 	 * Upsert this user's "Most Recent Search" row for a game.
 	 *
-	 * @param int    $game_id
-	 * @param int    $wp_user_id
-	 * @param string $inventory
-	 * @param bool   $match_all
-	 * @param array  $conditions
+	 * @param int                            $game_id
+	 * @param int                            $wp_user_id
+	 * @param string                         $inventory
+	 * @param bool                           $match_all
+	 * @param array<int,array<string,mixed>> $conditions
 	 * @return int Query ID.
 	 */
 	public static function save_recent( int $game_id, int $wp_user_id, string $inventory, bool $match_all, array $conditions ): int {
@@ -157,8 +159,9 @@ class Saved_Query {
 	 * Decode a row's conditions JSON field into an array, and cast its match_all and is_recent_search fields to booleans,
 	 * in place.
 	 *
-	 * @param object|null $row
-	 * @return object|null
+	 * @template T of object|null
+	 * @param T $row
+	 * @return T
 	 */
 	private static function decode( $row ) {
 		if ( $row && isset( $row->conditions ) && is_string( $row->conditions ) ) {

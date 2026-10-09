@@ -25,8 +25,7 @@ class Custom_Rekey {
 	 *                                              holding a custom row).
 	 * @param array<string,string> $replacement_map Retired slug => live slug, this character's stack.
 	 * @param array{suggestions?:bool} $options     `suggestions` (default true): attach `Fuzzy_Matcher`
-	 *                                              candidates to a row that stays custom. `apply()` turns it off -
-	 *                                              a suggestion is for the plan CSV, never for a write.
+	 *                                              candidates to a row that stays custom. `apply()` turns it off.
 	 * @return array{
 	 *     sheet_data: array<string,mixed>,
 	 *     records: array<int,array<string,mixed>>,
@@ -325,8 +324,7 @@ class Custom_Rekey {
 	}
 
 	/**
-	 * Lookup tables over one block's items, built once per block per plan: 1,291 rituals scanned by 7,000 custom rows
-	 * must not re-normalize every catalog name every time.
+	 * Lookup tables over one block's items, built once per block per plan.
 	 *
 	 * @return array{items:array<int,object>,exact:array<string,array<int,object>>,normalized:array<string,array<int,object>>,alias:array<string,array<int,object>>,canonical:array<string,array<int,object>>,rule:?object}
 	 */
@@ -382,7 +380,10 @@ class Custom_Rekey {
 		return null;
 	}
 
-	/** @param array<int,object> $items @return array<int,object> */
+	/**
+	 * @param array<int,object> $items
+	 * @return array<int,object>
+	 */
 	private static function unique_items( array $items ): array {
 		$seen = [];
 		foreach ( $items as $item ) {

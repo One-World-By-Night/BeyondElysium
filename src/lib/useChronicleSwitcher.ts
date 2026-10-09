@@ -83,6 +83,10 @@ export interface ChronicleSwitcherState {
 	 * This chronicle's resolved brand accent.
 	 */
 	accentColor: string;
+	/**
+	 * How many of the player's own changes are pending in each chronicle on this site, by slug.
+	 */
+	pendingCounts: Record< string, number >;
 }
 
 export function useChronicleSwitcher(): ChronicleSwitcherState {
@@ -96,6 +100,9 @@ export function useChronicleSwitcher(): ChronicleSwitcherState {
 	const [ gamesAttempt, setGamesAttempt ] = useState( 0 );
 	const [ loadingCapabilities, setLoadingCapabilities ] = useState( false );
 	const [ capabilitiesFor, setCapabilitiesFor ] = useState( '' );
+	const [ pendingCounts, setPendingCounts ] = useState<
+		Record< string, number >
+	>( {} );
 
 	// Loads the user's real memberships once.
 	useEffect( () => {
@@ -112,6 +119,23 @@ export function useChronicleSwitcher(): ChronicleSwitcherState {
 				setLoadingGames( false );
 			}
 		);
+	}, [ gamesAttempt ] );
+
+	// Counts the player's own pending changes per chronicle, for the switcher's own badge.
+	useEffect( () => {
+		api.myChangesAcrossGames()
+			.list()
+			.then( ( rows ) => {
+				const counts: Record< string, number > = {};
+				for ( const row of rows ) {
+					if ( row.display_status === 'pending' ) {
+						counts[ row.game_slug ] =
+							( counts[ row.game_slug ] ?? 0 ) + 1;
+					}
+				}
+				setPendingCounts( counts );
+			} )
+			.catch( () => setPendingCounts( {} ) );
 	}, [ gamesAttempt ] );
 
 	// Re-resolves capabilities every time the selected chronicle changes, and keeps the URL's own game_slug in sync.
@@ -160,5 +184,6 @@ export function useChronicleSwitcher(): ChronicleSwitcherState {
 		loadingCapabilities,
 		capabilitiesFor,
 		accentColor,
+		pendingCounts,
 	};
 }

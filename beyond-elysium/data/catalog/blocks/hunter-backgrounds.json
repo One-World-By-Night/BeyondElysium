@@ -1,0 +1,43 @@
+{
+  "format": 1,
+  "slug": "hunter-backgrounds",
+  "name": "Backgrounds",
+  "kind": "block",
+  "section_type": "trait_list",
+  "provenance": {
+    "sources": [
+      "Mind's Eye Theatre: Laws of the Reckoning (WW05037), \"Choosing Backgrounds\" p.90 (the full Backgrounds list) and Experience p.269 (\"New Background... One Experience Trait per Background level is usually sufficient\")."
+    ],
+    "tool": "read directly, 2026-10-04"
+  },
+  "definition": {
+    "atomic": false,
+    "allow_custom": true,
+    "allow_multiples": false,
+    "items": [
+      { "name": "Allies", "cost": "1", "tier": null, "group": null, "subgroup": null, "allow_multiples": true },
+      { "name": "Arsenal", "cost": "1", "tier": null, "group": null, "subgroup": null },
+      { "name": "Berserk", "cost": "1", "tier": null, "group": null, "subgroup": null },
+      { "name": "Bystanders", "cost": "1", "tier": null, "group": null, "subgroup": null, "allow_multiples": true },
+      { "name": "Contacts", "cost": "1", "tier": null, "group": null, "subgroup": null, "allow_multiples": true },
+      { "name": "Destiny", "cost": "1", "tier": null, "group": null, "subgroup": null },
+      { "name": "Everyman", "cost": "1", "tier": null, "group": null, "subgroup": null },
+      { "name": "Exposure", "cost": "1", "tier": null, "group": null, "subgroup": null },
+      { "name": "Fame", "cost": "1", "tier": null, "group": null, "subgroup": null },
+      { "name": "Fraternity", "cost": "1", "tier": null, "group": null, "subgroup": null },
+      { "name": "Grace Under Pressure", "cost": "1", "tier": null, "group": null, "subgroup": null },
+      {
+        "name": "Influence", "cost": "1", "tier": null, "group": null, "subgroup": null, "allow_multiples": true,
+        "note": "Sway over an area of mundane society: Bureaucracy, Church, Espionage, Finance, Health, High Society, Industry, Legal, Media, Military, Occult, Police, Politics, Street, Transportation, Underworld or University."
+      },
+      { "name": "Iron Willed", "cost": "1", "tier": null, "group": null, "subgroup": null },
+      { "name": "Mentor", "cost": "1", "tier": null, "group": null, "subgroup": null },
+      { "name": "Patron", "cost": "1", "tier": null, "group": null, "subgroup": null },
+      { "name": "Pawn", "cost": "1", "tier": null, "group": null, "subgroup": null },
+      { "name": "Resources", "cost": "1", "tier": null, "group": null, "subgroup": null },
+      { "name": "Roots", "cost": "1", "tier": null, "group": null, "subgroup": null },
+      { "name": "Soulmate", "cost": "1", "tier": null, "group": null, "subgroup": null },
+      { "name": "Steel Nerves", "cost": "1", "tier": null, "group": null, "subgroup": null }
+    ]
+  }
+}

@@ -13,7 +13,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * (found triaging).
+ * A transfer whose row did not save is answered with an error, an offer that arrived during the check is answered as
+ * already offered, and another transfer waits while one is checked and written.
  */
 class TransferRowWriteThreadTest extends WP_UnitTestCase {
 
@@ -65,7 +66,7 @@ class TransferRowWriteThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Fails every insert into the transfers table, as a lost connection or lock timeout would.
+	 * Fails every insert into the transfers table.
 	 */
 	public function break_transfer_inserts( string $query ): string {
 		global $wpdb;
@@ -75,7 +76,7 @@ class TransferRowWriteThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The route's own check misses an offer, as it would one another request wrote a moment later.
+	 * Hides the open offer from the route's own check once.
 	 */
 	public function hide_the_open_offer_once( string $query ): string {
 		if ( $this->hidden_checks === 0 && preg_match( "/be_character_transfers WHERE character_uuid = .* AND direction = 'inbound'/", $query ) ) {

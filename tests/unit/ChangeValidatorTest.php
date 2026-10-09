@@ -269,6 +269,130 @@ class ChangeValidatorTest extends TestCase {
 		$this->assertSame( 'Ran the door', $result['change_data']['request']['note'] );
 	}
 
+	// --- spent_from / raised_by -------------------------------------------------
+
+	private function hunterBlocks(): array {
+		return $this->blocks() + [
+			'hunter-edges' => (object) [ 'section_type' => 'tiered_power', 'definition' => (object) [
+				'_meta'  => (object) [
+					'ranks'      => [ 'touched', 'gifted' ],
+					'ladder'     => [],
+					'spent_from' => (object) [
+						'pool_block'      => 'hunter-virtues',
+						'by_family_field' => 'virtue',
+						'rank_cost'       => (object) [ 'touched' => 1, 'gifted' => 2 ],
+						'creed_check'     => 'hunter-identity.Creed',
+					],
+				],
+				'powers' => [
+					(object) [
+						'name'   => 'Innocence Path', 'virtue' => 'Mercy',
+						'levels' => [],
+						'elder'  => (object) [ 'touched' => [ (object) [ 'level' => null, 'tier' => 'touched', 'power_name' => 'Hide' ] ] ],
+					],
+					(object) [
+						'name' => 'Deviance Path', 'virtue' => 'Vision', 'creed_restricted_to' => [ 'Deviance' ],
+						'levels' => [],
+						'elder'  => (object) [ 'touched' => [ (object) [ 'level' => null, 'tier' => 'touched', 'power_name' => 'Impart' ] ] ],
+					],
+				],
+			] ],
+			'hunter-virtues' => (object) [ 'section_type' => 'resource_pool', 'definition' => (object) [
+				'pools' => [
+					(object) [ 'name' => 'Mercy', 'default_start' => 0, 'raised_by' => (object) [ 'from' => 'hunter-resources.Conviction', 'temporary' => 10 ] ],
+					(object) [ 'name' => 'Vision', 'default_start' => 0, 'raised_by' => (object) [ 'from' => 'hunter-resources.Conviction', 'temporary' => 10 ] ],
+				],
+			] ],
+			'hunter-resources' => (object) [ 'section_type' => 'resource_pool', 'definition' => (object) [
+				'pools' => [ (object) [ 'name' => 'Conviction', 'default_start' => 3 ] ],
+			] ],
+			'hunter-identity' => (object) [ 'section_type' => 'identity_field', 'definition' => (object) [
+				'fields' => [ (object) [ 'name' => 'Creed', 'field_type' => 'select', 'options' => [ 'Innocence', 'Deviance' ] ] ],
+			] ],
+		];
+	}
+
+	private function checkHunter( string $type, array $data, array $sheet = [], bool $manager = false ): array {
+		return Change_Validator::validate( [ 'change_type' => $type, 'change_data' => $data ], $this->hunterBlocks(), $sheet, $manager );
+	}
+
+	public function test_buying_an_edge_with_enough_unspent_virtue_traits_succeeds(): void {
+		$sheet  = [ 'hunter-virtues' => [ 'Mercy' => [ 'permanent' => 3, 'spent' => 0 ] ] ];
+		$result = $this->checkHunter( 'add_trait', [ 'block_slug' => 'hunter-edges', 'trait' => [ 'name' => 'Innocence Path', 'power_name' => 'Hide' ] ], $sheet );
+
+		$this->assertTrue( $result['ok'], (string) ( $result['message'] ?? '' ) );
+	}
+
+	public function test_buying_an_edge_without_enough_unspent_virtue_traits_is_refused(): void {
+		$sheet  = [ 'hunter-virtues' => [ 'Mercy' => [ 'permanent' => 3, 'spent' => 3 ] ] ];
+		$result = $this->checkHunter( 'add_trait', [ 'block_slug' => 'hunter-edges', 'trait' => [ 'name' => 'Innocence Path', 'power_name' => 'Hide' ] ], $sheet );
+
+		$this->assertFalse( $result['ok'] );
+		$this->assertSame( 'not_enough_unspent', $result['code'] );
+	}
+
+	public function test_removing_a_held_edge_never_checks_unspent_dots(): void {
+		$sheet  = [
+			'hunter-edges'   => [ [ 'name' => 'Innocence Path', 'power_name' => 'Hide' ] ],
+			'hunter-virtues' => [ 'Mercy' => [ 'permanent' => 3, 'spent' => 3 ] ],
+		];
+		$result = $this->checkHunter( 'remove_trait', [ 'block_slug' => 'hunter-edges', 'trait' => [ 'name' => 'Innocence Path', 'power_name' => 'Hide' ] ], $sheet );
+
+		$this->assertTrue( $result['ok'] );
+	}
+
+	public function test_a_creed_restricted_edge_is_refused_for_the_wrong_creed(): void {
+		$sheet  = [
+			'hunter-identity' => [ 'Creed' => 'Innocence' ],
+			'hunter-virtues'  => [ 'Vision' => [ 'permanent' => 5, 'spent' => 0 ] ],
+		];
+		$result = $this->checkHunter( 'add_trait', [ 'block_slug' => 'hunter-edges', 'trait' => [ 'name' => 'Deviance Path', 'power_name' => 'Impart' ] ], $sheet );
+
+		$this->assertFalse( $result['ok'] );
+		$this->assertSame( 'creed_restricted', $result['code'] );
+	}
+
+	public function test_a_creed_restricted_edge_is_allowed_for_the_matching_creed(): void {
+		$sheet  = [
+			'hunter-identity' => [ 'Creed' => 'Deviance' ],
+			'hunter-virtues'  => [ 'Vision' => [ 'permanent' => 5, 'spent' => 0 ] ],
+		];
+		$result = $this->checkHunter( 'add_trait', [ 'block_slug' => 'hunter-edges', 'trait' => [ 'name' => 'Deviance Path', 'power_name' => 'Impart' ] ], $sheet );
+
+		$this->assertTrue( $result['ok'], (string) ( $result['message'] ?? '' ) );
+	}
+
+	public function test_raising_a_virtue_with_enough_temporary_conviction_succeeds(): void {
+		$sheet  = [
+			'hunter-virtues'   => [ 'Mercy' => [ 'permanent' => 2, 'temporary' => 2 ] ],
+			'hunter-resources' => [ 'Conviction' => [ 'permanent' => 3, 'temporary' => 10 ] ],
+		];
+		$result = $this->checkHunter( 'modify_resource', [ 'block_slug' => 'hunter-virtues', 'values' => [ 'Mercy' => [ 'permanent' => 3, 'temporary' => 2 ] ] ], $sheet );
+
+		$this->assertTrue( $result['ok'], (string) ( $result['message'] ?? '' ) );
+	}
+
+	public function test_raising_a_virtue_without_enough_temporary_conviction_is_refused(): void {
+		$sheet  = [
+			'hunter-virtues'   => [ 'Mercy' => [ 'permanent' => 2, 'temporary' => 2 ] ],
+			'hunter-resources' => [ 'Conviction' => [ 'permanent' => 3, 'temporary' => 9 ] ],
+		];
+		$result = $this->checkHunter( 'modify_resource', [ 'block_slug' => 'hunter-virtues', 'values' => [ 'Mercy' => [ 'permanent' => 3, 'temporary' => 2 ] ] ], $sheet );
+
+		$this->assertFalse( $result['ok'] );
+		$this->assertSame( 'not_enough_temporary', $result['code'] );
+	}
+
+	public function test_lowering_a_raised_by_pool_never_checks_temporary_points(): void {
+		$sheet  = [
+			'hunter-virtues'   => [ 'Mercy' => [ 'permanent' => 3, 'temporary' => 0 ] ],
+			'hunter-resources' => [ 'Conviction' => [ 'permanent' => 3, 'temporary' => 0 ] ],
+		];
+		$result = $this->checkHunter( 'modify_resource', [ 'block_slug' => 'hunter-virtues', 'values' => [ 'Mercy' => [ 'permanent' => 2, 'temporary' => 0 ] ] ], $sheet );
+
+		$this->assertTrue( $result['ok'] );
+	}
+
 	public function test_protected_fields_are_every_field_the_stacks_in_type_tests_read(): void {
 		$stack = json_decode( (string) json_encode( [ 'stack_definition' => [ 'sections' => [
 			[ 'block_slug' => 'vampire-disciplines', 'in_type' => [

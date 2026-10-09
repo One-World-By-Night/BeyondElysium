@@ -10,6 +10,7 @@ import type { Game } from '../../types';
 import { errorMessage } from '../../lib/errorMessage';
 import { useRevealOnOpen } from '../../lib/revealEditor';
 import HelpButton from '../shared/HelpButton';
+import DemoChronicleSection from './DemoChronicleSection';
 import './Admin.css';
 
 const EMPTY_FORM = { name: '', slug: '', game_type: 'met', description: '' };
@@ -366,6 +367,18 @@ export function AdminGames() {
 					</div>
 				</form>
 			) }
+
+			{ editingSlug !== null &&
+				games.find( ( g ) => g.slug === editingSlug ) && (
+					<DemoChronicleSection
+						game={
+							games.find(
+								( g ) => g.slug === editingSlug
+							) as Game
+						}
+						onSaved={ load }
+					/>
+				) }
 		</div>
 	);
 }

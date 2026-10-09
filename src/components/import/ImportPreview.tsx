@@ -224,6 +224,29 @@ export function ImportPreview( {
 				</div>
 			) }
 
+			{ preview.refused.length > 0 && (
+				<div className="be-import-preview__refused">
+					<h4>
+						{ sprintf(
+							/* translators: %d: number of characters refused for having no creature type here */
+							__( 'Refused (%d)', 'beyond-elysium' ),
+							preview.refused.length
+						) }
+					</h4>
+					<p>
+						{ __(
+							'Nothing is written for these characters. Everyone else in this file still imports.',
+							'beyond-elysium'
+						) }
+					</p>
+					<ul>
+						{ preview.refused.map( ( refusal, i ) => (
+							<li key={ i }>{ refusal.reason }</li>
+						) ) }
+					</ul>
+				</div>
+			) }
+
 			<h4>
 				{ sprintf(
 					/* translators: %d: number of duplicate characters found */
@@ -634,30 +657,39 @@ export function ImportPreview( {
 												'beyond-elysium'
 											) }
 										>
-											<label className="be-import-preview__keep-custom">
-												<input
-													type="checkbox"
-													checked={ keptCustom }
-													onChange={ ( e ) =>
-														onTraitResolutionChange(
-															key,
-															e.target.checked
-																? {
-																		character:
-																			trait.character,
-																		block: trait.block,
-																		raw: trait.raw,
-																		action: 'keep_custom',
-																	}
-																: null
-														)
-													}
-												/>{ ' ' }
-												{ __(
-													'Keep as written',
-													'beyond-elysium'
-												) }
-											</label>
+											{ trait.allow_custom ? (
+												<label className="be-import-preview__keep-custom">
+													<input
+														type="checkbox"
+														checked={ keptCustom }
+														onChange={ ( e ) =>
+															onTraitResolutionChange(
+																key,
+																e.target.checked
+																	? {
+																			character:
+																				trait.character,
+																			block: trait.block,
+																			raw: trait.raw,
+																			action: 'keep_custom',
+																		}
+																	: null
+															)
+														}
+													/>{ ' ' }
+													{ __(
+														'Keep as written',
+														'beyond-elysium'
+													) }
+												</label>
+											) : (
+												<span className="be-import-preview__keep-custom-disabled">
+													{ __(
+														"This block's own list is fixed - choose the suggestion above instead.",
+														'beyond-elysium'
+													) }
+												</span>
+											) }
 											{ /* Writes to this chronicle's own schema block fork, never the shared global catalog. */ }
 											{ keptCustom &&
 												canManageSchemas && (
@@ -763,30 +795,39 @@ export function ImportPreview( {
 										</span>
 									) }
 									{  }{ ' ' }
-									<label className="be-import-preview__keep-custom">
-										<input
-											type="checkbox"
-											checked={ keptCustom }
-											onChange={ ( e ) =>
-												onTraitResolutionChange(
-													key,
-													e.target.checked
-														? {
-																character:
-																	trait.character,
-																block: trait.block,
-																raw: trait.raw,
-																action: 'keep_custom',
-															}
-														: null
-												)
-											}
-										/>{ ' ' }
-										{ __(
-											'Keep as written, unmatched',
-											'beyond-elysium'
-										) }
-									</label>
+									{ trait.allow_custom ? (
+										<label className="be-import-preview__keep-custom">
+											<input
+												type="checkbox"
+												checked={ keptCustom }
+												onChange={ ( e ) =>
+													onTraitResolutionChange(
+														key,
+														e.target.checked
+															? {
+																	character:
+																		trait.character,
+																	block: trait.block,
+																	raw: trait.raw,
+																	action: 'keep_custom',
+																}
+															: null
+													)
+												}
+											/>{ ' ' }
+											{ __(
+												'Keep as written, unmatched',
+												'beyond-elysium'
+											) }
+										</label>
+									) : (
+										<span className="be-import-preview__keep-custom-disabled">
+											{ __(
+												"This block's own list is fixed - it can never take an unmatched value as written. Choose Discard this trait or Map to a different name instead.",
+												'beyond-elysium'
+											) }
+										</span>
+									) }
 									{ /* Only offered once "keep as written" is checked, and only to someone who can manage schemas. */ }
 									{ keptCustom && canManageSchemas && (
 										<label className="be-import-preview__keep-custom">

@@ -94,7 +94,9 @@ describe( 'describeChange — parity with Change_Description.php', () => {
 					testCase.change_type as Parameters<
 						typeof describeChange
 					>[ 0 ],
-					testCase.change_data
+					testCase.change_data as Parameters<
+						typeof describeChange
+					>[ 1 ]
 				)
 			).toBe( changeDescriptionExpected[ i ].output );
 		} );
@@ -102,7 +104,7 @@ describe( 'describeChange — parity with Change_Description.php', () => {
 } );
 
 /**
- * The words were bare English that never reached the translation file.
+ * Every word of a change's description goes through translation.
  */
 describe( 'describeChange — translation', () => {
 	afterEach( () => {
@@ -189,7 +191,7 @@ describe( 'describeChange — translation', () => {
 				testCase.change_type as Parameters<
 					typeof describeChange
 				>[ 0 ],
-				testCase.change_data
+				testCase.change_data as Parameters< typeof describeChange >[ 1 ]
 			);
 			let left = described;
 			let before;
@@ -229,6 +231,38 @@ describe( 'describeChangeDetail', () => {
 		expect( describeChangeDetail( 'catalog_rekey', { records } ) ).toEqual(
 			[ 'Alertness → Alertness', 'Lore: Kindred → Lore (Kindred)' ]
 		);
+	} );
+
+	it( 'lists each repeated row a catalog update dropped and each level it disagreed on', () => {
+		expect(
+			describeChangeDetail( 'catalog_rekey', {
+				records: [
+					{
+						outcome: 'duplicate',
+						from: 'Dur-An-Ki: Elemental Mastery',
+						to: 'Elemental Mastery',
+						tradition: 'Dur An Ki',
+						level: 5,
+					},
+					{
+						outcome: 'conflict',
+						from: "Dur-An-Ki: Neptune's Might",
+						to: "Neptune's Might",
+						tradition: 'Dur An Ki',
+						level: 5,
+						held_level: 3,
+					},
+					{
+						outcome: 'moved',
+						from: 'Sadhanna: Alchemy',
+						to: 'Alchemy',
+					},
+				],
+			} )
+		).toEqual( [
+			'Dur-An-Ki: Elemental Mastery: already held as Elemental Mastery (Dur An Ki), not added again',
+			"Neptune's Might (Dur An Ki): held at level 3, this entry says 5, both kept",
+		] );
 	} );
 
 	it( 'lists nothing for a catalog update that matched nothing', () => {

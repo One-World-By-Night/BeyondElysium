@@ -4,14 +4,73 @@
 import { __, sprintf } from '@wordpress/i18n';
 import { useEffect, useState } from '@wordpress/element';
 import api from '../../api/client';
-import { describeChange } from '../../lib/describeChange';
 import { MyPlotsFeed } from '../apr/MyPlotsFeed';
 import { CastingBrief } from './CastingBrief';
-import type { Character, QueueChange } from '../../types/character';
+import type { Character, MyChangeAcrossGames } from '../../types/character';
 import type { StaffQueueCastingRow } from '../../types/staffQueue';
 import type { Faction, Position } from '../../types/faction';
 import HelpButton from '../shared/HelpButton';
 import './GameDashboard.css';
+
+/**
+ * A display label for one change's status, as `MyChangeAcrossGames.display_status` names it.
+ */
+export function statusLabel(
+	status: MyChangeAcrossGames[ 'display_status' ]
+): string {
+	switch ( status ) {
+		case 'pending':
+			return __( 'Pending', 'beyond-elysium' );
+		case 'approved':
+			return __( 'Approved', 'beyond-elysium' );
+		case 'auto_approved':
+			return __( 'Auto-approved', 'beyond-elysium' );
+		case 'refused':
+			return __( 'Refused', 'beyond-elysium' );
+	}
+}
+
+/**
+ * Groups a player's changes by chronicle - the current one first, every other chronicle with something after it in
+ * the order it's first seen - with each group's own pending changes sorted above its recent ones.
+ */
+export function groupMyChanges(
+	changes: MyChangeAcrossGames[],
+	currentGameSlug: string
+): Array< {
+	gameSlug: string;
+	gameName: string;
+	changes: MyChangeAcrossGames[];
+} > {
+	const order: string[] = [];
+	const byGame = new Map< string, MyChangeAcrossGames[] >();
+	for ( const change of changes ) {
+		if ( ! byGame.has( change.game_slug ) ) {
+			byGame.set( change.game_slug, [] );
+			order.push( change.game_slug );
+		}
+		byGame.get( change.game_slug )!.push( change );
+	}
+
+	order.sort( ( a, b ) => {
+		if ( a === currentGameSlug ) {
+			return -1;
+		}
+		if ( b === currentGameSlug ) {
+			return 1;
+		}
+		return 0;
+	} );
+
+	return order.map( ( slug ) => {
+		const rows = [ ...byGame.get( slug )! ].sort( ( a, b ) => {
+			const aPending = a.display_status === 'pending' ? 0 : 1;
+			const bPending = b.display_status === 'pending' ? 0 : 1;
+			return aPending - bPending;
+		} );
+		return { gameSlug: slug, gameName: rows[ 0 ].game_name, changes: rows };
+	} );
+}
 
 export interface PlayerDashboardProps {
 	gameSlug: string;
@@ -45,7 +104,7 @@ export function PlayerDashboard( {
 	sheetPageUrl,
 }: PlayerDashboardProps ) {
 	const [ characters, setCharacters ] = useState< Character[] >( [] );
-	const [ myChanges, setMyChanges ] = useState< QueueChange[] >( [] );
+	const [ myChanges, setMyChanges ] = useState< MyChangeAcrossGames[] >( [] );
 	const [ myCastings, setMyCastings ] = useState< StaffQueueCastingRow[] >(
 		[]
 	);
@@ -62,7 +121,7 @@ export function PlayerDashboard( {
 		setError( null );
 		Promise.all( [
 			api.characters( gameSlug ).myCharacters(),
-			api.changes( gameSlug ).myChanges(),
+			api.myChangesAcrossGames().list(),
 			api.castings( gameSlug ).myUpcoming(),
 			api.factions( gameSlug ).list(),
 			api.positions( gameSlug ).list(),
@@ -178,28 +237,41 @@ export function PlayerDashboard( {
 			) }
 
 			<section className="be-game-dashboard__section">
-				<h2>{ __( 'My Pending Changes', 'beyond-elysium' ) }</h2>
+				<h2>{ __( 'My Changes', 'beyond-elysium' ) }</h2>
 				{ loading ? (
 					<p>{ __( 'Loading…', 'beyond-elysium' ) }</p>
 				) : myChanges.length === 0 ? (
-					<p>{ __( 'Nothing pending review.', 'beyond-elysium' ) }</p>
+					<p>
+						{ __(
+							'Nothing pending or recently reviewed.',
+							'beyond-elysium'
+						) }
+					</p>
 				) : (
-					<ul className="be-game-dashboard__list">
-						{ myChanges.map( ( change ) => (
-							<li key={ change.id }>
-								{ change.character_name ??
-									`#${ change.character_id }` }{ ' ' }
-								—{ ' ' }
-								{ describeChange(
-									change.change_type,
-									change.change_data
-								) }{ ' ' }
-								<span className="be-game-dashboard__badge">
-									{ change.approval_level }
-								</span>
-							</li>
-						) ) }
-					</ul>
+					groupMyChanges( myChanges, gameSlug ).map( ( group ) => (
+						<div
+							key={ group.gameSlug }
+							className="be-game-dashboard__change-group"
+						>
+							{ group.gameSlug !== gameSlug && (
+								<h3>{ group.gameName }</h3>
+							) }
+							<ul className="be-game-dashboard__list">
+								{ group.changes.map( ( change ) => (
+									<li key={ change.id }>
+										{ change.character_name ??
+											`#${ change.character_id }` }{ ' ' }
+										— { change.description }{ ' ' }
+										<span className="be-game-dashboard__badge">
+											{ statusLabel(
+												change.display_status
+											) }
+										</span>
+									</li>
+								) ) }
+							</ul>
+						</div>
+					) )
 				) }
 			</section>
 

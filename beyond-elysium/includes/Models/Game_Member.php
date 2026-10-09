@@ -18,7 +18,7 @@ class Game_Member {
 	 * Return every membership row for one game, ordered oldest first.
 	 *
 	 * @param int $game_id
-	 * @return array
+	 * @return array<int,object>
 	 */
 	public static function for_game( int $game_id ): array {
 		return Manager::get_results(
@@ -36,7 +36,7 @@ class Game_Member {
 	 * Every hst/ast/narrator member of one game.
 	 *
 	 * @param int $game_id
-	 * @return array
+	 * @return array<int,object>
 	 */
 	public static function staff_for_game( int $game_id ): array {
 		return array_values( array_filter(
@@ -62,7 +62,7 @@ class Game_Member {
 	 * Return every membership row for one WordPress user across every game they belong to, ordered oldest first.
 	 *
 	 * @param int $wp_user_id
-	 * @return array
+	 * @return array<int,object>
 	 */
 	public static function for_user( int $wp_user_id ): array {
 		return Manager::get_results(

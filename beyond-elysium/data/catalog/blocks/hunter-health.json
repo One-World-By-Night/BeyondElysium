@@ -1,0 +1,31 @@
+{
+  "format": 1,
+  "slug": "hunter-health",
+  "name": "Health",
+  "kind": "block",
+  "section_type": "trait_list",
+  "provenance": {
+    "sources": [
+      "Mind's Eye Theatre: Laws of the Reckoning (WW05037), \"Health\" p.240-241: \"Healthy (where a character starts), Bruised, Bruised, Bruised, Wounded, Wounded, Incapacitated, Mortally Wounded and Dead\" - five distinct level names, the same shape as every other stack's own Health block (D92): Dead is the track's own end, never a box of its own."
+    ],
+    "tool": "read directly, 2026-10-04"
+  },
+  "definition": {
+    "allow_custom": false,
+    "allow_multiples": false,
+    "items": [
+      { "name": "Healthy", "cost": null, "tier": null, "group": null, "subgroup": null },
+      { "name": "Bruised", "cost": null, "tier": null, "group": null, "subgroup": null },
+      { "name": "Wounded", "cost": null, "tier": null, "group": null, "subgroup": null },
+      { "name": "Incapacitated", "cost": null, "tier": null, "group": null, "subgroup": null },
+      { "name": "Mortally Wounded", "cost": null, "tier": null, "group": null, "subgroup": null }
+    ],
+    "default_held": [
+      { "name": "Healthy", "count": 1 },
+      { "name": "Bruised", "count": 3 },
+      { "name": "Wounded", "count": 2 },
+      { "name": "Incapacitated", "count": 1 },
+      { "name": "Mortally Wounded", "count": 1 }
+    ]
+  }
+}

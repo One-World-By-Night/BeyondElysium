@@ -27,9 +27,9 @@ class Catalog_Switch_Guard {
 	/**
 	 * Returns a 503 error for a write to this plugin's routes while a cutover run is in flight.
 	 *
-	 * @param mixed            $response Null, or an earlier filter's result.
-	 * @param array            $handler  The matched route handler.
-	 * @param \WP_REST_Request $request
+	 * @param mixed               $response Null, or an earlier filter's result.
+	 * @param array<string,mixed> $handler  The matched route handler.
+	 * @param \WP_REST_Request    $request
 	 * @return mixed
 	 */
 	public static function check( $response, $handler, $request ) {

@@ -12,10 +12,11 @@ class StVisibilityTest extends TestCase {
 
 	private function character(): object {
 		return (object) [
-			'rp_notes'   => 'a real storyteller note',
-			'biography'  => 'Public text. [ST]Secret plotting.[/ST] More public text.',
-			'notes'      => '[ST]Only the ST should see this.[/ST]',
-			'sheet_data' => [
+			'rp_notes'           => 'a real storyteller note',
+			'biography'          => 'Public text. [ST]Secret plotting.[/ST] More public text.',
+			'notes'              => '[ST]Only the ST should see this.[/ST]',
+			'public_description' => 'Shown to everyone. [ST]Hidden from the owning player too.[/ST]',
+			'sheet_data'         => [
 				'npc-roleplaying-notes' => [ 'motive' => 'wants revenge' ],
 				'met-abilities'         => [ 'Academics' => 3 ],
 			],
@@ -55,6 +56,23 @@ class StVisibilityTest extends TestCase {
 
 		$this->assertSame( 'Public text.  More public text.', $character->biography );
 		$this->assertSame( '', $character->notes );
+	}
+
+	public function test_filter_character_strips_st_marked_public_description_for_a_non_manager(): void {
+		$character = $this->character();
+
+		St_Visibility::filter_character( $character, null, false, [] );
+
+		$this->assertSame( 'Shown to everyone.', $character->public_description );
+	}
+
+	public function test_filter_character_leaves_a_null_public_description_alone(): void {
+		$character                     = $this->character();
+		$character->public_description = null;
+
+		St_Visibility::filter_character( $character, null, false, [] );
+
+		$this->assertNull( $character->public_description );
 	}
 
 	public function test_filter_character_removes_a_storyteller_only_blocks_values_from_sheet_data(): void {

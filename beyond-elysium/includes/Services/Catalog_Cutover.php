@@ -154,7 +154,7 @@ class Catalog_Cutover {
 	 * Rewrites every template's shared block slugs, and every `title_refs[].block_slug`, onto the stack's own blocks in
 	 * place.
 	 *
-	 * @return array<int,array{id:int,stack_slug:string,before:array,after:array}> One entry per template changed.
+	 * @return array<int,array{id:int,stack_slug:string,before:array<string,mixed>,after:array<string,mixed>}> One entry per template changed.
 	 */
 	public static function rewrite_templates(): array {
 		$rewritten = [];
@@ -189,6 +189,8 @@ class Catalog_Cutover {
 	 * other field untouched.
 	 *
 	 * @param array<string,string> $map Shared slug => the stack's slug.
+	 * @param array<string,mixed> $layout
+	 * @return array<string,mixed>
 	 */
 	private static function rewrite_layout( array $layout, array $map ): array {
 		$layout['sections'] = array_map(

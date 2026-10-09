@@ -11,3 +11,6 @@
 # OS noise that can appear inside any directory, including the shippable one.
 .DS_Store
 Thumbs.db
+
+# The help screenshot manifest, read only by the build tooling.
+docs/help/screenshots.json

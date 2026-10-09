@@ -10,7 +10,7 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * Route permission callbacks were chronicle-scoped.
+ * Route permission callbacks are chronicle-scoped.
  */
 class ChronicleScopedHandlerChecksThreadTest extends WP_UnitTestCase {
 

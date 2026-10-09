@@ -34,6 +34,13 @@
 	border-radius: 3px;
 }
 
+.be-import-preview__refused {
+	padding: 0.75rem;
+	border: 1px solid var(--be-red-7);
+	background: var(--be-red-11);
+	border-radius: 3px;
+}
+
 .be-import-preview__blocking-note {
 	color: var(--be-red-6);
 }

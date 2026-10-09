@@ -85,7 +85,7 @@ export function familyHasSeam( power?: TieredPower ): boolean {
 	if ( ! power ) {
 		return false;
 	}
-	// Every container, not the ladder alone (pre-deploy).
+	// Every container, not the ladder alone.
 	const seen = new Set< string >();
 	for ( const level of allLevels( power ) ) {
 		seen.add( levelQualifier( level.note ) ?? '' );

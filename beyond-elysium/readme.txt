@@ -3,7 +3,7 @@ Tags: larp, character sheet, mind's eye theatre, world of darkness, chronicle
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 8.2
-Stable tag: 1.4.0.2
+Stable tag: 1.5.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -13,7 +13,7 @@ Character management for Mind's Eye Theatre LARP chronicles, built for One World
 
 Beyond Elysium keeps a chronicle's characters: the sheets, the changes players submit, and the Storyteller approval in between.
 
-Eleven creature types ship with it: Vampire, Werewolf, Mage, Changeling, Wraith, Demon, Mummy, Kuei-Jin, Mortal, Fera, and Bête. Sheets are built from shared blocks (trait lists, tiered powers, resource pools, identity fields), so there is no per-creature code, and a chronicle can adjust a block for its own game without touching anyone else's.
+Twelve creature types ship with it: Vampire, Werewolf, Mage, Changeling, Wraith, Demon, Mummy, Kuei-Jin, Mortal, Fera, Bête, and Hunter. Sheets are built from shared blocks (trait lists, tiered powers, resource pools, identity fields), so there is no per-creature code, and a chronicle can adjust a block for its own game without touching anyone else's.
 
 * Players build their characters, submit changes, and track their experience.
 * Storytellers review submissions, run plots, actions, and rumors, and manage the roster.

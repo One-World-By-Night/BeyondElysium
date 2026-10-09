@@ -32,4 +32,18 @@ export interface DowntimeQueueRow {
 	 * The plot's own staff owner, or null when unassigned.
 	 */
 	assigned_to: number | null;
+	/**
+	 * Every other character, NPC, item and location connected to this plot - not the primary actor, already
+	 * carried as character_name.
+	 */
+	connections: DowntimeQueueConnection[];
+}
+
+/**
+ * One entity connected to an action-allocation plot, beyond its primary actor.
+ */
+export interface DowntimeQueueConnection {
+	type: 'character' | 'npc' | 'item' | 'location';
+	id: number;
+	name: string;
 }

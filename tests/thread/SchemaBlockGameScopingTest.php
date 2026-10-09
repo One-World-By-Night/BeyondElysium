@@ -119,7 +119,8 @@ class SchemaBlockGameScopingTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The two real consumers this whole mechanism exists.
+	 * The two consumers of a chronicle's own block: Cost_Engine prices from it and Change_Engine resolves approval
+	 * against it.
 	 */
 	public function test_cost_engine_prices_a_chronicle_only_trait_via_the_forked_block(): void {
 		Schema_Block::find_or_create_fork_for_game( $this->slug, 'game-a' );
@@ -143,7 +144,7 @@ class SchemaBlockGameScopingTest extends WP_UnitTestCase {
 
 		$this->assertSame( 4, $cost, 'a trait that exists only in the chronicle fork must price from the fork, not fall back to 0 as an unknown block' );
 
-		// A character in a DIFFERENT.
+		// A character in a different chronicle.
 		$other_character_id = Character::create( [
 			'name' => 'No Fork Test Character', 'stack_slug' => 'vampire',
 			'owner_type' => 'chronicle', 'owner_slug' => 'game-b',

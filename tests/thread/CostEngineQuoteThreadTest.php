@@ -61,4 +61,22 @@ class CostEngineQuoteThreadTest extends WP_UnitTestCase {
 
 		$this->assertSame( [ 'xp' => 0, 'priced' => true, 'unpriced_reason' => null ], Cost_Engine::quote_for_change( $this->character, $change, true ) );
 	}
+
+	/**
+	 * A resource_pool raise genuinely costs XP for a player, same as any other priced purchase - a manager's own
+	 * direct edit is free, the same standing is_manager exception trait_list and tiered_power already give.
+	 */
+	public function test_a_resource_pool_raise_is_priced_for_a_player_and_free_for_a_manager(): void {
+		$change = [
+			'change_type' => 'modify_resource',
+			'change_data' => [ 'block_slug' => 'vampire-resources', 'values' => [ 'Willpower' => 4 ] ],
+		];
+		$this->character->sheet_data['vampire-resources'] = [ 'Willpower' => 3 ];
+
+		$priced = Cost_Engine::quote_for_change( $this->character, $change );
+		$this->assertSame( 3, $priced['xp'], 'Willpower costs 3 XP/dot for a player' );
+
+		$free = Cost_Engine::quote_for_change( $this->character, $change, true );
+		$this->assertSame( 0, $free['xp'], 'the same raise, done directly by a manager, costs nothing' );
+	}
 }

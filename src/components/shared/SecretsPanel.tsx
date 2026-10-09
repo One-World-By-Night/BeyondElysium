@@ -10,6 +10,7 @@ import AudiencePicker from './AudiencePicker';
 import HtmlEditor from './HtmlEditor';
 import HelpButton from './HelpButton';
 import CollapsiblePanel from './CollapsiblePanel';
+import { highlightStMarkers } from '../../lib/highlightStMarkers';
 import type { AudienceRules, AudienceValue } from '../../types/plot';
 import type { Character } from '../../types/character';
 import type {
@@ -183,7 +184,7 @@ export function SecretsPanel( {
 	);
 }
 
-function SecretRow( {
+export function SecretRow( {
 	gameSlug,
 	secret,
 	characters,
@@ -276,7 +277,7 @@ function SecretRow( {
 					{ secret.content && (
 						<div
 							dangerouslySetInnerHTML={ {
-								__html: secret.content,
+								__html: highlightStMarkers( secret.content ),
 							} }
 						/>
 					) }

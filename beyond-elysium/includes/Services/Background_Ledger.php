@@ -10,8 +10,7 @@ use BeyondElysium\Models\Plot_Entry;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * The background-use ledger: the missing write path for the `action`/`result` fields Action_Allocator has persisted
- * on every subaction, unwritten.
+ * The background-use ledger: the write path for the `action` and `result` fields of each Action_Allocator subaction.
  */
 class Background_Ledger {
 
@@ -20,7 +19,7 @@ class Background_Ledger {
 	 * single most recent allocation granted it a subaction, that subaction's current unused budget.
 	 *
 	 * @param int $character_id
-	 * @return array[] {name, block_slug, level, source, budget_total, budget_name}
+	 * @return array<int,array<string,mixed>> {name, block_slug, level, source, budget_total, budget_name}
 	 */
 	public static function spendable_for( int $character_id ): array {
 		$character = Character::find( $character_id );
@@ -80,9 +79,9 @@ class Background_Ledger {
 	/**
 	 * Debits a set of ledger entries against a set of allocator subactions.
 	 *
-	 * @param array $subactions Output of Action_Allocator::allocate() or subactions_for_plot().
-	 * @param array $entries    Decoded ledger entries: [{name, cost, ...}, ...].
-	 * @return array{subactions: array[], unbudgeted_spends: array<string,int>}
+	 * @param array<int,array<string,mixed>> $subactions Output of Action_Allocator::allocate() or subactions_for_plot().
+	 * @param array<int,array<string,mixed>> $entries    Decoded ledger entries: [{name, cost, ...}, ...].
+	 * @return array{subactions: array<int,array<string,mixed>>, unbudgeted_spends: array<string,int>}
 	 */
 	public static function apply_spends( array $subactions, array $entries ): array {
 		$spent_by_name = [];
@@ -126,7 +125,7 @@ class Background_Ledger {
 	 *
 	 * @param int    $character_id
 	 * @param string $game_date
-	 * @return array[]
+	 * @return array<int,array<string,mixed>>
 	 */
 	public static function for_character_date( int $character_id, string $game_date ): array {
 		$plot_id = Action_Allocator::find_own_plot_id( $character_id, $game_date );
@@ -140,7 +139,7 @@ class Background_Ledger {
 	 * Returns every decoded ledger entry on a plot, regardless of which character or date it belongs to.
 	 *
 	 * @param int $plot_id
-	 * @return array[]
+	 * @return array<int,array<string,mixed>>
 	 */
 	public static function entries_for_plot( int $plot_id ): array {
 		$entries = [];
@@ -156,10 +155,10 @@ class Background_Ledger {
 	/**
 	 * Records one background use.
 	 *
-	 * @param int    $character_id
-	 * @param string $game_date
-	 * @param array  $use {name, cost?, text?}
-	 * @return array|\WP_Error The recorded entry (decoded, with its own id), or a WP_Error.
+	 * @param int                 $character_id
+	 * @param string              $game_date
+	 * @param array<string,mixed> $use {name, cost?, text?}
+	 * @return array<string,mixed>|\WP_Error The recorded entry (decoded, with its own id), or a WP_Error.
 	 */
 	public static function record( int $character_id, string $game_date, array $use ) {
 		$character = Character::find( $character_id );
@@ -235,8 +234,8 @@ class Background_Ledger {
 	/**
 	 * Edits a ledger entry's text, result, or cost.
 	 *
-	 * @param int   $entry_id
-	 * @param array $fields Any of: text, result, cost.
+	 * @param int                 $entry_id
+	 * @param array<string,mixed> $fields Any of: text, result, cost.
 	 * @return bool
 	 */
 	public static function update_entry( int $entry_id, array $fields ): bool {
@@ -355,7 +354,7 @@ class Background_Ledger {
 	 *
 	 * @param int    $entry_id
 	 * @param string $content
-	 * @return array|null
+	 * @return array<string,mixed>|null
 	 */
 	private static function decode_ledger_entry( int $entry_id, string $content ): ?array {
 		$data = json_decode( $content, true );

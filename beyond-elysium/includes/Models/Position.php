@@ -66,7 +66,7 @@ class Position {
 	/**
 	 * Creates a position.
 	 *
-	 * @param array $data
+	 * @param array<string,mixed> $data
 	 * @return int|false
 	 */
 	public static function create( array $data ) {
@@ -108,8 +108,8 @@ class Position {
 	/**
 	 * Updates a position's editable fields, other than its holder.
 	 *
-	 * @param int   $id
-	 * @param array $data
+	 * @param int                 $id
+	 * @param array<string,mixed> $data
 	 * @return bool
 	 */
 	public static function update( int $id, array $data ): bool {
@@ -213,7 +213,10 @@ class Position {
 		return true;
 	}
 
-	/** @param mixed $value @return string|false|null */
+	/**
+	 * @param mixed $value
+	 * @return string|false|null
+	 */
 	private static function encode_json_field( $value ) {
 		if ( $value === null ) {
 			return null;

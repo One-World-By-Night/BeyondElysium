@@ -8,8 +8,9 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * GET /wp-users searched every account on the site by name, login, or email and returned up to 50 email addresses to
- * any WordPress editor.
+ * GET /wp-users never lists email addresses: a Storyteller searches by name through the chronicle route, finds an
+ * account by email only on an exact address, and cannot use the site-wide directory; a site administrator still
+ * searches the whole site.
  */
 class WpUserSearchThreadTest extends WP_UnitTestCase {
 
@@ -86,5 +87,16 @@ class WpUserSearchThreadTest extends WP_UnitTestCase {
 		$data = $this->get( '/be/v1/wp-users', 'stranger.secret' )->get_data();
 
 		$this->assertSame( 'stranger.secret@example.org', $data[0]['email'] );
+	}
+
+	public function test_a_known_id_resolves_by_include_with_no_search_term(): void {
+		wp_set_current_user( self::factory()->user->create( [ 'role' => 'administrator' ] ) );
+
+		$request = new WP_REST_Request( 'GET', '/be/v1/wp-users' );
+		$request->set_query_params( [ 'include' => (string) $this->stranger ] );
+		$data = rest_get_server()->dispatch( $request )->get_data();
+
+		$this->assertCount( 1, $data );
+		$this->assertSame( $this->stranger, $data[0]['id'] );
 	}
 }

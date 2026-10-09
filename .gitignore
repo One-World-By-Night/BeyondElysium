@@ -43,3 +43,7 @@ BE_PROCESS/_credentials.md
 # uncommitted mortal-numina build, the run report) - reproducible, never tracked.
 tools/catalog/out/
 tools/catalog/__pycache__/
+
+# tools/bylaws/extract.php's own raw pull from council.owbn.net - reproducible on demand, never
+# tracked. attachments.json, the reviewed mapping, IS tracked.
+tools/bylaws/extracted-rules.json

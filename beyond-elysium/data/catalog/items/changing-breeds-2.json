@@ -1,0 +1,533 @@
+{
+  "format": 1,
+  "kind": "item_catalog",
+  "slug": "changing-breeds-2",
+  "name": "Mind's Eye Theatre: Changing Breeds II",
+  "book": "Mind's Eye Theatre: Changing Breeds II",
+  "code": "WW05024",
+  "provenance": {
+    "sources": [
+      "Mind's Eye Theatre: Changing Breeds II (WW05024), the Gurahl chapter's own \"Fetishes and Talens\" section (pp.101-103) and the Mokole chapter's own \"Fetishes\"/\"Talens\" sections, covering five cultural streams - Mokole, Gumagan, Makara, Mokole-mbembe, Zhong Lung (pp.190-197).",
+      "Every entry read directly from the book's own page images (not OCR), per reference-wod-scan-ocr-lessons. This copy's own printed page numbers are plain, legible Arabic numerals."
+    ],
+    "tool": "read directly, 2026-10-04"
+  },
+  "notes": [
+    "Fetish Trait Cost -> properties.level, Gnosis -> properties.tempers (one entry, {name:\"Gnosis\",count:N}), Spirit Affinity -> properties.item_subtype, Melee Bonus Traits (weapon-shaped fetishes only) -> properties.bonus, the full prose description -> properties.powers, per the design's own fetish mapping rules.",
+    "Every talen in this book's own Mokole-chapter \"Talens\" sections (Mokole, Gumagan, Makara, Zhong Lung streams, 10 entries) prints Gnosis and Spirit Affinity only, with no Fetish Trait Cost line at all - unlike this book's own Fetishes, and unlike Changing Breeds 1's talens (Powder of Kishijoten, Lotus Petals), which did carry a cost. `level` is left unset on all ten rather than invented.",
+    "Claws of the Cave Bear and Blade of Kings are both weapon-shaped fetishes that print no Melee Bonus Traits line at all, unlike Edge of the Sun and Mace of the Winds in the same chapters - `bonus` left unset on those two rather than invented, the same reasoning as Changing Breeds 1's own Claws of the Cave Bear precedent.",
+    "Bloodstone prints no Spirit Affinity line at all, unlike every other talen in this book - item_subtype left unset to match.",
+    "The five Gurahl entries' own page citations (101/101/102/102/103) are a reasonable distribution across the confirmed pp.101-103 range rather than individually re-checked against the page image in this pass; the range itself was confirmed via the real printed footer numbers when first read."
+  ],
+  "items": [
+    {
+      "key": "ursas-healing-balm",
+      "name": "Ursa's Healing Balm",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Talen",
+        "item_subtype": "Healing, Honey, Bee",
+        "level": 1,
+        "tempers": [ { "name": "Gnosis", "count": 3 } ],
+        "uses_max": 2,
+        "powers": "This balm heals up to three health levels, including lethal or aggravated wounds, seals wounds shut, acts as an antiseptic, and lowers fevers. Most applications hold enough balm for two uses."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds II", "code": "WW05024", "page": 101 }
+    },
+    {
+      "key": "claws-of-the-cave-bear",
+      "name": "Claws of the Cave Bear",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "item_subtype": "Bear Spirits (particularly Cave Bear), War",
+        "level": 3,
+        "tempers": [ { "name": "Gnosis", "count": 4 } ],
+        "powers": "These dagger-form fetish weapons inflict aggravated damage, though they do not do any more damage than a normal dagger. They warn their holder of Wyrm-creatures nearby. Unlike a Garou klaive, carrying one grants no Renown status."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds II", "code": "WW05024", "page": 101 }
+    },
+    {
+      "key": "mother-tongues",
+      "name": "Mother Tongues",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "item_subtype": "Appropriate Changing Breed Totems",
+        "level": 4,
+        "tempers": [ { "name": "Gnosis", "count": 5 } ],
+        "powers": "This fetish lets its Gurahl holder speak and understand a specific Changing Breed's secret language. The tongues currently known to exist among the Gurahl are those of the Bastet, Corax, Garou, Nuwisha and Ratkin, with a Mokole tongue rumored."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds II", "code": "WW05024", "page": 102 }
+    },
+    {
+      "key": "soul-brush",
+      "name": "Soul Brush",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "item_subtype": "Tree, Beauty, Truth",
+        "level": 4,
+        "tempers": [ { "name": "Gnosis", "count": 5 } ],
+        "powers": "This paint-brush fetish reveals a subject's true nature in portrait form. It was created by a Gurahl artist, Turgiv Bruzov, who has since vanished; the technique for making another is now lost."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds II", "code": "WW05024", "page": 102 }
+    },
+    {
+      "key": "net-of-stars",
+      "name": "Net of Stars",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "item_subtype": "Bear Spirits, Star Spirits",
+        "level": 4,
+        "tempers": [ { "name": "Gnosis", "count": 5 } ],
+        "powers": "This fishing-net-shaped fetish fills with fish when cast upon water. Thrown in combat, it traps enemies in an unbreakable hold. It can also purify a contaminated, finite body of water."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds II", "code": "WW05024", "page": 103 }
+    },
+    {
+      "key": "dragon-crystal",
+      "name": "Dragon Crystal",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "item_subtype": "Sun, Insect",
+        "level": 1,
+        "tempers": [ { "name": "Gnosis", "count": 6 } ],
+        "powers": "This is a piece of amber or other clear semi-precious stone shaped into a lens or disc and placed in a setting. When activated, it allows the user to discern a Mokole's Archid form, despite whatever form he currently uses (or magic he casts against detection). The Dragon Crystal itself is not subtle; any Mokole skilled in fetishes will know he is being detected. When in contact with the skin of a Mokole, the crystal shines brightly, making them valued ornaments for gathers."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds II", "code": "WW05024", "page": 190 }
+    },
+    {
+      "key": "hatchlings-tail",
+      "name": "Hatchling's Tail",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "item_subtype": "Glass Snake, Palolo Worm, Father",
+        "level": 1,
+        "tempers": [ { "name": "Gnosis", "count": 3 } ],
+        "powers": "This fetish appears to be little more than a dried lizard's tail. A Mokole attaches this fetish to his belt and grows a second tail while in Archid. Swimming increases to five steps of movement while the tail is active (as long as the Mokole keeps the fetish attached to his belt and remains in Archid). He may also gain two Traits any time he makes a tail attack in combat. Most Mokole tend to \"grow out of\" these and pass them on to young hatchlings."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds II", "code": "WW05024", "page": 190 }
+    },
+    {
+      "key": "tray-of-the-teachers",
+      "name": "Tray of the Teachers",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "item_subtype": "Visions",
+        "level": 1,
+        "tempers": [ { "name": "Gnosis", "count": 5 } ],
+        "powers": "This wooden tray is decorated with the death masks of Crowning and inlaid with bones and gems. When used as a receptacle for teacher-plants, the plants' potency is increased by one level for each level the user has in Rituals."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds II", "code": "WW05024", "page": 191 }
+    },
+    {
+      "key": "egg-basket",
+      "name": "Egg Basket",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "item_subtype": "Weaverbird, Oriole",
+        "level": 2,
+        "tempers": [ { "name": "Gnosis", "count": 3 } ],
+        "powers": "This tiny reed basket, barely larger than a single egg, stores an entire clutch of Mokole eggs. This keeps the eggs fairly warm: They lose 5% of their heat every hour. This measure is a temporary one, not a permanent incubator for eggs; the basket is extraordinarily fragile, and an accident would wipe out an entire clutch of Mokole. Most Mokole mothers use the rite Save Hatchling on the basket."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds II", "code": "WW05024", "page": 191 }
+    },
+    {
+      "key": "spirit-jar",
+      "name": "Spirit Jar",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "item_subtype": "various",
+        "level": 2,
+        "tempers": [ { "name": "Gnosis", "count": 5 } ],
+        "powers": "This small, handcrafted pottery jar is the receptacle for a spirit who is bound to the jar by glyphs drawn on the outside. The user coaxes the spirit with rewards (grant Gnosis, possession of a medium, setting it free) to do favors for the Mokole (use a Charm, talk to an alien spirit). The spirit should be strong enough to affect charms while in captivity, but not so strong it can free itself and seek a pound of flesh from the fetish-maker. Use of this fetish creates Notoriety among the spirits. The Storyteller and player should work together to create the spirit that resides in the jar; obviously a spirit with the power of a totem avatar is inappropriate. Typical charms include Healing, Steal Gnosis, Flood, Create Fires and Information Link."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds II", "code": "WW05024", "page": 191 }
+    },
+    {
+      "key": "mirror-of-amaterasu-omikami",
+      "name": "Mirror of Amaterasu Omikami",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "item_subtype": "Sun",
+        "level": 3,
+        "tempers": [ { "name": "Gnosis", "count": 4 } ],
+        "powers": "Made from a shard of the very mirror used to coax Sun from hiding long ago, this mirror stores Sun's light (with an equal expenditure of Gnosis per hour). Once activated, each Gnosis level is one turn of direct sunlight shining from the mirror (maximum 4 Gnosis)."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds II", "code": "WW05024", "page": 191 }
+    },
+    {
+      "key": "bowl-of-mnesis",
+      "name": "Bowl of Mnesis",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "item_subtype": "Ancestor",
+        "level": 4,
+        "tempers": [ { "name": "Gnosis", "count": 5 } ],
+        "powers": "An adobe bowl, fired in an oven, the Bowl of Mnesis allows a Mokole to gain memories of a dead supernatural being. Placing the intact brain of the creature into the bowl filled with the water of an untainted wallow, the user sets the bowl in sunlight for one day. (If the creature was a vampire or a Kuei-jin, the brain dissolves into the water, until only the water remains.) As the sun sets on the bowl, the Mokole drinks deep of the water and gains the Mnesis of the creature. The player makes a Static Mental Challenge versus a number of Traits dependent on the type of fallen creature: Mokole 8; Mokole Kin, Corax or Nagah 10; other Bete, mortal or changeling 12; Mummy or True Fae 14; Vampire, Bane, Kuei-jin or Dissolver-Beast 16. Each successful test grants memories of the target - in other Mokole, this can mean raising the caster's permanent Mnesis if the success is great; with mummies and fae, this can awaken remembrance and thousands of years of forgotten stories; in vampires and creatures of the Dissolver, any number of private secrets may be divulged, but at the risk of Harano or even corruption by the Wyrm."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds II", "code": "WW05024", "page": 191 }
+    },
+    {
+      "key": "edge-of-the-sun",
+      "name": "Edge of the Sun",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "item_subtype": "War",
+        "level": 4,
+        "tempers": [ { "name": "Gnosis", "count": 6 } ],
+        "bonus": 3,
+        "powers": "The Edge of the Sun is an extremely rare weapon carried by Noonday Suns for ritual duels and executions as part of their office. It is a gold machete with a teakwood hilt adorned with gems. It inflicts aggravated damage on anything it strikes. Like Garou klaives, it must have a War-spirit bound into it, and it causes the Mokole who carries it to lose one Gnosis per day. The expense in creating one of these weapons is tremendous - it requires Resources x4 to have enough disposable cash to put to something that may cost over $50,000 to create. Using a Sun's Edge without the sanction of Duty is a serious offense. Noonday Suns do not dare use them outside the Duties for fear of losing Dragon's acceptance."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds II", "code": "WW05024", "page": 192 }
+    },
+    {
+      "key": "spirit-tether",
+      "name": "Spirit Tether",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "item_subtype": "Awakened",
+        "level": 4,
+        "tempers": [ { "name": "Gnosis", "count": 6 } ],
+        "powers": "Created from a mummified umbilical cord, a spirit tether is a primal connection between mind and body, giving the mind a second grip on the body while traveling astrally. When traveling in Mnesis, the Mokole ties one end to himself and the other to something in the present (anything made within his lifetime will do). The tether allows the Mokole to travel deep in Mnesis without fear of getting lost and eliminates the usual confusion that occurs at the end of such journeys. The tether may also be used in the Rite of Lost Dreams. The subject being lowered into Sea of Shadows ties one end to herself and gives the other end to the other participants. If she runs into trouble, she can tug on the tether to call for help and be pulled out by the ritemaster before things get bad. The tether must be used only by the Mokole whom it was a part of, which makes it most useful for homids. Using someone else's tether is a risky proposition."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds II", "code": "WW05024", "page": 192 }
+    },
+    {
+      "key": "blade-of-kings",
+      "name": "Blade of Kings",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "item_subtype": "Butterfly, Octopus",
+        "level": 5,
+        "tempers": [ { "name": "Gnosis", "count": 6 } ],
+        "powers": "This is an edged weapon (sword, halberd, spear, axe, etc.) from older times. The weapon inflicts aggravated damage and usually bears a silver edge. It can shift to match if its wielder changes to Archid; the Mokole may use it if he has Grasping Hands in Archid form. When the spirit is bound into the weapon during creation, the maker must call the spirit's name with each blow that shapes the weapon. Some elders are said to enter Sleep of the Dragon with these weapons at their sides. Losing or abusing such a weapon would surely cost a Mokole a loss of status."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds II", "code": "WW05024", "page": 193 }
+    },
+    {
+      "key": "blowpipe-of-anamnesis",
+      "name": "Blowpipe of Anamnesis",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "item_subtype": "Poison",
+        "level": 5,
+        "tempers": [ { "name": "Gnosis", "count": 7 } ],
+        "powers": "This long pipe made of ceiba wood, harvested without killing the tree and carved with glyphs of the Kings. It is used to blow a fine dust of teacher plants into a participant, one nostril at a time, increasing the chances of a successful Rite of Anamnesis."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds II", "code": "WW05024", "page": 193 }
+    },
+    {
+      "key": "lungin",
+      "name": "Lungin",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "item_subtype": "Fire",
+        "level": 1,
+        "tempers": [ { "name": "Gnosis", "count": 5 } ],
+        "powers": "This is a wooden smoking pipe used for tobacco or tobacco and pituri. A Fire-spirit must be coaxed to enter with chiminage unless the Gumagan is a frequent smoker. Use of the pipe puts the user one Trait up on all Gumagan rites for a scene. The user may also smoke Awakened tobacco or pituri and receive twice as much effect."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds II", "code": "WW05024", "page": 193 }
+    },
+    {
+      "key": "pearlshell-of-healing",
+      "name": "Pearlshell of Healing",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "item_subtype": "Fish",
+        "level": 1,
+        "tempers": [ { "name": "Gnosis", "count": 4 } ],
+        "powers": "This Australian pearlshell allows the user to determine the cause of an illness in a person. The shell is held over the body of a sick person and the medicine-man or woman makes a Mental Challenge. With success, the pearlshell can identify the illness, and if it is contagious or fatal (more information may be available with further tests, at the Storyteller's discretion)."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds II", "code": "WW05024", "page": 193 }
+    },
+    {
+      "key": "kurdaitcha",
+      "name": "Kurdaitcha",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "item_subtype": "Tokampini the devil-bird",
+        "level": 2,
+        "tempers": [ { "name": "Gnosis", "count": 5 } ],
+        "powers": "These shoes are made of emu feathers knotted with human hair and held together with one health level of the user's blood. When activated, the shoes silence the steps of the Mokole. The Mokole is two Traits up on all Stealth challenges while the fetish is active."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds II", "code": "WW05024", "page": 193 }
+    },
+    {
+      "key": "rangga",
+      "name": "Rangga",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "item_subtype": "Perenty",
+        "level": 2,
+        "tempers": [ { "name": "Gnosis", "count": 5 } ],
+        "powers": "This is a small clay or wax figurine used in hunting magic, representing the target of the hunt (animal, Garou, human); a Perenty-spirit is bound into it. The hunter activates it by speaking his target's name, and receives a free retest on any contest related to the hunt."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds II", "code": "WW05024", "page": 194 }
+    },
+    {
+      "key": "tokoyanga",
+      "name": "Tokoyanga",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "item_subtype": "Bird",
+        "level": 3,
+        "tempers": [ { "name": "Gnosis", "count": 6 } ],
+        "powers": "This ball of goose down, worn about the neck, relieves grief and depression. Biting down on the ball causes the wearer to be unable to cry. It also prevents Suchid-form Mokole and other large reptiles from hearing anything spoken by the wielder. At the Storyteller's discretion, activating this fetish may relieve Harano for one scene."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds II", "code": "WW05024", "page": 194 }
+    },
+    {
+      "key": "warshell",
+      "name": "Warshell",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "item_subtype": "Snake",
+        "level": 3,
+        "tempers": [ { "name": "Gnosis", "count": 6 } ],
+        "powers": "A warshell is a piece of shell shaped into a triangle and sharpened. With successful activation, it can strike an enemy from a distance, up to 10 yards away. The user makes a Physical Challenge against his target. With success, the warshell inflicts two aggravated health levels of damage."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds II", "code": "WW05024", "page": 194 }
+    },
+    {
+      "key": "bret",
+      "name": "Bret",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "item_subtype": "Wraith",
+        "level": 4,
+        "tempers": [ { "name": "Gnosis", "count": 7 } ],
+        "powers": "This grisly fetish is a pair of hands or paws from a dead sentient being, such as human, Garou, Mokole or the like, with a piece of the dead person's soul bound in them. The hands are wrapped in grass, dried and worn about the neck. The bret grants its holder as much Perception as the hands' owner had, both Perception-related Mental Traits and Perception-related Gifts like Sense Wyrm. Obviously, wearing these in most social settings would be a gross faux pas, not to mention there will be angry relatives of the dead person trying to get the hands back to release the spirit."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds II", "code": "WW05024", "page": 194 }
+    },
+    {
+      "key": "beggars-mantle",
+      "name": "Beggar's Mantle",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "item_subtype": "Snake",
+        "level": 3,
+        "tempers": [ { "name": "Gnosis", "count": 7 } ],
+        "powers": "This garment of snakeskin woven on tattered clothing allows the Makara to avoid the notice of creatures of darkness. Vampires, Banes, fallen shapeshifters, fomori and other Dissolver-creatures fail to see the Makara once this fetish has been activated: They simply overlook him as ordinary or uninteresting. For obvious reasons, this fetish cannot hide a Mokole in Archid or Suchid form as both forms will draw attention. This fetish is quite fragile and can be easily damaged."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds II", "code": "WW05024", "page": 194 }
+    },
+    {
+      "key": "mace-of-the-winds",
+      "name": "Mace of the Winds",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "item_subtype": "War",
+        "level": 4,
+        "tempers": [ { "name": "Gnosis", "count": 8 } ],
+        "bonus": 3,
+        "powers": "This is a weapon unique to the Makara and appears to be a rounded mace made of brass-inlaid iron. When activated and wielded as a weapon, it inflicts aggravated damage. When the wielder is in Archid form, the mace fights at range, floating in the air and striking opponents as the Makara directs it. It requires one turn to activate the fetish, one turn to direct the mace's attack and a Physical Challenge on the next turn. Like most weapon fetishes, the mace requires high metalworking skills."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds II", "code": "WW05024", "page": 195 }
+    },
+    {
+      "key": "mask-of-mnante",
+      "name": "Mask of Mnante",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "item_subtype": "Chameleon, Mirror",
+        "level": 1,
+        "tempers": [ { "name": "Gnosis", "count": 5 } ],
+        "powers": "This is a carved mask that may be of any size - large enough to be worn on the face down to small enough to place on a necklace. It deceives the senses, making it impossible to tell the Mokole's Breed through Perception-related Gifts such as Scent of the True Form. The perceiver believes the Mokole to be a member of her own kind. This was devised during the Wars of Rage and may have helped the Mokole survive slaughter."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds II", "code": "WW05024", "page": 195 }
+    },
+    {
+      "key": "box-of-rice",
+      "name": "Box of Rice",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "item_subtype": "Snake",
+        "level": 1,
+        "tempers": [ { "name": "Gnosis", "count": 3 } ],
+        "powers": "This wooden box of rice replenishes daily, feeding as many people as the number written on top. This number can be changed daily by simply writing a new number. This fills with rice only once a day. If the box is broken, there will be no more rice."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds II", "code": "WW05024", "page": 195 }
+    },
+    {
+      "key": "dragon-skin",
+      "name": "Dragon Skin",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "item_subtype": "Sun",
+        "level": 2,
+        "tempers": [ { "name": "Gnosis", "count": 4 } ],
+        "powers": "This skin, shed from a Zhong Lung, is crafted by a professional leatherworker and bound with a Sun-spirit; it grants the wielder armor equivalent to the Gift: Armor of the Tortoise. The skin glows softly with five-colored light, and there is prestige in owning a fine skin (as some Eastern magic-users know)."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds II", "code": "WW05024", "page": 195 }
+    },
+    {
+      "key": "pearls-of-flood-and-ebb-tide",
+      "name": "Pearls of Flood and Ebb Tide",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "item_subtype": "Luna",
+        "level": 5,
+        "tempers": [ { "name": "Gnosis", "count": 9 } ],
+        "powers": "These precious pearls, a naturally occurring fetish and a highly sought treasure (this fetish cannot be created by a ritemaster), control the tides through Luna's influence. They grant the wielder the Gift: Call the Tide."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds II", "code": "WW05024", "page": 195 }
+    },
+    {
+      "key": "arrows-of-the-sun",
+      "name": "Arrows of the Sun",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Talen",
+        "item_subtype": "Sun",
+        "tempers": [ { "name": "Gnosis", "count": 5 } ],
+        "uses_max": 1,
+        "powers": "These arrows are decorated with gold and contain the very essence of Sun. When shot from a bow (or jabbed like a spear), these arrows inflict aggravated damage; vampires struck by one are affected by full daylight for one turn. Once the arrow strikes a target, it immolates, destroying itself completely."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds II", "code": "WW05024", "page": 196 }
+    },
+    {
+      "key": "cacao-moons-chocolate",
+      "name": "Cacao Moon's Chocolate",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Talen",
+        "item_subtype": "Awakened cocoa beans",
+        "tempers": [ { "name": "Gnosis", "count": 6 } ],
+        "uses_max": 1,
+        "powers": "These rare cocoa beans are grown only in a small area of Guatemala near the wallow of a Mayan Mokole. Anyone brewing Aztec-style chocolate from them may share it with another. Any Gifts, rites or Abilities are learned in half the time while under this chocolate's influence. Aztec-style chocolate is far less sweet than regular hot chocolate, and the beans are Awakened as they are harvested. Attempting to Awaken brand-name chocolate (no matter how tasty) will not have the same effect."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds II", "code": "WW05024", "page": 196 }
+    },
+    {
+      "key": "matre-medicine",
+      "name": "Matre Medicine",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Talen",
+        "item_subtype": "Fertility",
+        "tempers": [ { "name": "Gnosis", "count": 3 } ],
+        "uses_max": 1,
+        "powers": "Made from the essence of crocodiles mating, this salve ensures conception and raises the chances of creating a true Mokole."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds II", "code": "WW05024", "page": 196 }
+    },
+    {
+      "key": "quipu-of-the-amautas",
+      "name": "Quipu of the Amautas",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Talen",
+        "item_subtype": "Memory",
+        "tempers": [ { "name": "Gnosis", "count": 5 } ],
+        "uses_max": 1,
+        "powers": "The amautas served a similar function as the Mokole as memory-carriers in the Incan empire. A quipu is a bundle of knotted cords which carries a Mnesis message. When a cord is tied in knots by a Mokole-mbembe with the proper skill and expending a Gnosis Trait, one memory can be bound into the cord. The quipu may be dyed or stained to further retain memory. When the recipient \"reads\" the knots by handling them, the memory passes into her mind. Similar forms exist for other streams."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds II", "code": "WW05024", "page": 196 }
+    },
+    {
+      "key": "snake-herbs",
+      "name": "Snake Herbs",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Talen",
+        "item_subtype": "Awakened",
+        "tempers": [ { "name": "Gnosis", "count": 4 } ],
+        "uses_max": 1,
+        "powers": "This is a bunch of herbs from Australia (similar varieties are found elsewhere) with the ability to counteract snakebites or other poisons. Each bowl of herbs eaten or brewed as a tea will restore one health level of Dissolver-taint or poisoning."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds II", "code": "WW05024", "page": 196 }
+    },
+    {
+      "key": "bloodstone",
+      "name": "Bloodstone",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Talen",
+        "tempers": [ { "name": "Gnosis", "count": 7 } ],
+        "uses_max": 1,
+        "powers": "This talen is created by magically extracting blood from a human and preserving it in a hollow tree. Over a year's time, the blood congeals into a stonelike substance, which may be rubbed into the skin or eaten. For each Blood Trait of bloodstone used (most usually contain three), the user may gain either a Mental Trait or a level of Primal-Urge for one scene."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds II", "code": "WW05024", "page": 196 }
+    },
+    {
+      "key": "message-stick",
+      "name": "Message Stick",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Talen",
+        "item_subtype": "Mynah-bird",
+        "tempers": [ { "name": "Gnosis", "count": 4 } ],
+        "uses_max": 1,
+        "powers": "This carved and painted stick travels from one place to another, bearing a message. For each Gnosis Trait the Mokole ritemaster has, he can imbue the stick with a word. The stick then travels from the ritemaster's hand to the recipient's hand. The recipient must make a Gnosis Challenge to understand the message and know who sent it. As the message is delivered, the spirit is freed."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds II", "code": "WW05024", "page": 197 }
+    },
+    {
+      "key": "pituri",
+      "name": "Pituri",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Talen",
+        "item_subtype": "Awakened",
+        "tempers": [ { "name": "Gnosis", "count": 3 } ],
+        "uses_max": 1,
+        "powers": "This narcotic plant is native to Australia. When un-Awakened, it induces a mild euphoria and suppressed hunger and thirst. When Awakened, it adds one health level to healing rituals, as well as relieving the need for food, water or rest for a day."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds II", "code": "WW05024", "page": 197 }
+    },
+    {
+      "key": "thunder-dart",
+      "name": "Thunder Dart",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Talen",
+        "item_subtype": "Thunder, rain",
+        "tempers": [ { "name": "Gnosis", "count": 6 } ],
+        "uses_max": 1,
+        "powers": "Binding a spirit into a carved oversize dart, about the size of a lawn dart, the fetish-maker can craft an incredibly deadly weapon that releases the fury of a thunderbolt in a single strike. The results are devastating; a successful strike does seven levels of aggravated damage instantly. This is crafted from the bone of a monster and fletched with peacock feathers."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds II", "code": "WW05024", "page": 197 }
+    },
+    {
+      "key": "dragons-spittle",
+      "name": "Dragon's Spittle",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Talen",
+        "item_subtype": "Dragon",
+        "tempers": [ { "name": "Gnosis", "count": 4 } ],
+        "uses_max": 1,
+        "powers": "The spittle of a Zhong Lung, when aided by a Dragon-spirit, becomes a conductor for magic, aiding in rites and rituals. It adds one Gnosis to each ritual. If mixed into ink or paint for drawings, add one extra Gnosis for the work."
+      },
+      "source": { "book": "Mind's Eye Theatre: Changing Breeds II", "code": "WW05024", "page": 197 }
+    }
+  ]
+}

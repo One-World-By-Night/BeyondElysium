@@ -3,6 +3,7 @@
 namespace BeyondElysium\REST;
 
 use BeyondElysium\Core\Authorization;
+use BeyondElysium\Core\Notifications;
 use BeyondElysium\Database\Manager;
 use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Connection;
@@ -144,6 +145,11 @@ class Connections_Controller extends Base_Controller {
 			}
 		}
 
+		$visibility_target = $this->resolve_visibility_target( $source_type, $source_id, $target_type, $target_type === 'tag' ? null : (int) $target_id );
+		$was_visible       = $visibility_target
+			? \BeyondElysium\Services\Audience::can_see( $visibility_target['entity'], $visibility_target['entity_type'], (int) ( $visibility_target['character']->wp_user_id ?? 0 ), $request['game_slug'], false )
+			: false;
+
 		$id = Connection::create( [
 			'game_id'     => (int) $game->id,
 			'source_type' => $source_type,
@@ -168,7 +174,82 @@ class Connections_Controller extends Base_Controller {
 			(int) $game->id
 		);
 
+		if ( $visibility_target ) {
+			$now_visible = \BeyondElysium\Services\Audience::can_see(
+				$visibility_target['entity'],
+				$visibility_target['entity_type'],
+				(int) ( $visibility_target['character']->wp_user_id ?? 0 ),
+				$request['game_slug'],
+				false
+			);
+			Notifications::notify_if_newly_visible(
+				$visibility_target['character'],
+				$was_visible,
+				$now_visible,
+				$game,
+				$visibility_target['kind'],
+				$visibility_target['title'],
+				$visibility_target['link'],
+				get_current_user_id()
+			);
+			Notifications::flush_visible();
+		}
+
 		return $this->success( Connection::find( (int) $id ), 201 );
+	}
+
+	/**
+	 * Resolves a connection's own plot-newly-visible-to-a-character or character-newly-visible-to-an-item/location pair,
+	 * for the one real direction `Audience` reads each kind of connection from. Null for any other pairing (a plot can't
+	 * reach item/location visibility, nor can a character-to-character or tag connection).
+	 *
+	 * @param string   $source_type
+	 * @param int      $source_id
+	 * @param string   $target_type
+	 * @param int|null $target_id
+	 * @return array{character:object,entity:object,entity_type:string,kind:string,title:string,link:string}|null
+	 */
+	private function resolve_visibility_target( string $source_type, int $source_id, string $target_type, ?int $target_id ): ?array {
+		if ( $target_id === null ) {
+			return null;
+		}
+
+		if ( $source_type === 'plot' && $target_type === 'character' ) {
+			$entity    = Plot::find( $source_id );
+			$character = Character::find( $target_id );
+			if ( ! $entity || ! $character ) {
+				return null;
+			}
+			return [
+				'character'   => $character,
+				'entity'      => $entity,
+				'entity_type' => 'plot',
+				'kind'        => 'plot',
+				'title'       => (string) ( $entity->title ?? '' ),
+				'link'        => Notifications::player_plot_url( (int) $entity->id, (string) ( $character->owner_slug ?? '' ) ),
+			];
+		}
+
+		if ( $source_type === 'character' && $target_type === 'world_object' ) {
+			$entity    = World_Object::find( $target_id );
+			$character = Character::find( $source_id );
+			if ( ! $entity || ! $character || ! in_array( $entity->object_type, [ 'item', 'location' ], true ) ) {
+				return null;
+			}
+			$is_location = $entity->object_type === 'location';
+			return [
+				'character'   => $character,
+				'entity'      => $entity,
+				'entity_type' => $entity->object_type,
+				'kind'        => $entity->object_type,
+				'title'       => (string) ( $entity->name ?? '' ),
+				'link'        => $is_location
+					? Notifications::player_location_url( (int) $character->id, (string) ( $character->owner_slug ?? '' ) )
+					: Notifications::player_item_url( (int) $character->id, (string) ( $character->owner_slug ?? '' ) ),
+			];
+		}
+
+		return null;
 	}
 
 	/**
@@ -183,7 +264,7 @@ class Connections_Controller extends Base_Controller {
 			return $connection;
 		}
 
-		// Both fields are sanitized here; neither has a format to further validate.
+		// Both fields are sanitized here.
 		$data = [];
 		$label = $request->get_param( 'label' );
 		if ( $label !== null ) {

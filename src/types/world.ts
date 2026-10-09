@@ -55,6 +55,31 @@ export interface LocationDisplay {
 /**
  * A single item, location, or rote belonging to a chronicle.
  */
+/**
+ * One entry from the declared, read-only item catalog (`GET /items/catalog`) - a book's own item, never a chronicle's
+ * own data. `book_ref` (`{book_slug}:{key}`) is what a chronicle's own copy stores to remember which book entry it
+ * started from.
+ */
+export interface CatalogItemEntry {
+	key: string;
+	name: string;
+	object_type: 'item';
+	description?: string;
+	properties: Record< string, unknown >;
+	source: { book: string; code: string; page: number };
+	book: string;
+	book_slug: string;
+	book_ref: string;
+}
+
+/**
+ * One book in the declared item catalog, as listed by `GET /items/catalog`'s own `books` field.
+ */
+export interface CatalogBookRef {
+	slug: string;
+	name: string;
+}
+
 export interface WorldObject {
 	id: number;
 	game_id: number;

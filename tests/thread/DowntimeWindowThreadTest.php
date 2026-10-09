@@ -3,9 +3,11 @@
 namespace BeyondElysium\Tests\Thread;
 
 use BeyondElysium\Models\Character;
+use BeyondElysium\Models\Connection;
 use BeyondElysium\Models\Game_Member;
 use BeyondElysium\Models\Game_Session;
 use BeyondElysium\Models\Plot_Entry;
+use BeyondElysium\Models\World_Object;
 use BeyondElysium\Services\Action_Allocator;
 use BeyondElysium\Services\Downtime_Window;
 use BeyondElysium\Services\Release_Engine;
@@ -291,5 +293,73 @@ class DowntimeWindowThreadTest extends WP_UnitTestCase {
 		$this->assertCount( 2, $rows );
 		$this->assertFalse( $rows[0]['answered'] );
 		$this->assertTrue( $rows[1]['answered'] );
+	}
+
+	public function test_the_queue_payload_carries_the_right_connections_for_two_plots(): void {
+		$plot_a = $this->make_action_plot( '2026-10-02' );
+
+		$other_player = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+		Game_Member::set_role( $this->game_id, $other_player, 'player' );
+		$npc_id = (int) Character::create( [
+			'name'       => 'An NPC',
+			'stack_slug' => 'vampire',
+			'owner_slug' => $this->game_slug,
+			'is_npc'     => true,
+			'status'     => 'active',
+			'created_by' => 1,
+		] );
+		$other_character_id = (int) Character::create( [
+			'name'       => 'Isabel Cruz',
+			'stack_slug' => 'vampire',
+			'owner_slug' => $this->game_slug,
+			'wp_user_id' => $other_player,
+			'status'     => 'active',
+			'created_by' => 1,
+		] );
+		$plot_b = (int) Action_Allocator::create_own_plot( Character::find( $other_character_id ), '2026-10-02' );
+
+		$item_id = (int) World_Object::create( [
+			'game_id'     => $this->game_id,
+			'object_type' => 'item',
+			'name'        => 'A Silver Dagger',
+			'created_by'  => 1,
+		] );
+		$location_id = (int) World_Object::create( [
+			'game_id'     => $this->game_id,
+			'object_type' => 'location',
+			'name'        => 'The Old Mill',
+			'created_by'  => 1,
+		] );
+
+		Connection::create( [
+			'game_id' => $this->game_id, 'source_type' => 'plot', 'source_id' => $plot_a,
+			'target_type' => 'character', 'target_id' => $npc_id, 'label' => 'cast',
+		] );
+		Connection::create( [
+			'game_id' => $this->game_id, 'source_type' => 'plot', 'source_id' => $plot_a,
+			'target_type' => 'world_object', 'target_id' => $item_id, 'label' => 'uses',
+		] );
+		Connection::create( [
+			'game_id' => $this->game_id, 'source_type' => 'plot', 'source_id' => $plot_b,
+			'target_type' => 'world_object', 'target_id' => $location_id, 'label' => 'at',
+		] );
+
+		$rows = Downtime_Window::queue_for_date( $this->game_id, '2026-10-02' );
+		$by_plot = [];
+		foreach ( $rows as $row ) {
+			$by_plot[ $row['plot_id'] ] = $row['connections'];
+		}
+
+		$this->assertCount( 2, $by_plot[ $plot_a ] );
+		$this->assertContains( [ 'type' => 'npc', 'id' => $npc_id, 'name' => 'An NPC' ], $by_plot[ $plot_a ] );
+		$this->assertContains( [ 'type' => 'item', 'id' => $item_id, 'name' => 'A Silver Dagger' ], $by_plot[ $plot_a ] );
+
+		$this->assertCount( 1, $by_plot[ $plot_b ] );
+		$this->assertSame( [ 'type' => 'location', 'id' => $location_id, 'name' => 'The Old Mill' ], $by_plot[ $plot_b ][0] );
+
+		// The plot's own primary actor is never repeated inside its own connections list.
+		foreach ( $by_plot[ $plot_b ] as $connection ) {
+			$this->assertNotSame( $other_character_id, $connection['id'] );
+		}
 	}
 }

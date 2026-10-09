@@ -1,0 +1,173 @@
+{
+  "format": 1,
+  "kind": "item_catalog",
+  "slug": "laws-of-the-east",
+  "name": "Laws of the East",
+  "book": "Laws of the East",
+  "code": "WW05016",
+  "provenance": {
+    "sources": [
+      "Mind's Eye Theatre: Laws of the East (WW05016), \"Weapon Examples\"/Armor chapter, pp.186-191 - every entry checked against the accumulated catalog so far (Dark Epics, Laws of the Night Revised Edition, Laws of the Hunt); a same-name entry whose stats match an already-catalogued one is left out of this file.",
+      "Every entry read directly from the book's own page images (not OCR), per reference-wod-scan-ocr-lessons. This copy's own printed page numbers are plain, legible Arabic numerals."
+    ],
+    "tool": "read directly, 2026-10-04"
+  },
+  "notes": [
+    "A Kuei-Jin/Cathaya-themed sourcebook, so most of its own weapon content is genuinely new rather than a reprint - 10 of its 20-odd printed entries carry real stats, far more than Laws of the Hunt's own 2.",
+    "Staff/Spear prints one stat block covering two different weapons at once (\"Damage: Staff - 2 health levels; Spear - 3 health levels\", one shared Bonus/Negative/Concealability/Availability) - split here into two ordinary entries, the same reasoning as Club/Ax in the other two MET corebooks already catalogued.",
+    "Katana's own text explicitly states \"Negative Traits: None\" - kept as a real, deliberate empty list, not an omitted field.",
+    "Shuriken prints no Availability line at all on this page, unlike every other entry in this chapter - left unset here rather than invented."
+  ],
+  "items": [
+    {
+      "key": "shuriken",
+      "name": "Shuriken",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Throwing",
+        "bonus": 1,
+        "negatives": [ { "name": "Tiny" } ],
+        "concealability": "Palm",
+        "damage_amount": 1,
+        "powers": "Spray"
+      },
+      "description": "A character must possess either Melee or Martial Arts to throw shuriken; Athletics alone is not enough, though Athletics may be used to throw them if the other requirements are met. Spray: a character with at least one level in both Melee or Martial Arts and Athletics may throw up to half their permanent Melee/Martial Arts level (round up) in one attack.",
+      "source": { "book": "Laws of the East", "code": "WW05016", "page": 186 }
+    },
+    {
+      "key": "broken-bottle",
+      "name": "Broken Bottle",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Melee",
+        "bonus": 1,
+        "negatives": [ { "name": "Fragile" } ],
+        "concealability": "Vest (ouch!)",
+        "damage_amount": 1,
+        "availability": [ { "name": "Corner bar, maybe the floor" } ]
+      },
+      "source": { "book": "Laws of the East", "code": "WW05016", "page": 186 }
+    },
+    {
+      "key": "sash",
+      "name": "Sash",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Melee",
+        "bonus": 2,
+        "negatives": [ { "name": "Delicate" } ],
+        "concealability": "Pocket",
+        "damage_amount": 1,
+        "availability": [ { "name": "Almost any clothing store, though most Kuei-jin prefer sashes of fairly high quality, if only for aesthetic purposes" } ]
+      },
+      "description": "A weapon unique to the East. Melee alone is not enough - appropriate Martial Arts training lets skilled practitioners entangle and blind their foes, and true masters can even whip the sash with sufficient force and precision to slash their foes as if it were metal.",
+      "source": { "book": "Laws of the East", "code": "WW05016", "page": 186 }
+    },
+    {
+      "key": "nunchaku",
+      "name": "Nunchaku",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Melee",
+        "bonus": 2,
+        "negatives": [ { "name": "Short" } ],
+        "concealability": "Jacket",
+        "damage_amount": 1,
+        "availability": [ { "name": "Any" } ],
+        "powers": "Speed"
+      },
+      "description": "Covers the manriki-gusari, sa tjat joen, kawanga and similar bladed or unbladed East Asian flail weapons, considered to have the same basic characteristics for game purposes.",
+      "source": { "book": "Laws of the East", "code": "WW05016", "page": 187 }
+    },
+    {
+      "key": "staff",
+      "name": "Staff",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Melee",
+        "bonus": 3,
+        "negatives": [ { "name": "Clumsy" } ],
+        "concealability": "NA",
+        "damage_amount": 2,
+        "availability": [ { "name": "Most martial arts stores carry suitable staves; they attract much less attention than most other melee weapons" } ]
+      },
+      "description": "Known as jo or bo. A spear's blade makes it slash or pierce rather than bludgeon.",
+      "source": { "book": "Laws of the East", "code": "WW05016", "page": 187 }
+    },
+    {
+      "key": "spear",
+      "name": "Spear",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Melee",
+        "bonus": 3,
+        "negatives": [ { "name": "Clumsy" } ],
+        "concealability": "NA",
+        "damage_amount": 3,
+        "availability": [ { "name": "Spears such as the naginata and yari typically require a bit more effort to procure than staves, but they are not widely monitored" } ]
+      },
+      "source": { "book": "Laws of the East", "code": "WW05016", "page": 187 }
+    },
+    {
+      "key": "shortsword",
+      "name": "Shortsword",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Melee",
+        "bonus": 2,
+        "negatives": [ { "name": "Short" } ],
+        "concealability": "Trenchcoat",
+        "damage_amount": 2,
+        "availability": [ { "name": "Typically must be special-ordered, although cheap versions are available in many military-supply stores (these are of dubious quality at best)" } ],
+        "powers": "Speed"
+      },
+      "description": "Any bladed weapon between the size of a dagger and a katana; most notably the wakizashi, typically worn paired with a katana.",
+      "source": { "book": "Laws of the East", "code": "WW05016", "page": 188 }
+    },
+    {
+      "key": "longsword",
+      "name": "Longsword",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Melee",
+        "bonus": 3,
+        "negatives": [ { "name": "Heavy" } ],
+        "concealability": "Trenchcoat",
+        "damage_amount": 2,
+        "availability": [ { "name": "Typically must be special-ordered, although cheap versions are available in many military-supply stores (these are of dubious quality at best)" } ]
+      },
+      "description": "Any blade of medium length, excluding the katana - from scimitars to Western broadswords.",
+      "source": { "book": "Laws of the East", "code": "WW05016", "page": 188 }
+    },
+    {
+      "key": "katana",
+      "name": "Katana",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Melee",
+        "bonus": 3,
+        "negatives": [],
+        "concealability": "Trenchcoat",
+        "damage_amount": 3,
+        "availability": [ { "name": "Almost certainly crafted for the individual wielding it; mass-produced katana are treated the same as longswords due to their inferior craftsmanship. Hand-crafted katana command extremely high prices and are worth every penny - they never dull, and win all ties to resist breaking or shattering" } ]
+      },
+      "description": "Creations of master swordsmiths, deadlier than many firearms in close combat, and especially favored by elder Kuei-jin both as weapons and status symbols. Flawed katanas are rejected by their craftsmen.",
+      "source": { "book": "Laws of the East", "code": "WW05016", "page": 188 }
+    },
+    {
+      "key": "greatsword",
+      "name": "Greatsword",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Melee",
+        "bonus": 5,
+        "negatives": [ { "name": "Heavy" }, { "name": "Clumsy" }, { "name": "Slow" } ],
+        "concealability": "NA",
+        "damage_amount": 3,
+        "availability": [ { "name": "Expensive but available through the same sources as other swords" } ]
+      },
+      "description": "Mighty blades requiring two hands to wield, such as the Japanese nodachi.",
+      "source": { "book": "Laws of the East", "code": "WW05016", "page": 188 }
+    }
+  ]
+}

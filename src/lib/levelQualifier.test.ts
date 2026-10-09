@@ -3,7 +3,7 @@ import type { TieredPower } from '../types';
 
 describe( 'levelQualifier', () => {
 	it( 'finds nothing in a note that is only a tier', () => {
-		// The overwhelmingly common shape - 1,083 `mortal-numina` levels say exactly this.
+		// The overwhelmingly common shape: a tier word and nothing else.
 		for ( const note of [
 			'basic',
 			'int.',

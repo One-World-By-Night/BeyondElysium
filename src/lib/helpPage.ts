@@ -46,6 +46,30 @@ export function helpTarget( href: string ): HelpTarget | null {
 }
 
 /**
+ * The website's slug for each guide.
+ */
+const WEBSITE_GUIDE_SLUGS: Record< GuideSlug, string > = {
+	'st-guide': 'storyteller-guide',
+	'admin-guide': 'admin-guide',
+	'player-guide': 'player-guide',
+	'rest-api': 'rest-api-reference',
+};
+
+/**
+ * The illustrated copy of a help page or guide on beyondelysium.com, in Portuguese when the viewer reads it.
+ */
+export function websitePageUrl(
+	page: { kind: 'help'; key: string } | { kind: 'guide'; slug: GuideSlug },
+	portuguese: boolean
+): string {
+	const slug =
+		page.kind === 'help' ? page.key : WEBSITE_GUIDE_SLUGS[ page.slug ];
+	return `https://beyondelysium.com${
+		portuguese ? '/pt' : ''
+	}/docs/${ slug }/`;
+}
+
+/**
  * A heading's words without their Markdown: link text kept, emphasis and code marks dropped.
  */
 export function headingText( markdown: string ): string {

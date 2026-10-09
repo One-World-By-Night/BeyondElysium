@@ -20,6 +20,7 @@ import {
 	type OptionGroup,
 } from '../../lib/searchableSelect';
 import './SearchableSelect.css';
+import { listBoxStyle } from '../../lib/searchableSelectLayout';
 
 interface SearchableSelectCommonProps {
 	value: string;
@@ -87,7 +88,8 @@ export function SearchableSelect( {
 	const listRef = useRef< HTMLUListElement >( null );
 	const inputRef = useRef< HTMLInputElement >( null );
 	const measuredOptionRef = useRef< HTMLLIElement | null >( null );
-	const listboxId = useId();
+	// The listbox id: useId()'s output with every ":" removed.
+	const listboxId = useId().replace( /:/g, '' );
 	const optionId = ( index: number ) => `${ listboxId }-option-${ index }`;
 
 	// Portaled to document.body.
@@ -232,18 +234,12 @@ export function SearchableSelect( {
 			ref={ listRef }
 			id={ listboxId }
 			role="listbox"
-			style={ {
-				position: 'fixed',
-				top: listRect.openUpward ? undefined : listRect.top,
-				bottom: listRect.openUpward
-					? window.innerHeight - listRect.top
-					: undefined,
-				left: listRect.left,
-				width: listRect.width,
-				...( virtualized
-					? { height: listHeight, overflowY: 'auto' }
-					: {} ),
-			} }
+			style={ listBoxStyle(
+				listRect,
+				window.innerHeight,
+				virtualized,
+				listHeight
+			) }
 			onScroll={ ( e ) =>
 				setScrollTop( ( e.target as HTMLUListElement ).scrollTop )
 			}
@@ -345,6 +341,7 @@ export function SearchableSelect( {
 				aria-label={ ariaLabel ?? placeholder }
 				autoComplete="off"
 				onFocus={ () => setOpen( true ) }
+				onClick={ () => setOpen( true ) }
 				onBlur={ () => {
 					// Commits a typed value on blur even when no dropdown row was explicitly picked.
 					const commit = resolveBlurCommit(

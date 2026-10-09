@@ -63,7 +63,7 @@ class GameFileParserTest extends TestCase {
 	}
 
 	public function test_the_calendar_is_read_unconditionally_with_no_presence_flag(): void {
-		// The divergence this class's own doc comment calls the nastiest one.
+		// The calendar section has no presence flag.
 		$data = $this->real_sample();
 
 		$this->assertNotNull( $data['calendar'] );

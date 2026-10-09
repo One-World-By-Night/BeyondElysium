@@ -1,0 +1,263 @@
+{
+  "format": 1,
+  "kind": "item_catalog",
+  "slug": "changing-breeds-4",
+  "name": "Changing Breeds 4",
+  "book": "Changing Breeds 4",
+  "code": "UN0070",
+  "provenance": {
+    "sources": [
+      "Changing Breeds 4 (uncatalogued, UN0070 / UN0105 - two scans of the identical 214-page book, same creation date, read from the cleaner UN0105 copy) covers two breeds in full: Nagah's own Fetishes/Talens/Bindhi (pp.98-102) and Rokea's own Fetishes (pp.205-206). Neither chapter's Talens heading, where one exists, is shared between the two breeds.",
+      "Every entry read directly from the book's own page images (not OCR), per reference-wod-scan-ocr-lessons. This copy's own printed page numbers are plain, legible Arabic numerals."
+    ],
+    "tool": "read directly, 2026-10-04"
+  },
+  "notes": [
+    "This book labels its cost field \"Level:\" throughout, never \"Fetish Trait Cost:\" - the same value, mapped to properties.level exactly as every other book's \"Fetish Trait Cost\" is.",
+    "No Fetish or Talen in this entire book prints a Spirit/Spiritual Affinity line - item_subtype left unset on all twenty entries rather than invented.",
+    "Bindhi (Bindhi of Surya, Bindhi of Disillusion, Indomitable Eye) are the book's own named Fetish subtype, unique to the Nagah: a small jewel worn pressed to the forehead's third-eye point, one at a time, each lasting three turns per activation. Kept as item_type \"Fetish\" like any other entry - there is no separate mechanical category - with that shared framing folded into each entry's own `powers` text, since the catalog has no field for a note shared across several entries.",
+    "Flood Dust's own talen holds \"between five and ten pinches\" per bag - a stated range, not a single fixed count - uses_max is left unset rather than picking one number out of the range; the real text stays in full in `powers`.",
+    "Fragment of Oversea is an explicitly variable-effect fetish family (\"perhaps a dozen of them exist... all have different effects\"), gated on Storyteller permission with the player and Storyteller agreeing the real effect together - transcribed as printed, including that caveat, rather than resolved to one invented power."
+  ],
+  "items": [
+    {
+      "key": "yantra",
+      "name": "Yantra",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "level": 1,
+        "tempers": [ { "name": "Gnosis", "count": 6 } ],
+        "powers": "Also called a mandalla, a yantra is a complex, radially symmetric diagram that symbolically represents the universe. It serves as a focus of meditation that draws the mind to the center point, called the bindu. When inscribed onto an animal hide and made into a Fetish, a yantra's owner can activate it by meditating on the bindu for three turns; if successful, its owner will sense exactly where she is in the universe. This does not mean the Nagah learns how to get home (or anywhere else), simply that she knows where she is at that moment. Strange or extremely distant locations (such as the deep Umbra) may require longer meditation at the Storyteller's discretion. A spirit of knowledge must be bound into this Fetish."
+      },
+      "source": { "book": "Changing Breeds 4", "code": "UN0070", "page": 98 }
+    },
+    {
+      "key": "spirit-rattler",
+      "name": "Spirit Rattler",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "level": 2,
+        "tempers": [ { "name": "Gnosis", "count": 6 } ],
+        "powers": "A Spirit Rattler is a snake's rattle tied with sinew to a long bone of any medium-sized animal. When activated and shaken, all spirits within ten paces of the Spirit Rattler will immediately freeze in fear. Spirits with seven or more Gnosis Traits are allowed a Gnosis test against the Spirit Rattler's owner to flee; otherwise they remain nearly paralyzed with fear for three turns and can only defend themselves weakly (a two Trait penalty on all tests). An appropriate spirit servant of the Wani must be bound into this Fetish."
+      },
+      "source": { "book": "Changing Breeds 4", "code": "UN0070", "page": 99 }
+    },
+    {
+      "key": "jewel-of-the-river-spirit",
+      "name": "Jewel of the River Spirit",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "level": 3,
+        "tempers": [ { "name": "Gnosis", "count": 7 } ],
+        "powers": "By activating this Fetish and tossing it into a natural body of water, the Jewel's owner is able to speak the name of a spirit within and have that spirit appear. The spirit will be ready to provide the owner of the Fetish with a single favor related to the water in question, which may include catching fish, propelling a raft or distracting an enemy. The spirit will not endanger itself, and remains for either one scene or the time required to complete the requested task, whichever is shorter. Once the task is completed, the spirit gives back the Jewel then returns to the water. Should the spirit be mistreated, both it and the Jewel will disappear. A water elemental must be bound into this Fetish, which appears as a precious transparent stone of some kind."
+      },
+      "source": { "book": "Changing Breeds 4", "code": "UN0070", "page": 99 }
+    },
+    {
+      "key": "stranglers-scarves",
+      "name": "Strangler's Scarves",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "level": 3,
+        "tempers": [ { "name": "Gnosis", "count": 7 } ],
+        "powers": "The Thuggee of India were famous for strangling their victims with beautiful silk scarves. This Fetish was developed by the Nagah after observing their brutal yet effective tactics. When wrapped around a victim's neck and activated, the scarf will strangle its victim on its own, dealing a number of bashing Health Levels of damage equal to half the owner's Gnosis (up to a maximum of three, round down) each round it strangles successfully. When activated, this scarf is considered to have the Physical Traits Stalwart x2, Wiry x2, and Tireless x2, and has six Health Levels for the purposes of preventing itself from being removed from its victim. To craft this Fetish, the Nagah must create the scarf herself then bind an appropriate spirit servant of the Wani into her creation."
+      },
+      "source": { "book": "Changing Breeds 4", "code": "UN0070", "page": 99 }
+    },
+    {
+      "key": "danbhalahs-drum",
+      "name": "Danbhalah's Drum",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "level": 4,
+        "tempers": [ { "name": "Gnosis", "count": 6 } ],
+        "powers": "These Fetishes were first developed by Nagah from Africa, the Caribbean, and the Southeast United States. They are highly prized by the Nagah, and are generally more effective but far less subtle than Summon the Accused at getting a target to come to you. The drummer must activate the Fetish and concentrate on her would-be target while she pounds out a rhythm on the drum. If the drumming stops, the effect is wasted and can never be used on that target again. As long as the drumming continues, the target will do everything he can to get to the location of the drumming without knowing or even caring exactly why it is he is doing so, though survival instincts come first. The Drum can call a target from anywhere in the world, although it can take a long time for a target to reach a drumming location a continent away. Other members of the drummer's nest can help out - by making a Physical test (retest Performance) against a difficulty of six Traits, a nestmate can take over the drumming without interrupting the rhythm. This drumming must be extremely loud to work properly; if done inside a building, it resonates throughout the building's entire structure; if done outside, the sound can carry for a great distance, drawing a great deal of attention to the drummer."
+      },
+      "source": { "book": "Changing Breeds 4", "code": "UN0070", "page": 100 }
+    },
+    {
+      "key": "garland-of-skulls",
+      "name": "Garland of Skulls",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "level": 4,
+        "tempers": [ { "name": "Gnosis", "count": 7 } ],
+        "powers": "This powerful Fetish is crafted from the skulls or shrunken heads of a Nagah's victims - obviously not the type of thing one wears in public. All such Fetishes have at least eight skulls strung together on a thick piece of sinew, with one of the Wani's spirits of war bound into it. The end result is quite impressive: when activated during combat, the Fetish grants the wearer five temporary Rage Traits and the wearer grows two extra sets of arms right below her normal ones. These extra arms do not grant any extra attacks or Traits, but can be used for any sort of utility purposes - fighting with a full complement of weapons while also carrying an unconscious captive, for example."
+      },
+      "source": { "book": "Changing Breeds 4", "code": "UN0070", "page": 100 }
+    },
+    {
+      "key": "dart-of-nullity",
+      "name": "Dart of Nullity",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "level": 5,
+        "tempers": [ { "name": "Gnosis", "count": 7 } ],
+        "powers": "This potent weapon is among the most prized tools of the Nagah; it is a small dart made from a bird bone, weighted with gold dust and fletched with peacock feathers. To use it, the owner activates the Fetish and throws it at a target (retest Athletics); as soon as it leaves its owner's hand, it becomes invisible to everyone but its owner. When it strikes, it deals no damage and the target feels nothing - as long as it remains in its target, however, he is unable to use Gnosis or Rage. Other creatures are denied their mystical energies, such as a vampire's Blood Traits, a mage's Quintessence and so on. Once a target grows suspicious, generally after a failed attempt to use these energies, he may attempt a Mental test (retest Enigmas) against a difficulty of eight Traits to discover the dart. Once found and removed, the next stage of the dart's effects begins: removal inflicts merely a single level of bashing damage, but all the pain that would have been felt by the victim suddenly hits all at once, and the victim acts as if he were at the Wounded health level for a number of turns equal to the number of turns the dart was lodged in his side."
+      },
+      "source": { "book": "Changing Breeds 4", "code": "UN0070", "page": 100 }
+    },
+    {
+      "key": "ascetics-ashes",
+      "name": "Ascetic's Ashes",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Talen",
+        "tempers": [ { "name": "Gnosis", "count": 6 } ],
+        "uses_max": 4,
+        "powers": "When this talen is rubbed over the naked body of the wearer, it grants her a respectable amount of protection and turns her skin gray. For the duration of a single combat, the user receives the bonus Physical Trait: Resilient. A single pouch of these ashes is enough for four such uses. To make this talen, an elemental spirit must be bound into the ashes from a recent funeral pyre."
+      },
+      "source": { "book": "Changing Breeds 4", "code": "UN0070", "page": 101 }
+    },
+    {
+      "key": "cloud-popper",
+      "name": "Cloud Popper",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Talen",
+        "tempers": [ { "name": "Gnosis", "count": 6 } ],
+        "uses_max": 1,
+        "powers": "This talen appears as an arrow with a turquoise or quartz arrowhead. When shot into a rain or storm cloud, this talen causes the cloud to burst and quickly spill its contents. Showers created with this talen tend to be quite intense, often flooding flat or low lying areas; any outdoor fires are quickly extinguished. A water elemental or one of the Wani's rain spirits must be bound within this talen."
+      },
+      "source": { "book": "Changing Breeds 4", "code": "UN0070", "page": 101 }
+    },
+    {
+      "key": "flood-dust",
+      "name": "Flood Dust",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Talen",
+        "tempers": [ { "name": "Gnosis", "count": 4 } ],
+        "powers": "Flood Dust is dust taken from a dried-out riverbed into which a water elemental is bound. A single pinch of this dust will cause the water in a 30-foot radius to rise by five feet within five minutes of hitting the water; in large bodies of water, this may not even be noticeable, but it can cause floods along sections of beach and river. A talen of this sort is a bag with between five and ten pinches of this dust; it is highly recommended that an entire bag not be used unless absolutely necessary, since the floods that result can be rather devastating to the immediate area."
+      },
+      "source": { "book": "Changing Breeds 4", "code": "UN0070", "page": 101 }
+    },
+    {
+      "key": "snake-oil",
+      "name": "Snake Oil",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Talen",
+        "tempers": [ { "name": "Gnosis", "count": 5 } ],
+        "uses_max": 1,
+        "powers": "Snake oil has been the tool of many a con artist over the years, touted as the cure for ailments ranging from glaucoma to arthritis pain to allergies. It would likely surprise many of these grifters to discover that snake oil does, in fact, have some healing properties - it's just that those properties are only present for creatures with Gnosis. By drinking this mixture, the user can spend a number of Gnosis Traits to heal an equal number of bashing or lethal levels of damage."
+      },
+      "source": { "book": "Changing Breeds 4", "code": "UN0070", "page": 101 }
+    },
+    {
+      "key": "venom-arrows",
+      "name": "Venom Arrows",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Talen",
+        "tempers": [ { "name": "Gnosis", "count": 6 } ],
+        "uses_max": 1,
+        "powers": "These talens look like arrows with a double-tipped arrowhead, usually in the shape of a crescent. By activating this talen and shooting it at a target, the arrow will deal an extra level of lethal damage if it strikes due to the venom of the snake spirit bound within."
+      },
+      "source": { "book": "Changing Breeds 4", "code": "UN0070", "page": 102 }
+    },
+    {
+      "key": "bindhi-of-surya",
+      "name": "Bindhi of Surya",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "level": 1,
+        "tempers": [ { "name": "Gnosis", "count": 6 } ],
+        "powers": "Bindhi are a type of Fetish unique to the Nagah, appearing as small jewels worn on the forehead over the ajna, or third eye chakra, about an inch above the bridge of the nose. To wear one, a Nagah merely presses it to the third eye, where it remains in place on its own; only one Bindhi can be worn at a time, and each lasts for three turns when activated. This Bindhi is made from topaz or diamond. When activated, it shines with pure golden sunlight, illuminating the area with the light of full day; vampires caught within the glow take damage as from full sunlight."
+      },
+      "source": { "book": "Changing Breeds 4", "code": "UN0070", "page": 102 }
+    },
+    {
+      "key": "bindhi-of-disillusion",
+      "name": "Bindhi of Disillusion",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "level": 3,
+        "tempers": [ { "name": "Gnosis", "count": 8 } ],
+        "powers": "Bindhi are a type of Fetish unique to the Nagah, appearing as small jewels worn on the forehead over the ajna, or third eye chakra, about an inch above the bridge of the nose, worn one at a time and lasting three turns when activated. Usually made from moonstone or onyx, this Bindhi reveals to its wearer the presence of all illusions in sight when activated. The illusions are not dispelled - they merely become faint, translucent images that the wearer can automatically see for what they are."
+      },
+      "source": { "book": "Changing Breeds 4", "code": "UN0070", "page": 102 }
+    },
+    {
+      "key": "indomitable-eye",
+      "name": "Indomitable Eye",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "level": 5,
+        "tempers": [ { "name": "Gnosis", "count": 9 } ],
+        "powers": "Bindhi are a type of Fetish unique to the Nagah, appearing as small jewels worn on the forehead over the ajna, or third eye chakra, worn one at a time and lasting three turns when activated. This rare type of Bindhi is always made from a deep red gem, often garnet. When activated, it puts the Nagah wearing it up ten Traits in any challenges defending against emotion or mind control powers of any sort. Additionally, anyone foolish enough to attempt to use such a power against the Nagah receives a number of levels of bashing damage equal to half his Gnosis, Arete, or the like (a maximum of three levels) due to the excruciating headache caused by the attempt."
+      },
+      "source": { "book": "Changing Breeds 4", "code": "UN0070", "page": 102 }
+    },
+    {
+      "key": "seas-garb",
+      "name": "Sea's Garb",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "level": 1,
+        "tempers": [ { "name": "Gnosis", "count": 6 } ],
+        "powers": "Rokea who swim ashore do so naked, so an innovative Dimwater discovered how to create Sea's Garb. This fetish appears to be a normal piece of human apparel - the Rokea creating it must first acquire an article of clothing, the exact type being unimportant. When activated, Sea's Garb clothes the Rokea in something appropriate to the place and season; a Rokea wearing only a Sea's Garb vest coming ashore along a southern California beach might find her clothing changed to a halter top and split skirt, with sandals, a sun hat and sunglasses. The clothes produced are considered dedicated and go with the Rokea into the Umbra. The fetish cannot create an entire wardrobe; the clothing remains the same so long as the Rokea stays on land, and she may change it by swimming out to sea and returning. The Rokea has no control over what kind of clothing is generated. Creating Sea's Garb requires binding either a stingray-spirit or eel-spirit into the article of clothing."
+      },
+      "source": { "book": "Changing Breeds 4", "code": "UN0070", "page": 205 }
+    },
+    {
+      "key": "marlins-tail",
+      "name": "Marlin's Tail",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "level": 2,
+        "tempers": [ { "name": "Gnosis", "count": 6 } ],
+        "powers": "Formed from several marlin bones strung together and worn around the waist, this fetish allows the Rokea to draw upon the speed and power of the marlin. When activated, Marlin's Tail doubles the Rokea's swimming speed as well as the distance she can leap out of the water. This fetish is visible in Chasmus and Squamus forms as a row of protrusions surrounding the wereshark's tail. The spirit of a marlin, swordfish or mako shark may be bound into the bones to create this fetish."
+      },
+      "source": { "book": "Changing Breeds 4", "code": "UN0070", "page": 205 }
+    },
+    {
+      "key": "barnacle-necklace",
+      "name": "Barnacle Necklace",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "level": 3,
+        "tempers": [ { "name": "Gnosis", "count": 6 } ],
+        "powers": "Made from a barnacle strung on a piece of leather or skin and worn around the neck, this fetish acts as a homing beacon when activated, enabling the wereshark to locate whaling or shark fishing vessels within a 10 mile range (more at the Storyteller's discretion). The fetish requires the spirit of a barnacle."
+      },
+      "source": { "book": "Changing Breeds 4", "code": "UN0070", "page": 206 }
+    },
+    {
+      "key": "net-of-vengeance",
+      "name": "Net of Vengeance",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "level": 4,
+        "tempers": [ { "name": "Gnosis", "count": 7 } ],
+        "powers": "A Rokea who wishes to create this fetish must first steal a section of net from a fishing vessel. When imbued by both an air- and a sea-spirit, the Net of Vengeance drowns both air and water breathers ensnared in it. The Rokea must entangle his victim by making a Physical test against seven Traits (retest Melee). If the Rokea succeeds, his victim suffers the effects of drowning as described in Laws of the Wild. To free himself before dying, the trapped person must make three successive Physical tests against eight Traits (retest Survival or Swim) to tear free of the net, or three successive Mental tests (retest Enigmas) to work free of the net. If the victim succeeds, he begins to breathe normally. This fetish requires both an air-spirit and a sea-spirit."
+      },
+      "source": { "book": "Changing Breeds 4", "code": "UN0070", "page": 206 }
+    },
+    {
+      "key": "fragment-of-oversea",
+      "name": "Fragment of Oversea",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Fetish",
+        "level": 5,
+        "tempers": [ { "name": "Gnosis", "count": 8 } ],
+        "powers": "To Rokea, meteorites are pieces of Oversea's body that the Wound has burned so badly they have fallen into Sea (or Unsea, as the case may be). Made into fetishes, these items have wondrous powers - perhaps a dozen of them exist, and all have different effects. One such fetish may heal an individual completely when activated; another might blaze with a brilliant light mirroring that of the Wound, blinding any who look directly at it and affecting vampires as if they were struck by sunlight; the most famous, called Woundbringer, causes a fiery explosion like that of a hand grenade when tossed. The fragments may be gathered up again and reassembled for later use. These fetishes are allowed in a chronicle only with the Storyteller's permission; the player and Storyteller should work together to decide exactly what effect the Fragment has and what sort of spirit has been bound into it."
+      },
+      "source": { "book": "Changing Breeds 4", "code": "UN0070", "page": 206 }
+    }
+  ]
+}

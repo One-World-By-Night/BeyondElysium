@@ -167,7 +167,7 @@ class GexXmlParserTest extends TestCase {
 		$this->assertArrayHasKey( 'Disciplines', $character['trait_lists'] );
 		$this->assertArrayHasKey( 'Abilities', $character['trait_lists'] );
 
-		// Confirmed genuinely absent from every real XML sample.
+		// Absent from every real XML sample.
 		$this->assertSame( '', $character['coterie'] );
 		$this->assertSame( '', $character['player'] );
 		$this->assertFalse( $character['is_npc'] );
@@ -261,7 +261,7 @@ class GexXmlParserTest extends TestCase {
 	}
 
 	// -------------------------------------------------------------------------
-	// Defects 2-7 - no real aura/NPC/boon-carrying file exists in this repo
+	// The npc, id, biography, aura, boon and temp-field readers - no real file in this repo carries them
 	// -------------------------------------------------------------------------
 
 	private function vampire_xml( string $attributes, string $body = '' ): string {

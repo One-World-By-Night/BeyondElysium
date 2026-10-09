@@ -51,21 +51,21 @@ class DefaultApprovalPolicyThreadTest extends WP_UnitTestCase {
 		$response = $this->send( $this->hst, 'PUT', "{$this->slug}/approval-rules/default", [ 'auto_approve' => true ] );
 
 		$this->assertSame( 200, $response->get_status() );
-		$this->assertSame( [ 'auto_approve' => true ], $response->get_data() );
+		$this->assertSame( [ 'auto_approve' => true, 'approval_on_removal' => false, 'owbn_bylaws' => false ], $response->get_data() );
 
 		$settings = Game::find_by_slug( $this->slug )->settings;
 		$this->assertTrue( $settings->auto_approve );
 		$this->assertSame( 3, (int) $settings->apr->personal_actions );
 		$this->assertTrue( $settings->require_new_character_approval );
 
-		$this->assertSame( [ 'auto_approve' => true ], $this->send( $this->hst, 'GET', "{$this->slug}/approval-rules/default" )->get_data() );
+		$this->assertSame( [ 'auto_approve' => true, 'approval_on_removal' => false, 'owbn_bylaws' => false ], $this->send( $this->hst, 'GET', "{$this->slug}/approval-rules/default" )->get_data() );
 	}
 
 	public function test_back_to_pending_by_default(): void {
 		$this->send( $this->hst, 'PUT', "{$this->slug}/approval-rules/default", [ 'auto_approve' => true ] );
 		$response = $this->send( $this->hst, 'PUT', "{$this->slug}/approval-rules/default", [ 'auto_approve' => false ] );
 
-		$this->assertSame( [ 'auto_approve' => false ], $response->get_data() );
+		$this->assertSame( [ 'auto_approve' => false, 'approval_on_removal' => false, 'owbn_bylaws' => false ], $response->get_data() );
 		$this->assertFalse( Game::find_by_slug( $this->slug )->settings->auto_approve );
 	}
 
@@ -78,6 +78,34 @@ class DefaultApprovalPolicyThreadTest extends WP_UnitTestCase {
 
 	public function test_a_missing_choice_is_refused(): void {
 		$response = $this->send( $this->hst, 'PUT', "{$this->slug}/approval-rules/default", [] );
+
+		$this->assertSame( 400, $response->get_status() );
+	}
+
+	public function test_the_removal_switch_sets_independently_of_the_default_policy(): void {
+		$response = $this->send( $this->hst, 'PUT', "{$this->slug}/approval-rules/default", [ 'approval_on_removal' => true ] );
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( [ 'auto_approve' => false, 'approval_on_removal' => true, 'owbn_bylaws' => false ], $response->get_data() );
+		$this->assertTrue( Game::find_by_slug( $this->slug )->settings->approval_on_removal );
+
+		$response = $this->send( $this->hst, 'PUT', "{$this->slug}/approval-rules/default", [ 'auto_approve' => true ] );
+		$this->assertSame( [ 'auto_approve' => true, 'approval_on_removal' => true, 'owbn_bylaws' => false ], $response->get_data(), 'setting one leaves the other as it was' );
+	}
+
+	public function test_the_owbn_bylaws_switch_sets_independently_of_the_others(): void {
+		$response = $this->send( $this->hst, 'PUT', "{$this->slug}/approval-rules/default", [ 'owbn_bylaws' => true ] );
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( [ 'auto_approve' => false, 'approval_on_removal' => false, 'owbn_bylaws' => true ], $response->get_data() );
+		$this->assertTrue( Game::find_by_slug( $this->slug )->settings->owbn_bylaws );
+
+		$response = $this->send( $this->hst, 'PUT', "{$this->slug}/approval-rules/default", [ 'auto_approve' => true ] );
+		$this->assertSame( [ 'auto_approve' => true, 'approval_on_removal' => false, 'owbn_bylaws' => true ], $response->get_data(), 'setting one leaves the others as they were' );
+	}
+
+	public function test_owbn_bylaws_must_be_a_boolean(): void {
+		$response = $this->send( $this->hst, 'PUT', "{$this->slug}/approval-rules/default", [ 'owbn_bylaws' => 'yes' ] );
 
 		$this->assertSame( 400, $response->get_status() );
 	}

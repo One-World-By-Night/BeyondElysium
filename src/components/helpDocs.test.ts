@@ -1,6 +1,6 @@
 import { readFileSync, readdirSync } from 'fs';
 import { join } from 'path';
-import { headingAnchors, helpTarget } from '../lib/helpPage';
+import { GUIDES, GuideSlug, headingAnchors, helpTarget } from '../lib/helpPage';
 
 /**
  * The help pages' coverage guard: every `?` opens a help page that exists, every link in a help page opens something
@@ -40,7 +40,7 @@ const usedKeys = new Set(
 );
 
 /**
- * Screens whose `?` is not wired to a help page yet. Wiring one removes it from this list.
+ * Screens whose `?` is not wired to a help page.
  */
 const WAITING_FOR_PILOT_REVIEW = [
 	'profile-settings',
@@ -104,6 +104,76 @@ test( 'every link in a help page opens a page, at a heading it really has', () =
 				! anchorsOf( targetFile ).includes( target.anchor )
 			) {
 				broken.push( `${ key }: ${ href }` );
+			}
+		}
+	}
+	expect( broken ).toEqual( [] );
+} );
+
+/**
+ * The pages and guides that have a Portuguese translation, as paths under the documentation folder.
+ */
+const PORTUGUESE = join( DOCS, 'pt_BR' );
+const portuguesePages = ( dir: string ): string[] =>
+	readdirSync( dir ).filter( ( file ) => file.endsWith( '.md' ) );
+
+test( 'every link in a Portuguese help page opens a heading its target really has', () => {
+	const translatedHelp = portuguesePages( join( PORTUGUESE, 'help' ) );
+	const translatedGuides = portuguesePages( PORTUGUESE );
+	expect( translatedHelp.length ).toBeGreaterThan( 0 );
+
+	const broken: string[] = [];
+	const pages = [
+		...translatedHelp.map( ( file ) => join( PORTUGUESE, 'help', file ) ),
+		...translatedGuides.map( ( file ) => join( PORTUGUESE, file ) ),
+	];
+	for ( const file of pages ) {
+		const own = file.slice( PORTUGUESE.length + 1 );
+		for ( const [ , href ] of read( file ).matchAll(
+			/\]\(([^)\s]+)\)/g
+		) ) {
+			const found = helpTarget( href );
+			const target =
+				found?.kind === 'help' &&
+				( GUIDES as readonly string[] ).includes( found.key )
+					? {
+							kind: 'guide' as const,
+							slug: found.key as GuideSlug,
+							anchor: found.anchor,
+						}
+					: found;
+			if ( ! target ) {
+				// A guide, unlike a help page, also links to files that are not help pages, such as the README.
+				if ( ! own.includes( '/' ) ) {
+					continue;
+				}
+				broken.push( `${ own }: ${ href }` );
+				continue;
+			}
+			if ( target.kind === 'external' ) {
+				continue;
+			}
+			let targetFile = file;
+			if ( target.kind === 'help' ) {
+				if ( ! helpKeys.includes( target.key ) ) {
+					broken.push( `${ own }: ${ href }` );
+					continue;
+				}
+				if ( ! translatedHelp.includes( `${ target.key }.md` ) ) {
+					continue;
+				}
+				targetFile = join( PORTUGUESE, 'help', `${ target.key }.md` );
+			} else if ( target.kind === 'guide' ) {
+				if ( ! translatedGuides.includes( `${ target.slug }.md` ) ) {
+					continue;
+				}
+				targetFile = join( PORTUGUESE, `${ target.slug }.md` );
+			}
+			if (
+				target.anchor &&
+				! headingAnchors( read( targetFile ) ).includes( target.anchor )
+			) {
+				broken.push( `${ own }: ${ href }` );
 			}
 		}
 	}

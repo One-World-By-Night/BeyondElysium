@@ -73,7 +73,12 @@ for ( const file of files ) {
 		}
 
 		const resolved = path.resolve( dir, filePart );
-		if ( ! fs.existsSync( resolved ) ) {
+		// A Portuguese page may link to a page that is not translated yet: the reader gets the English one.
+		const original = path.resolve(
+			dir.replace( /\/pt_BR(?=\/|$)/, '' ),
+			filePart
+		);
+		if ( ! fs.existsSync( resolved ) && ! fs.existsSync( original ) ) {
 			const line = text.slice( 0, match.index ).split( '\n' ).length;
 			problems.push( `${ file }:${ line }  ->  ${ target }` );
 		}

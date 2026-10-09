@@ -4,6 +4,7 @@ import {
 	headingText,
 	helpTarget,
 	pageTitle,
+	websitePageUrl,
 	withoutTitle,
 } from './helpPage';
 
@@ -123,5 +124,31 @@ describe( 'pageTitle and withoutTitle', () => {
 		expect( withoutTitle( markdown ) ).toBe(
 			'The five roles.\n\n## Who can use this\n'
 		);
+	} );
+} );
+
+describe( 'websitePageUrl', () => {
+	it( 'points a help page at its illustrated copy on the website', () => {
+		expect(
+			websitePageUrl( { kind: 'help', key: 'character-sheet' }, false )
+		).toBe( 'https://beyondelysium.com/docs/character-sheet/' );
+	} );
+
+	it( 'points a guide at the website slug the guide is published under', () => {
+		expect(
+			websitePageUrl( { kind: 'guide', slug: 'st-guide' }, false )
+		).toBe( 'https://beyondelysium.com/docs/storyteller-guide/' );
+		expect(
+			websitePageUrl( { kind: 'guide', slug: 'rest-api' }, false )
+		).toBe( 'https://beyondelysium.com/docs/rest-api-reference/' );
+	} );
+
+	it( 'opens the Portuguese copy for a viewer reading Portuguese', () => {
+		expect( websitePageUrl( { kind: 'help', key: 'roles' }, true ) ).toBe(
+			'https://beyondelysium.com/pt/docs/roles/'
+		);
+		expect(
+			websitePageUrl( { kind: 'guide', slug: 'player-guide' }, true )
+		).toBe( 'https://beyondelysium.com/pt/docs/player-guide/' );
 	} );
 } );

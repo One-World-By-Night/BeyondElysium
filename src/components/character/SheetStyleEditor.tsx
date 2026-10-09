@@ -2,9 +2,10 @@
  * SheetStyleEditor is the appearance-customization panel for one character's sheet: font, accent/background/text
  * colors, a background image, and a per-section graphic picker.
  */
-import { useEffect, useState } from '@wordpress/element';
+import { useEffect, useRef, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
+import { readableTextFor, readsWell } from '../../lib/colorContrast';
 import { pickMediaImage } from '../../lib/pickMediaImage';
 import type { SheetStyle } from '../../types/character';
 import HelpButton from '../shared/HelpButton';
@@ -51,6 +52,60 @@ const FONT_CHOICES: { value: string; label: string }[] = [
 ];
 
 /**
+ * A color input that follows the picker while it is open and saves once, when the choice is committed.
+ */
+function ColorField( {
+	id,
+	label,
+	value,
+	fallback,
+	onPreview,
+	onCommit,
+}: {
+	id: string;
+	label: string;
+	value: string | null | undefined;
+	fallback: string;
+	onPreview: ( color: string ) => void;
+	onCommit: ( color: string ) => void;
+} ) {
+	const input = useRef< HTMLInputElement >( null );
+	const commit = useRef( onCommit );
+	commit.current = onCommit;
+	const [ draft, setDraft ] = useState( value ?? fallback );
+
+	useEffect( () => {
+		setDraft( value ?? fallback );
+	}, [ value, fallback ] );
+
+	useEffect( () => {
+		const element = input.current;
+		if ( ! element ) {
+			return undefined;
+		}
+		const onChange = () => commit.current( element.value );
+		element.addEventListener( 'change', onChange );
+		return () => element.removeEventListener( 'change', onChange );
+	}, [] );
+
+	return (
+		<div className="be-sheet-style-editor__row">
+			<label htmlFor={ id }>{ label }</label>
+			<input
+				id={ id }
+				ref={ input }
+				type="color"
+				value={ draft }
+				onChange={ ( e ) => {
+					setDraft( e.target.value );
+					onPreview( e.target.value );
+				} }
+			/>
+		</div>
+	);
+}
+
+/**
  * Renders the appearance-customization controls for one character's sheet.
  */
 export function SheetStyleEditor( {
@@ -60,15 +115,16 @@ export function SheetStyleEditor( {
 	onChange,
 }: SheetStyleEditorProps ) {
 	const [ style, setStyle ] = useState< SheetStyle >( {} );
+	const [ loaded, setLoaded ] = useState( false );
 	const [ saving, setSaving ] = useState( false );
 	const [ error, setError ] = useState< string | null >( null );
 
 	useEffect( () => {
 		api.sheetStyle( gameSlug )
 			.get( characterId )
-			.then( ( loaded ) => {
-				setStyle( loaded );
-				onChange( loaded );
+			.then( ( current ) => {
+				setStyle( current );
+				onChange( current );
 			} )
 			.catch( () =>
 				setError(
@@ -77,7 +133,8 @@ export function SheetStyleEditor( {
 						'beyond-elysium'
 					)
 				)
-			);
+			)
+			.finally( () => setLoaded( true ) );
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [ characterId, gameSlug ] );
 
@@ -153,6 +210,18 @@ export function SheetStyleEditor( {
 		}
 	}
 
+	const effectiveText =
+		style.text_color ||
+		( style.background_color
+			? readableTextFor( style.background_color )
+			: null );
+	const hardToRead =
+		!! style.background_color &&
+		!! effectiveText &&
+		( ! readsWell( effectiveText, style.background_color ) ||
+			( !! style.accent_color &&
+				! readsWell( style.accent_color, style.background_color ) ) );
+
 	return (
 		<div className="be-sheet-style-editor">
 			<div className="be-help-heading">
@@ -165,119 +234,148 @@ export function SheetStyleEditor( {
 				</p>
 			) }
 
-			<div className="be-sheet-style-editor__row">
-				<label htmlFor="be-sheet-style-font">
-					{ __( 'Font', 'beyond-elysium' ) }
-				</label>
-				<select
-					id="be-sheet-style-font"
-					value={ style.font_family ?? '' }
-					disabled={ saving }
-					onChange={ ( e ) =>
-						save( { ...style, font_family: e.target.value } )
-					}
-				>
-					{ FONT_CHOICES.map( ( f ) => (
-						<option key={ f.value } value={ f.value }>
-							{ f.label }
-						</option>
-					) ) }
-				</select>
-			</div>
+			{ ! loaded && <p>{ __( 'Loading…', 'beyond-elysium' ) }</p> }
 
-			<div className="be-sheet-style-editor__row">
-				<label htmlFor="be-sheet-style-accent">
-					{ __( 'Accent color', 'beyond-elysium' ) }
-				</label>
-				<input
-					id="be-sheet-style-accent"
-					type="color"
-					value={ style.accent_color ?? '#000000' }
-					disabled={ saving }
-					onChange={ ( e ) =>
-						save( { ...style, accent_color: e.target.value } )
-					}
-				/>
-			</div>
+			{ loaded && (
+				<>
+					<div className="be-sheet-style-editor__row">
+						<label htmlFor="be-sheet-style-font">
+							{ __( 'Font', 'beyond-elysium' ) }
+						</label>
+						<select
+							id="be-sheet-style-font"
+							value={ style.font_family ?? '' }
+							disabled={ saving }
+							onChange={ ( e ) =>
+								save( {
+									...style,
+									font_family: e.target.value,
+								} )
+							}
+						>
+							{ FONT_CHOICES.map( ( f ) => (
+								<option key={ f.value } value={ f.value }>
+									{ f.label }
+								</option>
+							) ) }
+						</select>
+					</div>
 
-			<div className="be-sheet-style-editor__row">
-				<label htmlFor="be-sheet-style-bg-color">
-					{ __( 'Background color', 'beyond-elysium' ) }
-				</label>
-				<input
-					id="be-sheet-style-bg-color"
-					type="color"
-					value={ style.background_color ?? '#ffffff' }
-					disabled={ saving }
-					onChange={ ( e ) =>
-						save( { ...style, background_color: e.target.value } )
-					}
-				/>
-			</div>
-
-			<div className="be-sheet-style-editor__row">
-				<label htmlFor="be-sheet-style-text">
-					{ __( 'Text color', 'beyond-elysium' ) }
-				</label>
-				<input
-					id="be-sheet-style-text"
-					type="color"
-					value={ style.text_color ?? '#000000' }
-					disabled={ saving }
-					onChange={ ( e ) =>
-						save( { ...style, text_color: e.target.value } )
-					}
-				/>
-			</div>
-
-			<div className="be-sheet-style-editor__row">
-				<span>{ __( 'Background image', 'beyond-elysium' ) }</span>
-				<button
-					type="button"
-					disabled={ saving }
-					onClick={ pickBackground }
-				>
-					{ style.background_image_url
-						? __( 'Change…', 'beyond-elysium' )
-						: __( 'Choose…', 'beyond-elysium' ) }
-				</button>
-				{ style.background_image_url && (
-					<img
-						className="be-sheet-style-editor__preview"
-						src={ style.background_image_url }
-						alt={ __(
-							'Sheet background preview',
-							'beyond-elysium'
-						) }
+					<ColorField
+						id="be-sheet-style-accent"
+						label={ __( 'Accent color', 'beyond-elysium' ) }
+						value={ style.accent_color }
+						fallback="#000000"
+						onPreview={ ( color ) =>
+							onChange( { ...style, accent_color: color } )
+						}
+						onCommit={ ( color ) =>
+							save( { ...style, accent_color: color } )
+						}
 					/>
-				) }
-			</div>
 
-			{ blockSlugs.length > 0 && (
-				<div className="be-sheet-style-editor__section-graphics">
-					<span>{ __( 'Section graphics', 'beyond-elysium' ) }</span>
-					<ul>
-						{ blockSlugs.map( ( slug ) => (
-							<li key={ slug }>
-								{ slug }
-								<button
-									type="button"
-									disabled={ saving }
-									onClick={ () => pickSectionGraphic( slug ) }
-								>
-									{ style.section_graphic_urls?.[ slug ]
-										? __( 'Change…', 'beyond-elysium' )
-										: __( 'Choose…', 'beyond-elysium' ) }
-								</button>
-							</li>
-						) ) }
-					</ul>
-				</div>
+					<ColorField
+						id="be-sheet-style-bg-color"
+						label={ __( 'Background color', 'beyond-elysium' ) }
+						value={ style.background_color }
+						fallback="#ffffff"
+						onPreview={ ( color ) =>
+							onChange( { ...style, background_color: color } )
+						}
+						onCommit={ ( color ) =>
+							save( { ...style, background_color: color } )
+						}
+					/>
+
+					<ColorField
+						id="be-sheet-style-text"
+						label={ __( 'Text color', 'beyond-elysium' ) }
+						value={ style.text_color }
+						fallback="#000000"
+						onPreview={ ( color ) =>
+							onChange( { ...style, text_color: color } )
+						}
+						onCommit={ ( color ) =>
+							save( { ...style, text_color: color } )
+						}
+					/>
+
+					{ hardToRead && (
+						<p
+							className="be-sheet-style-editor__hint"
+							role="status"
+						>
+							{ __(
+								'These colors are hard to read together - try a lighter text color on a dark background, or the reverse.',
+								'beyond-elysium'
+							) }
+						</p>
+					) }
+
+					<div className="be-sheet-style-editor__row">
+						<span>
+							{ __( 'Background image', 'beyond-elysium' ) }
+						</span>
+						<button
+							type="button"
+							disabled={ saving }
+							onClick={ pickBackground }
+						>
+							{ style.background_image_url
+								? __( 'Change…', 'beyond-elysium' )
+								: __( 'Choose…', 'beyond-elysium' ) }
+						</button>
+						{ style.background_image_url && (
+							<img
+								className="be-sheet-style-editor__preview"
+								src={ style.background_image_url }
+								alt={ __(
+									'Sheet background preview',
+									'beyond-elysium'
+								) }
+							/>
+						) }
+					</div>
+
+					{ blockSlugs.length > 0 && (
+						<div className="be-sheet-style-editor__section-graphics">
+							<span>
+								{ __( 'Section graphics', 'beyond-elysium' ) }
+							</span>
+							<ul>
+								{ blockSlugs.map( ( slug ) => (
+									<li key={ slug }>
+										{ slug }
+										<button
+											type="button"
+											disabled={ saving }
+											onClick={ () =>
+												pickSectionGraphic( slug )
+											}
+										>
+											{ style.section_graphic_urls?.[
+												slug
+											]
+												? __(
+														'Change…',
+														'beyond-elysium'
+													)
+												: __(
+														'Choose…',
+														'beyond-elysium'
+													) }
+										</button>
+									</li>
+								) ) }
+							</ul>
+						</div>
+					) }
+
+					<button type="button" disabled={ saving } onClick={ reset }>
+						{ __( 'Reset to default', 'beyond-elysium' ) }
+					</button>
+				</>
 			) }
-
-			<button type="button" disabled={ saving } onClick={ reset }>
-				{ __( 'Reset to default', 'beyond-elysium' ) }
-			</button>
 		</div>
 	);
 }

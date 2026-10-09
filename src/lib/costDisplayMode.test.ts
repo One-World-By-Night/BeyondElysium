@@ -8,7 +8,7 @@ beforeEach( () => {
 } );
 
 describe( 'readStoredCostVisibility', () => {
-	// The default flipped.
+	// The default shows the price.
 	it( 'defaults to showing the price with nothing stored', () => {
 		expect( readStoredCostVisibility() ).toBe( true );
 	} );

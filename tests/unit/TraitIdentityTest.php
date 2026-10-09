@@ -104,7 +104,7 @@ class TraitIdentityTest extends TestCase {
 	}
 
 	// -----------------------------------------------------------------------
-	// Consumer 2 - Cost_Engine prices the holding the change names
+	// Cost_Engine prices the holding the change names
 	// -----------------------------------------------------------------------
 
 	/**

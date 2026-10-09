@@ -13,7 +13,7 @@ use BeyondElysium\Services\GEX_Xml_Parser;
 use WP_UnitTestCase;
 
 /**
- * A character exported and imported back arrives as it left, over the 22 demo characters.
+ * A character exported and imported back arrives as it left, over the 23 demo characters.
  */
 class ExchangeRoundTripThreadTest extends WP_UnitTestCase {
 
@@ -67,11 +67,21 @@ class ExchangeRoundTripThreadTest extends WP_UnitTestCase {
 						$entry['count'] = $entry['count'] ?? 1;
 					}
 					if ( is_array( $entry ) ) {
+						// Display-only: re-derived from the catalog and the held power_name, never read back.
+						unset( $entry['spent_cost'], $entry['spent_pool'], $entry['spent_rank'] );
 						ksort( $entry );
 					}
 					return $entry;
 				}, $held );
 			} elseif ( is_array( $held ) ) {
+				$held = array_map( static function ( $value ) {
+					if ( is_array( $value ) ) {
+						// A spent_from pool's own `spent` has no Grapevine wire-format slot to survive export through -
+						// it is re-derived from the held picks that spend it, not carried on the pool itself.
+						unset( $value['spent'] );
+					}
+					return $value;
+				}, $held );
 				$held = array_filter( $held, static fn( $value ) => ! in_array( $value, [ '', null, 0, [ 'permanent' => 0, 'temporary' => 0 ] ], true ) );
 				ksort( $held );
 			}
@@ -107,7 +117,7 @@ class ExchangeRoundTripThreadTest extends WP_UnitTestCase {
 	public function test_every_demo_character_comes_back_as_it_left(): void {
 		global $wpdb;
 		$ids = array_map( 'intval', $wpdb->get_col( "SELECT id FROM {$wpdb->prefix}be_characters WHERE owner_slug = 'be-demo' ORDER BY id" ) );
-		$this->assertCount( 22, $ids );
+		$this->assertCount( 23, $ids );
 
 		$losses = [];
 		foreach ( $ids as $id ) {

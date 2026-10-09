@@ -211,7 +211,7 @@ class AttachmentThreadTest extends WP_UnitTestCase {
 	public function test_invalid_entity_type_is_rejected(): void {
 		wp_set_current_user( $this->make_manager() );
 		$request = new WP_REST_Request( 'POST', "/be/v1/{$this->game_slug}/attachments" );
-		$request->set_param( 'entity_type', 'character' );
+		$request->set_param( 'entity_type', 'npc' );
 		$request->set_param( 'entity_id', 1 );
 		$request->set_file_params( $this->fake_file_params( $this->real_png_path() ) );
 
@@ -363,6 +363,32 @@ class AttachmentThreadTest extends WP_UnitTestCase {
 		$this->assertFileDoesNotExist( $path );
 	}
 
+	public function test_deleting_a_plot_through_the_model_layer_alone_removes_the_file_too(): void {
+		$plot_id       = $this->make_open_plot();
+		$manager       = $this->make_manager();
+		$attachment_id = $this->upload( $manager, 'plot', $plot_id )->get_data()['id'];
+		$row           = Attachment::find( $attachment_id );
+		$path          = Attachment_Storage::path_for( $row->stored_name, $row->original_name );
+		$this->assertFileExists( $path );
+
+		Plot::delete( $plot_id );
+
+		$this->assertFileDoesNotExist( $path, 'a model-layer delete, with no REST controller in the call chain, must still remove the file' );
+	}
+
+	public function test_deleting_an_item_through_the_model_layer_alone_removes_the_file_too(): void {
+		$item_id       = $this->make_item();
+		$manager       = $this->make_manager();
+		$attachment_id = $this->upload( $manager, 'item', $item_id )->get_data()['id'];
+		$row           = Attachment::find( $attachment_id );
+		$path          = Attachment_Storage::path_for( $row->stored_name, $row->original_name );
+		$this->assertFileExists( $path );
+
+		World_Object::delete( $item_id );
+
+		$this->assertFileDoesNotExist( $path, 'a model-layer delete, with no REST controller in the call chain, must still remove the file' );
+	}
+
 	public function test_a_stranger_cannot_delete_an_attachment(): void {
 		$plot_id       = $this->make_open_plot();
 		$attachment_id = $this->upload( $this->make_manager(), 'plot', $plot_id )->get_data()['id'];
@@ -413,5 +439,105 @@ class AttachmentThreadTest extends WP_UnitTestCase {
 		$data = $this->dispatch( new WP_REST_Request( 'GET', "/be/v1/{$this->game_slug}/world-objects/{$item_id}" ) )->get_data();
 
 		$this->assertCount( 1, $data->attachments );
+	}
+
+	// -------------------------------------------------------------------------
+	// Character entity type: own-character upload, one-image limit, audience-gated download
+	// -------------------------------------------------------------------------
+
+	public function test_a_player_may_upload_a_portrait_to_their_own_character(): void {
+		$player       = $this->make_player();
+		$character_id = $this->make_character( $player );
+
+		$this->assertSame( 201, $this->upload( $player, 'character', $character_id )->get_status() );
+	}
+
+	public function test_a_player_cannot_upload_to_another_players_character(): void {
+		$character_id = $this->make_character( $this->make_player() );
+		$stranger     = $this->make_player();
+
+		$this->assertSame( 403, $this->upload( $stranger, 'character', $character_id )->get_status() );
+	}
+
+	public function test_a_manager_may_upload_a_portrait_to_any_character(): void {
+		$character_id = $this->make_character( $this->make_player() );
+
+		$this->assertSame( 201, $this->upload( $this->make_manager(), 'character', $character_id )->get_status() );
+	}
+
+	public function test_a_character_may_hold_exactly_one_portrait(): void {
+		$player       = $this->make_player();
+		$character_id = $this->make_character( $player );
+
+		$this->assertSame( 201, $this->upload( $player, 'character', $character_id )->get_status() );
+		$second = $this->upload( $player, 'character', $character_id );
+
+		$this->assertSame( 409, $second->get_status() );
+		$this->assertSame( 'limit_reached', $second->as_error()->get_error_code() );
+	}
+
+	public function test_a_pdf_is_refused_for_a_character_portrait(): void {
+		wp_set_current_user( $this->make_manager() );
+		$character_id = $this->make_character( $this->make_player() );
+
+		$path = tempnam( sys_get_temp_dir(), 'be-test-pdf-' );
+		file_put_contents( $path, "%PDF-1.4\n%%EOF\n" ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+		$this->written_paths[] = $path;
+
+		$request = new WP_REST_Request( 'POST', "/be/v1/{$this->game_slug}/attachments" );
+		$request->set_param( 'entity_type', 'character' );
+		$request->set_param( 'entity_id', $character_id );
+		$request->set_file_params( $this->fake_file_params( $path, 'sheet.pdf', 'application/pdf' ) );
+
+		$this->assertSame( 400, $this->dispatch( $request )->get_status() );
+	}
+
+	public function test_the_owning_player_can_download_their_own_portrait_whatever_the_audience(): void {
+		$player       = $this->make_player();
+		$character_id = $this->make_character( $player );
+		Character::update_header( $character_id, [ 'profile_audience' => Audience::STORYTELLERS ] );
+		$attachment_id = $this->upload( $player, 'character', $character_id )->get_data()['id'];
+
+		wp_set_current_user( $player );
+		$response = $this->dispatch( new WP_REST_Request( 'GET', "/be/v1/{$this->game_slug}/attachments/{$attachment_id}" ) );
+
+		$this->assertSame( 200, $response->get_status() );
+	}
+
+	public function test_a_player_denied_by_profile_audience_gets_a_404_not_a_403(): void {
+		$owner         = $this->make_player();
+		$character_id  = $this->make_character( $owner );
+		Character::update_header( $character_id, [ 'profile_audience' => Audience::STORYTELLERS ] );
+		$attachment_id = $this->upload( $this->make_manager(), 'character', $character_id )->get_data()['id'];
+
+		wp_set_current_user( $this->make_player() );
+		$response = $this->dispatch( new WP_REST_Request( 'GET', "/be/v1/{$this->game_slug}/attachments/{$attachment_id}" ) );
+
+		$this->assertSame( 404, $response->get_status() );
+	}
+
+	public function test_a_player_allowed_by_profile_audience_everyone_can_download_it(): void {
+		$owner         = $this->make_player();
+		$character_id  = $this->make_character( $owner );
+		Character::update_header( $character_id, [ 'profile_audience' => Audience::EVERYONE ] );
+		$attachment_id = $this->upload( $this->make_manager(), 'character', $character_id )->get_data()['id'];
+
+		wp_set_current_user( $this->make_player() );
+		$response = $this->dispatch( new WP_REST_Request( 'GET', "/be/v1/{$this->game_slug}/attachments/{$attachment_id}" ) );
+
+		$this->assertSame( 200, $response->get_status() );
+	}
+
+	public function test_deleting_a_character_through_the_model_layer_alone_removes_the_portrait_too(): void {
+		$player        = $this->make_player();
+		$character_id  = $this->make_character( $player );
+		$attachment_id = $this->upload( $player, 'character', $character_id )->get_data()['id'];
+		$row           = Attachment::find( $attachment_id );
+		$path          = Attachment_Storage::path_for( $row->stored_name, $row->original_name );
+		$this->assertFileExists( $path );
+
+		Character::delete( $character_id );
+
+		$this->assertFileDoesNotExist( $path, 'a model-layer delete, with no REST controller in the call chain, must still remove the file' );
 	}
 }

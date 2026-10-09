@@ -16,7 +16,7 @@ class Layout_Generator {
 	 *
 	 * @param string $stack_slug
 	 * @param string $game_slug
-	 * @return array|null Layout array, or null if the stack does not exist.
+	 * @return array<string,mixed>|null Layout array, or null if the stack does not exist.
 	 */
 	public static function generate_for_stack( string $stack_slug, string $game_slug = '' ): ?array {
 		$resolved = Creature_Stack::resolve( $stack_slug, $game_slug );
@@ -30,9 +30,9 @@ class Layout_Generator {
 	/**
 	 * Builds a layout from an already-resolved stack and its schema blocks.
 	 *
-	 * @param object $stack  A creature_stacks row with `stack_definition` decoded.
-	 * @param array  $blocks Schema block rows keyed by slug (Schema_Block::find_by_slugs()).
-	 * @return array
+	 * @param object               $stack  A creature_stacks row with `stack_definition` decoded.
+	 * @param array<string,object> $blocks Schema block rows keyed by slug (Schema_Block::find_by_slugs()).
+	 * @return array<string,mixed>
 	 */
 	public static function generate( object $stack, array $blocks ): array {
 		$sections = $stack->stack_definition->sections ?? [];
@@ -96,6 +96,7 @@ class Layout_Generator {
 	 * Builds one output layout section entry for a given column and order position.
 	 *
 	 * @param array{section:object,block:object} $entry
+	 * @return array<string,mixed>
 	 */
 	private static function build_section( array $entry, int $column, int $order ): array {
 		return [

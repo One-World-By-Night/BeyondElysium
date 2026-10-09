@@ -216,8 +216,8 @@ class ImportControllerCommitTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The real fix: an imported character's "Health Levels" list lands in `{stack}-health` sheet_data exactly like any
-	 * other trait_list import (Merits' own path), carrying the real per-character box counts.
+	 * An imported character's "Health Levels" list lands in `{stack}-health` sheet_data exactly like any other
+	 * trait_list import (Merits' own path), carrying the per-character box counts.
 	 */
 	public function test_health_levels_imports_into_the_stacks_own_health_block(): void {
 		wp_set_current_user( $this->admin_id );
@@ -254,6 +254,26 @@ class ImportControllerCommitTest extends WP_UnitTestCase {
 	}
 
 	/**
+	 * An unmatched Health Level name can never be kept as written - the block is a fixed, closed list. The preview
+	 * reports `allow_custom` false, so the client does not offer that choice.
+	 */
+	public function test_an_unmatched_health_level_reports_allow_custom_false(): void {
+		wp_set_current_user( $this->admin_id );
+
+		$character = $this->synthetic_character( 'Iron Will', [
+			'Health Levels' => [
+				'name'   => 'Health Levels',
+				'traits' => [ [ 'name' => 'Scraped Up', 'total' => '2', 'note' => '' ] ],
+			],
+		] );
+		$job_id = $this->inject_job( $this->synthetic_parsed( [ $character ] ) );
+		$job    = get_transient( 'be_import_job_' . $job_id );
+
+		$this->assertNotEmpty( $job['preview']['unresolved'] );
+		$this->assertFalse( $job['preview']['unresolved'][0]['allow_custom'] );
+	}
+
+	/**
 	 * Every open-catalog trait_list block (Merits, Backgrounds, and so on) seeds with `allow_custom: true`.
 	 */
 	public function test_commit_is_refused_while_a_tiered_power_trait_is_unresolved(): void {
@@ -267,6 +287,8 @@ class ImportControllerCommitTest extends WP_UnitTestCase {
 
 		$before = Character::count_for_game( $this->game_slug );
 		$job_id = $this->inject_job( $this->synthetic_parsed( [ $character ] ) );
+		$job    = get_transient( 'be_import_job_' . $job_id );
+		$this->assertTrue( $job['preview']['unresolved'][0]['allow_custom'] );
 
 		$response = $this->dispatch( $this->commit_request( $job_id ) );
 

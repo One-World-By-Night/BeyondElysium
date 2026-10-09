@@ -8,15 +8,15 @@ use BeyondElysium\Models\Schema_Block;
 use WP_UnitTestCase;
 
 /**
- * Moving pre-Blood-Magic data onto the new shape.
+ * Moving Blood Magic data held in Disciplines onto the Blood Magic block.
  */
 class BloodMagicMigrationTest extends WP_UnitTestCase {
 
 	private const GAME = 'thread-test-blood-magic-migration';
 
 	/**
-	 * Forks vampire-disciplines for self::GAME and stashes onto it a synthetic tradition-prefixed power plus one ordinary
-	 * one, mirroring the real pre-Blood-Magic shape.
+	 * Forks vampire-disciplines for self::GAME and stashes onto it a synthetic tradition-prefixed power plus one
+	 * ordinary one, mirroring the shape stored before the move.
 	 */
 	private function stale_fork_with( array $extra_powers ): void {
 		$fork       = Schema_Block::find_or_create_fork_for_game( 'vampire-disciplines', self::GAME );

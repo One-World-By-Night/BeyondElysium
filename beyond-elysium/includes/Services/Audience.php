@@ -29,7 +29,7 @@ class Audience {
 	/**
 	 * Entity types this class knows how to resolve connections for.
 	 */
-	const ENTITY_TYPES = [ 'plot', 'item', 'location', 'npc', 'secret', 'faction', 'position' ];
+	const ENTITY_TYPES = [ 'plot', 'item', 'location', 'npc', 'secret', 'faction', 'position', 'pc' ];
 
 	/**
 	 * Normalizes a stored or submitted audience value, falling back to `everyone` for anything unrecognized.
@@ -130,24 +130,47 @@ class Audience {
 	 * @return int[]
 	 */
 	public static function visible_character_ids( object $entity, string $entity_type, string $game_slug ): array {
+		if ( $entity_type === 'plot' && ! empty( $entity->held ) ) {
+			$release_batch_id = ! empty( $entity->release_batch_id ) ? (int) $entity->release_batch_id : null;
+			$out_batch_ids    = Release_Batch::out_ids( (int) ( $entity->game_id ?? 0 ) );
+			if ( $release_batch_id === null || ! in_array( $release_batch_id, $out_batch_ids, true ) ) {
+				return [];
+			}
+		}
+
+		$candidates = array_map(
+			static fn( $c ) => (int) $c->id,
+			Character::all_for_game( $game_slug, [ 'status' => 'active', 'is_npc' => 0 ] )
+		);
+
 		$audience = self::normalize( $entity->audience ?? self::EVERYONE );
-
 		if ( $audience === self::EVERYONE ) {
-			return array_map(
-				static fn( $c ) => (int) $c->id,
-				Character::all_for_game( $game_slug, [ 'status' => 'active', 'is_npc' => 0 ] )
-			);
-		}
-		if ( $audience === self::STORYTELLERS ) {
-			return [];
+			return $candidates;
 		}
 
-		$connected = self::connected_character_ids( $entity, $entity_type );
+		// A character connected to an item or location always sees it, whatever its audience - the same rule
+		// `visible_to()` applies for one viewer at a time.
+		$connected_bypass = ! in_array( $entity_type, [ 'plot', 'secret', 'pc' ], true );
+		$connected        = self::connected_character_ids( $entity, $entity_type );
 
-		$rules    = $entity->audience_rules ?? null;
-		$rule_ids = Query_Engine::resolve_audience_rules( $game_slug, is_array( $rules ) ? $rules : null );
+		$rules    = is_array( $entity->audience_rules ?? null ) ? $entity->audience_rules : null;
+		$rule_ids = $audience === self::RESTRICTED ? Query_Engine::resolve_audience_rules( $game_slug, $rules ) : [];
 
-		return array_values( array_unique( array_merge( $connected, $rule_ids ) ) );
+		$visible = [];
+		foreach ( $candidates as $id ) {
+			$is_connected = in_array( $id, $connected, true );
+			if ( $connected_bypass && $is_connected ) {
+				$visible[] = $id;
+				continue;
+			}
+			if ( $audience === self::STORYTELLERS ) {
+				continue;
+			}
+			if ( $is_connected || in_array( $id, $rule_ids, true ) ) {
+				$visible[] = $id;
+			}
+		}
+		return $visible;
 	}
 
 	/**
@@ -160,15 +183,10 @@ class Audience {
 	 * @param bool       $can_manage
 	 * @param int[]|null $out_batch_ids The game's currently-out release batch ids,
 	 *                                   precomputed by a caller looping over one plot's
-	 *                                   entries. Null resolves it here instead, via the
-	 *                                   entry's own parent plot - a small extra query, only
-	 *                                   ever paid by a caller that didn't bother batching it.
-	 * @param object|null $plot         The entry's parent plot, already loaded by the caller
-	 *                                   (both real call sites have it already). Null resolves
-	 *                                   it here instead, the same fallback `$out_batch_ids`
-	 *                                   gets. Only ever read for a `rumor_level` entry, whose
-	 *                                   `rumor_level_key`/`rumor_level_match` live on
-	 *                                   the plot, never the entry.
+	 *                                   entries. Null resolves them here, via the entry's own parent plot.
+	 * @param object|null $plot         The entry's parent plot, already loaded by the caller. Null resolves it here.
+	 *                                  Only ever read for a `rumor_level` entry, whose
+	 *                                  `rumor_level_key`/`rumor_level_match` live on the plot, never the entry.
 	 * @return bool
 	 */
 	public static function can_see_entry( object $entry, int $wp_user_id, string $game_slug, bool $can_manage, ?array $out_batch_ids = null, ?object $plot = null ): bool {
@@ -243,12 +261,9 @@ class Audience {
 	 * @param array<string,int[]>|null $rule_memo Present only when called from `filter()` -
 	 *                                              a rule set already resolved for an earlier
 	 *                                              row in the same list, keyed by its own JSON.
-	 *                                              `can_see()`'s single-entity call omits it,
-	 *                                              since there is nothing to share a memo with.
-	 * @param int[] $out_batch_ids The game's currently-out release batch ids - resolved
-	 *                              once by can_see()/filter(), never per row. Only ever
-	 *                              non-empty when $entity_type is 'plot'; world objects carry
-	 *                              no held/release_batch_id columns.
+	 *                                              `can_see()`'s single-entity call omits it.
+	 * @param int[] $out_batch_ids The game's currently-out release batch ids - resolved once by can_see()/filter().
+	 *                             Only ever non-empty when $entity_type is 'plot'.
 	 */
 	private static function visible_to( object $entity, string $entity_type, string $game_slug, array $my_character_ids, ?array &$rule_memo = null, array $out_batch_ids = [] ): bool {
 		if ( $entity_type === 'plot' && ! empty( $entity->held ) ) {
@@ -265,7 +280,7 @@ class Audience {
 		}
 
 		// A character connected to an item or location always sees it, whatever its audience.
-		if ( ! in_array( $entity_type, [ 'plot', 'secret' ], true ) && ! empty( $my_character_ids )
+		if ( ! in_array( $entity_type, [ 'plot', 'secret', 'pc' ], true ) && ! empty( $my_character_ids )
 			&& array_intersect( $my_character_ids, self::connected_character_ids( $entity, $entity_type ) ) ) {
 			return true;
 		}
@@ -319,7 +334,7 @@ class Audience {
 			) ) );
 		}
 
-		if ( $entity_type === 'npc' ) {
+		if ( $entity_type === 'npc' || $entity_type === 'character' ) {
 			// Undirected ("connected either way").
 			$rows = Connection::for_entity( 'character', (int) $entity->id );
 			return array_values( array_unique( array_filter( array_map(

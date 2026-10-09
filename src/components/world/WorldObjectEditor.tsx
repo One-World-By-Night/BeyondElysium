@@ -335,7 +335,8 @@ function PropertyField( {
 	onChange: ( value: PropertyValue ) => void;
 	gameSlug: string;
 } ) {
-	const fieldId = useId();
+	// Stripped of ":".
+	const fieldId = useId().replace( /:/g, '' );
 	const label = fieldKey
 		.split( '_' )
 		.map( ( word ) => word.charAt( 0 ).toUpperCase() + word.slice( 1 ) )

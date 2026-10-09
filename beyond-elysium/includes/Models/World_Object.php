@@ -64,8 +64,7 @@ class World_Object {
 	}
 
 	/**
-	 * Look up a single world object and lock its row for the rest of the current transaction (the "use" route decrements
-	 * `uses_left` and must never race with a concurrent use of the same item).
+	 * Look up a single world object and lock its row for the rest of the current transaction.
 	 *
 	 * @param int $id
 	 * @return object|null
@@ -127,10 +126,10 @@ class World_Object {
 	/**
 	 * Returns the world objects belonging to a game, filtered, paginated and sorted.
 	 *
-	 * @param int   $game_id
-	 * @param array $args Filters: object_type, rarity, search, copies ('exclude'|'only'|'include', default 'exclude'),
+	 * @param int                 $game_id
+	 * @param array<string,mixed> $args Filters: object_type, rarity, search, copies ('exclude'|'only'|'include', default 'exclude'),
 	 *                    per_page, offset, orderby, order.
-	 * @return array
+	 * @return array<int,object>
 	 */
 	public static function for_game( int $game_id, array $args = [] ): array {
 		global $wpdb;
@@ -157,14 +156,16 @@ class World_Object {
 
 		$sql  = $wpdb->prepare( $sql, $values );
 		$rows = $wpdb->get_results( $sql ) ?: [];
-		return array_map( [ self::class, 'decode' ], $rows );
+		/** @var array<int,object> $decoded */
+		$decoded = array_map( [ self::class, 'decode' ], $rows );
+		return $decoded;
 	}
 
 	/**
 	 * Count world objects belonging to a game that match the given filters.
 	 *
-	 * @param int   $game_id
-	 * @param array $args Same filters as for_game() (no pagination).
+	 * @param int                 $game_id
+	 * @param array<string,mixed> $args Same filters as for_game() (no pagination).
 	 * @return int
 	 */
 	public static function count_for_game( int $game_id, array $args = [] ): int {
@@ -180,8 +181,8 @@ class World_Object {
 	/**
 	 * The shared WHERE-clause builder behind `for_game()` and `count_for_game()`.
 	 *
-	 * @param int   $game_id
-	 * @param array $args
+	 * @param int                 $game_id
+	 * @param array<string,mixed> $args
 	 * @return array{0: string[], 1: array<int,mixed>} `[$where_clauses, $bind_values]`.
 	 */
 	private static function build_where( int $game_id, array $args ): array {
@@ -259,8 +260,8 @@ class World_Object {
 	}
 
 	/**
-	 * Refuses a parent assignment that would make a location its own descendant, walking the candidate parent's own chain
-	 * up to 50 hops (the design's explicit cap, matching ancestors()'s own safeguard).
+	 * Refuses a parent assignment that would make a location its own descendant, walking the candidate parent's own
+	 * chain up to 50 hops (the same cap as ancestors()).
 	 *
 	 * @param int $id
 	 * @param int $new_parent_id
@@ -282,7 +283,7 @@ class World_Object {
 				) );
 			}
 			if ( in_array( $next, $chain, true ) ) {
-				// Breaks out on a pre-existing cycle.
+				// Stops at a cycle already in the data.
 				break;
 			}
 			$chain[] = $next;
@@ -293,8 +294,8 @@ class World_Object {
 	/**
 	 * Validate a properties payload against its object_type's schema.
 	 *
-	 * @param string $object_type
-	 * @param array  $properties
+	 * @param string              $object_type
+	 * @param array<string,mixed> $properties
 	 * @return string|null Null if valid, otherwise an error message naming the problem key.
 	 */
 	public static function validate_properties( string $object_type, array $properties ): ?string {
@@ -327,9 +328,9 @@ class World_Object {
 	 * Sanitizes each string property value by its schema type: a `text` property is rich text sanitized with
 	 * `wp_kses_post()`, a `string` one gets `sanitize_text_field()`.
 	 *
-	 * @param string $object_type
-	 * @param array  $properties
-	 * @return array
+	 * @param string              $object_type
+	 * @param array<string,mixed> $properties
+	 * @return array<string,mixed>
 	 */
 	private static function sanitize_properties( string $object_type, array $properties ): array {
 		$schema = self::schemas()[ $object_type ] ?? [];
@@ -349,7 +350,7 @@ class World_Object {
 	/**
 	 * Insert a new world object.
 	 *
-	 * @param array $data
+	 * @param array<string,mixed> $data
 	 * @return int|false Insert ID, or false if object_type/properties/parent_id are invalid.
 	 */
 	public static function create( array $data ) {
@@ -404,8 +405,8 @@ class World_Object {
 	/**
 	 * Update a world object.
 	 *
-	 * @param int   $id
-	 * @param array $data
+	 * @param int                 $id
+	 * @param array<string,mixed> $data
 	 * @return bool
 	 * @throws \RuntimeException When a new parent_id would create a cycle.
 	 */

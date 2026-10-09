@@ -271,7 +271,7 @@ return [
 		'title'      => 'Game Calendar',
 		'shape'      => 'calendar',
 		'entity'     => 'none',
-		'empty_note' => 'Beyond Elysium does not yet model a chronicle game-date schedule - this report will populate once that data exists.',
+		'empty_note' => 'No game nights are on this chronicle\'s calendar.',
 	],
 
 	// -- house_rules -----------------------------------------------------------------

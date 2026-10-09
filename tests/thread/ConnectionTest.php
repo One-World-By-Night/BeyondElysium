@@ -6,7 +6,7 @@ use BeyondElysium\Models\Connection;
 use WP_UnitTestCase;
 
 /**
- * The universal join is the piece most likely to be misused.
+ * Connections: the universal join between entities.
  */
 class ConnectionTest extends WP_UnitTestCase {
 

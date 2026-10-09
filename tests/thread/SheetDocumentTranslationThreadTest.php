@@ -14,8 +14,8 @@ use BeyondElysium\Services\Sheet_Document;
 use WP_UnitTestCase;
 
 /**
- * "Same character, GET its PDF sheet and one report: both now match the screen (closes (a))."
- * `Sheet_Document::for_characters()` is the PDF sheet's own resolution layer (Sheets_Controller calls it directly).
+ * `Sheet_Document::for_characters()`, the PDF sheet's own resolution layer (Sheets_Controller calls it directly),
+ * translates names the way the screen does; reports are not translated.
  */
 class SheetDocumentTranslationThreadTest extends WP_UnitTestCase {
 

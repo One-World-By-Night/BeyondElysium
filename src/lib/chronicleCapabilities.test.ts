@@ -2,7 +2,8 @@ import { canIn, canAny } from './chronicleCapabilities';
 import type { MyCapabilities } from '../types';
 
 /**
- * My Chronicle's screens decided what to show from the site-wide snapshot of what the person can do anywhere.
+ * A screen decides what to show from the chronicle's own answer when the page resolved one, else from the site-wide
+ * snapshot of what the person can do anywhere.
  */
 describe( 'canIn', () => {
 	const siteWide = {

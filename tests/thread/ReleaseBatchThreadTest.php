@@ -235,6 +235,8 @@ class ReleaseBatchThreadTest extends WP_UnitTestCase {
 		$batch_id = $this->make_batch();
 		$this->add_item_to_batch( $batch_id, 'plot', $plot_id );
 
+		// Clears the mail sent when the plot was created, so only the release's own mail is counted.
+		$this->captured_mail = [];
 		Release_Engine::release( $batch_id );
 
 		$this->assertCount( 1, $this->captured_mail );
@@ -268,6 +270,8 @@ class ReleaseBatchThreadTest extends WP_UnitTestCase {
 
 		$batch_id = $this->make_batch();
 		$this->add_item_to_batch( $batch_id, 'entry', $entry_id );
+		// Clears the mail sent when the plot was created.
+		$this->captured_mail = [];
 		Release_Engine::release( $batch_id );
 
 		$this->assertCount( 1, $this->captured_mail );
@@ -282,6 +286,8 @@ class ReleaseBatchThreadTest extends WP_UnitTestCase {
 		$batch_id = $this->make_batch( gmdate( 'Y-m-d H:i:s', time() + DAY_IN_SECONDS ) );
 		$this->add_item_to_batch( $batch_id, 'plot', $plot_id );
 
+		// Clears the mail sent when the plot was created.
+		$this->captured_mail = [];
 		wp_set_current_user( $this->make_manager() );
 		$request  = new WP_REST_Request( 'POST', "/be/v1/{$this->game_slug}/release-batches/{$batch_id}/release-now" );
 		$response = $this->dispatch( $request );
@@ -339,6 +345,8 @@ class ReleaseBatchThreadTest extends WP_UnitTestCase {
 	public function test_release_now_single_creates_fills_and_releases_in_one_call(): void {
 		$plot_id = $this->make_plot();
 
+		// Clears the mail sent when the plot was created.
+		$this->captured_mail = [];
 		wp_set_current_user( $this->make_manager() );
 		$request = new WP_REST_Request( 'POST', "/be/v1/{$this->game_slug}/release-batches/release-now" );
 		$request->set_param( 'items', [ [ 'type' => 'plot', 'id' => $plot_id ] ] );

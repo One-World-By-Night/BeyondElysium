@@ -97,3 +97,8 @@
 .be-incoming-transfers__verification[role="alert"] p:first-child {
 	margin-top: 0;
 }
+
+.be-incoming-transfers__keep-current-note {
+	font-weight: 600;
+	color: var(--be-blue-5);
+}

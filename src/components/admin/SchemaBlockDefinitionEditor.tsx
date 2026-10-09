@@ -25,6 +25,10 @@ import type {
 import Modal from '../shared/Modal';
 import HtmlEditor from '../shared/HtmlEditor';
 import HelpButton from '../shared/HelpButton';
+import {
+	setPlayerOrder,
+	showsReorderButton,
+} from '../../lib/playerOrderToggle';
 
 const APPROVAL_LEVELS: ApprovalLevel[] = [ 'auto', 'st' ];
 import './Admin.css';
@@ -1044,6 +1048,24 @@ function TraitListEditor( {
 					) }
 				</label>
 				<label>
+					<input
+						type="checkbox"
+						checked={ showsReorderButton( definition ) }
+						onChange={ ( e ) =>
+							onChange(
+								setPlayerOrder(
+									definition,
+									e.target.checked
+								) as unknown as Record< string, unknown >
+							)
+						}
+					/>{ ' ' }
+					{ __(
+						'Players set their own order (flattens the list; no grouping)',
+						'beyond-elysium'
+					) }
+				</label>
+				<label>
 					{ __( 'Max per item', 'beyond-elysium' ) }{ ' ' }
 					<input
 						type="number"
@@ -1748,6 +1770,24 @@ function TieredPowerEditor( {
 					/>{ ' ' }
 					{ __(
 						'Blood magic (taking a power prompts for a Tradition)',
+						'beyond-elysium'
+					) }
+				</label>
+				<label>
+					<input
+						type="checkbox"
+						checked={ showsReorderButton( definition ) }
+						onChange={ ( e ) =>
+							onChange(
+								setPlayerOrder(
+									definition,
+									e.target.checked
+								) as unknown as Record< string, unknown >
+							)
+						}
+					/>{ ' ' }
+					{ __(
+						'Players set their own order (flattens the list; no grouping)',
 						'beyond-elysium'
 					) }
 				</label>

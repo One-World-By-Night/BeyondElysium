@@ -31,3 +31,9 @@
 .be-send-grapevine-file__disallowed {
 	color: var(--be-red-3);
 }
+
+.be-send-grapevine-file__keep-current {
+	display: flex;
+	align-items: center;
+	gap: 0.35rem;
+}

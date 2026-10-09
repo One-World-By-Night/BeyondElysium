@@ -6,6 +6,8 @@ use BeyondElysium\Database\Manager;
 use BeyondElysium\Database\Transaction;
 use BeyondElysium\Core\Game_Slug_References;
 use BeyondElysium\REST\Game_Stats_Controller;
+use BeyondElysium\Services\Demo_Chronicle;
+use BeyondElysium\Services\Keep_Current;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -71,8 +73,8 @@ class Game {
 	/**
 	 * Return games matching optional filters.
 	 *
-	 * @param array $args Filters: game_type, orderby, order, per_page, offset.
-	 * @return array
+	 * @param array<string,mixed> $args Filters: game_type, orderby, order, per_page, offset.
+	 * @return array<int,object>
 	 */
 	public static function all( array $args = [] ): array {
 		global $wpdb;
@@ -105,13 +107,15 @@ class Game {
 		}
 
 		$rows = $wpdb->get_results( $sql ) ?: [];
-		return array_map( [ self::class, 'decode_settings' ], $rows );
+		/** @var array<int,object> $decoded */
+		$decoded = array_map( [ self::class, 'decode_settings' ], $rows );
+		return $decoded;
 	}
 
 	/**
 	 * Count games matching the given filters.
 	 *
-	 * @param array $args Same filters as all().
+	 * @param array<string,mixed> $args Same filters as all().
 	 * @return int
 	 */
 	public static function count( array $args = [] ): int {
@@ -140,7 +144,7 @@ class Game {
 	/**
 	 * Insert a new game.
 	 *
-	 * @param array $data Game data.
+	 * @param array<string,mixed> $data Game data.
 	 * @return int|false Insert ID or false on failure.
 	 */
 	public static function create( array $data ) {
@@ -176,8 +180,8 @@ class Game {
 	/**
 	 * Update a game identified by slug.
 	 *
-	 * @param string $slug
-	 * @param array  $data Fields to update.
+	 * @param string              $slug
+	 * @param array<string,mixed> $data Fields to update.
 	 * @return bool False when no field is given or no chronicle has the slug.
 	 */
 	public static function update( string $slug, array $data ): bool {
@@ -265,6 +269,8 @@ class Game {
 			return [ 'changed' => false, 'error' => 'orphan_collision', 'orphans' => $orphans ];
 		}
 
+		$visits_to_notify = Transfer::open_inbound_visits_for_host( $old_slug );
+
 		$wpdb->query(
 			$wpdb->prepare(
 				"UPDATE {$games_table} SET slug = %s, updated_at = %s WHERE id = %d",
@@ -322,6 +328,10 @@ class Game {
 		}
 		Transaction::commit( $savepoint );
 
+		foreach ( $visits_to_notify as $visit ) {
+			Keep_Current::notify_rename( $visit, $old_slug, $new_slug, (string) $game->name );
+		}
+
 		$reference_counts = Game_Slug_References::repair( $old_slug, $new_slug );
 		Game_Stats_Controller::invalidate( $old_slug );
 		Game_Stats_Controller::invalidate( $new_slug );
@@ -359,8 +369,6 @@ class Game {
 	 * @return bool
 	 */
 	public static function delete_with_content( string $slug ): bool {
-		global $wpdb;
-
 		$game = self::find_by_slug( $slug );
 		if ( ! $game || $slug === '' ) {
 			return false;
@@ -368,6 +376,35 @@ class Game {
 		$game_id = (int) $game->id;
 
 		$savepoint = Transaction::begin( 'be_game_delete_with_content' );
+
+		if ( ! self::clear_content( $game_id ) || Manager::delete( 'games', [ 'id' => $game_id ] ) === false ) {
+			Transaction::rollback( $savepoint );
+			return false;
+		}
+
+		Transaction::commit( $savepoint );
+		Game_Stats_Controller::invalidate( $slug );
+		Demo_Chronicle::unschedule( $game_id );
+		return true;
+	}
+
+	/**
+	 * Deletes everything stored under a chronicle except the `games` row itself - its id, slug and settings all
+	 * survive. Runs in its own transaction when not already inside one.
+	 *
+	 * @param int $game_id
+	 * @return bool
+	 */
+	public static function clear_content( int $game_id ): bool {
+		global $wpdb;
+
+		$game = self::find( $game_id );
+		if ( ! $game ) {
+			return false;
+		}
+		$slug = (string) $game->slug;
+
+		$savepoint = Transaction::begin( 'be_game_clear_content' );
 		$ok        = true;
 
 		foreach ( Character::all_for_game( $slug ) as $character ) {
@@ -405,11 +442,12 @@ class Game {
 			Manager::delete( 'npc_castings', [ 'game_id' => $game_id ] ),
 			Manager::delete( 'after_game_reports', [ 'game_id' => $game_id ] ),
 			Manager::delete( 'notification_queue', [ 'game_id' => $game_id ] ),
+			Manager::delete( 'mail_log', [ 'game_id' => $game_id ] ),
 			Manager::delete( 'release_batches', [ 'game_id' => $game_id ] ),
 			Manager::delete( 'game_sessions', [ 'game_id' => $game_id ] ),
 			Manager::delete( 'connections', [ 'game_id' => $game_id ] ),
 			Manager::delete( 'game_members', [ 'game_id' => $game_id ] ),
-			Manager::delete( 'games', [ 'id' => $game_id ] ),
+			Manager::delete( 'join_requests', [ 'game_id' => $game_id ] ),
 		];
 
 		if ( ! $ok || in_array( false, $deletes, true ) ) {
@@ -418,7 +456,6 @@ class Game {
 		}
 
 		Transaction::commit( $savepoint );
-		Game_Stats_Controller::invalidate( $slug );
 		return true;
 	}
 
@@ -447,7 +484,7 @@ class Game {
 	 * Counts everything stored under a chronicle that deleting its row alone would leave behind.
 	 *
 	 * @param object $game A games row.
-	 * @return array{characters:int,plots:int,world_objects:int,templates:int,schema_blocks:int,creature_stacks:int,saved_queries:int,attestations:int,transfers:int,factions:int,positions:int,secrets:int,game_sessions:int,attendance:int,release_batches:int,notification_queue:int,npc_castings:int,after_game_reports:int}
+	 * @return array{characters:int,plots:int,world_objects:int,templates:int,schema_blocks:int,creature_stacks:int,saved_queries:int,attestations:int,transfers:int,factions:int,positions:int,secrets:int,game_sessions:int,attendance:int,release_batches:int,notification_queue:int,npc_castings:int,after_game_reports:int,join_requests:int}
 	 */
 	public static function content_counts( object $game ): array {
 		$id   = (int) $game->id;
@@ -472,6 +509,7 @@ class Game {
 			'notification_queue' => self::count_rows( 'notification_queue', 'game_id = %d', $id ),
 			'npc_castings' => self::count_rows( 'npc_castings', 'game_id = %d', $id ),
 			'after_game_reports' => self::count_rows( 'after_game_reports', 'game_id = %d', $id ),
+			'join_requests' => self::count_rows( 'join_requests', 'game_id = %d', $id ),
 		];
 	}
 
@@ -527,8 +565,9 @@ class Game {
 	/**
 	 * Decode a row's settings JSON field into an object in place.
 	 *
-	 * @param object|null $row Row from the database, or null when the query found nothing.
-	 * @return object|null The same row, or null when null was passed in.
+	 * @template T of object|null
+	 * @param T $row Row from the database, or null when the query found nothing.
+	 * @return T The same row, or null when null was passed in.
 	 */
 	private static function decode_settings( $row ) {
 		if ( $row && isset( $row->settings ) && is_string( $row->settings ) ) {

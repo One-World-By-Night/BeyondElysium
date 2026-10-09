@@ -39,6 +39,8 @@ return [
 			'negatives'      => [ 'source' => 'properties', 'property' => 'negatives', 'atomic' => false ],
 			// Item Availability is not atomic.
 			'availability'   => [ 'source' => 'properties', 'property' => 'availability', 'atomic' => false ],
+			// Item Tempers is not atomic.
+			'tempers'        => [ 'source' => 'properties', 'property' => 'tempers', 'atomic' => false ],
 		],
 	],
 

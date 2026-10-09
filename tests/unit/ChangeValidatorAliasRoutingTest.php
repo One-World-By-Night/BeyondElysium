@@ -95,8 +95,7 @@ class ChangeValidatorAliasRoutingTest extends TestCase {
 	// ---------------------------------------------------------------------------------
 
 	/**
-	 * The dangerous case this class's own docblock warns about: a family the catalog renamed, held under sheet_data's OLD
-	 * spelling.
+	 * A family the catalog renamed, held under sheet_data's old spelling.
 	 */
 	public function test_removing_a_row_already_held_under_the_old_name_keeps_the_old_name(): void {
 		$sheet = [ 'blood-magic' => [ [ 'name' => 'Path of Dry Nile', 'level' => 3 ] ] ];

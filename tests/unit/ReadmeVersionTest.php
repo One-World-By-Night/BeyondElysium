@@ -20,12 +20,12 @@ class ReadmeVersionTest extends TestCase {
 	}
 
 	public function test_the_status_line_names_the_current_version(): void {
-		$this->assertSame( 1, preg_match( '/^\*\*`v([0-9][0-9.]*)`/m', $this->readme, $found ), 'README has no **`vX.Y.Z`** status line' );
+		$this->assertSame( 1, preg_match( '/^\*\*`v([0-9][0-9.]*(?:-dev\.[0-9]+)?)`/m', $this->readme, $found ), 'README has no **`vX.Y.Z`** status line' );
 		$this->assertSame( $this->version, $found[1], 'README status line is not the plugin version' );
 	}
 
 	public function test_every_zip_it_names_is_the_current_version(): void {
-		$this->assertGreaterThan( 0, preg_match_all( '/beyond-elysium-([0-9][0-9.]*)\.zip/', $this->readme, $found ), 'README names no zip' );
+		$this->assertGreaterThan( 0, preg_match_all( '/beyond-elysium-([0-9][0-9.]*(?:-dev\.[0-9]+)?)\.zip/', $this->readme, $found ), 'README names no zip' );
 		foreach ( $found[1] as $named ) {
 			$this->assertSame( $this->version, $named, 'README names a zip that is not the current version' );
 		}

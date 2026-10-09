@@ -1,0 +1,157 @@
+{
+  "format": 1,
+  "kind": "item_catalog",
+  "slug": "laws-of-the-night-revised",
+  "name": "Laws of the Night Revised Edition",
+  "book": "Laws of the Night Revised Edition",
+  "code": "WW05013",
+  "provenance": {
+    "sources": [
+      "Mind's Eye Theatre: Laws of the Night Revised Edition (WW05013), \"Weapon Examples\"/Armor chapter - every entry checked against Dark Epics' own master list; a same-name entry whose stats match exactly is left out of this file (Knife/Dagger, Pistol, Heavy Pistol, Submachine Gun, Chain-mail, Plate mail); a same-name entry with real stat differences is kept here under its own name.",
+      "Every entry read directly from the book's own page images (not OCR), per reference-wod-scan-ocr-lessons.",
+      "This copy's own printed page numbers are set in a stylized decorative font this pass could not read back with confidence (unlike Dark Epics' cleaner scan), and the PDF carries no embedded page-label metadata to check them against. Each entry's `source.page` is the PDF's own page index in this file instead, which this chapter's layout suggests tracks the printed folio closely but is not a confirmed match - flagged honestly rather than guessed at digit by digit."
+    ],
+    "tool": "read directly, 2026-10-04"
+  },
+  "notes": [
+    "Club/Ax prints one stat block covering two different weapons at once (\"Bonus Traits: Club: 2, Ax: 3\", \"Damage: Club - One health level; Ax - Two health levels\") - split here into two ordinary entries, Club and Ax, since a catalog entry's own `bonus`/`damage_amount` are each a single number.",
+    "Concealability \"None.\" in this book's own text is this catalog's own \"NA\" term (no way to conceal it at all) - the same meaning Dark Epics already uses for several of its own entries, applied here for consistency rather than introducing a second spelling of the same value.",
+    "This chapter's firearms carry no `Rate` line at all, unlike Dark Epics' own printing of the same weapons - left out of `description` rather than invented.",
+    "Reinforced (Bulletproof) Vest keeps this book's own full printed name, distinct from Dark Epics' shorter \"Reinforced Vest\" - the two are different entries with different stats, not a renamed duplicate."
+  ],
+  "items": [
+    {
+      "key": "wooden-stake",
+      "name": "Wooden Stake",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Melee",
+        "bonus": 2,
+        "negatives": [ { "name": "Short" } ],
+        "concealability": "Jacket",
+        "damage_amount": 1,
+        "availability": [ { "name": "Any" } ],
+        "powers": "Staking"
+      },
+      "source": { "book": "Laws of the Night Revised Edition", "code": "WW05013", "page": 206 }
+    },
+    {
+      "key": "club",
+      "name": "Club",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Melee",
+        "bonus": 2,
+        "negatives": [ { "name": "Clumsy" } ],
+        "concealability": "Trenchcoat",
+        "damage_amount": 1,
+        "availability": [ { "name": "Any" } ]
+      },
+      "source": { "book": "Laws of the Night Revised Edition", "code": "WW05013", "page": 206 }
+    },
+    {
+      "key": "ax",
+      "name": "Ax",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Melee",
+        "bonus": 3,
+        "negatives": [ { "name": "Clumsy" } ],
+        "concealability": "Trenchcoat",
+        "damage_amount": 2,
+        "availability": [ { "name": "Any" } ],
+        "powers": "Destroy Shield"
+      },
+      "source": { "book": "Laws of the Night Revised Edition", "code": "WW05013", "page": 206 }
+    },
+    {
+      "key": "fencing-blades",
+      "name": "Fencing Blades",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Melee",
+        "bonus": 2,
+        "negatives": [ { "name": "Fragile" } ],
+        "concealability": "Trenchcoat",
+        "damage_amount": 1,
+        "availability": [ { "name": "Any. A fencing foil attracts less police attention than an ornamental saber, especially if the character is wearing or carrying fencing gear" } ],
+        "powers": "Speed"
+      },
+      "source": { "book": "Laws of the Night Revised Edition", "code": "WW05013", "page": 206 }
+    },
+    {
+      "key": "longbow",
+      "name": "Longbow",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Ranged",
+        "bonus": 6,
+        "negatives": [ { "name": "Fragile" }, { "name": "Clumsy" }, { "name": "Heavy" } ],
+        "concealability": "NA",
+        "damage_amount": 2,
+        "availability": [ { "name": "Any" } ],
+        "powers": "Armor-Piercing, Staking, Destroy Shield"
+      },
+      "description": "Modern compound bows are smaller and use pulley systems to generate powerful pull; they do not have the Negative Trait Clumsy, but give the user only five Bonus Traits.",
+      "source": { "book": "Laws of the Night Revised Edition", "code": "WW05013", "page": 206 }
+    },
+    {
+      "key": "rifle",
+      "name": "Rifle",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Firearm",
+        "bonus": 3,
+        "negatives": [ { "name": "Loud" } ],
+        "concealability": "NA",
+        "damage_amount": 2,
+        "availability": [ { "name": "Any, if registered; Police 4, Street 4 or Underworld 3 otherwise" } ],
+        "powers": "High-Caliber (only with ammunition acquired for it separately)"
+      },
+      "source": { "book": "Laws of the Night Revised Edition", "code": "WW05013", "page": 207 }
+    },
+    {
+      "key": "shotgun",
+      "name": "Shotgun",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Firearm",
+        "bonus": 3,
+        "negatives": [ { "name": "Loud" } ],
+        "concealability": "NA",
+        "damage_amount": 2,
+        "availability": [ { "name": "Any, if registered. Police 4, Street 4 or Underworld 3 otherwise" } ],
+        "powers": "Spray, Mass-Trauma"
+      },
+      "source": { "book": "Laws of the Night Revised Edition", "code": "WW05013", "page": 207 }
+    },
+    {
+      "key": "ballistic-vest",
+      "name": "Ballistic Vest",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Armor",
+        "item_subtype": "Modern",
+        "level": 2,
+        "negatives": [ { "name": "Heavy" } ],
+        "availability": [ { "name": "Police 4, or Underworld 3" } ]
+      },
+      "description": "Health Levels: 2.",
+      "source": { "book": "Laws of the Night Revised Edition", "code": "WW05013", "page": 208 }
+    },
+    {
+      "key": "reinforced-bulletproof-vest",
+      "name": "Reinforced (Bulletproof) Vest",
+      "object_type": "item",
+      "properties": {
+        "item_type": "Armor",
+        "item_subtype": "Modern",
+        "level": 3,
+        "negatives": [ { "name": "Heavy" }, { "name": "Clumsy" } ],
+        "availability": [ { "name": "Police 5, or Underworld 4" } ]
+      },
+      "description": "Health Levels: 3.",
+      "source": { "book": "Laws of the Night Revised Edition", "code": "WW05013", "page": 208 }
+    }
+  ]
+}

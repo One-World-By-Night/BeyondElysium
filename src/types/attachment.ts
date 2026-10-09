@@ -5,7 +5,7 @@
 /**
  * The kind of entity an attachment may belong to.
  */
-export type AttachmentEntityType = 'plot' | 'item' | 'location';
+export type AttachmentEntityType = 'plot' | 'item' | 'location' | 'character';
 
 /**
  * A single uploaded file's public metadata, as returned by the attachments endpoints.

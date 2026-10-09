@@ -47,7 +47,7 @@ class ChronicleCorrelationBackfillTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Constructs the belt-and-braces case directly.
+	 * A post already claimed by another row: the case is constructed directly.
 	 */
 	public function test_a_post_already_claimed_by_another_row_leaves_the_new_row_null(): void {
 		$post_id = $this->chronicle( 'thread-backfill-claimed-a' );

@@ -15,6 +15,7 @@ class ChangesControllerApprovalTest extends WP_UnitTestCase {
 	private string $game_slug = 'thread-test-approval-game';
 	private int $character_id;
 	private int $st_id;
+	private int $player_id;
 
 	public function setUp(): void {
 		parent::setUp();
@@ -26,10 +27,10 @@ class ChangesControllerApprovalTest extends WP_UnitTestCase {
 			'created_by' => 1, 'created_at' => current_time( 'mysql' ), 'updated_at' => current_time( 'mysql' ),
 		] );
 
-		$player = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+		$this->player_id    = self::factory()->user->create( [ 'role' => 'subscriber' ] );
 		$this->character_id = Character::create( [
 			'name' => 'Approval Test Character', 'stack_slug' => 'vampire',
-			'owner_type' => 'chronicle', 'owner_slug' => $this->game_slug, 'wp_user_id' => $player,
+			'owner_type' => 'chronicle', 'owner_slug' => $this->game_slug, 'wp_user_id' => $this->player_id,
 		] );
 		Character::update_xp( $this->character_id, 10, 10 );
 
@@ -40,8 +41,12 @@ class ChangesControllerApprovalTest extends WP_UnitTestCase {
 		return rest_get_server()->dispatch( $request );
 	}
 
+	/**
+	 * Submitted by the character's own owning player, not the administrator: an administrator is a manager everywhere
+	 * (`be_manage_characters` is site-wide), and a manager's own direct addition of a real catalog item is free.
+	 */
 	private function submit_change(): int {
-		wp_set_current_user( $this->st_id );
+		wp_set_current_user( $this->player_id );
 		$request = new WP_REST_Request( 'POST', "/be/v1/{$this->game_slug}/characters/{$this->character_id}/changes" );
 		$request->set_param( 'change_type', 'add_trait' );
 		$request->set_param( 'category', 'vampire-merits' );

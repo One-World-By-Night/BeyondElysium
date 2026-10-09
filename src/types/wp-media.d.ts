@@ -92,6 +92,11 @@ interface BeyondElysiumGlobal {
 	 * The paper this site prints on unless the viewer picks another.
 	 */
 	paperSize?: 'letter' | 'a4';
+	/**
+	 * The logged-in viewer's own WordPress user id, 0 for a logged-out visitor. It arrives as a numeric string ("0",
+	 * "1", ...) despite the type - read it through `Number()` before comparing.
+	 */
+	currentUserId?: number | string;
 }
 
 /**

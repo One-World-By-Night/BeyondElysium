@@ -13,8 +13,8 @@ use WP_REST_Request;
 use WP_UnitTestCase;
 
 /**
- * Trace 3: a Storyteller creates Friday's session with a downtime window Monday to Thursday 11:59pm and a default
- * batch scheduled Friday 5pm.
+ * A Storyteller creates Friday's session with a downtime window Monday to Thursday 11:59pm and a default batch
+ * scheduled Friday 5pm.
  */
 class GameCycleWorkflowTest extends WP_UnitTestCase {
 

@@ -90,8 +90,7 @@ class SchemaBlockRoundTripStripThreadTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * The third real write path (found executing this box, not named in its own text): a chronicle's first edit forks the
-	 * global block via find_or_create_fork_for_game().
+	 * A chronicle's first edit forks the global block via find_or_create_fork_for_game().
 	 */
 	public function test_a_new_fork_is_not_born_with_pt_keys_from_the_decorated_global_block(): void {
 		Schema_Block::create( [
