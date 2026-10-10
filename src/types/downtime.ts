@@ -15,6 +15,16 @@ export type DowntimeAnswerReleaseState =
 	'not_answered' | 'immediate' | 'draft' | 'scheduled' | 'released';
 
 /**
+ * What an answer decided about the character's action: no action charged, charged to a background (and whether that
+ * use still stands), or answered before the choice was asked.
+ */
+export interface DowntimeCharge {
+	state: 'none' | 'charged' | 'charge_removed' | 'not_recorded';
+	name?: string;
+	cost?: number;
+}
+
+/**
  * One row in the Storyteller downtime queue.
  */
 export interface DowntimeQueueRow {
@@ -27,6 +37,10 @@ export interface DowntimeQueueRow {
 	last_action_at: string | null;
 	answered: boolean;
 	answer_release_state: DowntimeAnswerReleaseState;
+	/**
+	 * Null while the row is unanswered.
+	 */
+	charge: DowntimeCharge | null;
 	window_state: DowntimeWindowState;
 	/**
 	 * The plot's own staff owner, or null when unassigned.

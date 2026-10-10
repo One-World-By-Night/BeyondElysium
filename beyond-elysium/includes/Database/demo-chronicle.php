@@ -131,8 +131,14 @@ return [
 	],
 
 	'downtime_actions' => [
-		[ 'character' => 'Ezra Stormcrow', 'session' => 'past-2', 'assigned_to' => 'storyteller' ],
-		[ 'character' => 'Naomi Two Rivers', 'session' => 'past-2', 'assigned_to' => 'player' ],
+		[
+			'character'   => 'Ezra Stormcrow', 'session' => 'past-2', 'assigned_to' => 'storyteller',
+			'answer'      => [ 'text' => '<p>The pack finds the trail cold, and nothing is spent.</p>', 'charge' => null ],
+		],
+		[
+			'character'   => 'Naomi Two Rivers', 'session' => 'past-2', 'assigned_to' => 'player',
+			'answer'      => [ 'text' => '<p>Your kin come through with a name and a place to look.</p>', 'charge' => [ 'name' => 'Kinfolk', 'cost' => 1 ] ],
+		],
 	],
 
 	'factions' => [

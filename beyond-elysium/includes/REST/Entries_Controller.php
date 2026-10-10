@@ -11,7 +11,9 @@ use BeyondElysium\Models\Plot;
 use BeyondElysium\Models\Plot_Entry;
 use BeyondElysium\Models\Release_Batch;
 use BeyondElysium\Services\Action_Allocator;
+use BeyondElysium\Database\Transaction;
 use BeyondElysium\Services\Audience;
+use BeyondElysium\Services\Background_Ledger;
 use BeyondElysium\Services\Downtime_Window;
 use BeyondElysium\Services\Keep_Current;
 use BeyondElysium\Services\St_Visibility;
@@ -154,6 +156,11 @@ class Entries_Controller extends Base_Controller {
 			return $audience;
 		}
 
+		$charge = $this->resolve_action_charge( $request, (int) $plot->id, ! empty( $plot->game_date ) ? (string) $plot->game_date : null, (string) $entry_type );
+		if ( is_wp_error( $charge ) ) {
+			return $charge;
+		}
+
 		$insert = [
 			'plot_id'                => (int) $plot->id,
 			'author_id'              => get_current_user_id(),
@@ -173,11 +180,35 @@ class Entries_Controller extends Base_Controller {
 			}
 		}
 
+		// The answer and the ledger use it charges are saved together or not at all.
+		$unit = Transaction::begin( 'be_answer_charge' );
+		if ( $charge !== null && $charge['charged'] ) {
+			$use = Background_Ledger::record(
+				(int) Action_Allocator::actor_character_id( (int) $plot->id ),
+				(string) $plot->game_date,
+				[
+					'name' => $charge['name'],
+					'cost' => $charge['cost'],
+					'text' => wp_trim_words( wp_strip_all_tags( (string) $content ), 12, '…' ),
+				]
+			);
+			if ( is_wp_error( $use ) ) {
+				Transaction::rollback( $unit );
+				return $use;
+			}
+			$charge['use_id'] = (int) $use['id'];
+		}
+		if ( $charge !== null ) {
+			$insert['action_charge'] = $charge;
+		}
+
 		$id = Plot_Entry::create( $insert );
 
 		if ( ! $id ) {
+			Transaction::rollback( $unit );
 			return $this->error( 'create_failed', __( 'Failed to create entry.', 'beyond-elysium' ), 500 );
 		}
+		Transaction::commit( $unit );
 
 		$entry = Plot_Entry::find( $id );
 		if ( $entry ) {
@@ -418,8 +449,53 @@ class Entries_Controller extends Base_Controller {
 			return $this->error( 'apr_managed', __( 'This entry is managed by the Action & Rumor system and cannot be deleted here.', 'beyond-elysium' ), 409 );
 		}
 
+		// A charged answer takes the ledger use it charged with it.
+		$unit      = Transaction::begin( 'be_answer_delete' );
+		$charge_id = is_array( $entry->action_charge ?? null ) ? (int) ( $entry->action_charge['use_id'] ?? 0 ) : 0;
+		if ( $charge_id > 0 ) {
+			Background_Ledger::clear_entry( $charge_id );
+		}
 		Plot_Entry::delete( (int) $entry->id );
+		Transaction::commit( $unit );
 		return $this->success( null, 204 );
+	}
+
+	/**
+	 * The decision an answer on a character's dated downtime carries: whether answering cost the character an action,
+	 * and which background the action is charged to. Null for anything that is not such an answer.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @param int              $plot_id
+	 * @param string|null      $game_date The plot's game date, or null on a plot with none.
+	 * @return array{charged:bool,name?:string,cost?:int}|null|\WP_Error
+	 */
+	private function resolve_action_charge( $request, int $plot_id, ?string $game_date, string $entry_type ) {
+		if ( $entry_type !== 'response' || empty( $game_date ) || Action_Allocator::actor_character_id( $plot_id ) === null ) {
+			return null;
+		}
+
+		$required = $this->error( 'action_charge_required', __( 'Say whether this answer costs the character an action.', 'beyond-elysium' ), 400 );
+		$charge   = $request->get_param( 'action_charge' );
+		if ( ! is_array( $charge ) || ! array_key_exists( 'charged', $charge ) ) {
+			return $required;
+		}
+		$charged = filter_var( $charge['charged'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE );
+		if ( $charged === null ) {
+			return $required;
+		}
+		if ( ! $charged ) {
+			return [ 'charged' => false ];
+		}
+
+		$name = sanitize_text_field( (string) ( $charge['name'] ?? '' ) );
+		if ( $name === '' ) {
+			return $this->error( 'action_charge_required', __( 'Name the background the action is charged to.', 'beyond-elysium' ), 400 );
+		}
+		$cost = isset( $charge['cost'] ) ? (int) $charge['cost'] : 1;
+		if ( $cost < 1 ) {
+			return $this->error( 'invalid_param', __( 'An action costs at least 1.', 'beyond-elysium' ), 400 );
+		}
+		return [ 'charged' => true, 'name' => $name, 'cost' => $cost ];
 	}
 
 	/**

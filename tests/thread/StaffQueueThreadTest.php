@@ -149,6 +149,7 @@ class StaffQueueThreadTest extends WP_UnitTestCase {
 		wp_set_current_user( $manager );
 		$response_request = new WP_REST_Request( 'POST', "/be/v1/{$this->game_slug}/plots/{$plot_id}/entries" );
 		$response_request->set_param( 'entry_type', 'response' );
+		$response_request->set_param( 'action_charge', [ 'charged' => false ] );
 		$response_request->set_param( 'content', 'You find some.' );
 		$response_request->set_param( 'held', false );
 		$this->dispatch( $response_request );

@@ -6,6 +6,7 @@
 import { useEffect, useRef, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
+import { unbuyableLine } from '../../lib/raisedByPool';
 import type {
 	CreationTally as CreationTallyReport,
 	CreationTallyLimitFlag,
@@ -24,6 +25,10 @@ export interface CreationTallyPanelProps {
 	 */
 	stackSlug?: string;
 	sheetData?: Record< string, unknown >;
+	/**
+	 * Shows a player what the build holds that only play can raise; a Storyteller sets any rating, so never shown to one.
+	 */
+	warnsPlayer?: boolean;
 }
 
 const LIMIT_REASON_LABEL: Record< string, string > = {
@@ -255,6 +260,7 @@ export function CreationTallyPanel( {
 	characterId,
 	stackSlug,
 	sheetData,
+	warnsPlayer,
 }: CreationTallyPanelProps ) {
 	const [ report, setReport ] = useState< CreationTallyReport | null >(
 		null
@@ -388,6 +394,18 @@ export function CreationTallyPanel( {
 					<StepLine key={ `${ step.kind }-${ i }` } step={ step } />
 				) ) }
 			</ul>
+
+			{ warnsPlayer && ( report.unbuyable ?? [] ).length > 0 && (
+				<ul className="be-creation-tally__unbuyable" role="alert">
+					{ report.unbuyable.map( ( item ) => (
+						<li
+							key={ `${ item.kind }-${ item.section }-${ item.pool }` }
+						>
+							{ unbuyableLine( item ) }
+						</li>
+					) ) }
+				</ul>
+			) }
 		</div>
 	);
 }

@@ -612,6 +612,14 @@ class Catalog_Validator {
 			}
 			$name = (string) ( $pool['name'] ?? $i );
 
+			if ( array_key_exists( 'book_max', $pool ) ) {
+				$book_max = $pool['book_max'];
+				$ceiling  = is_int( $pool['max'] ?? null ) ? $pool['max'] : PHP_INT_MAX;
+				if ( ! is_int( $book_max ) || $book_max < 1 || $book_max > $ceiling ) {
+					$errors[] = sprintf( 'pool "%s" `book_max` must be a whole number from 1 up to its `max` - the most the book allows', $name );
+				}
+			}
+
 			if ( array_key_exists( 'sliding_cost', $pool ) && $pool['sliding_cost'] !== null ) {
 				if ( ! is_array( $pool['sliding_cost'] ) || ( $pool['sliding_cost']['equals_level'] ?? null ) !== true ) {
 					$errors[] = sprintf( 'pool "%s" has a `sliding_cost` that is not {"equals_level": true}', $name );

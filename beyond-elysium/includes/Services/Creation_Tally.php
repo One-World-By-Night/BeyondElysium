@@ -41,6 +41,7 @@ class Creation_Tally {
 				'pools'          => [],
 				'limits'         => [],
 				'grants_missing' => [],
+				'unbuyable'      => [],
 				'xp'             => [ 'starting' => $starting_xp, 'needed' => 0, 'left' => $starting_xp ],
 			];
 		}
@@ -119,8 +120,60 @@ class Creation_Tally {
 			'pools'          => self::pool_report( $pools ),
 			'limits'         => $limits,
 			'grants_missing' => $grants_missing,
+			'unbuyable'      => self::unbuyable( $sections, $blocks, $sheet_data, $resolved, $covered ),
 			'xp'             => [ 'starting' => $starting_xp, 'needed' => $needed, 'left' => $starting_xp - $needed ],
 		];
+	}
+
+	// -------------------------------------------------------------------------
+	// unbuyable
+	// -------------------------------------------------------------------------
+
+	/**
+	 * What no starting experience can buy: the dots of a pool that is only ever raised in play (`raised_by`) that no
+	 * step covers for free, and a pool set above the most the book allows (`book_max`).
+	 *
+	 * @param array<int,object>    $sections
+	 * @param array<string,object> $blocks
+	 * @param array<string,mixed>  $sheet_data
+	 * @param array<string,mixed>  $resolved
+	 * @param array<string,bool>   $covered
+	 * @return array<int,array<string,mixed>> `{kind, section, pool, dots}` or `{kind, section, pool, value, max}`.
+	 */
+	private static function unbuyable( array $sections, array $blocks, array $sheet_data, array $resolved, array $covered ): array {
+		$found = [];
+		foreach ( $sections as $section ) {
+			$slug  = (string) ( $section->block_slug ?? '' );
+			$block = $blocks[ $slug ] ?? null;
+			if ( $block === null || ( $block->section_type ?? null ) !== 'resource_pool' ) {
+				continue;
+			}
+			$held_map = self::as_array( $sheet_data[ $slug ] ?? [] );
+			foreach ( (array) ( $block->definition->pools ?? [] ) as $pool ) {
+				$name = (string) ( $pool->name ?? '' );
+				if ( $name === '' ) {
+					continue;
+				}
+				$start   = array_key_exists( $slug . '.' . $name, $resolved ) ? (int) $resolved[ $slug . '.' . $name ] : (int) ( $pool->default_start ?? 0 );
+				$current = self::pool_permanent( $held_map[ $name ] ?? null, $start );
+
+				if ( isset( $pool->raised_by ) ) {
+					$dots = 0;
+					for ( $d = 1; $d <= $current - $start; $d++ ) {
+						if ( ! isset( $covered[ $slug . '|' . $name . '#' . $d ] ) ) {
+							$dots++;
+						}
+					}
+					if ( $dots > 0 ) {
+						$found[] = [ 'kind' => 'raised_by', 'section' => $slug, 'pool' => $name, 'dots' => $dots ];
+					}
+				}
+				if ( isset( $pool->book_max ) && $current > (int) $pool->book_max ) {
+					$found[] = [ 'kind' => 'book_max', 'section' => $slug, 'pool' => $name, 'value' => $current, 'max' => (int) $pool->book_max ];
+				}
+			}
+		}
+		return $found;
 	}
 
 	// -------------------------------------------------------------------------

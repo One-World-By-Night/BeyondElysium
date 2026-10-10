@@ -444,8 +444,8 @@ clause_id,path,subject,pc,npc,coordinators,modified,suggested_family,suggested_n
 8506,10.k.ii.4,"Non-Mummy Full Supernaturals in possession of Mummy items made by NPC’s","Coordinator Approval",Unregulated,Mummy,2025-12-12,,,,,,,,
 14932,10.k.ii.5,"Vampires and other unnatural creatures benefitting from Mummy Magic Items","Coordinator Approval",Unregulated,Mummy,2025-12-12,,,,,,,,
 23538,10.k.ii.6,"Possession and performing the Mummy version of the Spell of Life, Elixir of Immortality or the Ritual of Going Westward",Disallowed,"Coordinator Approval",Mummy,2026-05-26,,,,,,,,
-23472,10.k.iii.1,"Balance, Direction or Quest 6, 7, 8","Coordinator Approval","Coordinator Approval",Mummy,2026-05-06,,,,,,,,
-23473,10.k.iii.2,"Balance or Quest 9-10",Disallowed,"Coordinator Approval",Mummy,2026-05-06,,,,,,,,
+23472,10.k.iii.1,"Balance, Direction or Quest 6, 7, 8","Coordinator Approval","Coordinator Approval",Mummy,2026-05-06,,,resources,Balance,6,8,,"Owner decided 2026-10-09: Balance (Direction or Quest for the other lineages) is one pool; 6 to 8 waits for a Storyteller with this clause as the reason."
+23473,10.k.iii.2,"Balance or Quest 9-10",Disallowed,"Coordinator Approval",Mummy,2026-05-06,,,resources,Balance,9,10,,"Owner decided 2026-10-09: 9 and 10 wait for a Storyteller with this clause as the reason; a player character is Disallowed, an NPC needs the Coordinator."
 8516,10.l.i.1,"Dharma 6+ Kuei-Jin","Coordinator Approval","Coordinator Approval",Kuei-Jin,2025-11-02,,,,,,,,
 8518,10.l.i.2,Dhampyr,"Coordinator Notify",Unregulated,Kuei-Jin,2025-12-12,,,,,,,,
 11188,10.l.i.3,"Jin Hai",Disallowed,"Coordinator Approval",Kuei-jin,2025-12-12,,,,,,,,

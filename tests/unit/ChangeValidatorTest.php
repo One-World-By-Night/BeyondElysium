@@ -30,6 +30,7 @@ class ChangeValidatorTest extends TestCase {
 				'pools' => [
 					(object) [ 'name' => 'Willpower', 'cost_per_dot' => 3, 'default_start' => 2 ],
 					(object) [ 'name' => 'Glory' ],
+					(object) [ 'name' => 'Balance', 'default_start' => 1, 'max' => 10, 'sliding_cost' => (object) [ 'equals_level' => true ] ],
 				],
 			] ],
 			'identity'    => (object) [ 'section_type' => 'identity_field', 'definition' => (object) [
@@ -190,6 +191,32 @@ class ChangeValidatorTest extends TestCase {
 
 		$this->assertTrue( $result['ok'] );
 		$this->assertSame( [ 'Willpower' => [ 'permanent' => 4, 'temporary' => 4 ] ], $result['change_data']['values'] );
+	}
+
+	public function test_a_player_cannot_raise_a_pool_past_its_own_maximum_but_a_storyteller_can(): void {
+		$sheet = [ 'pools' => [ 'Balance' => [ 'permanent' => 10, 'temporary' => 10 ] ] ];
+
+		$raise = $this->check( 'modify_resource', [ 'block_slug' => 'pools', 'values' => [ 'Balance' => [ 'permanent' => 11, 'temporary' => 11 ] ] ], $sheet );
+		$staff = $this->check( 'modify_resource', [ 'block_slug' => 'pools', 'values' => [ 'Balance' => [ 'permanent' => 11, 'temporary' => 11 ] ] ], $sheet, true );
+		$lower = $this->check( 'modify_resource', [ 'block_slug' => 'pools', 'values' => [ 'Balance' => [ 'permanent' => 9, 'temporary' => 9 ] ] ], $sheet );
+
+		$this->assertSame( 'pool_above_maximum', $raise['code'] );
+		$this->assertTrue( $staff['ok'] );
+		$this->assertTrue( $lower['ok'] );
+	}
+
+	public function test_a_pool_already_above_its_maximum_may_change_another_way(): void {
+		// An imported or Storyteller-set rating above the maximum stays editable in its temporary points.
+		$sheet  = [ 'pools' => [ 'Balance' => [ 'permanent' => 12, 'temporary' => 12 ] ] ];
+		$result = $this->check( 'modify_resource', [ 'block_slug' => 'pools', 'values' => [ 'Balance' => [ 'permanent' => 12, 'temporary' => 11 ] ] ], $sheet );
+
+		$this->assertTrue( $result['ok'] );
+	}
+
+	public function test_a_player_may_buy_a_pool_priced_by_level(): void {
+		$result = $this->check( 'modify_resource', [ 'block_slug' => 'pools', 'values' => [ 'Balance' => [ 'permanent' => 2, 'temporary' => 2 ] ] ] );
+
+		$this->assertTrue( $result['ok'] );
 	}
 
 	public function test_a_select_field_accepts_only_its_options(): void {

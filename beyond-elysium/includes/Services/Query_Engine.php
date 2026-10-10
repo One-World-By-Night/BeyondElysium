@@ -394,14 +394,20 @@ class Query_Engine {
 				break;
 
 			case 'stack_relative_list':
-				$block = str_replace( '{stack}', $row->stack_slug, $map['block_pattern'] );
-				$data  = $row->sheet_data[ $block ] ?? null;
-				if ( $data !== null ) {
-					$sources = self::catalog_sources( $block, $row->owner_slug );
-					$value   = array_values( array_filter( $data, static function ( $item ) use ( $sources, $map ) {
-						return ( $sources[ $item['name'] ?? '' ] ?? '' ) === $map['filter_source'];
-					} ) );
-					$atomic  = self::block_is_atomic( $block, $row->owner_slug );
+				$block = self::stack_block_held( $row, $map );
+				$data  = $block !== null ? ( $row->sheet_data[ $block ] ?? null ) : null;
+				if ( $block !== null && is_array( $data ) ) {
+					$value = $data;
+					if ( isset( $map['filter_source'] ) || isset( $map['exclude_source'] ) ) {
+						$sources = self::catalog_sources( $block, $row->owner_slug );
+						$value   = array_values( array_filter( $data, static function ( $item ) use ( $sources, $map ) {
+							$source = $sources[ $item['name'] ?? '' ] ?? '';
+							return isset( $map['filter_source'] )
+								? $source === $map['filter_source']
+								: $source !== $map['exclude_source'];
+						} ) );
+					}
+					$atomic = self::block_is_atomic( $block, $row->owner_slug );
 				}
 				break;
 
@@ -412,6 +418,28 @@ class Query_Engine {
 		}
 
 		return [ 'type' => $type, 'value' => $value, 'atomic' => $atomic ];
+	}
+
+	/**
+	 * The block a `stack_relative_list` field-map entry reads from a character's sheet: the one its `block_pattern`
+	 * names for the character's own creature type, else the one block the sheet holds with the pattern's ending (a
+	 * creature type that shares another's block, such as Bête's Backgrounds).
+	 *
+	 * @param object              $row
+	 * @param array<string,mixed> $map A `stack_relative_list` field-map entry.
+	 */
+	private static function stack_block_held( object $row, array $map ): ?string {
+		$own = str_replace( '{stack}', (string) $row->stack_slug, (string) $map['block_pattern'] );
+		if ( isset( $row->sheet_data[ $own ] ) ) {
+			return $own;
+		}
+		$ending = str_replace( '{stack}', '', (string) $map['block_pattern'] );
+		foreach ( array_keys( (array) $row->sheet_data ) as $held ) {
+			if ( str_ends_with( (string) $held, $ending ) ) {
+				return (string) $held;
+			}
+		}
+		return null;
 	}
 
 	/**

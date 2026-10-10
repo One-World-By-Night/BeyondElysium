@@ -57,7 +57,7 @@ def emit_trait_list(slug, items=None, extra=None, sources=None, notes=None, name
     REPORT[slug] = {'items': len(its)}
 
 
-POOL_ORDER = ['name', 'value_type', 'default_start', 'min', 'max', 'max_lookup', 'name_lookup',
+POOL_ORDER = ['name', 'value_type', 'default_start', 'min', 'max', 'book_max', 'max_lookup', 'name_lookup',
               'cost_per_dot', 'free_dots', 'sliding_cost']
 FIELD_ORDER = ['name', 'field_type', 'required', 'options', 'options_ref', 'allow_custom', 'default', 'min', 'max']
 

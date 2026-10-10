@@ -152,6 +152,11 @@ export interface Plot {
 	 * Only present on the single-plot fetch.
 	 */
 	entries?: PlotEntry[];
+	/**
+	 * The character an action plot belongs to; present on the single-plot fetch for a Storyteller, null when no
+	 * character owns the plot.
+	 */
+	actor_character_id?: number | null;
 	connections?: Connection[];
 	/**
 	 * Only present on the single-plot fetch.
@@ -189,8 +194,26 @@ export interface PlotEntry {
 	 */
 	held: boolean;
 	release_batch_id: number | null;
+	/**
+	 * What a Storyteller decided about the character's action when answering a downtime; null on any other entry and
+	 * on an answer written before the choice was asked, and always null for a player.
+	 */
+	action_charge?: ActionCharge | null;
 	created_at: string;
 }
+
+/**
+ * Whether answering a downtime cost the character an action, as stored with the answer.
+ */
+export type ActionCharge =
+	| { charged: false }
+	| { charged: true; name: string; cost: number; use_id: number };
+
+/**
+ * The same decision as a request sends it.
+ */
+export type ActionChargeRequest =
+	{ charged: false } | { charged: true; name: string; cost: number };
 
 /**
  * A link between two entities, such as a character connected to a plot or to another character.
@@ -348,6 +371,10 @@ export interface CreateEntryRequest {
 	 * Required, non-empty, when audience is `characters`.
 	 */
 	audience_character_ids?: number[];
+	/**
+	 * Required on an answer to a character's dated downtime.
+	 */
+	action_charge?: ActionChargeRequest;
 }
 
 /**

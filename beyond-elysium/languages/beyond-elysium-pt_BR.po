@@ -15477,6 +15477,145 @@ msgstr "Motley"
 msgid "House"
 msgstr "Casa"
 
+#. translators: 1: a pool's name (Mercy), 2: how many dots are past the free ones
+#: includes/Services/Creation_Limits.php:23
+#: build/10.js:82
+#: build/28.js:88
+#: build/301.js:146
+#, php-format,js-format
+msgid "%1$s is set %2$d dot past the free dots a new character gets. More are raised in play."
+msgid_plural "%1$s is set %2$d dots past the free dots a new character gets. More are raised in play."
+msgstr[0] "%1$s está %2$d ponto acima dos pontos livres que um personagem novo recebe. Mais são elevados durante o jogo."
+msgstr[1] "%1$s está %2$d pontos acima dos pontos livres que um personagem novo recebe. Mais são elevados durante o jogo."
+
+#. translators: 1: a resource pool, such as Balance, 2: its highest rating
+#: includes/REST/Changes_Controller.php:1045
+#, php-format
+msgid "%1$s can't be raised above %2$d."
+msgstr "%1$s não pode passar de %2$d."
+
+#. translators: 1: a pool's name (Balance), 2: the most the book allows
+#: includes/Services/Change_Engine.php:1264
+#, php-format
+msgid "%1$s is above the book's maximum of %2$d."
+msgstr "%1$s está acima do máximo de %2$d do livro."
+
+#. translators: 1: a pool's name (Balance), 2: the rating it is set to, 3: the most the book allows
+#: includes/Services/Creation_Limits.php:35
+#: build/10.js:82
+#: build/28.js:88
+#: build/301.js:146
+#, php-format,js-format
+msgid "%1$s is set to %2$d, above the %3$d the book allows. A Storyteller sets it higher."
+msgstr "%1$s está em %2$d, acima dos %3$d que o livro permite. Um Narrador pode definir um valor maior."
+
+#: build/301.js:9
+#: build/501.js:2
+#: build/507.js:2
+#: build/722.js:15
+#: build/805.js:15
+#: build/887.js:15
+msgid "Does this answer cost the character an action?"
+msgstr "Esta resposta custa uma ação ao personagem?"
+
+#: build/301.js:9
+#: build/301.js:108
+#: build/501.js:2
+#: build/501.js:9
+#: build/507.js:2
+#: build/507.js:10
+#: build/722.js:15
+#: build/722.js:23
+#: build/805.js:15
+#: build/805.js:107
+#: build/887.js:15
+#: build/887.js:26
+msgid "No action charged"
+msgstr "Nenhuma ação cobrada"
+
+#: build/301.js:9
+#: build/501.js:2
+#: build/507.js:2
+#: build/722.js:15
+#: build/805.js:15
+#: build/887.js:15
+msgid "Charge an action"
+msgstr "Cobrar uma ação"
+
+#: build/301.js:9
+#: build/501.js:2
+#: build/507.js:2
+#: build/722.js:15
+#: build/805.js:15
+#: build/887.js:15
+msgid "Background to charge"
+msgstr "Antecedente a cobrar"
+
+#: build/301.js:10
+#: build/501.js:3
+#: build/507.js:3
+#: build/722.js:16
+#: build/805.js:16
+#: build/887.js:16
+msgid "Actions to charge"
+msgstr "Ações a cobrar"
+
+#. translators: 1: a background's name, 2: how many actions it has left
+#: build/301.js:10
+#: build/501.js:3
+#: build/507.js:3
+#: build/722.js:16
+#: build/805.js:16
+#: build/887.js:16
+#, js-format
+msgid "%1$s (%2$d left)"
+msgstr "%1$s (restam %2$d)"
+
+#. translators: 1: how many actions, 2: the background they are charged to
+#: build/301.js:108
+#: build/501.js:9
+#: build/507.js:10
+#: build/722.js:23
+#: build/805.js:107
+#: build/887.js:26
+#, js-format
+msgid "Charged %1$d action: %2$s"
+msgid_plural "Charged %1$d actions: %2$s"
+msgstr[0] "Cobrada %1$d ação: %2$s"
+msgstr[1] "Cobradas %1$d ações: %2$s"
+
+#. translators: %s: the background the action was charged to
+#: build/301.js:109
+#: build/501.js:10
+#: build/507.js:11
+#: build/722.js:24
+#: build/805.js:108
+#: build/887.js:27
+#, js-format
+msgid "Charged to %s, use since removed"
+msgstr "Cobrada de %s, uso removido depois"
+
+#: build/301.js:109
+#: build/501.js:10
+#: build/507.js:11
+#: build/722.js:24
+#: build/805.js:108
+#: build/887.js:27
+msgid "Action charge not recorded"
+msgstr "Cobrança de ação não registrada"
+
+#: includes/REST/Entries_Controller.php:476
+msgid "Say whether this answer costs the character an action."
+msgstr "Diga se esta resposta custa uma ação ao personagem."
+
+#: includes/REST/Entries_Controller.php:491
+msgid "Name the background the action is charged to."
+msgstr "Informe o antecedente de onde a ação é cobrada."
+
+#: includes/REST/Entries_Controller.php:495
+msgid "An action costs at least 1."
+msgstr "Uma ação custa pelo menos 1."
+
 #~ msgid "action"
 #~ msgid_plural "actions"
 #~ msgstr[0] "ação"

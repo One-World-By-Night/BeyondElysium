@@ -52,3 +52,37 @@
 .be-entry-form.be-entry-form button[type="submit"] {
 	align-self: flex-start;
 }
+
+.be-entry-form__charge.be-entry-form__charge {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5rem 1rem;
+	margin: 0;
+	padding: 0.5rem 0.75rem;
+	border: 1px solid var(--be-gray-21);
+	border-radius: 4px;
+}
+
+.be-entry-form__charge.be-entry-form__charge legend {
+	padding: 0 0.25rem;
+	font-weight: 600;
+}
+
+.be-entry-form__charge.be-entry-form__charge label {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+}
+
+.be-entry-form__charge-detail.be-entry-form__charge-detail {
+	display: inline-flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+
+.be-entry-form__charge.be-entry-form__charge input[type="number"] {
+	width: 4.5rem;
+	box-sizing: border-box;
+	padding: 0.3rem 0.5rem;
+}

@@ -921,9 +921,32 @@ export interface CreationTally {
 	pools: Record< string, CreationTallyPool >;
 	limits: CreationTallyLimitFlag[];
 	grants_missing: CreationTallyGrantEntry[];
+	/**
+	 * What no starting experience can buy: a pool only play raises, set past the free dots a new character gets.
+	 */
+	unbuyable: CreationTallyUnbuyable[];
 	xp: {
 		starting: number;
 		needed: number;
 		left: number;
 	};
 }
+
+/**
+ * What a new character may not start with: a `raised_by` pool's dots past the free ones the creation rules give it, or
+ * a pool set above the most the book allows.
+ */
+export type CreationTallyUnbuyable =
+	| {
+			kind: 'raised_by';
+			section: string;
+			pool: string;
+			dots: number;
+	  }
+	| {
+			kind: 'book_max';
+			section: string;
+			pool: string;
+			value: number;
+			max: number;
+	  };

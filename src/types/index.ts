@@ -880,6 +880,10 @@ export interface ResourcePool {
 	 */
 	free_dots?: number;
 	/**
+	 * The most the book allows. A pool may reach its own max, but a rating above this waits for a Storyteller.
+	 */
+	book_max?: number;
+	/**
 	 * A cost that scales with the dot being bought.
 	 */
 	sliding_cost?: {

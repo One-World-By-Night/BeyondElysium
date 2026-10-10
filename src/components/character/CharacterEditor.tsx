@@ -739,6 +739,7 @@ export function CharacterEditor( {
 							gameSlug={ gameSlug }
 							stackSlug={ chosenStackSlug }
 							sheetData={ draftSheetData }
+							warnsPlayer={ ! canFlagNpc }
 						/>
 					</div>
 				) }
@@ -810,6 +811,7 @@ export function CharacterEditor( {
 										sheetData={ draftSheetData }
 										gameSlug={ gameSlug }
 										isManager={ canFlagNpc }
+										creating
 									/>
 								</div>
 							);

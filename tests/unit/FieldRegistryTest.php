@@ -133,7 +133,16 @@ class FieldRegistryTest extends TestCase {
 				// Resolved per-character by Query_Engine using the character's own stack_slug.
 				$this->assertNotEmpty( $entry['block_pattern'] ?? '', "{$key}: stack_relative_list entry must carry a block_pattern" );
 				$this->assertStringContainsString( '{stack}', $entry['block_pattern'], "{$key}: block_pattern must be stack-relative" );
-				$this->assertNotEmpty( $entry['filter_source'] ?? '', "{$key}: stack_relative_list entry must carry a filter_source" );
+				// It keeps one menu's items, drops one menu's items, or reads the whole block.
+				$this->assertFalse( isset( $entry['filter_source'], $entry['exclude_source'] ), "{$key}: a stack_relative_list entry keeps a source or drops one, not both" );
+				foreach ( [ 'filter_source', 'exclude_source' ] as $narrowing ) {
+					if ( isset( $entry[ $narrowing ] ) ) {
+						$this->assertNotEmpty( $entry[ $narrowing ], "{$key}: {$narrowing} must name a source" );
+					}
+				}
+				$ending = str_replace( '{stack}', '', $entry['block_pattern'] );
+				$real   = array_filter( array_keys( self::$blocks_by_slug ), static fn( string $slug ): bool => str_ends_with( $slug, $ending ) );
+				$this->assertNotEmpty( $real, "{$key}: no block ends in '{$ending}'" );
 				break;
 
 			default:

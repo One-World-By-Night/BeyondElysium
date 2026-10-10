@@ -201,3 +201,9 @@
 	margin-top: 0.4rem;
 	font-size: 0.85em;
 }
+
+.be-plot-thread__entry-charge.be-plot-thread__entry-charge {
+	margin: 0.4rem 0 0;
+	font-size: 0.85em;
+	color: var(--be-gray-6);
+}

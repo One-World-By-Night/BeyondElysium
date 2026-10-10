@@ -239,8 +239,16 @@ class Plots_Controller extends Base_Controller {
 			} ) );
 		}
 
-		$plot->entries     = $entries;
-		$plot->connections = Connection::for_entity( 'plot', (int) $plot->id );
+		// Whether answering cost the character an action is a Storyteller's bookkeeping.
+		foreach ( $entries as $entry ) {
+			if ( ! $can_manage ) {
+				$entry->action_charge = null;
+			}
+		}
+
+		$plot->entries            = $entries;
+		$plot->actor_character_id = $can_manage ? Action_Allocator::actor_character_id( (int) $plot->id ) : null;
+		$plot->connections        = Connection::for_entity( 'plot', (int) $plot->id );
 		$plot->attachments = array_map( [ Attachment::class, 'public_shape' ], Attachment::for_entity( 'plot', (int) $plot->id ) );
 		// Immediate child plots are included and prepared the same way as the parent.
 		$children = array_values( array_filter(

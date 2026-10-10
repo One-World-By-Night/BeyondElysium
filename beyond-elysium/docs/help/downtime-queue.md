@@ -15,7 +15,7 @@ Storyteller Toolkit → Downtime tab.
 - **Game date** - a dropdown of every game night that exists (see [Game Nights](game-nights.md)). Picking one loads that date's queue below. A badge next to it shows the deadline, relative to now ("closes in 3 days", "closed 2 days ago").
 - **Unanswered / All** - narrows the list to action plots with no answer yet, or shows every one for the date.
 - **Assigned to** - All, Assigned to me, or one named staff member, narrowing the list to that assignee's own rows.
-- The queue itself: one row per character with an action plot for that date - their name, their player, how many actions they submitted, whether it's been answered, the answer's release state (Draft, Scheduled, Released, or Posted for one sent immediately), their own downtime window state (Open, Not open yet, Closed, or No window), and every other character, NPC, item, and location connected to that plot, each a link. Click a row to open that plot's thread directly, where you can write or edit the answer.
+- The queue itself: one row per character with an action plot for that date - their name, their player, how many actions they submitted, whether it's been answered, the answer's release state (Draft, Scheduled, Released, or Posted for one sent immediately), what the answer decided about the character's action (No action charged, Charged 1 action to a background, or Action charge not recorded for an answer written before the choice was asked), their own downtime window state (Open, Not open yet, Closed, or No window), and every other character, NPC, item, and location connected to that plot, each a link. Click a row to open that plot's thread directly, where you can write or edit the answer.
 
 ## Common tasks
 
@@ -29,6 +29,7 @@ Storyteller Toolkit → Downtime tab.
 
 1. Click a row in the queue.
 2. This opens the plot's thread. Write your response there - it's held by default (see [Releases](release-batches.md)) unless you explicitly send it immediately.
+3. Say whether the answer costs the character an action: pick **No action charged**, or **Charge an action**, then the background it is charged to and how many actions (usually 1). **Post** stays off until you choose. A charge adds a use to that character's [background uses](background-uses.md) for the date; deleting the answer takes the use with it. The thread shows your choice under the answer.
 
 ### Extend one character's deadline
 

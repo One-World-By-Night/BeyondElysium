@@ -15,6 +15,7 @@ use BeyondElysium\Models\Plot_Entry;
 use BeyondElysium\Models\Schema_Block;
 use BeyondElysium\Models\Transfer;
 use BeyondElysium\Services\Change_Engine;
+use BeyondElysium\Services\Creation_Limits;
 use BeyondElysium\Services\Creation_Tally;
 use BeyondElysium\Services\St_Visibility;
 
@@ -695,7 +696,14 @@ class Characters_Controller extends Base_Controller {
 
 		// The build's own cost, priced against the chronicle's creation rules; charged once the character exists.
 		$starting_xp   = (int) ( $game->settings->starting_xp ?? 0 );
-		$creation_cost = $existing_character ? 0 : Creation_Tally::for_stack( $resolved['stack'], $resolved['blocks'], $sheet_data, $request['game_slug'], $starting_xp )['xp']['needed'];
+		$tally         = $existing_character ? null : Creation_Tally::for_stack( $resolved['stack'], $resolved['blocks'], $sheet_data, $request['game_slug'], $starting_xp );
+		$creation_cost = $tally === null ? 0 : $tally['xp']['needed'];
+
+		// Ratings only play can raise are a Storyteller's to set at creation.
+		$refusal = ! $is_manager && $tally !== null ? Creation_Limits::refusal( $tally ) : null;
+		if ( $refusal !== null ) {
+			return $this->error( 'creation_limit', $refusal, 400 );
+		}
 
 		$data = [
 			'name'        => sanitize_text_field( $name ),

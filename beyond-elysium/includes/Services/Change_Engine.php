@@ -1249,6 +1249,30 @@ class Change_Engine {
 					}
 				}
 
+				// A pool raised past the most the book allows waits for a Storyteller.
+				if ( ! empty( $change_data['values'] ) && ! empty( $definition->pools ) ) {
+					foreach ( (array) $change_data['values'] as $pool_name => $new_value ) {
+						foreach ( $definition->pools as $pool ) {
+							if ( ( $pool->name ?? null ) !== $pool_name || ! isset( $pool->book_max ) ) {
+								continue;
+							}
+							$permanent = self::pool_permanent_of( $new_value, null );
+							$held      = self::pool_permanent_of( ( (array) ( $character->sheet_data ?? [] ) )[ $block_slug ][ $pool_name ] ?? null, (int) ( $pool->default_start ?? 0 ) );
+							if ( $permanent !== null && $permanent > $held && $permanent > (int) $pool->book_max ) {
+								$book_reason = sprintf(
+									/* translators: 1: a pool's name (Balance), 2: the most the book allows */
+									__( "%1\$s is above the book's maximum of %2\$d.", 'beyond-elysium' ),
+									(string) $pool_name,
+									(int) $pool->book_max
+								);
+								$reason = $reason !== null ? $reason . "\n" . $book_reason : $book_reason;
+								$level  = self::strictest( $level, 'st' );
+							}
+							break;
+						}
+					}
+				}
+
 				// Check the matched resource pool's own per-value schedule (Willpower, Blood, Rage...).
 				if ( ! empty( $change_data['values'] ) && ! empty( $definition->pools ) ) {
 					foreach ( (array) $change_data['values'] as $pool_name => $new_value ) {
@@ -1330,11 +1354,42 @@ class Change_Engine {
 			}
 		}
 
+		// A pool raised to a rating an OWBN Character Bylaw names follows that clause too.
+		if ( $block_slug && ! empty( $change_data['values'] ) && $game && ( $game->settings->owbn_bylaws ?? false ) === true ) {
+			$axis   = ! empty( $character->is_npc ) ? 'npc' : 'pc';
+			$family = Bylaws::family_of_block( $block_slug );
+			foreach ( (array) $change_data['values'] as $pool_name => $new_value ) {
+				$permanent = self::pool_permanent_of( $new_value, null );
+				$held      = self::pool_permanent_of( ( (array) ( $character->sheet_data ?? [] ) )[ $block_slug ][ $pool_name ] ?? null, 0 );
+				if ( $permanent === null || $permanent <= (int) $held ) {
+					continue;
+				}
+				$pool_reason = Bylaw_Reason::format_all( Bylaws::rules_for( $family, (string) $pool_name, null, false, $permanent ), $axis, (string) $pool_name );
+				if ( $pool_reason !== null ) {
+					$reason = $reason !== null ? $reason . "\n" . $pool_reason : $pool_reason;
+					$level  = self::strictest( $level, 'st' );
+				}
+			}
+		}
+
 		// Falls back to the chronicle's own default approval setting.
 		$chronicle_default = ( $game && ( $game->settings->auto_approve ?? false ) === true ) ? 'auto' : 'st';
 		$level = $level ?? $chronicle_default;
 
 		return [ 'level' => $level, 'reason' => $reason ];
+	}
+
+	/**
+	 * A pool value's permanent rating, whether it is held as `{permanent, temporary}` or as a bare number.
+	 *
+	 * @param mixed    $value
+	 * @param int|null $default What an absent value reads as.
+	 */
+	private static function pool_permanent_of( $value, ?int $default ): ?int {
+		if ( is_array( $value ) ) {
+			return isset( $value['permanent'] ) && is_numeric( $value['permanent'] ) ? (int) $value['permanent'] : $default;
+		}
+		return is_numeric( $value ) ? (int) $value : $default;
 	}
 
 	/**

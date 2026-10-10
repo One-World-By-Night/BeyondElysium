@@ -206,6 +206,7 @@ class DowntimeWindowThreadTest extends WP_UnitTestCase {
 		wp_set_current_user( $this->make_manager() );
 		$request = new WP_REST_Request( 'POST', "/be/v1/{$this->game_slug}/plots/{$plot_id}/entries" );
 		$request->set_param( 'entry_type', 'response' );
+		$request->set_param( 'action_charge', [ 'charged' => false ] );
 		$request->set_param( 'content', 'You find nothing.' );
 		$response = $this->dispatch( $request );
 
@@ -225,6 +226,7 @@ class DowntimeWindowThreadTest extends WP_UnitTestCase {
 		wp_set_current_user( $this->make_manager() );
 		$create = new WP_REST_Request( 'POST', "/be/v1/{$this->game_slug}/plots/{$plot_id}/entries" );
 		$create->set_param( 'entry_type', 'response' );
+		$create->set_param( 'action_charge', [ 'charged' => false ] );
 		$create->set_param( 'content', 'You find nothing.' );
 		$entry_id = (int) $this->dispatch( $create )->get_data()->id;
 
@@ -251,6 +253,7 @@ class DowntimeWindowThreadTest extends WP_UnitTestCase {
 		wp_set_current_user( $this->make_manager() );
 		$request = new WP_REST_Request( 'POST', "/be/v1/{$this->game_slug}/plots/{$plot_id}/entries" );
 		$request->set_param( 'entry_type', 'response' );
+		$request->set_param( 'action_charge', [ 'charged' => false ] );
 		$request->set_param( 'content', 'Posted right away.' );
 		$request->set_param( 'held', false );
 		$response = $this->dispatch( $request );
@@ -269,6 +272,7 @@ class DowntimeWindowThreadTest extends WP_UnitTestCase {
 		wp_set_current_user( $this->make_manager() );
 		$respond = new WP_REST_Request( 'POST', "/be/v1/{$this->game_slug}/plots/{$answered_plot}/entries" );
 		$respond->set_param( 'entry_type', 'response' );
+		$respond->set_param( 'action_charge', [ 'charged' => false ] );
 		$respond->set_param( 'content', 'Answered.' );
 		$this->dispatch( $respond );
 

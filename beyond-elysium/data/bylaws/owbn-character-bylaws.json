@@ -1,5 +1,5 @@
 {
-    "generated_at": "2026-10-09T04:27:31+00:00",
+    "generated_at": "2026-10-10T02:24:13+00:00",
     "rules": [
         {
             "clause_id": 7760,
@@ -11392,6 +11392,24 @@
             "clause_id": 14980,
             "family": "combo-disciplines",
             "name": "Eradication of Secrets"
+        },
+        {
+            "clause_id": 23472,
+            "family": "resources",
+            "name": "Balance",
+            "count_range": {
+                "from": 6,
+                "to": 8
+            }
+        },
+        {
+            "clause_id": 23473,
+            "family": "resources",
+            "name": "Balance",
+            "count_range": {
+                "from": 9,
+                "to": 10
+            }
         }
     ]
 }

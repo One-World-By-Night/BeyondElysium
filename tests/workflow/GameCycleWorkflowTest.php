@@ -100,7 +100,7 @@ class GameCycleWorkflowTest extends WP_UnitTestCase {
 		// A Storyteller answers Wednesday (held).
 		wp_set_current_user( $hst_id );
 		$answer = $this->dispatch( 'POST', "/be/v1/{$this->slug}/plots/{$plot_id}/entries", [
-			'entry_type' => 'response', 'content' => 'Someone was here before you.',
+			'entry_type' => 'response', 'content' => 'Someone was here before you.', 'action_charge' => [ 'charged' => false ],
 		] );
 		$this->assertSame( 201, $answer->get_status() );
 		$this->assertTrue( (bool) $answer->get_data()->held );

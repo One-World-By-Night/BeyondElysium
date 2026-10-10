@@ -56,3 +56,9 @@
 	color: var(--be-gray-6);
 	font-style: italic;
 }
+
+.be-creation-tally__unbuyable {
+	margin: 0.75rem 0 0;
+	padding-left: 1.25rem;
+	color: var(--be-red-6);
+}

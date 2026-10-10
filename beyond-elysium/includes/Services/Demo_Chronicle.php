@@ -514,6 +514,25 @@ class Demo_Chronicle {
 			if ( $plot_id && $assigned_to ) {
 				Plot::update( $plot_id, [ 'assigned_to' => $assigned_to ] );
 			}
+
+			// An answered downtime, saying whether it cost the character an action.
+			if ( $plot_id && isset( $action['answer'] ) ) {
+				$charge = [ 'charged' => false ];
+				if ( ! empty( $action['answer']['charge'] ) ) {
+					$use = Background_Ledger::record( $character_id, (string) $session->game_date, [
+						'name' => $action['answer']['charge']['name'],
+						'cost' => $action['answer']['charge']['cost'],
+						'text' => wp_trim_words( wp_strip_all_tags( $action['answer']['text'] ), 12, '…' ),
+					] );
+					if ( ! is_wp_error( $use ) ) {
+						$charge = [ 'charged' => true, 'name' => $action['answer']['charge']['name'], 'cost' => $action['answer']['charge']['cost'], 'use_id' => (int) $use['id'] ];
+					}
+				}
+				Plot_Entry::create( [
+					'plot_id' => $plot_id, 'author_id' => $storyteller_id, 'entry_type' => 'response',
+					'content' => $action['answer']['text'], 'audience' => 'plot', 'held' => false, 'action_charge' => $charge,
+				] );
+			}
 		}
 
 		// Factions.

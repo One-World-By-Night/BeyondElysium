@@ -105,6 +105,7 @@ class Downtime_Window {
 				'answered'             => $answer !== null,
 				'answer_release_state' => self::answer_release_state( $answer ),
 				'window_state'         => self::state( $game_id, $game_date, (int) $character->id ),
+				'charge'               => self::charge_of( $answer ),
 				'assigned_to'          => $plot->assigned_to !== null ? (int) $plot->assigned_to : null,
 				'connections'          => [],
 			];
@@ -258,6 +259,29 @@ class Downtime_Window {
 		}
 
 		return [ count( $actions ), $last_action_at, $answer ];
+	}
+
+	/**
+	 * What an answer decided about the character's action: null while unanswered, `none` (no action charged),
+	 * `charged` (with the background and cost), `charge_removed` (charged, and the ledger use has since been
+	 * removed) or `not_recorded` (answered before the choice was asked).
+	 *
+	 * @param object|null $answer A decoded plot_entries row, or null when there is none yet.
+	 * @return array{state:string,name?:string,cost?:int}|null
+	 */
+	private static function charge_of( $answer ): ?array {
+		if ( $answer === null ) {
+			return null;
+		}
+		$charge = is_array( $answer->action_charge ?? null ) ? $answer->action_charge : null;
+		if ( $charge === null ) {
+			return [ 'state' => 'not_recorded' ];
+		}
+		if ( empty( $charge['charged'] ) ) {
+			return [ 'state' => 'none' ];
+		}
+		$charged = [ 'name' => (string) ( $charge['name'] ?? '' ), 'cost' => (int) ( $charge['cost'] ?? 1 ) ];
+		return Plot_Entry::find( (int) ( $charge['use_id'] ?? 0 ) ) ? [ 'state' => 'charged' ] + $charged : [ 'state' => 'charge_removed' ] + $charged;
 	}
 
 	/**

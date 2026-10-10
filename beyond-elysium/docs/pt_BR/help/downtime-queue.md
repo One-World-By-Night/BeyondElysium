@@ -15,7 +15,7 @@ Kit de Ferramentas do Narrador → aba Tempo Livre.
 - **Data do jogo** - uma lista suspensa de toda noite de jogo que existe (veja [Noites de Jogo](game-nights.md)). Escolher uma carrega a fila dessa data abaixo. Um selo ao lado mostra o prazo, relativo a agora ("fecha em 3 dia(s)", "fechou há 2 dia(s)").
 - **Não respondidas / Todos** - restringe a lista a tramas de ação sem resposta ainda, ou mostra todas da data.
 - **Atribuído a** - Todos, Atribuído a mim, ou um membro da equipe nomeado, restringindo a lista às linhas desse responsável.
-- A fila em si: uma linha por personagem com uma trama de ação nessa data - o nome, o jogador, quantas ações enviou, se foi respondida, o estado de lançamento da resposta (Rascunho, Agendado, Lançado, ou Publicada para uma enviada na hora), o estado da própria janela de tempo livre dele (Aberta, Ainda não aberta, Fechada ou Sem janela) e todo outro personagem, NPC, item e local conectado a essa trama, cada um um link. Clique numa linha para abrir direto o fio dessa trama, onde você pode escrever ou editar a resposta.
+- A fila em si: uma linha por personagem com uma trama de ação nessa data - o nome, o jogador, quantas ações enviou, se foi respondida, o estado de lançamento da resposta (Rascunho, Agendado, Lançado, ou Publicada para uma enviada na hora), o que a resposta decidiu sobre a ação do personagem (Nenhuma ação cobrada, 1 ação cobrada de um antecedente, ou Cobrança de ação não registrada para uma resposta escrita antes de a escolha ser pedida), o estado da própria janela de tempo livre dele (Aberta, Ainda não aberta, Fechada ou Sem janela) e todo outro personagem, NPC, item e local conectado a essa trama, cada um um link. Clique numa linha para abrir direto o fio dessa trama, onde você pode escrever ou editar a resposta.
 
 ## Tarefas comuns
 
@@ -29,6 +29,7 @@ Kit de Ferramentas do Narrador → aba Tempo Livre.
 
 1. Clique numa linha da fila.
 2. Isso abre o fio da trama. Escreva a sua resposta ali - ela é retida por padrão (veja [Lançamentos](release-batches.md)) a menos que você a envie imediatamente de forma explícita.
+3. Diga se a resposta custa uma ação ao personagem: escolha **Nenhuma ação cobrada**, ou **Cobrar uma ação**, depois o antecedente de onde ela é cobrada e quantas ações (em geral 1). **Publicar** fica desligado até você escolher. Uma cobrança acrescenta um uso aos [usos de antecedentes](background-uses.md) do personagem na data; apagar a resposta leva o uso junto. O fio mostra a sua escolha sob a resposta.
 
 ### Estender o prazo de um personagem
 

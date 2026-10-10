@@ -81,7 +81,7 @@ Editing an existing rule locks its Block and target - only Approval and Reason c
 
 1. Pick your **Chronicle**.
 2. Check **Require OWBN Character Bylaw approval**.
-3. A purchase a bylaw already covers now cites it the moment a player submits it - no further setup needed.
+3. A purchase a bylaw already covers now cites it the moment a player submits it - no further setup needed. Ratings count too: raising a Mummy's Balance to 6, 7 or 8 cites clause 10.k.iii.1, and to 9 or 10 cites 10.k.iii.2, which is Disallowed for a player character.
 
 ### Look up a bylaw before approving a purchase
 

@@ -1041,6 +1041,8 @@ class Changes_Controller extends Base_Controller {
 			'unknown_pool'         => __( '"%s" is not a pool on this sheet.', 'beyond-elysium' ),
 			/* translators: %s: a resource pool, such as Glory */
 			'pool_not_purchasable' => __( "%s's permanent rating is set by a Storyteller.", 'beyond-elysium' ),
+			/* translators: 1: a resource pool, such as Balance, 2: its highest rating */
+			'pool_above_maximum'   => __( "%1\$s can't be raised above %2\$d.", 'beyond-elysium' ),
 			/* translators: %s: the field name as submitted */
 			'unknown_field'        => __( '"%s" is not a field on this sheet.', 'beyond-elysium' ),
 			/* translators: 1: the choice as submitted, 2: the field, such as Clan */

@@ -78,6 +78,7 @@ wp-admin sidebar → Beyond Elysium → Query Tool → **Query Tool** tab. Repor
 - **Bulk actions work on Characters results only.** Items, Locations, and Rotes rows aren't characters, so awarding XP, resetting a pool, or setting a status never appears for them.
 - **A bad character ID in a selection is skipped, never guessed at.** If a row's character no longer exists, or belongs to a different chronicle, it's reported as failed rather than silently touched or silently dropped.
 - **Export CSV covers only the page you're looking at**, not the whole result set - page through and export each page if you need everything.
+- **Bonds, Guanxi, Passions, Fetters, Thorns, Backgrounds and Health Levels are searchable like any other list**, and so is the Kuei-Jin P'o archetype. Backgrounds leaves out Influences, which have their own field.
 - **Tempers is a field on the Items inventory**, holding a fetish or talen's bound spirit requirements (for example, its Gnosis cost). A clause like `Tempers contains Gnosis` finds every item with a Gnosis temper, whatever its count.
 - **A named saved query is shared** - every Storyteller in the chronicle can load it, but only its creator or a Storyteller can rename or delete it. Your own "most recent search" entry is yours alone; nobody else sees it in their own Saved Queries list.
 - This is desk work best done at a keyboard, but results still read on a phone - when there's no room for the columns, each result becomes a card instead of scrolling sideways.

@@ -77,7 +77,7 @@ Editar uma regra existente trava o Bloco e o alvo dela - só Aprovação e Motiv
 
 1. Escolha a sua **Crônica**.
 2. Marque **Exigir aprovação dos Estatutos de Personagem da OWBN**.
-3. Uma compra que um estatuto já cobre agora o cita no instante em que um jogador a envia - nenhuma outra configuração é necessária.
+3. Uma compra que um estatuto já cobre agora o cita no instante em que um jogador a envia - nenhuma outra configuração é necessária. As classificações contam também: elevar o Equilíbrio de uma Múmia a 6, 7 ou 8 cita a cláusula 10.k.iii.1, e a 9 ou 10 cita a 10.k.iii.2, que é Proibido para um personagem de jogador.
 
 ### Consultar um estatuto antes de aprovar uma compra
 

@@ -5,7 +5,12 @@ import { __ } from '@wordpress/i18n';
 import DotTracker, { type DotTrackerValue } from '../shared/DotTracker';
 import { resolvePoolName } from '../../lib/resolveCrossBlockRef';
 import { trackerMax } from '../../lib/poolMax';
-import { raiseButtonLabel, spentBadgeLabel } from '../../lib/raisedByPool';
+import {
+	raiseButtonLabel,
+	raisedByLocked,
+	showsRaiseButton,
+	spentBadgeLabel,
+} from '../../lib/raisedByPool';
 import type { ResourcePoolValue } from '../../lib/displayTemper';
 import type { ResourcePoolDefinition } from '../../types';
 import './ResourcePoolEditor.css';
@@ -27,6 +32,10 @@ export interface ResourcePoolEditorProps {
 	 * A Storyteller of this chronicle sets any pool directly, bypassing its own max and any raised_by cost.
 	 */
 	isManager?: boolean;
+	/**
+	 * True while a new character is being made: a raised_by pool's free dots are set directly, and nothing is converted yet.
+	 */
+	creating?: boolean;
 }
 
 /**
@@ -40,6 +49,7 @@ export function ResourcePoolEditor( {
 	readOnly,
 	sheetData,
 	isManager,
+	creating,
 }: ResourcePoolEditorProps ) {
 	const setPool = ( poolName: string, next: DotTrackerValue ) => {
 		onChange( blockSlug, { ...data, [ poolName ]: next } );
@@ -71,7 +81,12 @@ export function ResourcePoolEditor( {
 							) }
 							onChange={ ( next ) => setPool( pool.name, next ) }
 							readOnly={
-								readOnly || ( !! raisedBy && ! isManager )
+								readOnly ||
+								raisedByLocked(
+									raisedBy,
+									!! isManager,
+									!! creating
+								)
 							}
 						/>
 						{ spentBadgeLabel( value.spent ) && (
@@ -85,21 +100,22 @@ export function ResourcePoolEditor( {
 								{ spentBadgeLabel( value.spent ) }
 							</span>
 						) }
-						{ raisedBy && (
-							<button
-								type="button"
-								className="be-resource-pool-editor__raise"
-								disabled={ readOnly }
-								onClick={ () =>
-									setPool( pool.name, {
-										permanent: value.permanent + 1,
-										temporary: value.temporary,
-									} )
-								}
-							>
-								{ raiseButtonLabel( raisedBy ) }
-							</button>
-						) }
+						{ raisedBy &&
+							showsRaiseButton( raisedBy, !! creating ) && (
+								<button
+									type="button"
+									className="be-resource-pool-editor__raise"
+									disabled={ readOnly }
+									onClick={ () =>
+										setPool( pool.name, {
+											permanent: value.permanent + 1,
+											temporary: value.temporary,
+										} )
+									}
+								>
+									{ raiseButtonLabel( raisedBy ) }
+								</button>
+							) }
 					</div>
 				);
 			} ) }

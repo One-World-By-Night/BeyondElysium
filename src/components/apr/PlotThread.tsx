@@ -19,6 +19,7 @@ import SecretsPanel from '../shared/SecretsPanel';
 import WhatYouKnow from '../shared/WhatYouKnow';
 import type { FactionGoal, Plot } from '../../types/plot';
 import { EntryForm } from './EntryForm';
+import { storedChargeLabel } from '../../lib/answerCharge';
 import { highlightStMarkers } from '../../lib/highlightStMarkers';
 import './PlotThread.css';
 
@@ -751,6 +752,11 @@ export function PlotThread( {
 								</span>
 							</div>
 							{ renderEntryContent( entry.content ) }
+							{ storedChargeLabel( entry.action_charge ) && (
+								<p className="be-plot-thread__entry-charge">
+									{ storedChargeLabel( entry.action_charge ) }
+								</p>
+							) }
 						</li>
 					) ) }
 					{ ( plot.entries ?? [] ).length === 0 && (
@@ -769,6 +775,8 @@ export function PlotThread( {
 					canManage={ canManage }
 					onCreated={ load }
 					expandedEnabled={ expandedEnabled }
+					gameDate={ plot.game_date }
+					actorCharacterId={ plot.actor_character_id }
 				/>
 			</section>
 

@@ -127,6 +127,12 @@ class Plot_Entry {
 		if ( array_key_exists( 'held', $data ) ) {
 			$insert['held'] = $data['held'] ? 1 : 0;
 		}
+		if ( array_key_exists( 'action_charge', $data ) && $data['action_charge'] !== null ) {
+			$insert['action_charge'] = self::encode_json_field( $data['action_charge'] );
+			if ( $insert['action_charge'] === false ) {
+				return false;
+			}
+		}
 		if ( array_key_exists( 'release_batch_id', $data ) ) {
 			$insert['release_batch_id'] = ! empty( $data['release_batch_id'] ) ? (int) $data['release_batch_id'] : null;
 		}
@@ -275,7 +281,7 @@ class Plot_Entry {
 	private static function decode_row( object $row ): object {
 		$id = property_exists( $row, 'id' ) ? (int) $row->id : 0;
 
-		foreach ( [ 'audience_character_ids' ] as $field ) {
+		foreach ( [ 'audience_character_ids', 'action_charge' ] as $field ) {
 			if ( ! property_exists( $row, $field ) || $row->$field === null ) {
 				continue;
 			}

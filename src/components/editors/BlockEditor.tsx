@@ -45,6 +45,10 @@ export interface BlockEditorProps {
 	 * raised_by cost - the same standing exception every other section_type already gives a manager.
 	 */
 	isManager?: boolean;
+	/**
+	 * True while a new character is being made, so a pool only play can raise takes its free dots directly.
+	 */
+	creating?: boolean;
 }
 
 /**
@@ -63,6 +67,7 @@ export function BlockEditor( {
 	gameSlug,
 	characterId,
 	isManager,
+	creating,
 }: BlockEditorProps ) {
 	switch ( sectionType ) {
 		case 'trait_list':
@@ -122,6 +127,7 @@ export function BlockEditor( {
 					readOnly={ readOnly }
 					sheetData={ sheetData }
 					isManager={ isManager }
+					creating={ creating }
 				/>
 			);
 

@@ -348,6 +348,21 @@ class CatalogValidatorTest extends TestCase {
 		$this->assertSame( [], Catalog_Validator::validate_block( $data, 'test-block' ) );
 	}
 
+	public function test_a_pool_with_a_book_maximum_inside_its_maximum_passes(): void {
+		$data = $this->block( 'resource_pool', [ 'pools' => [ $this->pool( [ 'max' => 10, 'book_max' => 5 ] ) ] ] );
+		$this->assertSame( [], Catalog_Validator::validate_block( $data, 'test-block' ) );
+	}
+
+	public function test_a_book_maximum_above_the_pools_maximum_is_rejected(): void {
+		$data = $this->block( 'resource_pool', [ 'pools' => [ $this->pool( [ 'max' => 5, 'book_max' => 8 ] ) ] ] );
+		$this->assertRejects( $data, '`book_max` must be a whole number from 1 up to its `max`' );
+	}
+
+	public function test_a_book_maximum_that_is_not_a_number_is_rejected(): void {
+		$data = $this->block( 'resource_pool', [ 'pools' => [ $this->pool( [ 'book_max' => 'five' ] ) ] ] );
+		$this->assertRejects( $data, '`book_max` must be a whole number from 1 up to its `max`' );
+	}
+
 	public function test_raised_by_with_a_malformed_from_is_rejected(): void {
 		$data = $this->block( 'resource_pool', [
 			'pools' => [ $this->pool( [ 'raised_by' => [ 'from' => 'hunter-resources', 'temporary' => 10 ] ] ) ],

@@ -10,7 +10,8 @@
       "Laws of the Resurrection (WW05035) p. 64 - a beginning Amenti assigns Balance 1, Willpower 5, Sekhem 1 (\"which, like any starting Amenti, begins with one Trait\")",
       "Laws of the Resurrection (WW05035) p. 67 - Free Traits alone cannot raise Balance above 3 or Sekhem above the character's own Balance rating, not encoded as a structural cap here (matching this project's existing precedent of leaving a rating-tied ceiling flat, e.g. Vampire's Blood against Generation)",
       "Laws of the Resurrection (WW05035) p. 67 - a maximum of 10 permanent Willpower Traits; p. 94-95 - Balance never exceeds 5 (\"even if the new Balance rating is less than five\")",
-      "Laws of the Resurrection (WW05035) p. 115 - new Willpower 3 XP/Trait, new Sekhem 3 XP/Trait, new Balance a number of Experience Traits equal to the level desired"
+      "Laws of the Resurrection (WW05035) p. 115 - new Willpower 3 XP/Trait, new Sekhem 3 XP/Trait, new Balance a number of Experience Traits equal to the level desired",
+      "OWbN Character Bylaws 10.k.iii.1 and 10.k.iii.2 - Balance (Direction for the Teomallki, Quest for the Wu T'ian) 6 to 8 needs Coordinator approval; 9 and 10 are Disallowed for a player character and need Coordinator approval for an NPC. The pool therefore reaches 10 and `book_max` 5 marks where the book stops."
     ],
     "tool": "tools/catalog/emit_catalog.py"
   },
@@ -27,7 +28,8 @@
         "name": "Balance",
         "value_type": "integer",
         "default_start": 1,
-        "max": 5,
+        "max": 10,
+        "book_max": 5,
         "sliding_cost": {
           "equals_level": true
         }

@@ -12,7 +12,7 @@ class Schema {
 	/**
 	 * The plugin's current database schema version, matching the plugin release version.
 	 */
-	const DB_VERSION = '1.5.0.1';
+	const DB_VERSION = '1.5.0.2';
 
 	/**
 	 * Option key holding the installed schema version.
@@ -398,6 +398,7 @@ class Schema {
 			held tinyint(1) NOT NULL DEFAULT 0,
 			release_batch_id bigint(20) unsigned DEFAULT NULL,
 			level tinyint(3) unsigned DEFAULT NULL,
+			action_charge json DEFAULT NULL,
 			shared_at datetime DEFAULT NULL,
 			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY  (id),
@@ -2403,6 +2404,30 @@ class Schema {
 	}
 
 	/**
+	 * Gives a plot entry a place to say whether answering it cost the character an action.
+	 */
+	public static function add_action_charge_to_plot_entries(): void {
+		global $wpdb;
+
+		$table  = self::table( 'plot_entries' );
+		$exists = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM information_schema.columns
+				 WHERE table_schema = DATABASE() AND table_name = %s AND column_name = 'action_charge'",
+				$table
+			)
+		);
+		if ( (int) $exists > 0 ) {
+			return;
+		}
+
+		$wpdb->query( "ALTER TABLE {$table} ADD COLUMN action_charge json DEFAULT NULL" );
+		if ( $wpdb->last_error ) {
+			error_log( 'Beyond Elysium: failed to add plot_entries.action_charge: ' . $wpdb->last_error );
+		}
+	}
+
+	/**
 	 * Lets a secret exist with no entity attached.
 	 */
 	public static function make_secret_entity_nullable(): void {
@@ -2851,6 +2876,8 @@ class Schema {
 		self::correct_health_section_width();
 
 		self::make_secret_entity_nullable();
+
+		self::add_action_charge_to_plot_entries();
 
 		// Gives system templates the section titles their declared files name.
 		\BeyondElysium\Services\Template_Titles::run();

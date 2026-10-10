@@ -5,6 +5,7 @@ import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
 import { canIn } from '../../lib/chronicleCapabilities';
+import { queueChargeLabel } from '../../lib/answerCharge';
 import {
 	characterSheetUrl,
 	storytellerTabUrl,
@@ -319,6 +320,11 @@ export function DowntimeQueue( {
 										{ RELEASE_STATE_LABELS[
 											row.answer_release_state
 										] ?? row.answer_release_state }
+									</span>
+								) }
+								{ queueChargeLabel( row.charge ) && (
+									<span className="be-st-badge be-st-badge--charge">
+										{ queueChargeLabel( row.charge ) }
 									</span>
 								) }
 								<span className="be-st-badge be-st-badge--audience">

@@ -173,6 +173,11 @@
 	background: var(--be-red-12);
 }
 
+.be-st-badge--charge {
+	color: var(--be-st-muted);
+	border-color: var(--be-st-border-strong);
+}
+
 .be-plot-manager__empty {
 	padding: 2rem 1rem;
 	text-align: center;

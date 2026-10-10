@@ -982,12 +982,22 @@ class Change_Validator {
 		}
 
 		// A pool with no XP price is awarded - unless it converts another pool's temporary points instead.
-		if ( ! $is_manager && ! isset( $pools[ $name ]->cost_per_dot ) && ! isset( $pools[ $name ]->raised_by ) ) {
+		if ( ! $is_manager && ! isset( $pools[ $name ]->cost_per_dot ) && ! isset( $pools[ $name ]->sliding_cost ) && ! isset( $pools[ $name ]->raised_by ) ) {
 			$new_permanent = is_array( $value ) ? ( $value['permanent'] ?? null ) : $value;
 			$old           = $held[ $name ] ?? null;
 			$old_permanent = is_array( $old ) ? ( $old['permanent'] ?? null ) : $old;
 			if ( $new_permanent !== null && (int) $new_permanent !== (int) ( $old_permanent ?? ( $pools[ $name ]->default_start ?? 0 ) ) ) {
 				return self::fail( 'pool_not_purchasable', "%s's permanent rating is set by a Storyteller.", [ $name ] );
+			}
+		}
+
+		// A player cannot raise a pool past its own maximum; a Storyteller sets any rating.
+		if ( ! $is_manager && isset( $pools[ $name ]->max ) && is_numeric( $pools[ $name ]->max ) ) {
+			$new_permanent = is_array( $value ) ? ( $value['permanent'] ?? null ) : $value;
+			$old           = $held[ $name ] ?? null;
+			$old_permanent = (int) ( is_array( $old ) ? ( $old['permanent'] ?? ( $pools[ $name ]->default_start ?? 0 ) ) : ( $old ?? ( $pools[ $name ]->default_start ?? 0 ) ) );
+			if ( $new_permanent !== null && (int) $new_permanent > (int) $pools[ $name ]->max && (int) $new_permanent > $old_permanent ) {
+				return self::fail( 'pool_above_maximum', "%s can't be raised above %d.", [ $name, (int) $pools[ $name ]->max ] );
 			}
 		}
 

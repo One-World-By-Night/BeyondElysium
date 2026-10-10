@@ -262,6 +262,22 @@ class DemoChronicleThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 'storytellers', $by_name['Detective Rosa Alvarez']->profile_audience, 'left on the default, so hidden from Who\'s Who' );
 	}
 
+	public function test_reset_seeds_two_answered_downtimes_one_charged_and_one_not(): void {
+		$this->assertTrue( Demo_Chronicle::reset( $this->game ) );
+
+		$charges = [];
+		foreach ( \BeyondElysium\Models\Game_Session::for_game( (int) $this->game->id ) as $session ) {
+			foreach ( \BeyondElysium\Services\Downtime_Window::queue_for_date( (int) $this->game->id, (string) $session->game_date ) as $row ) {
+				if ( $row['answered'] ) {
+					$charges[ $row['character_name'] ] = $row['charge'];
+				}
+			}
+		}
+
+		$this->assertSame( [ 'state' => 'none' ], $charges['Ezra Stormcrow'] ?? null );
+		$this->assertSame( [ 'state' => 'charged', 'name' => 'Kinfolk', 'cost' => 1 ], $charges['Naomi Two Rivers'] ?? null );
+	}
+
 	public function test_reset_seeds_secret_passing_and_a_tellable_secret(): void {
 		Demo_Chronicle::reset( $this->game );
 

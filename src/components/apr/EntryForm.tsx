@@ -11,6 +11,12 @@ import type {
 	EntryType,
 } from '../../types/plot';
 import { errorMessage } from '../../lib/errorMessage';
+import {
+	chargeComplete,
+	chargePayload,
+	type ChargeChoice,
+} from '../../lib/answerCharge';
+import type { SpendableBackground } from '../../types/apr';
 import './EntryForm.css';
 
 export interface EntryFormProps {
@@ -25,6 +31,12 @@ export interface EntryFormProps {
 	 * Shows an optional Timeline date field when true.
 	 */
 	expandedEnabled?: boolean;
+	/**
+	 * The plot's game date and the character it belongs to, when it is a character's dated downtime: an answer to it
+	 * says whether it cost the character an action.
+	 */
+	gameDate?: string | null;
+	actorCharacterId?: number | null;
 }
 
 /**
@@ -36,6 +48,8 @@ export function EntryForm( {
 	canManage,
 	onCreated,
 	expandedEnabled,
+	gameDate,
+	actorCharacterId,
 }: EntryFormProps ) {
 	const availableTypes: EntryType[] = canManage
 		? [ 'response', 'note', 'resolution', 'action' ]
@@ -60,6 +74,35 @@ export function EntryForm( {
 	const [ visibleCharacters, setVisibleCharacters ] = useState<
 		CharacterOption[]
 	>( [] );
+	const [ charge, setCharge ] = useState< ChargeChoice | null >( null );
+	const [ spendable, setSpendable ] = useState< SpendableBackground[] >( [] );
+	const asksCharge =
+		canManage &&
+		entryType === 'response' &&
+		!! gameDate &&
+		!! actorCharacterId;
+
+	useEffect( () => {
+		if ( ! asksCharge || ! actorCharacterId ) {
+			return;
+		}
+		let cancelled = false;
+		api.apr( gameSlug )
+			.spendable( actorCharacterId )
+			.then( ( list ) => {
+				if ( ! cancelled ) {
+					setSpendable( list );
+				}
+			} )
+			.catch( () => {
+				if ( ! cancelled ) {
+					setSpendable( [] );
+				}
+			} );
+		return () => {
+			cancelled = true;
+		};
+	}, [ asksCharge, gameSlug, actorCharacterId ] );
 
 	useEffect( () => {
 		if ( ! canManage ) {
@@ -120,6 +163,7 @@ export function EntryForm( {
 					audience === 'characters'
 						? audienceCharacterIds
 						: undefined,
+				action_charge: asksCharge ? chargePayload( charge ) : undefined,
 			} );
 			contentDraft.current = '';
 			setHasContent( false );
@@ -128,6 +172,7 @@ export function EntryForm( {
 			setEventDate( '' );
 			setAudience( 'plot' );
 			setAudienceCharacterIds( [] );
+			setCharge( null );
 			onCreated();
 		} catch ( err ) {
 			setError(
@@ -272,10 +317,102 @@ export function EntryForm( {
 						: undefined
 				}
 			/>
+			{ asksCharge && (
+				<fieldset className="be-entry-form__charge">
+					<legend>
+						{ __(
+							'Does this answer cost the character an action?',
+							'beyond-elysium'
+						) }
+					</legend>
+					<label>
+						<input
+							type="radio"
+							name={ `be-entry-charge-${ plotId }` }
+							checked={ charge?.mode === 'none' }
+							onChange={ () => setCharge( { mode: 'none' } ) }
+						/>
+						{ __( 'No action charged', 'beyond-elysium' ) }
+					</label>
+					<label>
+						<input
+							type="radio"
+							name={ `be-entry-charge-${ plotId }` }
+							checked={ charge?.mode === 'charge' }
+							onChange={ () =>
+								setCharge( {
+									mode: 'charge',
+									name: spendable[ 0 ]?.name ?? '',
+									cost: 1,
+								} )
+							}
+						/>
+						{ __( 'Charge an action', 'beyond-elysium' ) }
+					</label>
+					{ charge?.mode === 'charge' && (
+						<span className="be-entry-form__charge-detail">
+							<select
+								value={ charge.name }
+								onChange={ ( e ) =>
+									setCharge( {
+										...charge,
+										name: e.target.value,
+									} )
+								}
+								aria-label={ __(
+									'Background to charge',
+									'beyond-elysium'
+								) }
+							>
+								{ spendable.map( ( background ) => (
+									<option
+										key={ background.name }
+										value={ background.name }
+									>
+										{ background.budget_total === null
+											? background.name
+											: sprintf(
+													/* translators: 1: a background's name, 2: how many actions it has left */
+													__(
+														'%1$s (%2$d left)',
+														'beyond-elysium'
+													),
+													background.name,
+													background.budget_total
+												) }
+									</option>
+								) ) }
+							</select>
+							<input
+								type="number"
+								min={ 1 }
+								value={ charge.cost }
+								onChange={ ( e ) =>
+									setCharge( {
+										...charge,
+										cost: Math.max(
+											1,
+											Number( e.target.value ) || 1
+										),
+									} )
+								}
+								aria-label={ __(
+									'Actions to charge',
+									'beyond-elysium'
+								) }
+							/>
+						</span>
+					) }
+				</fieldset>
+			) }
 			<button
 				type="submit"
 				className="be-st-button"
-				disabled={ submitting || ! hasContent }
+				disabled={
+					submitting ||
+					! hasContent ||
+					( asksCharge && ! chargeComplete( charge ) )
+				}
 			>
 				{ submitting
 					? __( 'Posting…', 'beyond-elysium' )
