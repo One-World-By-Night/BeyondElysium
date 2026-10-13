@@ -8,6 +8,7 @@ import type { ReactNode } from 'react';
 import api from '../../api/client';
 import CatalogCorrections from './CatalogCorrections';
 import CatalogVariantsPicker from './CatalogVariantsPicker';
+import DiscordSetupRow from './DiscordSetupRow';
 import EnabledStacksPicker from './EnabledStacksPicker';
 import FactionRestrictionsPicker from './FactionRestrictionsPicker';
 import PurchaseListsPicker from './PurchaseListsPicker';
@@ -354,6 +355,7 @@ export function AdminChronicleSetup() {
 		book_variants: (
 			<CatalogVariantsPicker gameSlug={ gameSlug } onChanged={ reload } />
 		),
+		discord_bot: <DiscordSetupRow gameSlug={ gameSlug } />,
 		enabled_stacks: (
 			<EnabledStacksPicker
 				enabled={

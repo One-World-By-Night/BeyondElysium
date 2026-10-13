@@ -124,4 +124,11 @@ if ( $be_wp_tests_dir && file_exists( $be_wp_tests_dir . '/includes/functions.ph
 			return gmdate( $type === 'mysql' ? 'Y-m-d H:i:s' : $type );
 		}
 	}
+
+	// Secret_Box derives its key from this; a process with no WordPress has no real site salts.
+	if ( ! function_exists( 'wp_salt' ) ) {
+		function wp_salt( string $scheme = 'auth' ): string { // phpcs:ignore
+			return 'be-tests-fixed-salt-' . $scheme;
+		}
+	}
 }

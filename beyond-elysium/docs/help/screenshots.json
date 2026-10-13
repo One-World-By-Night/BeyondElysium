@@ -353,6 +353,28 @@
 				}
 			}
 		],
+		"discord": [
+			{
+				"heading": "The screen",
+				"path": "/wp-admin/admin.php?page=beyond-elysium-chronicle-setup-hub&tab=setup&game=be-demo",
+				"account": "admin",
+				"steps": [
+					{
+						"click": "tr:has(strong:has-text(\"Discord\")) button"
+					},
+					{
+						"click": {
+							"en": "button:has-text(\"Generate a connect code\")",
+							"pt_BR": "button:has-text(\"Gerar um código de conexão\")"
+						}
+					}
+				],
+				"alt": {
+					"en": "Chronicle Setup's Discord row, open and showing a generated connect code and the command to run in Discord.",
+					"pt_BR": "A linha do Discord em Configuração da Crônica, aberta, mostrando um código de conexão gerado e o comando para rodar no Discord."
+				}
+			}
+		],
 		"downtime-queue": [
 			{
 				"heading": "Downtime",

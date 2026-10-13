@@ -9,6 +9,7 @@ import { errorMessage } from '../../lib/errorMessage';
 import { everyPage } from '../../lib/everyPage';
 import { pickerRows, type PickerRow } from '../../lib/characterPicker';
 import { inviteMessages, linkMessages } from '../../lib/playerInviteMessages';
+import { ChronicleDiscordLinks } from './ChronicleDiscordLinks';
 import type {
 	ChroniclePlayer,
 	ChroniclePlayerList,
@@ -1052,6 +1053,8 @@ export function ChroniclePlayers( { gameSlug }: ChroniclePlayersProps ) {
 					</ul>
 				) }
 			</section>
+
+			<ChronicleDiscordLinks gameSlug={ gameSlug } />
 		</div>
 	);
 }

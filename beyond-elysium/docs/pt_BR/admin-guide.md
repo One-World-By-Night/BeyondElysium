@@ -339,6 +339,40 @@ Aprovar um grava o catálogo da crônica, então exige **tanto** `be_manage_char
 
 Aprovar cria a linha do catálogo e a conexão do personagem com ela numa só transação: o jogador pediu que o personagem tivesse a coisa, então uma entrada de catálogo sem a conexão seria só metade do que foi aprovado.
 
+## Discord
+
+Uma crônica conecta a um servidor do Discord, por um código de uso único que o HST dela gera em Configuração da Crônica. Uma vez conectado, o bot chama as rotas REST do próprio site, assinadas, agindo como o jogador ou Narrador que vinculou e foi aprovado - nunca como outra pessoa, e nunca além do que essas rotas estão listadas para permitir.
+
+### O link de convite
+
+Defina o link de convite do próprio bot para todo o site, uma vez, com o WP-CLI:
+
+```sh
+wp site option update be_discord_invite_url 'https://discord.com/oauth2/authorize?...'
+```
+
+`get_site_option()` o lê, então um único valor serve todo site de uma rede. Sem nada definido, a linha do Discord em Configuração da Crônica diz ao HST para pedir o link ao OWbN em vez de mostrar um botão morto.
+
+### Como um pedido é conferido
+
+Todo pedido que o bot faz carrega cinco cabeçalhos: um id de conexão, uma marca de tempo, um nonce, uma assinatura HMAC-SHA256 sobre uma forma canônica do pedido e, para um pedido agindo como um jogador ou Narrador específico, o id do Discord dessa pessoa. O Beyond Elysium confere os cinco antes de o pedido chegar à própria conferência de permissão da rota:
+
+1. A conexão existe e não foi revogada.
+2. A marca de tempo está a até cinco minutos do relógio do servidor.
+3. O nonce ainda não foi usado por essa conexão.
+4. A assinatura bate, com a chave do segredo próprio dessa conexão.
+5. A rota e o método estão numa lista fixa de permissões, e a crônica nomeada na rota bate com a crônica da própria conexão.
+
+Passado isso, um pedido que nomeia uma conta do Discord troca para a conta do WordPress vinculada a essa conta pelo resto do pedido - então toda função de permissão, regra de aprovação, papel do accessSchema e filtro só para Narradores se aplica exatamente como se aplicaria no site, porque é a mesma conta fazendo o mesmo tipo de pedido de um jeito ou de outro. Um pedido sem conta do Discord é um pedido de serviço - o bot agindo por si mesmo, como ler o status de uma crônica ou iniciar um vínculo - e chega só ao punhado de rotas construídas para isso.
+
+Toda escrita que o bot faz agindo como uma pessoa específica é registrada: quem, qual rota e o que ela respondeu. Uma leitura não é.
+
+### Segredos
+
+O segredo próprio de uma conexão - 32 bytes aleatórios, gerados quando ela conecta - é criptografado em repouso com o mesmo mecanismo que as próprias chaves de API da Assistência de Escrita por IA usam, e nunca é devolvido por nenhuma rota depois da única vez que é emitido. Desconectar o esvazia; reconectar emite um novo.
+
+Veja a página de ajuda [Discord](help/discord.md) para as telas de Configuração da Crônica e Jogadores que isto conduz.
+
 ## API REST
 
 Toda leitura e escrita do plugin passa pela sua API REST (namespace `be/v1`), da qual todo widget acima é um cliente fino - nada na interface de administração ou do Narrador faz algo que a API em si não exponha também. Veja a [referência da API REST](rest-api.md) para a lista completa de endpoints, parâmetros e exigências de permissão.

@@ -79,6 +79,8 @@ class FreeTextCoverageTest extends TestCase {
 		// Only ever read via GET .../players/join-requests, be_manage_characters-gated; GET .../join only ever
 		// returns a waiting row, before a note is ever written.
 		'join_requests.note'                          => self::MANAGER_ONLY,
+		// Encrypted at rest; returned once, by POST /bot/connect, and never again by any route to anyone.
+		'bot_connections.secret'                      => self::MANAGER_ONLY,
 	];
 
 	public function test_every_free_text_column_in_the_schema_is_accounted_for(): void {

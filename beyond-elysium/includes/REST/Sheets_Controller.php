@@ -79,27 +79,12 @@ class Sheets_Controller extends Base_Controller {
 
 		foreach ( $ids as $id ) {
 			$character = Character::find( $id );
-			if ( ! $character || $character->owner_slug !== $request['game_slug'] ) {
+			if ( ! $character ) {
 				return $this->error( 'character_not_found', __( 'Character not found in this game.', 'beyond-elysium' ), 404 );
 			}
-			if ( ! $can_manage && (int) $character->wp_user_id !== get_current_user_id() ) {
-				return $this->error(
-					'ownership_denied',
-					__( 'You do not have permission to view one or more of these characters.', 'beyond-elysium' ),
-					403
-				);
-			}
-			// A character whose creature type is gone has no sheet to build: say so.
-			if ( Creature_Stack::find_by_slug( (string) $character->stack_slug ) === null ) {
-				return $this->error(
-					'creature_stack_not_found',
-					sprintf(
-						/* translators: %s: character name */
-						__( '%s\'s creature type no longer exists, so no sheet can be printed for them.', 'beyond-elysium' ),
-						$character->name
-					),
-					404
-				);
+			$problem = self::check_sheet_access( $character, (string) $request['game_slug'], $can_manage );
+			if ( $problem !== null ) {
+				return $this->error( $problem['code'], $problem['message'], $problem['status'] );
 			}
 		}
 
@@ -175,5 +160,43 @@ class Sheets_Controller extends Base_Controller {
 			return $this->error( 'game_not_found', __( 'Game not found.', 'beyond-elysium' ), 404 );
 		}
 		return $game;
+	}
+
+	/**
+	 * Checks that a character belongs to the game, is visible to a viewer with this manage flag, and has a creature
+	 * type a sheet can still be built from.
+	 *
+	 * @param object $character
+	 * @param string $game_slug
+	 * @param bool   $can_manage
+	 * @return array{code:string,message:string,status:int}|null Null when every check passes.
+	 */
+	public static function check_sheet_access( object $character, string $game_slug, bool $can_manage ): ?array {
+		if ( $character->owner_slug !== $game_slug ) {
+			return [
+				'code'    => 'character_not_found',
+				'message' => __( 'Character not found in this game.', 'beyond-elysium' ),
+				'status'  => 404,
+			];
+		}
+		if ( ! $can_manage && (int) $character->wp_user_id !== get_current_user_id() ) {
+			return [
+				'code'    => 'ownership_denied',
+				'message' => __( 'You do not have permission to view this character.', 'beyond-elysium' ),
+				'status'  => 403,
+			];
+		}
+		if ( Creature_Stack::find_by_slug( (string) $character->stack_slug ) === null ) {
+			return [
+				'code'    => 'creature_stack_not_found',
+				'message' => sprintf(
+					/* translators: %s: character name */
+					__( '%s\'s creature type no longer exists, so no sheet can be printed for them.', 'beyond-elysium' ),
+					$character->name
+				),
+				'status'  => 404,
+			];
+		}
+		return null;
 	}
 }

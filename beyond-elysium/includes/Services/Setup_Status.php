@@ -3,6 +3,7 @@
 namespace BeyondElysium\Services;
 
 use BeyondElysium\Database\Manager;
+use BeyondElysium\Models\Bot_Connection;
 use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Game_Member;
 use BeyondElysium\Models\Submission;
@@ -40,6 +41,7 @@ class Setup_Status {
 			self::row_grapevine_files( $game ),
 			self::row_join_requests( $game ),
 			self::row_secret_passing( $game ),
+			self::row_discord_bot( $game ),
 		];
 
 		if ( $game->slug === 'be-demo' ) {
@@ -174,6 +176,24 @@ class Setup_Status {
 			'title'  => __( 'Players and secrets', 'beyond-elysium' ),
 			'detail' => $detail,
 			'fix'    => [ 'kind' => 'inline', 'capability' => 'be_manage_chronicle_setup' ],
+		];
+	}
+
+	/**
+	 * @return array<string,mixed>
+	 */
+	private static function row_discord_bot( object $game ): array {
+		$connection = Bot_Connection::active_for_game( (int) $game->id );
+
+		return [
+			'id'     => 'discord_bot',
+			'status' => $connection ? 'ok' : 'info',
+			'title'  => __( 'Discord', 'beyond-elysium' ),
+			'detail' => $connection
+				/* translators: %s: the connected Discord server's name */
+				? sprintf( __( 'Connected to %s.', 'beyond-elysium' ), $connection->guild_name )
+				: __( 'Not connected. Connecting lets your players read their sheets and link their accounts from Discord.', 'beyond-elysium' ),
+			'fix'    => [ 'kind' => 'inline', 'capability' => 'be_manage_characters' ],
 		];
 	}
 

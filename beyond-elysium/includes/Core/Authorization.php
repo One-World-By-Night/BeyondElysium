@@ -273,7 +273,7 @@ class Authorization {
 	 *
 	 * @return string[]
 	 */
-	private static function role_grants( string $role ): array {
+	public static function role_grants( string $role ): array {
 		return self::game_role_map()[ $role ] ?? [];
 	}
 

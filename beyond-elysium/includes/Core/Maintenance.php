@@ -3,7 +3,11 @@
 namespace BeyondElysium\Core;
 
 use BeyondElysium\Models\Attestation;
+use BeyondElysium\Models\Bot_Audit;
+use BeyondElysium\Models\Bot_Connect_Code;
+use BeyondElysium\Models\Bot_Nonce;
 use BeyondElysium\Models\Change;
+use BeyondElysium\Models\Discord_Link;
 use BeyondElysium\Models\Mail_Log;
 use BeyondElysium\Models\Release_Batch;
 use BeyondElysium\Models\Submission;
@@ -103,6 +107,10 @@ class Maintenance {
 		Change::expire_stale_visit_pairings( Transfer::OFFER_TTL_DAYS );
 		Notifications::send_daily_digests();
 		Mail_Log::prune();
+		Bot_Nonce::prune();
+		Bot_Connect_Code::prune();
+		Discord_Link::prune_expired_requests();
+		Bot_Audit::prune();
 	}
 
 	/**

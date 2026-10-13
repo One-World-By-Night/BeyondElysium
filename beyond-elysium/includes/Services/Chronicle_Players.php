@@ -108,6 +108,22 @@ class Chronicle_Players {
 	}
 
 	/**
+	 * The public link that opens My Chronicle's Discord-link panel for a waiting token, carrying `auth=sso` only
+	 * when the chronicle is linked to an OWbN player role.
+	 *
+	 * @param object $game
+	 * @param string $token
+	 * @return string
+	 */
+	public static function discord_confirm_link( object $game, string $token ): string {
+		$args = [ 'discord_link' => $token, 'discord_slug' => (string) $game->slug ];
+		if ( Authorization::asc_role_path( $game, 'player' ) !== null ) {
+			$args['auth'] = 'sso';
+		}
+		return add_query_arg( $args, home_url( '/' . Page_Provisioner::PLAYER_SLUG . '/' ) );
+	}
+
+	/**
 	 * Grants the chronicle's accessSchema player role, then refreshes that one account's cached roles.
 	 *
 	 * @return array{attempted:bool,granted?:bool,role_path?:string,message?:string}

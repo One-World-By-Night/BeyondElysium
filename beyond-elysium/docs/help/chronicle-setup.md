@@ -13,7 +13,7 @@ wp-admin sidebar → Beyond Elysium → Chronicle Setup. This is the hub's first
 ## The screen
 
 - **Chronicle** - a dropdown listing every chronicle on the install. Picking one reloads the checklist for it, and the choice goes into the page address, so it stays put when you switch to Chronicle Access or Action & Rumor Settings, follow a **Go** link, or press Back.
-- A summary line: how many rows are done, then how many need attention - "5 of 18 done. 3 items need attention." or "18 of 18 done. Nothing needs attention." The demo chronicle's own row isn't counted, even though it shows on the demo.
+- A summary line: how many rows are done, then how many need attention - "5 of 19 done. 3 items need attention." or "19 of 19 done. Nothing needs attention." The demo chronicle's own row isn't counted, even though it shows on the demo.
 - The checklist - one row per thing to set up, each with a status pill, a title and detail line, and one button:
   - The pill is **Needs attention** (amber) for something a chronicle needs, **✓ Done** (green, and the whole row goes light green) once it's set, or **Info** (grey) for an optional row you haven't set.
   - **Go** leaves this page for the one that does the job. **Set up** (or **Change**, once the row is done) opens the row's controls right under it, and **Close** folds them again. A row that needs attention starts open; every other row starts folded, so a finished chronicle is a short list. Saving a row that needed attention turns it green and folds it.
@@ -35,6 +35,7 @@ wp-admin sidebar → Beyond Elysium → Chronicle Setup. This is the hub's first
   - **Players' Grapevine files** - a link players can use to send this chronicle a character's Grapevine file, with this chronicle already picked when they follow it. A **Copy link** button copies it. *Done* once a player has sent a file through it. See [Send a Grapevine File](send-grapevine-file.md).
   - **Join requests** - on by default. *Done* once your chronicle has explicitly chosen it one way or the other; *Info* until then. On, anyone signed in can ask to join from My Chronicle, with nothing granted until a Storyteller approves it; off, this chronicle drops off the join list and asking is refused. Review an ask from the Players tab's own Join requests section. See [Joining a Chronicle](joining.md) and [Players](chronicle-players.md).
   - **Players and secrets** - *Done* once your chronicle has explicitly chosen a mode; *Info* until then (reads as **Needs a Storyteller**). Three radio choices: **Off** (players can't log what a character learned or tell a secret to another character), **Needs a Storyteller** (a log or a pass waits for review before it reaches anyone), **Immediate** (a passed secret reaches its recipient right away, with a Storyteller still reviewing it afterward). See [Secrets](secrets.md) and [What I Know](what-i-know.md).
+  - **Discord** - *Info* until the chronicle connects a Discord server, then *Done*, naming it ("Connected to Kingdom of Night."). Your chronicle's HST clicks **Generate a connect code** and runs the `/connect` command it shows in the server to connect; **Disconnect** ends it. An AST sees the same row with the connection's status but no controls. See [Discord](discord.md).
   - **Demo chronicle** - shown only while the selected chronicle is the seeded demo. Always *Info*. A site administrator gets a **Delete demo chronicle** button here.
 
 ## Common tasks
@@ -98,6 +99,13 @@ wp-admin sidebar → Beyond Elysium → Chronicle Setup. This is the hub's first
 1. Find **Players' Grapevine files** and click **Set up**.
 2. Click **Copy link** and share it however you'd share any other link.
 
+### Connect a Discord server
+
+1. Find **Discord** and click **Set up**.
+2. Click **Generate a connect code**.
+3. In the Discord server, run the `/connect` command shown, with the code.
+4. The row shows **Connected** once the bot answers. See [Discord](discord.md).
+
 ### Go back and change something you've finished
 
 1. Click **Change** on a setting that lives on this page, or **Go** on a row that links to another page.
@@ -122,6 +130,7 @@ wp-admin sidebar → Beyond Elysium → Chronicle Setup. This is the hub's first
 - **A purchase list only widens what can be bought.** Nothing is written to any catalog list, so switching one off leaves no trace, and the Schema Blocks screens still show each creature type's own list.
 - **A Go link still takes you to the page it names, even if you can't do anything once you're there.** If you're not a site administrator, following Go to Chronicle Access won't show you anything new.
 - **An AST sees the settings rows exactly as a player would - greyed, read-only.** Creature types, New-character approval, Purchase lists, Sub-faction restrictions and Branding are an HST's; Plot features is a site administrator's.
+- **Discord's row opens for an AST too, but without the buttons.** Unlike the other HST-only rows, an AST can expand it and see whether a server is connected and its name; connecting and disconnecting stay an HST's.
 - **Starting experience and Book variants can never turn amber.** Neither is required to run a chronicle - they stay grey (Info) until you set one, then turn green (Done), the same pattern Catalog customisation and Sheet templates already follow, but they never ask for attention the way Creature types or Storytellers can.
 - **Dropping a book variant never touches what a character already holds.** The preview only lists entries so you can decide with full information; "Save anyway" removes the chronicle's own copy of that variant's content, but every character keeps whatever they already have exactly as it is.
 - **A book correction is never stored - it's worked out fresh every time the page loads,** by comparing your chronicle's own copy against the book's current version. Resolving one, one way or the other, is what makes it stop appearing; there's nothing to go stale.
@@ -149,6 +158,7 @@ wp-admin sidebar → Beyond Elysium → Chronicle Setup. This is the hub's first
 - [Branding](branding.md)
 - [AI Assist Settings (Chronicle)](writing-assist-chronicle.md)
 - [Games](games.md)
+- [Discord](discord.md)
 - [Admin Characters](admin-characters.md)
 - [Roles](roles.md)
 - [Chronicles](chronicles.md)

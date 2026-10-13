@@ -17,6 +17,7 @@ Abra o [Kit de Ferramentas do Narrador](storyteller-toolkit.md), escolha a crôn
 - **A lista de personagens** - os livres primeiro, depois os que esperam o e-mail de alguém, depois os já ligados a um jogador (esses você não pode marcar). Digite na caixa de filtro dela para restringir por nome.
 - **Aguardando o primeiro acesso** - todo convite para o qual ninguém entrou ainda: o e-mail, os personagens que o esperam, quem o enviou e quando, com um botão **Cancelar**.
 - **Jogadores** - todos que são jogadores nesta crônica, cada um com seus personagens. Cada personagem tem **Desvincular**; cada jogador tem **Adicionar personagens** e **Remover**.
+- **Discord** - contas do Discord pedindo para agir como membro da crônica: **Aguardando decisão**, com **Aprovar**/**Recusar**, e **Vinculada**, com **Revogar**. Cada linha nomeia a conta do Discord, a conta do site a que ela foi confirmada e os personagens que carrega. Veja [Discord](discord.md).
 - Uma linha sob **Jogadores** nomeia o papel do OWbN que acompanha ser jogador aqui, como `chronicle/kony/player`.
 - Depois de qualquer coisa que você faz, uma mensagem diz o que aconteceu: quem virou jogador, quais personagens foram vinculados, quais foram deixados em paz e por quê.
 
@@ -53,6 +54,12 @@ Abra o [Kit de Ferramentas do Narrador](storyteller-toolkit.md), escolha a crôn
 1. Clique em **Remover** ao lado dele e confirme.
 2. Ele deixa de ser jogador aqui. Os personagens dele ficam exatamente como estão.
 
+### Aprovar um vínculo do Discord
+
+1. Ache a conta em **Discord**, **Aguardando decisão**.
+2. Confira os personagens que ela lista.
+3. Clique em **Aprovar**, ou em **Recusar** se ela não deve agir aqui.
+
 ## O que saber
 
 - **Os pedidos de entrada podem ser desligados** em [Configuração da Crônica](chronicle-setup.md). Desligado, a crônica sai da lista de entrada e o link de entrada dela recusa um pedido novo; um que já espera ainda é revisado aqui.
@@ -67,6 +74,8 @@ Abra o [Kit de Ferramentas do Narrador](storyteller-toolkit.md), escolha a crôn
 - **Um e-mail pendente definido num personagem** pela lista de Personagens também é um convite. Aparece em **Aguardando o primeiro acesso** e vincula do mesmo jeito.
 - **A vinculação é registrada.** O histórico de cada personagem mostra a quem ele foi vinculado ou de quem foi desvinculado.
 - **Remover não é excluir.** A conta, os personagens e o lugar da pessoa em qualquer outra crônica ficam intocados.
+- **Uma conta do Discord é aprovada para esta crônica, não para uma conta em todo o site.** Aprovar um vínculo novo para a mesma conta do site revoga qualquer vínculo aprovado antes dele; só um fica ativo por vez.
+- **Agir a partir do Discord segue as mesmas regras do site.** Nada que uma conta vinculada faz pelo bot pula uma permissão, uma aprovação ou um limite que encontraria aqui.
 
 ## Solução de problemas
 
@@ -84,3 +93,4 @@ Abra o [Kit de Ferramentas do Narrador](storyteller-toolkit.md), escolha a crôn
 - [Configuração da Crônica](chronicle-setup.md)
 - [Acesso à Crônica](chronicle-access.md)
 - [Papéis](roles.md)
+- [Discord](discord.md)

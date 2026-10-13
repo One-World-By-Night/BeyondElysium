@@ -44,6 +44,10 @@ import type {
 	JoinableChronicle,
 	MyJoinRequest,
 	ChronicleJoinRequest,
+	BotConnectionStatus,
+	BotConnectCode,
+	DiscordLinkPreview,
+	DiscordLink,
 } from '../types';
 import type {
 	Character,
@@ -1534,6 +1538,109 @@ export const joinRequests = {
 			method: 'DELETE',
 		} ),
 };
+
+/**
+ * REST client for connecting a chronicle to a Discord server.
+ */
+export const bot = ( gameSlug: string ) => ( {
+	/**
+	 * The chronicle's current connection status.
+	 */
+	connection: (): Promise< BotConnectionStatus > =>
+		apiFetch( { path: `${ BASE }/${ gameSlug }/bot/connection` } ),
+
+	/**
+	 * Generates a connect code, replacing any live code.
+	 */
+	generateCode: (): Promise< BotConnectCode > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/bot/connect-codes`,
+			method: 'POST',
+		} ),
+
+	/**
+	 * Disconnects the chronicle's Discord server.
+	 */
+	disconnect: (): Promise< { connected: boolean } > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/bot/connection`,
+			method: 'DELETE',
+		} ),
+} );
+
+/**
+ * REST client for Discord link requests.
+ */
+export const discordLinks = ( gameSlug: string ) => ( {
+	/**
+	 * Reads a link request by its token.
+	 */
+	preview: ( token: string ): Promise< DiscordLinkPreview > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/discord-links/preview`,
+			method: 'POST',
+			data: { token },
+		} ),
+
+	/**
+	 * Confirms a link request with the signed-in user's own characters.
+	 */
+	confirm: (
+		token: string,
+		characterIds: number[]
+	): Promise< { status: string } > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/discord-links/confirm`,
+			method: 'POST',
+			data: { token, character_ids: characterIds },
+		} ),
+
+	/**
+	 * Ends the signed-in user's own link.
+	 */
+	revokeMine: (): Promise< { revoked: boolean } > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/discord-links/mine`,
+			method: 'DELETE',
+		} ),
+
+	/**
+	 * Lists the chronicle's links, optionally narrowed to one status.
+	 */
+	list: ( status?: string ): Promise< DiscordLink[] > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/discord-links${
+				status ? `?status=${ status }` : ''
+			}`,
+		} ),
+
+	/**
+	 * Approves a confirmed link.
+	 */
+	approve: ( id: number ): Promise< { status: string } > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/discord-links/${ id }/approve`,
+			method: 'POST',
+		} ),
+
+	/**
+	 * Declines a confirmed link.
+	 */
+	decline: ( id: number ): Promise< { status: string } > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/discord-links/${ id }/decline`,
+			method: 'POST',
+		} ),
+
+	/**
+	 * Revokes an approved link.
+	 */
+	revoke: ( id: number ): Promise< { status: string } > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/discord-links/${ id }/revoke`,
+			method: 'POST',
+		} ),
+} );
 
 /**
  * REST client for the plugin's site-wide authorization configuration: whether external access-control integration is
@@ -4397,6 +4504,8 @@ const api = {
 	gameMembers,
 	chroniclePlayers,
 	joinRequests,
+	bot,
+	discordLinks,
 	authorizationSettings,
 	dataManagement,
 	gameStats,

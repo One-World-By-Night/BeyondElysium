@@ -17,6 +17,7 @@ Open the [Storyteller Toolkit](storyteller-toolkit.md), pick the chronicle, then
 - **The character list** - free characters first, then those waiting for someone's email, then those already linked to a player (you can't tick those). Type in its filter box to narrow it by name.
 - **Waiting to sign in** - every invite nobody has signed in for yet: the email, the characters waiting for it, who sent it and when, with a **Cancel** button.
 - **Players** - everyone who is a player in this chronicle, each with their characters. Each character has **Unlink**; each player has **Add characters** and **Remove**.
+- **Discord** - Discord accounts asking to act as a chronicle member: **Waiting for a decision**, with **Approve**/**Decline**, and **Linked**, with **Revoke**. Each row names the Discord account, the website account it's confirmed to, and the characters it carries. See [Discord](discord.md).
 - A line under **Players** names the OWbN role that goes with being a player here, such as `chronicle/kony/player`.
 - After anything you do, a message says what happened: who became a player, which characters were linked, which were left alone and why.
 
@@ -53,6 +54,12 @@ Open the [Storyteller Toolkit](storyteller-toolkit.md), pick the chronicle, then
 1. Click **Remove** beside them and confirm.
 2. They are no longer a player here. Their characters stay exactly as they are.
 
+### Approve a Discord link
+
+1. Find the account under **Discord**, **Waiting for a decision**.
+2. Check the characters it lists.
+3. Click **Approve**, or **Decline** if it shouldn't act here.
+
 ## Things to know
 
 - **Join requests can be turned off** on [Chronicle Setup](chronicle-setup.md). Off, the chronicle leaves the join list and its join link refuses a new request; one already waiting is still reviewed here.
@@ -67,6 +74,8 @@ Open the [Storyteller Toolkit](storyteller-toolkit.md), pick the chronicle, then
 - **A pending email set on a character** from the Characters list is an invite too. It shows under **Waiting to sign in** and links the same way.
 - **Linking is recorded.** Each character's history shows who it was linked to or unlinked from.
 - **Removing is not deleting.** Their account, their characters and their place in any other chronicle are untouched.
+- **A Discord account is approved for this chronicle, not for an account site-wide.** Approving a new link for the same website account revokes whichever link was approved before it; only one is active at a time.
+- **Acting from Discord follows the same rules as the website.** Nothing a linked account does through the bot skips a permission, an approval, or a limit it would hit here.
 
 ## Troubleshooting
 
@@ -84,3 +93,4 @@ Open the [Storyteller Toolkit](storyteller-toolkit.md), pick the chronicle, then
 - [Chronicle Setup](chronicle-setup.md)
 - [Chronicle Access](chronicle-access.md)
 - [Roles](roles.md)
+- [Discord](discord.md)

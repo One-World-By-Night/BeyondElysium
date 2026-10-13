@@ -250,6 +250,8 @@ class Games_Controller extends Base_Controller {
 			'be_manage_apr',
 			// Gates the Storyteller Toolkit's Factions tab.
 			'be_manage_factions',
+			// Gates Chronicle Setup's own connect and disconnect controls.
+			'be_manage_chronicle_setup',
 		];
 
 		$game = Game::find_by_slug( $request['game_slug'] );

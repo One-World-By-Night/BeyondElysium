@@ -9,6 +9,7 @@ import type { CSSProperties } from 'react';
 import { useChronicleSwitcher } from '../../lib/useChronicleSwitcher';
 import { ChronicleSwitcher } from '../shared/ChronicleSwitcher';
 import { JoinChronicle } from '../game/JoinChronicle';
+import { DiscordLinkPanel } from '../game/DiscordLinkPanel';
 import DemoBanner, { DemoBannerShownContext } from '../shared/DemoBanner';
 import { TabStrip } from '../shared/TabStrip';
 import { CharacterList } from '../character/CharacterList';
@@ -186,6 +187,8 @@ export function MyChroniclePage() {
 				pendingCounts={ pendingCounts }
 			/>
 			{ gameSlug && <DemoBanner gameSlug={ gameSlug } /> }
+
+			<DiscordLinkPanel />
 
 			{ ! loadingGames && (
 				<JoinChronicle hasMemberships={ games.length > 0 } />

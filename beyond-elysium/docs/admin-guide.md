@@ -339,6 +339,40 @@ Approving one writes the chronicle's catalog, so it needs **both** `be_manage_ch
 
 Approval creates the catalog row and the character's connection to it in one transaction: the player asked for their character to have the thing, so a catalog entry without the connection would only be half of what was approved.
 
+## Discord
+
+A chronicle connects to one Discord server, through a one-time code its HST generates on Chronicle Setup. Once connected, the bot calls this site's own REST routes, signed, acting as whichever player or Storyteller has linked and been approved - never as anyone else, and never beyond what that routes are listed to allow.
+
+### The invite link
+
+Set the bot's own invite link site-wide, once, with WP-CLI:
+
+```sh
+wp site option update be_discord_invite_url 'https://discord.com/oauth2/authorize?...'
+```
+
+`get_site_option()` reads it, so one value serves every site on a network. With nothing set, Chronicle Setup's Discord row tells an HST to ask OWbN for the link instead of showing a dead button.
+
+### How a call is checked
+
+Every call the bot makes carries five headers: a connection id, a timestamp, a nonce, an HMAC-SHA256 signature over a canonical form of the request, and, for a call acting as a specific player or Storyteller, that person's Discord user id. Beyond Elysium checks all five before the request ever reaches a route's own permission check:
+
+1. The connection exists and isn't revoked.
+2. The timestamp is within five minutes of the server's clock.
+3. The nonce hasn't been used before by that connection.
+4. The signature matches, keyed with that connection's own secret.
+5. The route and method are on a fixed allowlist, and the chronicle named in the route matches the connection's own chronicle.
+
+Past that, a call naming a Discord user switches to that user's own linked WordPress account for the rest of the request - so every permission callback, approval rule, accessSchema role, and Storyteller-only filter applies exactly as it would on the website, because it's the same account making the same kind of request either way. A call with no Discord user is a service call - the bot acting for itself, such as reading a chronicle's status or starting a link - and reaches only the handful of routes built for that.
+
+Every write a bot makes while acting as a specific person is recorded: who, what route, and what it answered. A read is not.
+
+### Secrets
+
+A connection's own secret - 32 random bytes, generated when it connects - is encrypted at rest with the same mechanism AI Assist's own API keys use, and is never returned by any route after the one time it's issued. Disconnecting empties it; reconnecting issues a new one.
+
+See the [Discord](help/discord.md) help page for the Chronicle Setup and Players screens this drives.
+
 ## REST API
 
 Every read and write in the plugin goes through its REST API (`be/v1` namespace), which every one of the widgets above is a thin client of - nothing in the admin or Storyteller UI does anything the API itself doesn't also expose. See the [REST API reference](rest-api.md) for the full endpoint list, parameters, and permission requirements.

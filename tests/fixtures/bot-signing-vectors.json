@@ -1,0 +1,76 @@
+[
+    {
+        "name": "a plain GET with no query and no body",
+        "secret": "RwRQkY2XApPVuOHEw2iZu2_qez9xMv6VeB4qHqbdWCU",
+        "method": "GET",
+        "route": "/be/v1/kony/my/characters",
+        "query": {},
+        "timestamp": "1700000000",
+        "nonce": "nonce-0001-plain-get",
+        "connection_id": "7",
+        "discord_user_id": "123456789012345678",
+        "body": "",
+        "canonical": "v1\nGET\n/be/v1/kony/my/characters\n\n1700000000\nnonce-0001-plain-get\n7\n123456789012345678\ne3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "signature": "6d1b64818cc302102c7256308d764ce9aad5e2d948f79601af26c29ad461dae3"
+    },
+    {
+        "name": "a GET with a query that needs sorting and encoding",
+        "secret": "RwRQkY2XApPVuOHEw2iZu2_qez9xMv6VeB4qHqbdWCU",
+        "method": "get",
+        "route": "/be/v1/kony/characters",
+        "query": {
+            "search": "a b&c",
+            "per_page": "25",
+            "page": "2"
+        },
+        "timestamp": "1700000100",
+        "nonce": "nonce-0002-sorted-query",
+        "connection_id": "7",
+        "discord_user_id": "123456789012345678",
+        "body": "",
+        "canonical": "v1\nGET\n/be/v1/kony/characters\npage=2&per_page=25&search=a%20b%26c\n1700000100\nnonce-0002-sorted-query\n7\n123456789012345678\ne3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "signature": "347a5c383ed2a866668c65f4f0ae61e25eb2759145637642c23a4c507ceb3bf6"
+    },
+    {
+        "name": "a POST with a JSON body",
+        "secret": "RwRQkY2XApPVuOHEw2iZu2_qez9xMv6VeB4qHqbdWCU",
+        "method": "POST",
+        "route": "/be/v1/kony/discord-links/confirm",
+        "query": {},
+        "timestamp": "1700000200",
+        "nonce": "nonce-0003-json-body",
+        "connection_id": "7",
+        "discord_user_id": "123456789012345678",
+        "body": "{\"token\":\"abc123\",\"character_ids\":[42,43]}",
+        "canonical": "v1\nPOST\n/be/v1/kony/discord-links/confirm\n\n1700000200\nnonce-0003-json-body\n7\n123456789012345678\n93b94c459275e5d8052bbbde5d518ce7bf5e6ccf637fea7a49ecedebc5857e15",
+        "signature": "c028b10b068132089abbe74746ce02d11a060e7f77574d82e284e8a016a865eb"
+    },
+    {
+        "name": "a service call with no acting user",
+        "secret": "RwRQkY2XApPVuOHEw2iZu2_qez9xMv6VeB4qHqbdWCU",
+        "method": "GET",
+        "route": "/be/v1/kony/bot/status",
+        "query": {},
+        "timestamp": "1700000300",
+        "nonce": "nonce-0004-service-call",
+        "connection_id": "7",
+        "discord_user_id": "",
+        "body": "",
+        "canonical": "v1\nGET\n/be/v1/kony/bot/status\n\n1700000300\nnonce-0004-service-call\n7\n\ne3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "signature": "f8655db63a52e3d345c806b44f64a20b9e2149e56bc2b61428e437e4c2067a55"
+    },
+    {
+        "name": "a POST with a non-ASCII body",
+        "secret": "RwRQkY2XApPVuOHEw2iZu2_qez9xMv6VeB4qHqbdWCU",
+        "method": "POST",
+        "route": "/be/v1/kony/bot/links",
+        "query": {},
+        "timestamp": "1700000400",
+        "nonce": "nonce-0005-non-ascii-body",
+        "connection_id": "7",
+        "discord_user_id": "",
+        "body": "{\"discord_username\":\"Grégory Étoile 日本\"}",
+        "canonical": "v1\nPOST\n/be/v1/kony/bot/links\n\n1700000400\nnonce-0005-non-ascii-body\n7\n\n68782cd20771b844560fe59c1f95067ebad3009f2fb083affa4293e24def1186",
+        "signature": "a4cb438db11183819af052dcac5259fccfbb28b6f4c9dcb2a6f4027afbd57882"
+    }
+]

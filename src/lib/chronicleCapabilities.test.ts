@@ -23,6 +23,7 @@ describe( 'canIn', () => {
 		be_manage_sessions: false,
 		be_manage_apr: false,
 		be_manage_factions: false,
+		be_manage_chronicle_setup: false,
 	};
 
 	beforeEach( () => {
@@ -65,6 +66,7 @@ describe( 'canAny', () => {
 		be_manage_sessions: false,
 		be_manage_apr: false,
 		be_manage_factions: false,
+		be_manage_chronicle_setup: false,
 	};
 
 	it( 'answers yes when any one capability is held', () => {

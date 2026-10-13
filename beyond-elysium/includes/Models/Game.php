@@ -426,8 +426,13 @@ class Game {
 			$ok = Secret::delete( (int) $secret->id ) && $ok;
 		}
 
-		$transfer_table = Manager::table( 'character_transfers' );
-		$deletes        = [
+		$transfer_table        = Manager::table( 'character_transfers' );
+		$link_table            = Manager::table( 'discord_links' );
+		$link_character_table  = Manager::table( 'discord_link_characters' );
+		$connection_table      = Manager::table( 'bot_connections' );
+		$audit_table           = Manager::table( 'bot_audit' );
+		$nonce_table           = Manager::table( 'bot_nonces' );
+		$deletes               = [
 			Manager::delete( 'templates', [ 'game_id' => $game_id ] ),
 			Manager::delete( 'queries', [ 'game_id' => $game_id ] ),
 			Manager::delete( 'schema_blocks', [ 'game_slug' => $slug ] ),
@@ -448,6 +453,21 @@ class Game {
 			Manager::delete( 'connections', [ 'game_id' => $game_id ] ),
 			Manager::delete( 'game_members', [ 'game_id' => $game_id ] ),
 			Manager::delete( 'join_requests', [ 'game_id' => $game_id ] ),
+			$wpdb->query( $wpdb->prepare(
+				"DELETE FROM {$link_character_table} WHERE link_id IN ( SELECT id FROM {$link_table} WHERE game_id = %d )",
+				$game_id
+			) ),
+			Manager::delete( 'discord_links', [ 'game_id' => $game_id ] ),
+			$wpdb->query( $wpdb->prepare(
+				"DELETE FROM {$audit_table} WHERE connection_id IN ( SELECT id FROM {$connection_table} WHERE game_id = %d )",
+				$game_id
+			) ),
+			$wpdb->query( $wpdb->prepare(
+				"DELETE FROM {$nonce_table} WHERE connection_id IN ( SELECT id FROM {$connection_table} WHERE game_id = %d )",
+				$game_id
+			) ),
+			Manager::delete( 'bot_connections', [ 'game_id' => $game_id ] ),
+			Manager::delete( 'bot_connect_codes', [ 'game_id' => $game_id ] ),
 		];
 
 		if ( ! $ok || in_array( false, $deletes, true ) ) {

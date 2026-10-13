@@ -13,7 +13,7 @@ Barra lateral do wp-admin → Beyond Elysium → Configuração da Crônica. Est
 ## A tela
 
 - **Crônica** - uma lista suspensa com toda crônica da instalação. Escolher uma recarrega a lista de conferência para ela, e a escolha vai para o endereço da página, então fica quando você troca para Acesso à Crônica ou Configurações de Ação e Rumor, segue um link **Ir** ou aperta Voltar.
-- Uma linha de resumo: quantas linhas estão prontas, depois quantas precisam de atenção - "5 de 18 prontas. 3 itens precisam de atenção." ou "18 de 18 prontas. Nada precisa de atenção." A própria linha da crônica de demonstração não conta, embora apareça na demonstração.
+- Uma linha de resumo: quantas linhas estão prontas, depois quantas precisam de atenção - "5 de 19 prontas. 3 itens precisam de atenção." ou "19 de 19 prontas. Nada precisa de atenção." A própria linha da crônica de demonstração não conta, embora apareça na demonstração.
 - A lista de conferência - uma linha por coisa a configurar, cada uma com um selo de status, um título e uma linha de detalhe, e um botão:
   - O selo é **Precisa de atenção** (âmbar) para algo de que uma crônica precisa, **✓ Concluído** (verde, e a linha inteira fica verde clara) depois de definido, ou **Informação** (cinza) para uma linha opcional que você não definiu.
   - **Ir** sai desta página para a que faz o trabalho. **Configurar** (ou **Alteração**, depois que a linha está pronta) abre os controles da linha logo abaixo dela, e **Fechar** os dobra de novo. Uma linha que precisa de atenção começa aberta; toda outra linha começa dobrada, então uma crônica terminada é uma lista curta. Salvar uma linha que precisava de atenção a deixa verde e a dobra.
@@ -35,6 +35,7 @@ Barra lateral do wp-admin → Beyond Elysium → Configuração da Crônica. Est
   - **Arquivos do Grapevine dos jogadores** - um link que os jogadores podem usar para enviar a esta crônica o arquivo do Grapevine de um personagem, com esta crônica já escolhida quando seguem. Um botão **Copiar link** o copia. *Concluído* quando um jogador enviou um arquivo por ele. Veja [Enviar um Arquivo do Grapevine](send-grapevine-file.md).
   - **Pedidos para entrar** - ligado por padrão. *Concluído* quando a sua crônica escolheu explicitamente de um jeito ou de outro; *Informação* até lá. Ligado, qualquer pessoa autenticada pode pedir para entrar em Minha Crônica, sem nada concedido até um Narrador aprovar; desligado, esta crônica sai da lista de entrada e pedir é recusado. Revise um pedido na própria seção Pedidos para entrar da aba Jogadores. Veja [Entrar em uma Crônica](joining.md) e [Jogadores](chronicle-players.md).
   - **Jogadores e segredos** - *Concluído* quando a sua crônica escolheu explicitamente um modo; *Informação* até lá (lê-se **Precisa de um Narrador**). Três botões de opção: **Desligado** (os jogadores não podem registrar o que um personagem aprendeu nem contar um segredo a outro personagem), **Precisa de um Narrador** (um registro ou repasse espera revisão antes de chegar a alguém), **Imediato** (um segredo repassado chega ao destinatário na hora, com um Narrador ainda o revisando depois). Veja [Segredos](secrets.md) e [O Que Eu Sei](what-i-know.md).
+  - **Discord** - *Informação* até a crônica conectar um servidor do Discord, depois *Concluído*, que o nomeia ("Conectado ao Kingdom of Night."). O HST da sua crônica clica em **Gerar um código de conexão** e roda o comando `/connect` que ele mostra no servidor para conectar; **Desconectar** encerra. Um AST vê a mesma linha com o status da conexão, mas sem controles. Veja [Discord](discord.md).
   - **Crônica de demonstração** - mostrada só enquanto a crônica escolhida é a demonstração semeada. Sempre *Informação*. Um administrador do site recebe aqui um botão **Excluir crônica de demonstração**.
 
 ## Tarefas comuns
@@ -98,6 +99,13 @@ Barra lateral do wp-admin → Beyond Elysium → Configuração da Crônica. Est
 1. Ache **Arquivos do Grapevine dos jogadores** e clique em **Configurar**.
 2. Clique em **Copiar link** e compartilhe-o do jeito que compartilharia qualquer outro link.
 
+### Conectar um servidor do Discord
+
+1. Ache **Discord** e clique em **Configurar**.
+2. Clique em **Gerar um código de conexão**.
+3. No servidor do Discord, rode o comando `/connect` mostrado, com o código.
+4. A linha mostra **Conectado** quando o bot responde. Veja [Discord](discord.md).
+
 ### Voltar e mudar algo que você terminou
 
 1. Clique em **Alteração** numa configuração que vive nesta página, ou em **Ir** numa linha que leva a outra página.
@@ -122,6 +130,7 @@ Barra lateral do wp-admin → Beyond Elysium → Configuração da Crônica. Est
 - **Uma lista de compra só amplia o que pode ser comprado.** Nada é gravado em nenhuma lista do catálogo, então desligar uma não deixa vestígio, e as telas de Blocos de Esquema ainda mostram a lista própria de cada tipo de criatura.
 - **Um link Ir ainda leva à página que nomeia, mesmo que você não possa fazer nada quando chegar lá.** Se você não é administrador do site, seguir Ir até Acesso à Crônica não mostrará nada de novo.
 - **Um AST vê as linhas de configuração exatamente como um jogador - em cinza, somente leitura.** Tipos de criatura, Aprovação de novo personagem, Listas de compra, Restrições de subfacção e Identidade Visual são de um HST; Recursos de trama é de um administrador do site.
+- **A linha do Discord abre para um AST também, mas sem os botões.** Diferente das outras linhas só de HST, um AST pode expandi-la e ver se um servidor está conectado e o nome dele; conectar e desconectar continuam do HST.
 - **Experiência inicial e Variantes do livro nunca podem ficar âmbar.** Nenhuma das duas é necessária para conduzir uma crônica - ficam cinza (Informação) até você definir uma, depois verdes (Concluído), o mesmo padrão que Personalização do catálogo e Modelos de ficha já seguem, mas nunca pedem atenção do jeito que Tipos de criatura ou Narradores podem.
 - **Largar uma variante do livro nunca toca o que um personagem já tem.** A prévia só lista entradas para você decidir com informação completa; "Salvar mesmo assim" remove a cópia própria da crônica do conteúdo dessa variante, mas todo personagem mantém o que já tem exatamente como está.
 - **Uma correção do livro nunca é guardada - é calculada do zero toda vez que a página carrega,** comparando a cópia própria da sua crônica com a versão atual do livro. Resolver uma, de um jeito ou de outro, é o que faz ela parar de aparecer; não há nada para ficar desatualizado.
@@ -149,6 +158,7 @@ Barra lateral do wp-admin → Beyond Elysium → Configuração da Crônica. Est
 - [Identidade Visual](branding.md)
 - [Configurações de Assistência de IA (Crônica)](writing-assist-chronicle.md)
 - [Jogos](games.md)
+- [Discord](discord.md)
 - [Personagens do Administrador](admin-characters.md)
 - [Papéis](roles.md)
 - [Crônicas](chronicles.md)

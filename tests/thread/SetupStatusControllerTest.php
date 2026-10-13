@@ -375,21 +375,21 @@ class SetupStatusControllerTest extends WP_UnitTestCase {
 	public function test_the_summary_counts_every_row_and_the_rows_there_are_to_do(): void {
 		$summary = $this->dispatch( $this->admin_id )->get_data()['summary'];
 
-		$this->assertSame( 18, $summary['total'] );
+		$this->assertSame( 19, $summary['total'] );
 		$this->assertSame( $summary['total'], $summary['attention'] + $summary['ok'] + $summary['info'] );
 
 		Game::update( $this->game_slug, [ 'settings' => [ 'accent_color' => '#123456' ] ] );
 		$after = $this->dispatch( $this->admin_id )->get_data()['summary'];
 		$this->assertSame( $summary['ok'] + 1, $after['ok'] );
-		$this->assertSame( 18, $after['total'] );
+		$this->assertSame( 19, $after['total'] );
 	}
 
 	public function test_the_demo_chronicles_own_row_is_not_something_to_do(): void {
 		$data = $this->dispatch_for_game( $this->admin_id, 'be-demo' )->get_data();
 
-		$this->assertCount( 19, $data['items'] );
-		$this->assertSame( 18, $data['summary']['total'], 'the demo row asks for nothing' );
-		$this->assertSame( 19, $data['summary']['attention'] + $data['summary']['ok'] + $data['summary']['info'] );
+		$this->assertCount( 20, $data['items'] );
+		$this->assertSame( 19, $data['summary']['total'], 'the demo row asks for nothing' );
+		$this->assertSame( 20, $data['summary']['attention'] + $data['summary']['ok'] + $data['summary']['info'] );
 	}
 
 	public function test_an_hst_can_act_on_the_setting_rows_a_site_administrator_does_not_have_to_be_for(): void {

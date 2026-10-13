@@ -138,6 +138,7 @@ export interface MyCapabilities {
 	be_manage_sessions: boolean;
 	be_manage_apr: boolean;
 	be_manage_factions: boolean;
+	be_manage_chronicle_setup: boolean;
 }
 
 /**
@@ -335,6 +336,61 @@ export interface MyJoinRequest {
 	reviewed_by: number | null;
 	reviewed_at: string | null;
 	created_at: string;
+}
+
+/**
+ * A chronicle's connection to a Discord server.
+ */
+export interface BotConnectionStatus {
+	connected: boolean;
+	guild_name: string | null;
+	connected_at: string | null;
+	last_seen_at: string | null;
+}
+
+/**
+ * A freshly generated connect code, shown once.
+ */
+export interface BotConnectCode {
+	code: string;
+	expires_in: number;
+	connect_command: string;
+	invite_url: string;
+}
+
+/**
+ * A character a Discord link can be confirmed with.
+ */
+export interface DiscordLinkableCharacter {
+	id: number;
+	name: string;
+	stack_slug: string;
+}
+
+/**
+ * A link request read by its token, before it is confirmed.
+ */
+export interface DiscordLinkPreview {
+	discord_username: string;
+	expires_at: string;
+	staff: boolean;
+	characters: DiscordLinkableCharacter[];
+}
+
+/**
+ * One Discord link, as the Players tab lists it.
+ */
+export interface DiscordLink {
+	id: number;
+	discord_user_id: string;
+	discord_username: string;
+	status: 'requested' | 'confirmed' | 'approved' | 'declined' | 'revoked';
+	wp_user: { id: number; display_name: string } | null;
+	characters: { id: number; name: string }[];
+	requested_at: string;
+	confirmed_at: string | null;
+	decided_at: string | null;
+	revoked_at: string | null;
 }
 
 /**

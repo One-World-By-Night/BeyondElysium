@@ -15,6 +15,7 @@ const EMPTY_CAPABILITIES: MyCapabilities = {
 	be_manage_sessions: false,
 	be_manage_apr: false,
 	be_manage_factions: false,
+	be_manage_chronicle_setup: false,
 };
 
 /**

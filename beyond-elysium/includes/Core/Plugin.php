@@ -32,6 +32,7 @@ class Plugin {
 		\BeyondElysium\REST\Url_Param_Guard::register();
 		\BeyondElysium\REST\Catalog_Switch_Guard::register();
 		Authorization::register();
+		Bot_Auth::register();
 		\BeyondElysium\Services\Player_Invites::register();
 
 		// Cleans up be_game_members rows when a user is deleted, single-site or multisite.
@@ -186,6 +187,9 @@ class Plugin {
 			new \BeyondElysium\REST\Translations_Controller(),
 			new \BeyondElysium\REST\Items_Catalog_Controller(),
 			new \BeyondElysium\REST\Mail_Log_Controller(),
+			new \BeyondElysium\REST\Bot_Controller(),
+			new \BeyondElysium\REST\Discord_Links_Controller(),
+			new \BeyondElysium\REST\Sheet_Document_Controller(),
 		];
 		foreach ( $controllers as $controller ) {
 			$controller->register_routes();

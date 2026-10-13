@@ -1,0 +1,21 @@
+.be-discord-setup-row__hint {
+	font-size: 0.85rem;
+	color: var(--be-gray-6);
+	margin: 0.3rem 0;
+}
+
+.be-discord-setup-row__error {
+	color: var(--be-red-6);
+	margin: 0.3rem 0;
+}
+
+.be-discord-setup-row__command {
+	display: block;
+	margin: 0.4rem 0;
+	padding: 0.4rem 0.6rem;
+	border: 1px solid var(--be-gray-18);
+	border-radius: 3px;
+	background: var(--be-gray-27);
+	font-size: 0.9rem;
+	user-select: all;
+}

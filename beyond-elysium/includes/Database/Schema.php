@@ -12,7 +12,7 @@ class Schema {
 	/**
 	 * The plugin's current database schema version, matching the plugin release version.
 	 */
-	const DB_VERSION = '1.5.0.2';
+	const DB_VERSION = '1.6.0';
 
 	/**
 	 * Option key holding the installed schema version.
@@ -77,6 +77,12 @@ class Schema {
 		'translation_strings',
 		'translations',
 		'join_requests',
+		'bot_connections',
+		'bot_connect_codes',
+		'bot_nonces',
+		'discord_links',
+		'discord_link_characters',
+		'bot_audit',
 	];
 
 	/**
@@ -860,6 +866,91 @@ class Schema {
 			PRIMARY KEY  (id),
 			UNIQUE KEY string_locale_context (string_id, locale, context),
 			KEY idx_locale_status (locale, status)
+		) $charset_collate;" );
+
+		// be_bot_connections: a chronicle's connection to a Discord server, one row per game, kept across a disconnect.
+		dbDelta( "CREATE TABLE {$prefix}bot_connections (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			game_id bigint(20) unsigned NOT NULL,
+			guild_id varchar(32) NOT NULL DEFAULT '',
+			guild_name varchar(200) NOT NULL DEFAULT '',
+			secret text,
+			created_by bigint(20) unsigned NOT NULL,
+			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			last_seen_at datetime DEFAULT NULL,
+			revoked_by bigint(20) unsigned DEFAULT NULL,
+			revoked_at datetime DEFAULT NULL,
+			PRIMARY KEY  (id),
+			UNIQUE KEY game_id (game_id)
+		) $charset_collate;" );
+
+		// be_bot_connect_codes: the one-time code an HST generates to connect a chronicle's Discord server.
+		dbDelta( "CREATE TABLE {$prefix}bot_connect_codes (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			game_id bigint(20) unsigned NOT NULL,
+			code_hash char(64) NOT NULL,
+			created_by bigint(20) unsigned NOT NULL,
+			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			expires_at datetime NOT NULL,
+			used_at datetime DEFAULT NULL,
+			failures int(10) unsigned NOT NULL DEFAULT 0,
+			PRIMARY KEY  (id),
+			UNIQUE KEY game_id (game_id),
+			UNIQUE KEY code_hash (code_hash)
+		) $charset_collate;" );
+
+		// be_bot_nonces: every nonce a connection's signed call has used, so a replay of it is refused.
+		dbDelta( "CREATE TABLE {$prefix}bot_nonces (
+			connection_id bigint(20) unsigned NOT NULL,
+			nonce varchar(64) NOT NULL,
+			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			UNIQUE KEY connection_nonce (connection_id, nonce),
+			KEY idx_created (created_at)
+		) $charset_collate;" );
+
+		// be_discord_links: one Discord account's request, and later approval, to act as a chronicle member.
+		dbDelta( "CREATE TABLE {$prefix}discord_links (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			game_id bigint(20) unsigned NOT NULL,
+			discord_user_id varchar(32) NOT NULL,
+			discord_username varchar(100) NOT NULL DEFAULT '',
+			wp_user_id bigint(20) unsigned DEFAULT NULL,
+			status varchar(20) NOT NULL DEFAULT 'requested',
+			token_hash char(64) DEFAULT NULL,
+			token_expires_at datetime DEFAULT NULL,
+			requested_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			confirmed_at datetime DEFAULT NULL,
+			decided_by bigint(20) unsigned DEFAULT NULL,
+			decided_at datetime DEFAULT NULL,
+			revoked_by bigint(20) unsigned DEFAULT NULL,
+			revoked_at datetime DEFAULT NULL,
+			PRIMARY KEY  (id),
+			KEY game_discord_user (game_id, discord_user_id),
+			KEY game_wp_user (game_id, wp_user_id),
+			KEY idx_token (token_hash),
+			KEY game_status (game_id, status)
+		) $charset_collate;" );
+
+		// be_discord_link_characters: the characters a Discord link was confirmed with.
+		dbDelta( "CREATE TABLE {$prefix}discord_link_characters (
+			link_id bigint(20) unsigned NOT NULL,
+			character_id bigint(20) unsigned NOT NULL,
+			PRIMARY KEY  (link_id, character_id)
+		) $charset_collate;" );
+
+		// be_bot_audit: every write a bot made while acting as a linked user.
+		dbDelta( "CREATE TABLE {$prefix}bot_audit (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			connection_id bigint(20) unsigned NOT NULL,
+			discord_user_id varchar(32) NOT NULL DEFAULT '',
+			wp_user_id bigint(20) unsigned NOT NULL DEFAULT 0,
+			method varchar(10) NOT NULL,
+			route varchar(191) NOT NULL,
+			status smallint(5) unsigned NOT NULL,
+			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY  (id),
+			KEY idx_connection (connection_id),
+			KEY idx_created (created_at)
 		) $charset_collate;" );
 
 		self::migrate();
