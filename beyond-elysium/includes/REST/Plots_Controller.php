@@ -1056,6 +1056,8 @@ class Plots_Controller extends Base_Controller {
 			? wp_get_attachment_image_url( (int) $plot->image_id, $image_size )
 			: null;
 		$plot->is_owner = self::owns_plot( (int) $plot->id, get_current_user_id() );
+		$plot->is_action_allocation = Action_Allocator::actor_character_id( (int) $plot->id ) !== null
+			&& Action_Allocator::is_actor_owned_by( (int) $plot->id, get_current_user_id() );
 	}
 
 	/**
