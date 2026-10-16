@@ -125,12 +125,18 @@ class Entries_Controller extends Base_Controller {
 			if ( ! $can_manage && ! Authorization::can( 'be_submit_actions' ) ) {
 				return $this->error( 'forbidden', __( 'You do not have permission to submit an action.', 'beyond-elysium' ), 403 );
 			}
+		} elseif ( $entry_type === 'scene' ) {
+			// A scene is a player's own log of in-character play, never downtime-windowed - only the plot's own
+			// actor's owner, a plot member, or a manager may add one.
+			if ( ! $can_manage && ! self::can_post_scene( $plot, get_current_user_id() ) ) {
+				return $this->error( 'not_found', __( 'Plot not found in this game.', 'beyond-elysium' ), 404 );
+			}
 		} elseif ( ! $can_manage ) {
 			// response, note, and resolution entries are ST-only regardless of other capabilities held.
 			return $this->error( 'forbidden', sprintf( __( 'You do not have permission to create a %s entry.', 'beyond-elysium' ), $entry_type ), 403 );
 		}
 
-		if ( ! $can_manage && self::is_unowned_allocation( $plot ) ) {
+		if ( ! $can_manage && $entry_type !== 'scene' && self::is_unowned_allocation( $plot ) ) {
 			return $this->error( 'not_found', __( 'Plot not found in this game.', 'beyond-elysium' ), 404 );
 		}
 
@@ -595,6 +601,23 @@ class Entries_Controller extends Base_Controller {
 		$wp_user_id = get_current_user_id();
 		return ! Action_Allocator::is_actor_owned_by( $plot_id, $wp_user_id )
 			&& ! Plot::viewer_is_member( $plot_id, $wp_user_id );
+	}
+
+	/**
+	 * Whether a non-manager may add a `scene` entry to a plot: they own its own action-allocation actor, or they
+	 * hold an explicit plot-member connection to it. Unlike `is_unowned_allocation()`, a plot with no actor at all
+	 * still requires one of these - a scene is never open to anyone with no stated connection to the plot.
+	 *
+	 * @param object $plot
+	 * @param int    $wp_user_id
+	 * @return bool
+	 */
+	private static function can_post_scene( $plot, int $wp_user_id ): bool {
+		$plot_id = (int) $plot->id;
+		if ( Action_Allocator::actor_character_id( $plot_id ) !== null && Action_Allocator::is_actor_owned_by( $plot_id, $wp_user_id ) ) {
+			return true;
+		}
+		return Plot::viewer_is_member( $plot_id, $wp_user_id );
 	}
 
 	/** @return \WP_Error The refusal for a body carrying the Action & Rumor marker. */

@@ -79,6 +79,14 @@ class Sessions_Controller extends Base_Controller {
 			],
 		] );
 
+		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/sessions/(?P<id>\d+)/check-in', [
+			[
+				'methods'             => 'POST',
+				'callback'            => [ $this, 'check_in' ],
+				'permission_callback' => $this->permission( 'be_edit_own_characters' ),
+			],
+		] );
+
 		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/sessions/(?P<id>\d+)/close', [
 			[
 				'methods'             => 'POST',
@@ -350,6 +358,43 @@ class Sessions_Controller extends Base_Controller {
 			'character_id'      => $character_id ? (int) $character_id : null,
 			'visitor_name'      => $visitor_name ? sanitize_text_field( $visitor_name ) : null,
 			'visitor_chronicle' => $request->get_param( 'visitor_chronicle' ) ? sanitize_text_field( $request->get_param( 'visitor_chronicle' ) ) : null,
+			'recorded_by'       => get_current_user_id(),
+		] );
+		if ( ! $id ) {
+			return $this->error( 'create_failed', __( 'Failed to record this sign-in.', 'beyond-elysium' ), 500 );
+		}
+
+		return $this->success( Attendance::find( (int) $id ), 201 );
+	}
+
+	/**
+	 * Lets a player sign their own character in at a session, refusing one already signed in or not
+	 * their own, active, non-NPC character.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function check_in( $request ) {
+		$session = $this->resolve_session( $request );
+		if ( is_wp_error( $session ) ) {
+			return $session;
+		}
+
+		$character = $this->resolve_own_character( $request );
+		if ( is_wp_error( $character ) ) {
+			return $character;
+		}
+		if ( $character->status !== 'active' || (int) $character->is_npc !== 0 ) {
+			return $this->error( 'invalid_candidate', __( 'Only an active, non-NPC character may be signed in.', 'beyond-elysium' ), 400 );
+		}
+		if ( in_array( (int) $character->id, Attendance::character_ids_for_session( (int) $session->id ), true ) ) {
+			return $this->error( 'already_signed_in', __( 'This character is already signed in at this session.', 'beyond-elysium' ), 409 );
+		}
+
+		$id = Attendance::record( (int) $session->id, (int) $session->game_id, [
+			'character_id'      => (int) $character->id,
+			'visitor_name'      => null,
+			'visitor_chronicle' => null,
 			'recorded_by'       => get_current_user_id(),
 		] );
 		if ( ! $id ) {
@@ -661,7 +706,7 @@ class Sessions_Controller extends Base_Controller {
 			return $this->error( 'invalid_param', __( 'character_id must be a real character in this game.', 'beyond-elysium' ), 400 );
 		}
 		if ( (int) $character->wp_user_id !== get_current_user_id() ) {
-			return $this->error( 'ownership_denied', __( 'You may only file a report for your own character.', 'beyond-elysium' ), 403 );
+			return $this->error( 'ownership_denied', __( 'You may only act for your own character.', 'beyond-elysium' ), 403 );
 		}
 		return $character;
 	}

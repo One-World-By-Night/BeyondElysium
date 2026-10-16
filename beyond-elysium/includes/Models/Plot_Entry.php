@@ -14,7 +14,7 @@ class Plot_Entry {
 	/**
 	 * Entry types.
 	 */
-	const ENTRY_TYPES = [ 'action', 'response', 'note', 'resolution', 'rumor_level' ];
+	const ENTRY_TYPES = [ 'action', 'response', 'note', 'resolution', 'rumor_level', 'scene' ];
 
 	/**
 	 * Visible to whoever can already see the parent plot.

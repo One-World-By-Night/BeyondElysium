@@ -6,6 +6,7 @@ use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Connection;
 use BeyondElysium\Models\Game;
 use BeyondElysium\Models\Game_Member;
+use BeyondElysium\Models\Game_Session;
 use BeyondElysium\Models\Plot;
 use BeyondElysium\Models\Plot_Entry;
 use BeyondElysium\Services\Action_Allocator;
@@ -89,6 +90,13 @@ class PlotEntryWritesThreadTest extends WP_UnitTestCase {
 		return rest_get_server()->dispatch( $request );
 	}
 
+	private function post_scene( int $plot_id, string $content ) {
+		$request = new WP_REST_Request( 'POST', "/be/v1/{$this->slug}/plots/{$plot_id}/entries" );
+		$request->set_header( 'Content-Type', 'application/json' );
+		$request->set_body( wp_json_encode( [ 'entry_type' => 'scene', 'content' => $content ] ) );
+		return rest_get_server()->dispatch( $request );
+	}
+
 	private function resources_budget(): ?int {
 		foreach ( Background_Ledger::spendable_for( $this->own_character ) as $row ) {
 			if ( $row['name'] === 'Resources' ) {
@@ -132,6 +140,67 @@ class PlotEntryWritesThreadTest extends WP_UnitTestCase {
 
 		$this->assertSame( 201, $this->post_entry( $this->open_plot, 'I watch the docks all night.' )->get_status() );
 		$this->assertSame( 201, $this->post_entry( $this->own_plot, 'I call in a favor with Resources.' )->get_status() );
+	}
+
+	public function test_a_player_can_log_a_scene_on_their_own_allocation_plot(): void {
+		wp_set_current_user( $this->player );
+
+		$response = $this->post_scene( $this->own_plot, 'We talked by the docks until dawn.' );
+
+		$this->assertSame( 201, $response->get_status() );
+		$this->assertSame( 'scene', $response->get_data()->entry_type );
+	}
+
+	public function test_a_player_cannot_log_a_scene_on_a_plot_they_have_no_connection_to(): void {
+		wp_set_current_user( $this->player );
+		$before = count( Plot_Entry::for_plot( $this->open_plot ) );
+
+		$response = $this->post_scene( $this->open_plot, 'A scene I was never part of.' );
+
+		$this->assertSame( 404, $response->get_status() );
+		$this->assertCount( $before, Plot_Entry::for_plot( $this->open_plot ) );
+	}
+
+	public function test_a_player_cannot_log_a_scene_on_another_characters_allocation_plot(): void {
+		wp_set_current_user( $this->player );
+
+		$response = $this->post_scene( $this->other_plot, 'A scene on someone else\'s downtime plot.' );
+
+		$this->assertSame( 404, $response->get_status() );
+	}
+
+	public function test_an_invited_plot_member_can_log_a_scene(): void {
+		Connection::create( [
+			'game_id' => $this->game_id, 'source_type' => 'plot', 'source_id' => $this->open_plot,
+			'target_type' => 'character', 'target_id' => $this->own_character, 'label' => 'plot_member', 'created_by' => 1,
+		] );
+		wp_set_current_user( $this->player );
+
+		$response = $this->post_scene( $this->open_plot, 'A shared scene on an open plot.' );
+
+		$this->assertSame( 201, $response->get_status() );
+	}
+
+	public function test_a_scene_posts_even_while_downtime_for_that_date_has_not_opened(): void {
+		Game_Session::create( [
+			'game_id' => $this->game_id, 'game_date' => '2026-09-01', 'created_by' => 1,
+			'downtime_opens_at' => gmdate( 'Y-m-d H:i:s', strtotime( '+1 day' ) ),
+		] );
+		wp_set_current_user( $this->player );
+
+		$blocked_action = $this->post_entry( $this->own_plot, 'I try to act before downtime opens.' );
+		$this->assertSame( 'downtime_not_open', $blocked_action->as_error()->get_error_code() );
+
+		$response = $this->post_scene( $this->own_plot, 'But the scene itself still logs.' );
+		$this->assertSame( 201, $response->get_status() );
+	}
+
+	public function test_a_manager_can_log_a_scene_anywhere(): void {
+		$storyteller_id = self::factory()->user->create( [ 'role' => 'editor' ] );
+		Game_Member::set_role( $this->game_id, $storyteller_id, 'hst' );
+		wp_set_current_user( $storyteller_id );
+
+		$this->assertSame( 201, $this->post_scene( $this->open_plot, 'A Storyteller-logged scene.' )->get_status() );
 	}
 
 	public function test_a_ledger_cost_below_one_never_adds_uses(): void {

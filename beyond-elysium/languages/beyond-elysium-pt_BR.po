@@ -3549,9 +3549,9 @@ msgstr "O XP de relatório já foi concedido para esta sessão."
 msgid "Report for %s"
 msgstr "Relatório de %s"
 
-#: includes/REST/Sessions_Controller.php:635
-msgid "You may only file a report for your own character."
-msgstr "Você só pode enviar um relatório para o seu próprio personagem."
+#: includes/REST/Sessions_Controller.php:709
+msgid "You may only act for your own character."
+msgstr "Você só pode agir pelo seu próprio personagem."
 
 #: includes/REST/Sessions_Controller.php:648
 msgid "A report can only be filed for a session on or before today."
