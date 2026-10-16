@@ -78,6 +78,30 @@ class Bot_Controller extends Base_Controller {
 				'permission_callback' => $this->permission_bot_service(),
 			],
 		] );
+
+		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/bot/notices', [
+			[
+				'methods'             => 'GET',
+				'callback'            => [ $this, 'get_notices' ],
+				'permission_callback' => $this->permission_bot_service(),
+			],
+		] );
+
+		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/bot/notices/ack', [
+			[
+				'methods'             => 'POST',
+				'callback'            => [ $this, 'ack_notices' ],
+				'permission_callback' => $this->permission_bot_service(),
+			],
+		] );
+
+		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/bot/approved-links', [
+			[
+				'methods'             => 'GET',
+				'callback'            => [ $this, 'get_approved_links' ],
+				'permission_callback' => $this->permission_bot_service(),
+			],
+		] );
 	}
 
 	/**
@@ -318,6 +342,75 @@ class Bot_Controller extends Base_Controller {
 		}
 		Bot_Connection::disconnect( (int) $connection->id, null );
 		return $this->success( [ 'connected' => false ] );
+	}
+
+	/**
+	 * The chronicle's own undelivered notices, oldest first.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function get_notices( $request ) {
+		$connection = Bot_Auth::service_context( $request );
+		if ( ! $connection ) {
+			return $this->error( 'bot_auth_failed', __( 'This call could not be verified.', 'beyond-elysium' ), 401 );
+		}
+
+		$notices = \BeyondElysium\Models\Bot_Notice::undelivered_for_game( (int) $connection->game_id );
+
+		return $this->success( array_map(
+			static fn( $n ) => [
+				'id'         => (int) $n->id,
+				'wp_user_id' => $n->wp_user_id,
+				'kind'       => $n->kind,
+				'payload'    => $n->payload,
+				'created_at' => $n->created_at,
+			],
+			$notices
+		) );
+	}
+
+	/**
+	 * Marks the given notice ids delivered, scoped to this connection's own chronicle.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function ack_notices( $request ) {
+		$connection = Bot_Auth::service_context( $request );
+		if ( ! $connection ) {
+			return $this->error( 'bot_auth_failed', __( 'This call could not be verified.', 'beyond-elysium' ), 401 );
+		}
+
+		$ids = array_map( 'intval', (array) $request->get_param( 'ids' ) );
+		$marked = \BeyondElysium\Models\Bot_Notice::mark_delivered( (int) $connection->game_id, $ids );
+
+		return $this->success( [ 'marked' => $marked ] );
+	}
+
+	/**
+	 * Every approved Discord link in this chronicle, for the bot's own routing - no acting user, since no single
+	 * Storyteller is "logged in" when the bot itself decides where a notice should go.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function get_approved_links( $request ) {
+		$connection = Bot_Auth::service_context( $request );
+		if ( ! $connection ) {
+			return $this->error( 'bot_auth_failed', __( 'This call could not be verified.', 'beyond-elysium' ), 401 );
+		}
+
+		$links = Discord_Link::for_game( (int) $connection->game_id, Discord_Link::APPROVED );
+
+		return $this->success( array_map(
+			static fn( $link ) => [
+				'wp_user_id'       => (int) $link->wp_user_id,
+				'discord_user_id'  => $link->discord_user_id,
+				'room_channel_id'  => $link->room_channel_id,
+			],
+			$links
+		) );
 	}
 
 	/**

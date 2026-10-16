@@ -58,6 +58,9 @@ class FreeTextCoverageTest extends TestCase {
 		'game_sessions.notes'                       => 'filter_session',
 		// Digest payload only - Notifications::send_daily_digests() reads and emails it.
 		'notification_queue.payload'                => self::STRUCTURED,
+		// The bot's own event feed - every field is already-safe synthesized text (a name, a title, a
+		// status), never raw player-authored prose that could carry an [ST] marker.
+		'bot_notices.payload'                       => self::STRUCTURED,
 		'characters.public_description'             => 'filter_npc_profile',
 		'npc_castings.brief'                         => 'filter_casting',
 		'secrets.content'                            => 'filter_secret',

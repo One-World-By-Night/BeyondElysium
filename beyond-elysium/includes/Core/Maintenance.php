@@ -6,6 +6,7 @@ use BeyondElysium\Models\Attestation;
 use BeyondElysium\Models\Bot_Audit;
 use BeyondElysium\Models\Bot_Connect_Code;
 use BeyondElysium\Models\Bot_Nonce;
+use BeyondElysium\Models\Bot_Notice;
 use BeyondElysium\Models\Change;
 use BeyondElysium\Models\Discord_Link;
 use BeyondElysium\Models\Mail_Log;
@@ -111,6 +112,8 @@ class Maintenance {
 		Bot_Connect_Code::prune();
 		Discord_Link::prune_expired_requests();
 		Bot_Audit::prune();
+
+		Bot_Notice::prune();
 	}
 
 	/**

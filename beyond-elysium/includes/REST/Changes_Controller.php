@@ -3,6 +3,7 @@
 namespace BeyondElysium\REST;
 
 use BeyondElysium\Core\Notifications;
+use BeyondElysium\Models\Bot_Notice;
 use BeyondElysium\Models\Change;
 use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Game;
@@ -202,6 +203,11 @@ class Changes_Controller extends Base_Controller {
 		}
 
 		$change = Change::find( $change_id );
+		if ( $change && $change->status === 'pending' ) {
+			Bot_Notice::add( (int) $game->id, null, 'change_waiting', [
+				'character_name' => (string) ( $character->name ?? '' ),
+			] );
+		}
 		if ( $change ) {
 			$this->redact_changes( [ $change ], $game );
 		}
@@ -268,6 +274,14 @@ class Changes_Controller extends Base_Controller {
 
 		$results = array_map( static fn( $id ) => Change::find( $id ), $outcome['change_ids'] );
 		$results = array_values( array_filter( $results ) );
+
+		$has_pending = (bool) array_filter( $results, static fn( $c ) => $c->status === 'pending' );
+		if ( $has_pending ) {
+			Bot_Notice::add( (int) $game->id, null, 'change_waiting', [
+				'character_name' => (string) ( $character->name ?? '' ),
+			] );
+		}
+
 		$this->redact_changes( $results, $game );
 
 		return $this->success( [ 'submission_id' => $outcome['submission_id'], 'changes' => $results ], 201 );

@@ -308,6 +308,20 @@ class BotActAsThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 404, $response->get_status() );
 	}
 
+	public function test_the_bot_can_list_its_own_chronicles_approved_links_with_no_acting_user(): void {
+		$request  = Bot_Signed_Request::build( 'GET', "/be/v1/{$this->slug}/bot/approved-links", $this->connection_id, $this->secret, '' );
+		$response = rest_get_server()->dispatch( $request );
+
+		$this->assertSame( 200, $response->get_status() );
+		$ids = array_column( $response->get_data(), 'discord_user_id' );
+		$this->assertContains( '77', $ids );
+		$this->assertContains( '88', $ids );
+
+		$player_row = current( array_filter( $response->get_data(), static fn( $l ) => $l['discord_user_id'] === '77' ) );
+		$this->assertArrayHasKey( 'wp_user_id', $player_row );
+		$this->assertArrayHasKey( 'room_channel_id', $player_row );
+	}
+
 	public function test_a_storyteller_can_set_a_players_room_through_the_bot(): void {
 		$link = Discord_Link::active_for_discord_user( $this->game_id, '77' );
 

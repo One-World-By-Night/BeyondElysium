@@ -2,6 +2,7 @@
 
 namespace BeyondElysium\Core;
 
+use BeyondElysium\Models\Bot_Notice;
 use BeyondElysium\Models\Game;
 use BeyondElysium\Models\Game_Member;
 use BeyondElysium\Models\Mail_Log;
@@ -124,6 +125,12 @@ class Notifications {
 			return;
 		}
 
+		Bot_Notice::add( (int) ( $game->id ?? 0 ), $wp_user_id, 'change_decided', [
+			'character_name' => (string) ( $character->name ?? '' ),
+			'label'          => self::label_for( $change ),
+			'status'         => (string) ( $change->status ?? '' ),
+		] );
+
 		self::$pending[ $wp_user_id ][] = [
 			'character_name' => (string) ( $character->name ?? '' ),
 			'game_id'        => (int) ( $game->id ?? 0 ),
@@ -166,6 +173,11 @@ class Notifications {
 		if ( ! $wp_user_id || ! self::allowed( $wp_user_id, $game, [ 'kind' => 'release', 'entity_type' => 'release_batch', 'entity_id' => $batch_id ] ) ) {
 			return;
 		}
+
+		Bot_Notice::add( (int) ( $game->id ?? 0 ), $wp_user_id, 'release_' . $kind, [
+			'game_name'       => (string) ( $game->name ?? '' ),
+			'character_names' => array_values( $character_names ),
+		] );
 
 		$bucket = self::$pending_release[ $wp_user_id ][ $batch_id ] ?? [
 			'game_id'         => (int) ( $game->id ?? 0 ),

@@ -12,7 +12,7 @@ class Schema {
 	/**
 	 * The plugin's current database schema version, matching the plugin release version.
 	 */
-	const DB_VERSION = '1.6.1.8';
+	const DB_VERSION = '1.6.1.9';
 
 	/**
 	 * Option key holding the installed schema version.
@@ -83,6 +83,7 @@ class Schema {
 		'discord_links',
 		'discord_link_characters',
 		'bot_audit',
+		'bot_notices',
 	];
 
 	/**
@@ -953,6 +954,20 @@ class Schema {
 			PRIMARY KEY  (id),
 			KEY idx_connection (connection_id),
 			KEY idx_created (created_at)
+		) $charset_collate;" );
+
+		// be_bot_notices: an event the bot should deliver to Discord - a player's room/DM, or a chronicle's staff channel
+		// when wp_user_id is null.
+		dbDelta( "CREATE TABLE {$prefix}bot_notices (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			game_id bigint(20) unsigned NOT NULL,
+			wp_user_id bigint(20) unsigned DEFAULT NULL,
+			kind varchar(30) NOT NULL,
+			payload longtext,
+			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			delivered_at datetime DEFAULT NULL,
+			PRIMARY KEY  (id),
+			KEY idx_game_undelivered (game_id, delivered_at)
 		) $charset_collate;" );
 
 		self::migrate();

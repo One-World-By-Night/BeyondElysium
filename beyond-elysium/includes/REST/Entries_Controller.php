@@ -4,6 +4,7 @@ namespace BeyondElysium\REST;
 
 use BeyondElysium\Core\Authorization;
 use BeyondElysium\Core\Notifications;
+use BeyondElysium\Models\Bot_Notice;
 use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Game;
 use BeyondElysium\Models\Game_Session;
@@ -283,6 +284,13 @@ class Entries_Controller extends Base_Controller {
 			$label = $this->action_poster_label( $plot );
 			$link  = Notifications::storyteller_plot_url( $plot_id );
 
+			// One shared staff-channel notice for the whole chronicle, not one per Storyteller - unlike email,
+			// which still sends to each recipient individually below.
+			Bot_Notice::add( (int) $game->id, null, 'downtime_in', [
+				'plot_title' => $plot_title,
+				'posted_by'  => $label,
+			] );
+
 			if ( ! empty( $plot->assigned_to ) ) {
 				$recipient_id = (int) $plot->assigned_to;
 				if ( $recipient_id !== $author_id ) {
@@ -312,6 +320,10 @@ class Entries_Controller extends Base_Controller {
 			if ( ! Audience::can_see_entry( $entry, $wp_user_id, $game_slug, false, null, $plot ) ) {
 				continue;
 			}
+			Bot_Notice::add( (int) $game->id, $wp_user_id, 'plot_post', [
+				'plot_title' => $plot_title,
+				'posted_by'  => $label,
+			] );
 			Notifications::notify_post( $wp_user_id, $game, $plot_id, $plot_title, $label, $link );
 		}
 	}

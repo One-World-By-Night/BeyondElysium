@@ -125,6 +125,10 @@ class Discord_Link {
 
 		if ( $is_staff ) {
 			self::finalize_approval( (int) $link->id, (int) $link->game_id, $wp_user_id, $wp_user_id );
+		} else {
+			\BeyondElysium\Models\Bot_Notice::add( (int) $link->game_id, null, 'link_request', [
+				'discord_username' => (string) ( $link->discord_username ?? '' ),
+			] );
 		}
 
 		Transaction::commit( $savepoint );
