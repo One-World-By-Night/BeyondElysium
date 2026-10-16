@@ -16,6 +16,7 @@ function link( overrides: Partial< DiscordLink > ): DiscordLink {
 		confirmed_at: null,
 		decided_at: null,
 		revoked_at: null,
+		room_channel_id: null,
 		...overrides,
 	};
 }

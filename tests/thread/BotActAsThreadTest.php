@@ -308,6 +308,23 @@ class BotActAsThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 404, $response->get_status() );
 	}
 
+	public function test_a_storyteller_can_set_a_players_room_through_the_bot(): void {
+		$link = Discord_Link::active_for_discord_user( $this->game_id, '77' );
+
+		$response = $this->signed( 'PUT', "/be/v1/{$this->slug}/discord-links/{$link->id}/room", '88', [ 'channel_id' => '999' ] );
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( '999', Discord_Link::find( (int) $link->id )->room_channel_id );
+	}
+
+	public function test_a_player_cannot_set_their_own_room_through_the_bot(): void {
+		$link = Discord_Link::active_for_discord_user( $this->game_id, '77' );
+
+		$response = $this->signed( 'PUT', "/be/v1/{$this->slug}/discord-links/{$link->id}/room", '77', [ 'channel_id' => '999' ] );
+
+		$this->assertSame( 403, $response->get_status() );
+	}
+
 	public function test_a_player_can_search_and_read_a_visible_plot_through_the_bot(): void {
 		Plot::create( [
 			'game_id' => $this->game_id, 'title' => 'The Harbor Conspiracy', 'initiated_by' => 'st',

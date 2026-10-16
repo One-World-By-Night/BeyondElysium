@@ -12,7 +12,7 @@ class Schema {
 	/**
 	 * The plugin's current database schema version, matching the plugin release version.
 	 */
-	const DB_VERSION = '1.6.1.7';
+	const DB_VERSION = '1.6.1.8';
 
 	/**
 	 * Option key holding the installed schema version.
@@ -925,6 +925,7 @@ class Schema {
 			decided_at datetime DEFAULT NULL,
 			revoked_by bigint(20) unsigned DEFAULT NULL,
 			revoked_at datetime DEFAULT NULL,
+			room_channel_id varchar(32) DEFAULT NULL,
 			PRIMARY KEY  (id),
 			KEY game_discord_user (game_id, discord_user_id),
 			KEY game_wp_user (game_id, wp_user_id),
@@ -2544,6 +2545,30 @@ class Schema {
 	}
 
 	/**
+	 * Gives a Discord link a place to record its player room's channel.
+	 */
+	public static function add_room_channel_id_to_discord_links(): void {
+		global $wpdb;
+
+		$table  = self::table( 'discord_links' );
+		$exists = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM information_schema.columns
+				 WHERE table_schema = DATABASE() AND table_name = %s AND column_name = 'room_channel_id'",
+				$table
+			)
+		);
+		if ( (int) $exists > 0 ) {
+			return;
+		}
+
+		$wpdb->query( "ALTER TABLE {$table} ADD COLUMN room_channel_id varchar(32) DEFAULT NULL" );
+		if ( $wpdb->last_error ) {
+			error_log( 'Beyond Elysium: failed to add discord_links.room_channel_id: ' . $wpdb->last_error );
+		}
+	}
+
+	/**
 	 * Lets a secret exist with no entity attached.
 	 */
 	public static function make_secret_entity_nullable(): void {
@@ -2996,6 +3021,8 @@ class Schema {
 		self::add_action_charge_to_plot_entries();
 
 		self::add_closed_at_to_game_sessions();
+
+		self::add_room_channel_id_to_discord_links();
 
 		// Gives system templates the section titles their declared files name.
 		\BeyondElysium\Services\Template_Titles::run();

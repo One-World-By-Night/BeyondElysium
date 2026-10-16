@@ -58,6 +58,7 @@ class Bot_Auth {
 		[ 'pattern' => '#^/be/v1/(?P<game_slug>[a-z0-9\-]+)/discord-links/(?P<id>\d+)/approve$#', 'method' => 'POST', 'kind' => 'user' ],
 		[ 'pattern' => '#^/be/v1/(?P<game_slug>[a-z0-9\-]+)/discord-links/(?P<id>\d+)/decline$#', 'method' => 'POST', 'kind' => 'user' ],
 		[ 'pattern' => '#^/be/v1/(?P<game_slug>[a-z0-9\-]+)/discord-links/(?P<id>\d+)/revoke$#', 'method' => 'POST', 'kind' => 'user' ],
+		[ 'pattern' => '#^/be/v1/(?P<game_slug>[a-z0-9\-]+)/discord-links/(?P<id>\d+)/room$#', 'method' => 'PUT', 'kind' => 'user' ],
 		[ 'pattern' => '#^/be/v1/(?P<game_slug>[a-z0-9\-]+)/discord-links/mine$#', 'method' => 'DELETE', 'kind' => 'user' ],
 	];
 

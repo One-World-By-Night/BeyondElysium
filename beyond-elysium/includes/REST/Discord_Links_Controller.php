@@ -72,6 +72,14 @@ class Discord_Links_Controller extends Base_Controller {
 				'permission_callback' => $this->permission( 'be_manage_characters' ),
 			],
 		] );
+
+		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/discord-links/(?P<id>\d+)/room', [
+			[
+				'methods'             => 'PUT',
+				'callback'            => [ $this, 'set_room' ],
+				'permission_callback' => $this->permission( 'be_manage_characters' ),
+			],
+		] );
 	}
 
 	/**
@@ -207,6 +215,7 @@ class Discord_Links_Controller extends Base_Controller {
 			'confirmed_at'      => $link->confirmed_at,
 			'decided_at'        => $link->decided_at,
 			'revoked_at'        => $link->revoked_at,
+			'room_channel_id'   => $link->room_channel_id,
 		];
 	}
 
@@ -271,6 +280,33 @@ class Discord_Links_Controller extends Base_Controller {
 			return $this->error( 'not_approved', __( 'That link is not currently approved.', 'beyond-elysium' ), 400 );
 		}
 		return $this->success( [ 'status' => Discord_Link::REVOKED ] );
+	}
+
+	/**
+	 * A Storyteller points a linked player's room at a Discord channel, or clears it.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function set_room( $request ) {
+		$game = $this->resolve_game( (string) $request['game_slug'] );
+		if ( is_wp_error( $game ) ) {
+			return $game;
+		}
+		$link = $this->find_link_for_game( (int) $request['id'], $game );
+		if ( is_wp_error( $link ) ) {
+			return $link;
+		}
+		if ( $link->status !== Discord_Link::APPROVED ) {
+			return $this->error( 'not_approved', __( 'That link is not currently approved.', 'beyond-elysium' ), 400 );
+		}
+
+		$channel_id = $request->get_param( 'channel_id' );
+		$channel_id = $channel_id === null || $channel_id === '' ? null : (string) $channel_id;
+
+		Discord_Link::set_room( (int) $link->id, $channel_id );
+
+		return $this->success( [ 'room_channel_id' => $channel_id ] );
 	}
 
 	/**

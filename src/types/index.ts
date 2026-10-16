@@ -391,6 +391,7 @@ export interface DiscordLink {
 	confirmed_at: string | null;
 	decided_at: string | null;
 	revoked_at: string | null;
+	room_channel_id: string | null;
 }
 
 /**

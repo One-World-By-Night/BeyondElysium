@@ -220,6 +220,19 @@ class Discord_Link {
 	}
 
 	/**
+	 * Sets or clears the Discord channel recorded as this link's player room.
+	 *
+	 * @param int         $link_id
+	 * @param string|null $channel_id
+	 * @return bool
+	 */
+	public static function set_room( int $link_id, ?string $channel_id ): bool {
+		return Manager::update( 'discord_links', [
+			'room_channel_id' => $channel_id,
+		], [ 'id' => $link_id ] ) !== false;
+	}
+
+	/**
 	 * A player ends their own approved link, or cancels one waiting for a Storyteller.
 	 *
 	 * @param int $game_id

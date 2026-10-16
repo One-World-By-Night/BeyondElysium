@@ -13870,6 +13870,16 @@ msgstr "Discord, vinculado (%d)"
 msgid "No Discord account is linked yet."
 msgstr "Nenhuma conta do Discord está vinculada ainda."
 
+#. translators: %s: a Discord channel id
+#: build/360.js:57
+#, js-format
+msgid "Room: %s"
+msgstr "Sala: %s"
+
+#: build/360.js:57
+msgid "No room set"
+msgstr "Nenhuma sala definida"
+
 #: build/360.js:56
 msgid "Revoke"
 msgstr "Revogar"

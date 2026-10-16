@@ -144,6 +144,20 @@ export function ChronicleDiscordLinks( {
 									{ link.wp_user?.display_name }
 									{ ' · ' }
 									{ characterNames( link ) }
+									{ ' · ' }
+									{ link.room_channel_id
+										? sprintf(
+												/* translators: %s: a Discord channel id */
+												__(
+													'Room: %s',
+													'beyond-elysium'
+												),
+												link.room_channel_id
+											)
+										: __(
+												'No room set',
+												'beyond-elysium'
+											) }
 								</span>
 							</span>
 							<button

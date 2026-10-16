@@ -150,6 +150,50 @@ class DiscordLinksThreadTest extends WP_UnitTestCase {
 		$this->assertCount( 0, Discord_Link::live_characters( $link ), 'a character given to someone else drops out' );
 	}
 
+	public function test_a_storyteller_sets_and_clears_an_approved_links_room(): void {
+		$result = Discord_Link::start_or_renew( $this->game_id, '20', 'Room Setter' );
+		Discord_Link::confirm( Discord_Link::find( $result['link_id'] ), $this->player, [], true );
+
+		wp_set_current_user( $this->hst );
+		$set = $this->dispatch( 'PUT', "/be/v1/{$this->slug}/discord-links/{$result['link_id']}/room", [
+			'channel_id' => '555666777',
+		] );
+		$this->assertSame( 200, $set->get_status() );
+		$this->assertSame( '555666777', $set->get_data()['room_channel_id'] );
+		$this->assertSame( '555666777', Discord_Link::find( (int) $result['link_id'] )->room_channel_id );
+
+		$list = $this->dispatch( 'GET', "/be/v1/{$this->slug}/discord-links" );
+		$found = current( array_filter( $list->get_data(), static fn( $l ) => $l['id'] === (int) $result['link_id'] ) );
+		$this->assertSame( '555666777', $found['room_channel_id'] );
+
+		$clear = $this->dispatch( 'PUT', "/be/v1/{$this->slug}/discord-links/{$result['link_id']}/room", [
+			'channel_id' => null,
+		] );
+		$this->assertSame( 200, $clear->get_status() );
+		$this->assertNull( Discord_Link::find( (int) $result['link_id'] )->room_channel_id );
+	}
+
+	public function test_a_room_cannot_be_set_on_a_link_that_is_not_approved(): void {
+		$result = Discord_Link::start_or_renew( $this->game_id, '21', 'Not Approved Yet' );
+
+		wp_set_current_user( $this->hst );
+		$response = $this->dispatch( 'PUT', "/be/v1/{$this->slug}/discord-links/{$result['link_id']}/room", [
+			'channel_id' => '111',
+		] );
+		$this->assertSame( 400, $response->get_status() );
+	}
+
+	public function test_a_player_cannot_set_a_room(): void {
+		$result = Discord_Link::start_or_renew( $this->game_id, '22', 'Player Attempt' );
+		Discord_Link::confirm( Discord_Link::find( $result['link_id'] ), $this->player, [], true );
+
+		wp_set_current_user( $this->player );
+		$response = $this->dispatch( 'PUT', "/be/v1/{$this->slug}/discord-links/{$result['link_id']}/room", [
+			'channel_id' => '111',
+		] );
+		$this->assertSame( 403, $response->get_status() );
+	}
+
 	public function test_the_token_never_appears_in_a_url_path(): void {
 		$result = Discord_Link::start_or_renew( $this->game_id, '12', 'Token Safety' );
 		$game   = Game::find( $this->game_id );
