@@ -190,7 +190,75 @@ class Sheet_Document {
 			'prose'            => self::build_prose( $character, $options ),
 			'xp_history'       => ! empty( $options['xp_history'] ) ? self::build_xp_history( $character_id ) : [],
 			'provenance_lines' => self::build_provenance( $character, $game ),
+			'wounds'           => self::build_wounds( $sheet_data ),
 		];
+	}
+
+	/**
+	 * Reads a character's current wound counts directly off its sheet_data, each zero when never recorded.
+	 *
+	 * @param array<string,mixed> $sheet_data
+	 * @return array{bashing:int,lethal:int,aggravated:int}
+	 */
+	private static function build_wounds( array $sheet_data ): array {
+		$state = $sheet_data['_wound_state'] ?? [];
+		$state = is_array( $state ) ? $state : [];
+		return [
+			'bashing'    => (int) ( $state['bashing'] ?? 0 ),
+			'lethal'     => (int) ( $state['lethal'] ?? 0 ),
+			'aggravated' => (int) ( $state['aggravated'] ?? 0 ),
+		];
+	}
+
+	/**
+	 * This block's own share of a character's night losses, by the trait's own stored name: a lost Trait's name maps
+	 * to `true`, an expended Ability's name maps to the number of levels expended.
+	 *
+	 * @param array<string,mixed> $sheet_data
+	 * @param string              $block_slug
+	 * @return array{lost:array<string,bool>,expended:array<string,int>}
+	 */
+	private static function night_loss_markers( array $sheet_data, string $block_slug ): array {
+		$state    = $sheet_data['_night_losses'] ?? [];
+		$state    = is_array( $state ) ? $state : [];
+		$lost     = [];
+		$expended = [];
+
+		foreach ( (array) ( $state['lost_traits'] ?? [] ) as $entry ) {
+			if ( is_array( $entry ) && ( $entry['block_slug'] ?? '' ) === $block_slug && isset( $entry['name'] ) ) {
+				$lost[ (string) $entry['name'] ] = true;
+			}
+		}
+		foreach ( (array) ( $state['expended_abilities'] ?? [] ) as $entry ) {
+			if ( is_array( $entry ) && ( $entry['block_slug'] ?? '' ) === $block_slug && isset( $entry['name'] ) ) {
+				$expended[ (string) $entry['name'] ] = (int) ( $entry['levels'] ?? 1 );
+			}
+		}
+
+		return [ 'lost' => $lost, 'expended' => $expended ];
+	}
+
+	/**
+	 * Appends a plain-text marker naming a trait as lost or expended tonight, when its own stored name matches one of
+	 * this block's night losses; the row's text otherwise unchanged.
+	 *
+	 * @param string                                                      $text
+	 * @param string                                                      $stored_name
+	 * @param array{lost:array<string,bool>,expended:array<string,int>}   $night_losses
+	 * @return string
+	 */
+	private static function append_night_loss_marker( string $text, string $stored_name, array $night_losses ): string {
+		if ( ! empty( $night_losses['lost'][ $stored_name ] ) ) {
+			return $text . ' ' . __( '(lost tonight)', 'beyond-elysium' );
+		}
+		if ( isset( $night_losses['expended'][ $stored_name ] ) ) {
+			return $text . ' ' . sprintf(
+				/* translators: %d: the number of levels expended for a retest tonight */
+				__( '(%d expended tonight)', 'beyond-elysium' ),
+				$night_losses['expended'][ $stored_name ]
+			);
+		}
+		return $text;
 	}
 
 	/**
@@ -329,7 +397,15 @@ class Sheet_Document {
 		foreach ( (array) ( $definition->pools ?? [] ) as $pool ) {
 			$value     = $values[ $pool->name ] ?? null;
 			$permanent = is_array( $value ) ? (int) ( $value['permanent'] ?? 0 ) : (int) ( $pool->default_start ?? 0 );
-			$pairs[]   = [ Cross_Block_Ref::resolve_pool_name( $pool, $sheet_data ), 'x' . $permanent, $permanent ];
+			$temporary = is_array( $value ) && array_key_exists( 'temporary', $value ) ? (int) $value['temporary'] : $permanent;
+
+			$text = 'x' . $permanent;
+			if ( $temporary !== $permanent ) {
+				/* translators: %d: the pool's current temporary rating, spent down from its permanent one */
+				$text .= ' ' . sprintf( __( '(%d temporary)', 'beyond-elysium' ), $temporary );
+			}
+
+			$pairs[] = [ Cross_Block_Ref::resolve_pool_name( $pool, $sheet_data ), $text, $permanent ];
 		}
 		return $pairs;
 	}
@@ -455,7 +531,7 @@ class Sheet_Document {
 
 			switch ( $block->section_type ) {
 				case 'trait_list':
-					$entry['groups'] = self::trait_list_groups( $section_data, $definition, $section, $options );
+					$entry['groups'] = self::trait_list_groups( $section_data, $definition, $section, $options, self::night_loss_markers( $sheet_data, $slug ) );
 					// A non-atomic section whose held entries all carry a numeric count shows its total after the title.
 					if ( empty( $definition->atomic ) ) {
 						$total = Trait_Grouping::section_count( Trait_Grouping::to_traits( $section_data ), ! empty( $definition->count_is_cost ) );
@@ -505,9 +581,11 @@ class Sheet_Document {
 	 * @param mixed                $section_data Raw `sheet_data[block_slug]` value.
 	 * @param array<string,mixed>  $section      Raw layout section (for its own `display` override).
 	 * @param array<string,mixed> $options Document-level options (`show_cost`).
+	 * @param array{lost:array<string,bool>,expended:array<string,int>} $night_losses This block's own lost Traits and
+	 *                     expended Ability levels, by name.
 	 * @return array<int,array{label:?string,rows:array<int,string|array{text:string,indent:int,circles:int}>}>
 	 */
-	private static function trait_list_groups( mixed $section_data, object $definition, array $section, array $options = [] ): array {
+	private static function trait_list_groups( mixed $section_data, object $definition, array $section, array $options = [], array $night_losses = [ 'lost' => [], 'expended' => [] ] ): array {
 		// A count_is_cost block's stored total is a flat XP cost, labelled as a price; `show_cost` only chooses whether it appears.
 		$mode = Trait_Grouping::resolve_mode(
 			$definition,
@@ -527,7 +605,7 @@ class Sheet_Document {
 		$catalog_items = $definition->items ?? [];
 
 		if ( ! empty( $definition->player_order ) ) {
-			return [ [ 'label' => null, 'rows' => self::render_traits( $traits, $mode, $catalog_items, $rings ) ] ];
+			return [ [ 'label' => null, 'rows' => self::render_traits( $traits, $mode, $catalog_items, $rings, $night_losses ) ] ];
 		}
 
 		$nested = Trait_Grouping::group_traits_by_field( $traits, $definition );
@@ -541,13 +619,13 @@ class Sheet_Document {
 						? $group['group'] . ' — ' . $subgroup['subgroup']
 						: $group['group'];
 					$items   = Trait_Grouping::sort_if_alphabetized( $subgroup['items'], $definition->alphabetize ?? null );
-					$groups[] = [ 'label' => $label, 'rows' => self::render_traits( $items, $mode, $catalog_items, $rings ) ];
+					$groups[] = [ 'label' => $label, 'rows' => self::render_traits( $items, $mode, $catalog_items, $rings, $night_losses ) ];
 				}
 			}
 		} else {
 			foreach ( Trait_Grouping::group_by_category( $traits, $definition ) as $group ) {
 				$items    = Trait_Grouping::sort_if_alphabetized( $group['traits'], $definition->alphabetize ?? null );
-				$groups[] = [ 'label' => $group['label'], 'rows' => self::render_traits( $items, $mode, $catalog_items, $rings ) ];
+				$groups[] = [ 'label' => $group['label'], 'rows' => self::render_traits( $items, $mode, $catalog_items, $rings, $night_losses ) ];
 			}
 		}
 
@@ -584,9 +662,11 @@ class Sheet_Document {
 	 *
 	 * @param array<int,array<string,mixed>> $traits
 	 * @param array<int,object>              $catalog_items
+	 * @param array{lost:array<string,bool>,expended:array<string,int>} $night_losses Keyed by each trait's own stored
+	 *                     name, read before any Portuguese substitution.
 	 * @return array<int,string|array{text:string,indent:int,circles:int}>
 	 */
-	private static function render_traits( array $traits, string $mode, array $catalog_items = [], bool $rings = false ): array {
+	private static function render_traits( array $traits, string $mode, array $catalog_items = [], bool $rings = false, array $night_losses = [ 'lost' => [], 'expended' => [] ] ): array {
 		$by_name = [];
 		foreach ( $catalog_items as $item ) {
 			if ( isset( $item->name ) ) {
@@ -597,7 +677,8 @@ class Sheet_Document {
 
 		$rows = [];
 		foreach ( $traits as $trait ) {
-			$item = $by_name[ $trait['name'] ] ?? null;
+			$item        = $by_name[ $trait['name'] ] ?? null;
+			$stored_name = (string) $trait['name'];
 
 			if ( $use_pt && ! empty( $item->name_pt ) ) {
 				$trait['name'] = $item->name_pt;
@@ -612,6 +693,7 @@ class Sheet_Document {
 
 			$has_total = Trait_Display::has_total( $trait['total'] ?? null );
 			$text      = Trait_Display::display_trait( (object) $trait, $mode === 'multiplier' && ! $has_total ? 'note_only' : $mode );
+			$text      = self::append_night_loss_marker( $text, $stored_name, $night_losses );
 
 			$rows[] = $rings
 				? [ 'text' => $text, 'indent' => 0, 'circles' => $has_total ? max( 0, Trait_Display::parse_total( $trait['total'] ) ) : 0 ]
@@ -669,9 +751,16 @@ class Sheet_Document {
 		foreach ( ( $definition->pools ?? [] ) as $pool ) {
 			$value     = $pool_values[ $pool->name ] ?? null;
 			$permanent = is_array( $value ) ? (int) ( $value['permanent'] ?? 0 ) : (int) ( $pool->default_start ?? 0 );
+			$temporary = is_array( $value ) && array_key_exists( 'temporary', $value ) ? (int) $value['temporary'] : $permanent;
+
+			$text = Cross_Block_Ref::resolve_pool_name( $pool, $sheet_data ) . ' x' . $permanent;
+			if ( $temporary !== $permanent ) {
+				/* translators: %d: the pool's current temporary rating, spent down from its permanent one */
+				$text .= ' ' . sprintf( __( '(%d temporary)', 'beyond-elysium' ), $temporary );
+			}
 
 			$rows[] = [
-				'text'    => Cross_Block_Ref::resolve_pool_name( $pool, $sheet_data ) . ' x' . $permanent,
+				'text'    => $text,
 				'indent'  => 0,
 				'circles' => $permanent,
 			];

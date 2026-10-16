@@ -3,6 +3,7 @@
 namespace BeyondElysium\Models;
 
 use BeyondElysium\Database\Manager;
+use BeyondElysium\Database\Transaction;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -170,6 +171,70 @@ class Game_Session {
 		return count( Attendance::for_session( $id ) ) > 0
 			|| Npc_Casting::exists_for_session( $id )
 			|| After_Game_Report::exists_for_session( $id );
+	}
+
+	/**
+	 * Closes a session: for every character with a real attendance row at it, resets their held resource pools to
+	 * permanent and clears their night's losses, each logged as its own already-approved Change naming the session,
+	 * then marks the session closed. Wounds carry over - nothing here touches them.
+	 *
+	 * @param int $id
+	 * @param int $by
+	 * @return array{closed: bool, code?: string, message?: string, character_ids?: int[]}
+	 */
+	public static function close( int $id, int $by ): array {
+		$session = self::find( $id );
+		if ( ! $session ) {
+			return [
+				'closed'  => false,
+				'code'    => 'not_found',
+				'message' => __( 'That session no longer exists.', 'beyond-elysium' ),
+			];
+		}
+		if ( ! empty( $session->closed_at ) ) {
+			return [
+				'closed'  => false,
+				'code'    => 'already_closed',
+				'message' => __( 'This session is already closed.', 'beyond-elysium' ),
+			];
+		}
+
+		$savepoint = Transaction::begin( 'be_session_close' );
+
+		$character_ids = Attendance::character_ids_for_session( $id );
+		$reason        = sprintf(
+			/* translators: %s: the session's game date, Y-m-d */
+			__( 'Night closed: %s', 'beyond-elysium' ),
+			$session->game_date
+		);
+
+		foreach ( $character_ids as $character_id ) {
+			Character::reset_all_pools_to_permanent( $character_id );
+			Character::clear_night_losses( $character_id );
+			Change::create( [
+				'character_id' => $character_id,
+				'change_type'  => 'session_closed',
+				'category'     => 'session',
+				'change_data'  => [ 'session_id' => $id, 'game_date' => $session->game_date ],
+				'xp_cost'      => 0,
+				'status'       => 'approved',
+				'submitted_by' => $by,
+				'notes'        => $reason,
+			] );
+		}
+
+		$updated = Manager::update( 'game_sessions', [ 'closed_at' => current_time( 'mysql' ) ], [ 'id' => $id ] );
+		if ( $updated === false ) {
+			Transaction::rollback( $savepoint );
+			return [
+				'closed'  => false,
+				'code'    => 'write_failed',
+				'message' => __( 'The session could not be closed.', 'beyond-elysium' ),
+			];
+		}
+
+		Transaction::commit( $savepoint );
+		return [ 'closed' => true, 'character_ids' => $character_ids ];
 	}
 
 	/**

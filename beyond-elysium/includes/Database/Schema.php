@@ -12,7 +12,7 @@ class Schema {
 	/**
 	 * The plugin's current database schema version, matching the plugin release version.
 	 */
-	const DB_VERSION = '1.6.0';
+	const DB_VERSION = '1.6.1';
 
 	/**
 	 * Option key holding the installed schema version.
@@ -591,6 +591,7 @@ class Schema {
 			attendance_xp_awarded_by bigint(20) unsigned DEFAULT NULL,
 			report_xp_awarded_at datetime DEFAULT NULL,
 			report_xp_awarded_by bigint(20) unsigned DEFAULT NULL,
+			closed_at datetime DEFAULT NULL,
 			created_by bigint(20) unsigned NOT NULL,
 			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -2519,6 +2520,30 @@ class Schema {
 	}
 
 	/**
+	 * Gives a game session a place to record when a Storyteller closed it.
+	 */
+	public static function add_closed_at_to_game_sessions(): void {
+		global $wpdb;
+
+		$table  = self::table( 'game_sessions' );
+		$exists = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM information_schema.columns
+				 WHERE table_schema = DATABASE() AND table_name = %s AND column_name = 'closed_at'",
+				$table
+			)
+		);
+		if ( (int) $exists > 0 ) {
+			return;
+		}
+
+		$wpdb->query( "ALTER TABLE {$table} ADD COLUMN closed_at datetime DEFAULT NULL" );
+		if ( $wpdb->last_error ) {
+			error_log( 'Beyond Elysium: failed to add game_sessions.closed_at: ' . $wpdb->last_error );
+		}
+	}
+
+	/**
 	 * Lets a secret exist with no entity attached.
 	 */
 	public static function make_secret_entity_nullable(): void {
@@ -2969,6 +2994,8 @@ class Schema {
 		self::make_secret_entity_nullable();
 
 		self::add_action_charge_to_plot_entries();
+
+		self::add_closed_at_to_game_sessions();
 
 		// Gives system templates the section titles their declared files name.
 		\BeyondElysium\Services\Template_Titles::run();

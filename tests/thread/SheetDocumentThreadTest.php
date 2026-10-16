@@ -163,9 +163,9 @@ class SheetDocumentThreadTest extends WP_UnitTestCase {
 		$document = $this->document( [ 'can_manage' => true ] );
 
 		$this->assertContains( [ 'Clan', 'Tremere' ], $document['header'] );
-		$this->assertContains( [ 'Blood', 'x10', 10 ], $document['header'] );
+		$this->assertContains( [ 'Blood', 'x10 (7 temporary)', 10 ], $document['header'] );
 		$this->assertLessThan(
-			array_search( [ 'Blood', 'x10', 10 ], $document['header'], true ),
+			array_search( [ 'Blood', 'x10 (7 temporary)', 10 ], $document['header'], true ),
 			array_search( [ 'Clan', 'Tremere' ], $document['header'], true ),
 			'header pairs follow the layout flow'
 		);

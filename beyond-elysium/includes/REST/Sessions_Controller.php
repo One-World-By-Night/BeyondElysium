@@ -79,6 +79,14 @@ class Sessions_Controller extends Base_Controller {
 			],
 		] );
 
+		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/sessions/(?P<id>\d+)/close', [
+			[
+				'methods'             => 'POST',
+				'callback'            => [ $this, 'close_session' ],
+				'permission_callback' => $this->permission( 'be_manage_sessions' ),
+			],
+		] );
+
 		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/sessions/(?P<id>\d+)/award-attendance-xp', [
 			[
 				'methods'             => 'POST',
@@ -417,6 +425,27 @@ class Sessions_Controller extends Base_Controller {
 			'awarded_count' => $awarded_count,
 			'amount'        => $amount,
 		] );
+	}
+
+	/**
+	 * Closes a session: resets every attendee's held resource pools to permanent and clears their night's losses.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function close_session( $request ) {
+		$session = $this->resolve_session( $request );
+		if ( is_wp_error( $session ) ) {
+			return $session;
+		}
+
+		$result = Game_Session::close( (int) $session->id, get_current_user_id() );
+		if ( ! $result['closed'] ) {
+			$status = ( $result['code'] ?? '' ) === 'already_closed' ? 409 : 400;
+			return $this->error( (string) ( $result['code'] ?? 'close_failed' ), (string) ( $result['message'] ?? __( 'The session could not be closed.', 'beyond-elysium' ) ), $status );
+		}
+
+		return $this->success( [ 'character_ids' => $result['character_ids'] ] );
 	}
 
 	/**

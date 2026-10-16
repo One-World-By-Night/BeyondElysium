@@ -190,6 +190,7 @@ class Plugin {
 			new \BeyondElysium\REST\Bot_Controller(),
 			new \BeyondElysium\REST\Discord_Links_Controller(),
 			new \BeyondElysium\REST\Sheet_Document_Controller(),
+			new \BeyondElysium\REST\Temporary_State_Controller(),
 		];
 		foreach ( $controllers as $controller ) {
 			$controller->register_routes();

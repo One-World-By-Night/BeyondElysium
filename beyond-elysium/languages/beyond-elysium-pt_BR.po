@@ -1006,6 +1006,24 @@ msgstr ""
 msgid "Unanswered for 60 days."
 msgstr "Sem resposta por 60 dias."
 
+#: includes/Models/Game_Session.php:191
+msgid "That session no longer exists."
+msgstr "Essa sessão não existe mais."
+
+#: includes/Models/Game_Session.php:198
+msgid "This session is already closed."
+msgstr "Esta sessão já está encerrada."
+
+#. translators: %s: the session's game date, Y-m-d
+#: includes/Models/Game_Session.php:207
+#, php-format
+msgid "Night closed: %s"
+msgstr "Noite encerrada: %s"
+
+#: includes/Models/Game_Session.php:232
+msgid "The session could not be closed."
+msgstr "Não foi possível encerrar a sessão."
+
 #: includes/Models/Mail_Log.php:46
 msgid "Plot post"
 msgstr "Postagem em trama"
@@ -3803,6 +3821,43 @@ msgstr "Não é possível excluir um modelo do sistema."
 msgid "Failed to delete template."
 msgstr "Falha ao excluir modelo."
 
+#: includes/REST/Temporary_State_Controller.php:80
+msgid "block_slug, pool_name and a non-zero whole-number delta are required."
+msgstr ""
+"block_slug, pool_name e um delta inteiro diferente de zero são "
+"obrigatórios."
+
+#: includes/REST/Temporary_State_Controller.php:96
+#: includes/REST/Temporary_State_Controller.php:164
+msgid "The change could not be applied."
+msgstr "Não foi possível aplicar a alteração."
+
+#. translators: %s: the three valid wound types, comma-separated
+#: includes/REST/Temporary_State_Controller.php:144
+#, php-format
+msgid "type must be one of %s, and amount must be a positive whole number."
+msgstr ""
+"type deve ser um dos seguintes: %s, e amount deve ser um número inteiro "
+"positivo."
+
+#. translators: 1: the amount absorbed by armor, 2: the character's own stated reason, if any
+#: includes/REST/Temporary_State_Controller.php:154
+#, php-format
+msgid "%1$d to armor. %2$s"
+msgstr "%1$d para a armadura. %2$s"
+
+#: includes/REST/Temporary_State_Controller.php:186
+msgid "kind (trait or ability), block_slug and name are required."
+msgstr "kind (trait ou ability), block_slug e name são obrigatórios."
+
+#: includes/REST/Temporary_State_Controller.php:198
+msgid "The loss could not be recorded."
+msgstr "Não foi possível registrar a perda."
+
+#: includes/REST/Temporary_State_Controller.php:217
+msgid "The losses could not be cleared."
+msgstr "Não foi possível limpar as perdas."
+
 #: includes/REST/Transfers_Controller.php:147
 msgid "A demo chronicle cannot send characters to another site."
 msgstr ""
@@ -4322,6 +4377,14 @@ msgstr "Isso deixaria o XP Ganho abaixo de zero."
 #: includes/Services/Change_Engine.php:1501
 msgid "The award could not be saved."
 msgstr "A concessão não pôde ser salva."
+
+#: includes/Services/Change_Engine.php:1560
+msgid "That character doesn't hold that pool."
+msgstr "Esse personagem não possui essa reserva."
+
+#: includes/Services/Change_Engine.php:1620
+msgid "type must be bashing, lethal or aggravated."
+msgstr "type deve ser um dos seguintes: bashing, lethal, aggravated."
 
 #: includes/Services/Change_Validator.php:361
 #, php-format
@@ -5313,6 +5376,22 @@ msgid ""
 msgstr ""
 "Estes são dados de exemplo. Seguro para excluir assim que você tiver sua "
 "própria crônica configurada."
+
+#: includes/Services/Sheet_Document.php:252
+msgid "(lost tonight)"
+msgstr "(perdido esta noite)"
+
+#. translators: %d: the number of levels expended for a retest tonight
+#: includes/Services/Sheet_Document.php:257
+#, php-format
+msgid "(%d expended tonight)"
+msgstr "(%d despendido esta noite)"
+
+#. translators: %d: the pool's current temporary rating, spent down from its permanent one
+#: includes/Services/Sheet_Document.php:751
+#, php-format
+msgid "(%d temporary)"
+msgstr "(%d temporário)"
 
 #: build/10.js:1 build/360.js:1 build/722.js:1 build/887.js:1 build/964.js:1
 msgid "Failed to load the background ledger."

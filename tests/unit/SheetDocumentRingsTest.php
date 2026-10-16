@@ -134,7 +134,7 @@ class SheetDocumentRingsTest extends TestCase {
 			]
 		);
 
-		$this->assertSame( [ $this->ring( 'Conscience x4', 4 ), $this->ring( 'Courage x5', 5 ) ], $sections[0]['rows'] );
+		$this->assertSame( [ $this->ring( 'Conscience x4 (2 temporary)', 4 ), $this->ring( 'Courage x5', 5 ) ], $sections[0]['rows'] );
 	}
 
 	public function test_a_header_pool_carries_its_rating_for_the_writer_and_an_identity_field_does_not(): void {
@@ -144,7 +144,7 @@ class SheetDocumentRingsTest extends TestCase {
 		];
 		$pairs      = $this->invoke( 'header_pairs_for', [ $pool_block, [ 'Willpower' => [ 'permanent' => 12, 'temporary' => 9 ] ], [] ] );
 
-		$this->assertSame( [ [ 'Willpower', 'x12', 12 ], [ 'Blood', 'x10', 10 ] ], $pairs );
+		$this->assertSame( [ [ 'Willpower', 'x12 (9 temporary)', 12 ], [ 'Blood', 'x10', 10 ] ], $pairs );
 
 		$identity_block = (object) [
 			'section_type' => 'identity_field',

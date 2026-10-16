@@ -524,6 +524,158 @@ class Character {
 	}
 
 	/**
+	 * Writes a new temporary rating onto one held resource pool, leaving its permanent rating untouched.
+	 *
+	 * @param int    $id
+	 * @param string $block_slug
+	 * @param string $pool_name
+	 * @param int    $value
+	 * @return bool False when the character does not exist, or does not hold that pool.
+	 */
+	public static function set_pool_temporary( int $id, string $block_slug, string $pool_name, int $value ): bool {
+		$character = self::find( $id );
+		if ( ! $character ) {
+			return false;
+		}
+
+		$sheet_data = $character->sheet_data;
+		$pool       = $sheet_data[ $block_slug ][ $pool_name ] ?? null;
+		if ( ! is_array( $pool ) || ! array_key_exists( 'permanent', $pool ) ) {
+			return false;
+		}
+
+		$sheet_data[ $block_slug ][ $pool_name ]['temporary'] = $value;
+		return self::update_sheet_data( $id, $sheet_data );
+	}
+
+	/**
+	 * Resets every resource pool a character holds back to its permanent rating, found directly on sheet_data - a
+	 * pool is any `{permanent, temporary}` pair, wherever it is held.
+	 *
+	 * @param int $id
+	 * @return bool False only when the character itself does not exist.
+	 */
+	public static function reset_all_pools_to_permanent( int $id ): bool {
+		$character = self::find( $id );
+		if ( ! $character ) {
+			return false;
+		}
+
+		foreach ( (array) $character->sheet_data as $block_slug => $block ) {
+			if ( ! is_array( $block ) ) {
+				continue;
+			}
+			foreach ( $block as $pool_name => $pool ) {
+				if ( is_array( $pool ) && array_key_exists( 'permanent', $pool ) && array_key_exists( 'temporary', $pool ) ) {
+					self::reset_pool_to_permanent( $id, (string) $block_slug, (string) $pool_name );
+				}
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Reads a character's current wound counts by type, each zero when never recorded.
+	 *
+	 * @param int $id
+	 * @return array{bashing:int,lethal:int,aggravated:int}|null Null when the character does not exist.
+	 */
+	public static function wound_state( int $id ): ?array {
+		$character = self::find( $id );
+		if ( ! $character ) {
+			return null;
+		}
+
+		$state = $character->sheet_data['_wound_state'] ?? [];
+		$state = is_array( $state ) ? $state : [];
+		return [
+			'bashing'    => (int) ( $state['bashing'] ?? 0 ),
+			'lethal'     => (int) ( $state['lethal'] ?? 0 ),
+			'aggravated' => (int) ( $state['aggravated'] ?? 0 ),
+		];
+	}
+
+	/**
+	 * Writes a character's wound count for one damage type, leaving the other two untouched.
+	 *
+	 * @param int    $id
+	 * @param string $type  bashing, lethal or aggravated.
+	 * @param int    $value
+	 * @return bool False only when the character itself does not exist.
+	 */
+	public static function set_wound( int $id, string $type, int $value ): bool {
+		$character = self::find( $id );
+		if ( ! $character ) {
+			return false;
+		}
+
+		$sheet_data                          = $character->sheet_data;
+		$sheet_data['_wound_state'][ $type ] = $value;
+		return self::update_sheet_data( $id, $sheet_data );
+	}
+
+	/**
+	 * Reads a character's night losses: bid Traits lost and Ability levels expended since the last session close.
+	 *
+	 * @param int $id
+	 * @return array{lost_traits:array<int,array<string,mixed>>,expended_abilities:array<int,array<string,mixed>>}|null
+	 *         Null when the character does not exist.
+	 */
+	public static function night_losses( int $id ): ?array {
+		$character = self::find( $id );
+		if ( ! $character ) {
+			return null;
+		}
+
+		$state = $character->sheet_data['_night_losses'] ?? [];
+		$state = is_array( $state ) ? $state : [];
+		return [
+			'lost_traits'        => is_array( $state['lost_traits'] ?? null ) ? $state['lost_traits'] : [],
+			'expended_abilities' => is_array( $state['expended_abilities'] ?? null ) ? $state['expended_abilities'] : [],
+		];
+	}
+
+	/**
+	 * Appends one entry to a character's night losses.
+	 *
+	 * @param int                 $id
+	 * @param string              $kind  trait or ability.
+	 * @param array<string,mixed> $entry
+	 * @return bool False only when the character itself does not exist.
+	 */
+	public static function append_night_loss( int $id, string $kind, array $entry ): bool {
+		$character = self::find( $id );
+		$losses    = self::night_losses( $id );
+		if ( ! $character || $losses === null ) {
+			return false;
+		}
+
+		$key              = $kind === 'ability' ? 'expended_abilities' : 'lost_traits';
+		$losses[ $key ][] = $entry;
+
+		$sheet_data                  = $character->sheet_data;
+		$sheet_data['_night_losses'] = $losses;
+		return self::update_sheet_data( $id, $sheet_data );
+	}
+
+	/**
+	 * Clears a character's night losses entirely.
+	 *
+	 * @param int $id
+	 * @return bool False only when the character itself does not exist.
+	 */
+	public static function clear_night_losses( int $id ): bool {
+		$character = self::find( $id );
+		if ( ! $character ) {
+			return false;
+		}
+
+		$sheet_data                  = $character->sheet_data;
+		$sheet_data['_night_losses'] = [ 'lost_traits' => [], 'expended_abilities' => [] ];
+		return self::update_sheet_data( $id, $sheet_data );
+	}
+
+	/**
 	 * Sets the same status on a batch of characters at once.
 	 *
 	 * @param int[]  $ids

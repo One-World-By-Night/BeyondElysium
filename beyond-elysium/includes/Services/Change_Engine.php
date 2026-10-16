@@ -1525,6 +1525,152 @@ class Change_Engine {
 	}
 
 	/**
+	 * Spends or regains a point of one held resource pool's temporary rating, right now, with no approval - logged
+	 * the same way an XP award is: an already-approved Change naming who did it and why, in the same transaction as
+	 * the write. The new value is clamped to `[0, permanent]` rather than refused for landing outside it.
+	 *
+	 * @param int    $character_id
+	 * @param string $block_slug
+	 * @param string $pool_name
+	 * @param int    $delta  A whole number, positive to regain, negative to spend.
+	 * @param string $reason
+	 * @param int    $by
+	 * @return array{applied: bool, code?: string, message?: string, permanent?: int, temporary?: int}
+	 */
+	public static function adjust_pool_temporary( int $character_id, string $block_slug, string $pool_name, int $delta, string $reason, int $by ): array {
+		$savepoint = Transaction::begin( 'be_adjust_pool_temporary' );
+
+		Character::lock( $character_id );
+		$character = Character::find( $character_id );
+		if ( ! $character ) {
+			Transaction::rollback( $savepoint );
+			return [
+				'applied' => false,
+				'code'    => 'not_found',
+				'message' => __( 'That character no longer exists.', 'beyond-elysium' ),
+			];
+		}
+
+		$pool = $character->sheet_data[ $block_slug ][ $pool_name ] ?? null;
+		if ( ! is_array( $pool ) || ! array_key_exists( 'permanent', $pool ) ) {
+			Transaction::rollback( $savepoint );
+			return [
+				'applied' => false,
+				'code'    => 'pool_not_found',
+				'message' => __( "That character doesn't hold that pool.", 'beyond-elysium' ),
+			];
+		}
+
+		$permanent = (int) $pool['permanent'];
+		$current   = (int) ( $pool['temporary'] ?? $permanent );
+		$new_value = max( 0, min( $permanent, $current + $delta ) );
+
+		$change_id = Change::create( [
+			'character_id' => $character_id,
+			'change_type'  => 'temporary_pool_spend',
+			'category'     => $block_slug,
+			'change_data'  => [
+				'block_slug' => $block_slug,
+				'pool_name'  => $pool_name,
+				'delta'      => $delta,
+				'from'       => $current,
+				'to'         => $new_value,
+			],
+			'xp_cost'      => 0,
+			'status'       => 'approved',
+			'submitted_by' => $by,
+			'notes'        => $reason,
+		] );
+
+		if ( ! $change_id || ! Character::set_pool_temporary( $character_id, $block_slug, $pool_name, $new_value ) ) {
+			Transaction::rollback( $savepoint );
+			return [
+				'applied' => false,
+				'code'    => 'write_failed',
+				'message' => __( 'The change could not be saved.', 'beyond-elysium' ),
+			];
+		}
+
+		Transaction::commit( $savepoint );
+
+		return [
+			'applied'   => true,
+			'permanent' => $permanent,
+			'temporary' => $new_value,
+		];
+	}
+
+	/**
+	 * Takes or heals damage of one type, right now, with no approval - logged the same way an XP award is. An
+	 * attack's armor amount is never subtracted from anything: Beyond Elysium does no armor math of its own, so the
+	 * caller folds it into the logged reason as plain text.
+	 *
+	 * @param int    $character_id
+	 * @param string $type   bashing, lethal or aggravated.
+	 * @param int    $delta  A whole number, positive to take damage, negative to heal.
+	 * @param string $reason
+	 * @param int    $by
+	 * @return array{applied: bool, code?: string, message?: string, wounds?: array{bashing:int,lethal:int,aggravated:int}}
+	 */
+	public static function adjust_wound( int $character_id, string $type, int $delta, string $reason, int $by ): array {
+		if ( ! in_array( $type, [ 'bashing', 'lethal', 'aggravated' ], true ) ) {
+			return [
+				'applied' => false,
+				'code'    => 'invalid_type',
+				'message' => __( 'type must be bashing, lethal or aggravated.', 'beyond-elysium' ),
+			];
+		}
+
+		$savepoint = Transaction::begin( 'be_adjust_wound' );
+
+		Character::lock( $character_id );
+		$state = Character::wound_state( $character_id );
+		if ( $state === null ) {
+			Transaction::rollback( $savepoint );
+			return [
+				'applied' => false,
+				'code'    => 'not_found',
+				'message' => __( 'That character no longer exists.', 'beyond-elysium' ),
+			];
+		}
+
+		$new_value = max( 0, $state[ $type ] + $delta );
+
+		$change_id = Change::create( [
+			'character_id' => $character_id,
+			'change_type'  => $delta >= 0 ? 'wound_taken' : 'wound_healed',
+			'category'     => $type,
+			'change_data'  => [
+				'type'  => $type,
+				'delta' => $delta,
+				'from'  => $state[ $type ],
+				'to'    => $new_value,
+			],
+			'xp_cost'      => 0,
+			'status'       => 'approved',
+			'submitted_by' => $by,
+			'notes'        => $reason,
+		] );
+
+		if ( ! $change_id || ! Character::set_wound( $character_id, $type, $new_value ) ) {
+			Transaction::rollback( $savepoint );
+			return [
+				'applied' => false,
+				'code'    => 'write_failed',
+				'message' => __( 'The change could not be saved.', 'beyond-elysium' ),
+			];
+		}
+
+		Transaction::commit( $savepoint );
+
+		$state[ $type ] = $new_value;
+		return [
+			'applied' => true,
+			'wounds'  => $state,
+		];
+	}
+
+	/**
 	 * Grants one trait_list item to a character, paid for from the resource pool its block names in `_meta.paid_from`
 	 * rather than the character's own XP - a Storyteller-only action, never reachable through the ordinary purchase
 	 * flow.
