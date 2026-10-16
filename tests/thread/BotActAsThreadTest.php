@@ -10,6 +10,7 @@ use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Discord_Link;
 use BeyondElysium\Models\Game;
 use BeyondElysium\Models\Game_Member;
+use BeyondElysium\Models\Plot;
 use BeyondElysium\Tests\Support\Bot_Signed_Request;
 use WP_REST_Request;
 use WP_UnitTestCase;
@@ -281,5 +282,45 @@ class BotActAsThreadTest extends WP_UnitTestCase {
 		$response = $this->signed( 'GET', "/be/v1/{$this->slug}/characters/{$other_character}/posting-profile", '77' );
 
 		$this->assertSame( 403, $response->get_status() );
+	}
+
+	public function test_a_storyteller_can_read_any_plot_through_the_bot(): void {
+		$plot_id = Plot::create( [
+			'game_id' => $this->game_id, 'title' => 'ST-Only Plot', 'initiated_by' => 'st',
+			'created_by' => $this->hst, 'audience' => 'storytellers',
+		] );
+
+		$response = $this->signed( 'GET', "/be/v1/{$this->slug}/plots/{$plot_id}", '88' );
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( 'ST-Only Plot', $response->get_data()->title );
+		$this->assertIsArray( $response->get_data()->entries );
+	}
+
+	public function test_a_player_cannot_read_a_plot_their_audience_excludes_through_the_bot(): void {
+		$plot_id = Plot::create( [
+			'game_id' => $this->game_id, 'title' => 'ST-Only Plot', 'initiated_by' => 'st',
+			'created_by' => $this->hst, 'audience' => 'storytellers',
+		] );
+
+		$response = $this->signed( 'GET', "/be/v1/{$this->slug}/plots/{$plot_id}", '77' );
+
+		$this->assertSame( 404, $response->get_status() );
+	}
+
+	public function test_a_player_can_search_and_read_a_visible_plot_through_the_bot(): void {
+		Plot::create( [
+			'game_id' => $this->game_id, 'title' => 'The Harbor Conspiracy', 'initiated_by' => 'st',
+			'created_by' => $this->hst, 'audience' => 'everyone',
+		] );
+
+		$search = $this->signed( 'GET', "/be/v1/{$this->slug}/plots", '77', null, [ 'search' => 'Harbor' ] );
+		$this->assertSame( 200, $search->get_status() );
+		$titles = array_map( static fn( $p ) => $p->title, $search->get_data() );
+		$this->assertContains( 'The Harbor Conspiracy', $titles );
+
+		$found    = current( array_filter( $search->get_data(), static fn( $p ) => $p->title === 'The Harbor Conspiracy' ) );
+		$response = $this->signed( 'GET', "/be/v1/{$this->slug}/plots/{$found->id}", '77' );
+		$this->assertSame( 200, $response->get_status() );
 	}
 }

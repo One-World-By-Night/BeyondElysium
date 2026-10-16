@@ -50,6 +50,8 @@ class Bot_Auth {
 		[ 'pattern' => '#^/be/v1/(?P<game_slug>[a-z0-9\-]+)/sessions/(?P<id>\d+)/reports$#', 'method' => 'POST', 'kind' => 'user' ],
 		[ 'pattern' => '#^/be/v1/(?P<game_slug>[a-z0-9\-]+)/sessions/(?P<id>\d+)/reports$#', 'method' => 'PUT', 'kind' => 'user' ],
 		[ 'pattern' => '#^/be/v1/(?P<game_slug>[a-z0-9\-]+)/my/plots$#', 'method' => 'GET', 'kind' => 'user' ],
+		[ 'pattern' => '#^/be/v1/(?P<game_slug>[a-z0-9\-]+)/plots$#', 'method' => 'GET', 'kind' => 'user' ],
+		[ 'pattern' => '#^/be/v1/(?P<game_slug>[a-z0-9\-]+)/plots/(?P<id>\d+)$#', 'method' => 'GET', 'kind' => 'user' ],
 		[ 'pattern' => '#^/be/v1/(?P<game_slug>[a-z0-9\-]+)/plots/(?P<plot_id>\d+)/entries$#', 'method' => 'GET', 'kind' => 'user' ],
 		[ 'pattern' => '#^/be/v1/(?P<game_slug>[a-z0-9\-]+)/plots/(?P<plot_id>\d+)/entries$#', 'method' => 'POST', 'kind' => 'user' ],
 		[ 'pattern' => '#^/be/v1/(?P<game_slug>[a-z0-9\-]+)/discord-links$#', 'method' => 'GET', 'kind' => 'user' ],
