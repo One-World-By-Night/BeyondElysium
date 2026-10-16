@@ -194,11 +194,15 @@ class Temporary_State_Controller extends Base_Controller {
 			$entry['levels'] = max( 1, (int) $request->get_param( 'levels' ) ?: 1 );
 		}
 
-		if ( ! Character::append_night_loss( (int) $character->id, $kind, $entry ) ) {
-			return $this->error( 'write_failed', __( 'The loss could not be recorded.', 'beyond-elysium' ), 500 );
+		$reason = sanitize_text_field( (string) $request->get_param( 'reason' ) );
+		$result = Change_Engine::add_night_loss( (int) $character->id, $kind, $entry, $reason, get_current_user_id() );
+
+		if ( ! $result['applied'] ) {
+			$status = ( $result['code'] ?? '' ) === 'not_found' ? 404 : 400;
+			return $this->error( (string) ( $result['code'] ?? 'write_failed' ), (string) ( $result['message'] ?? __( 'The loss could not be recorded.', 'beyond-elysium' ) ), $status );
 		}
 
-		return $this->success( Character::night_losses( (int) $character->id ), 201 );
+		return $this->success( $result['losses'], 201 );
 	}
 
 	/**
@@ -213,11 +217,15 @@ class Temporary_State_Controller extends Base_Controller {
 			return $character;
 		}
 
-		if ( ! Character::clear_night_losses( (int) $character->id ) ) {
-			return $this->error( 'write_failed', __( 'The losses could not be cleared.', 'beyond-elysium' ), 500 );
+		$reason = sanitize_text_field( (string) $request->get_param( 'reason' ) );
+		$result = Change_Engine::clear_night_losses( (int) $character->id, $reason, get_current_user_id() );
+
+		if ( ! $result['applied'] ) {
+			$status = ( $result['code'] ?? '' ) === 'not_found' ? 404 : 400;
+			return $this->error( (string) ( $result['code'] ?? 'write_failed' ), (string) ( $result['message'] ?? __( 'The losses could not be cleared.', 'beyond-elysium' ) ), $status );
 		}
 
-		return $this->success( Character::night_losses( (int) $character->id ) );
+		return $this->success( $result['losses'] );
 	}
 
 	/**

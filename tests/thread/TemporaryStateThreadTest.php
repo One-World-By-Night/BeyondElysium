@@ -332,15 +332,69 @@ class TemporaryStateThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 2, $response->get_data()['expended_abilities'][0]['levels'] );
 	}
 
+	public function test_a_lost_trait_is_logged_as_an_already_approved_change_with_its_reason(): void {
+		wp_set_current_user( $this->player );
+		$request = new WP_REST_Request( 'POST', "/be/v1/{$this->slug}/characters/{$this->character_id}/night-losses" );
+		$request->set_param( 'kind', 'trait' );
+		$request->set_param( 'block_slug', 'vampire-abilities' );
+		$request->set_param( 'name', 'Brawl' );
+		$request->set_param( 'reason', 'Lost in a Physical challenge against Corwin Ashe' );
+		$this->dispatch( $request );
+
+		global $wpdb;
+		$row = $wpdb->get_row( $wpdb->prepare(
+			"SELECT * FROM {$wpdb->prefix}be_character_changes WHERE character_id = %d AND change_type = 'night_loss_trait' ORDER BY id DESC LIMIT 1",
+			$this->character_id
+		) );
+		$this->assertNotNull( $row );
+		$this->assertSame( 'approved', $row->status );
+		$this->assertSame( 'Lost in a Physical challenge against Corwin Ashe', $row->notes );
+	}
+
 	public function test_clearing_night_losses_empties_both_lists(): void {
 		Character::append_night_loss( $this->character_id, 'trait', [ 'block_slug' => 'vampire-abilities', 'name' => 'Brawl' ] );
 
 		wp_set_current_user( $this->player );
-		$request  = new WP_REST_Request( 'DELETE', "/be/v1/{$this->slug}/characters/{$this->character_id}/night-losses" );
+		$request = new WP_REST_Request( 'DELETE', "/be/v1/{$this->slug}/characters/{$this->character_id}/night-losses" );
+		$request->set_param( 'reason', 'Night closed early' );
 		$response = $this->dispatch( $request );
 
 		$this->assertSame( 200, $response->get_status() );
 		$this->assertCount( 0, $response->get_data()['lost_traits'] );
+	}
+
+	public function test_clearing_night_losses_is_logged_with_its_reason(): void {
+		Character::append_night_loss( $this->character_id, 'trait', [ 'block_slug' => 'vampire-abilities', 'name' => 'Brawl' ] );
+
+		wp_set_current_user( $this->player );
+		$request = new WP_REST_Request( 'DELETE', "/be/v1/{$this->slug}/characters/{$this->character_id}/night-losses" );
+		$request->set_param( 'reason', 'Night closed early' );
+		$this->dispatch( $request );
+
+		global $wpdb;
+		$row = $wpdb->get_row( $wpdb->prepare(
+			"SELECT * FROM {$wpdb->prefix}be_character_changes WHERE character_id = %d AND change_type = 'night_losses_cleared' ORDER BY id DESC LIMIT 1",
+			$this->character_id
+		) );
+		$this->assertNotNull( $row );
+		$this->assertSame( 'approved', $row->status );
+		$this->assertSame( 'Night closed early', $row->notes );
+	}
+
+	public function test_clearing_an_already_empty_night_loses_no_change_logged(): void {
+		wp_set_current_user( $this->player );
+		$request = new WP_REST_Request( 'DELETE', "/be/v1/{$this->slug}/characters/{$this->character_id}/night-losses" );
+		$request->set_param( 'reason', 'Night closed early' );
+		$response = $this->dispatch( $request );
+
+		$this->assertSame( 200, $response->get_status() );
+
+		global $wpdb;
+		$count = (int) $wpdb->get_var( $wpdb->prepare(
+			"SELECT COUNT(*) FROM {$wpdb->prefix}be_character_changes WHERE character_id = %d AND change_type = 'night_losses_cleared'",
+			$this->character_id
+		) );
+		$this->assertSame( 0, $count );
 	}
 
 	// -------------------------------------------------------------------------

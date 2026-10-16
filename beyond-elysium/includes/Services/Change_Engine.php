@@ -1671,6 +1671,113 @@ class Change_Engine {
 	}
 
 	/**
+	 * Appends one entry to a character's night losses, logged with a reason the same way a pool spend or a wound is.
+	 *
+	 * @param array<string,mixed> $entry
+	 * @return array{applied:bool,code?:string,message?:string,losses?:array{lost_traits:array<int,array<string,mixed>>,expended_abilities:array<int,array<string,mixed>>}}
+	 */
+	public static function add_night_loss( int $character_id, string $kind, array $entry, string $reason, int $by ): array {
+		$savepoint = Transaction::begin( 'be_add_night_loss' );
+
+		Character::lock( $character_id );
+		$losses = Character::night_losses( $character_id );
+		if ( $losses === null ) {
+			Transaction::rollback( $savepoint );
+			return [
+				'applied' => false,
+				'code'    => 'not_found',
+				'message' => __( 'That character no longer exists.', 'beyond-elysium' ),
+			];
+		}
+
+		$change_id = Change::create( [
+			'character_id' => $character_id,
+			'change_type'  => $kind === 'ability' ? 'night_loss_ability' : 'night_loss_trait',
+			'category'     => $entry['block_slug'] ?? '',
+			'change_data'  => $entry,
+			'xp_cost'      => 0,
+			'status'       => 'approved',
+			'submitted_by' => $by,
+			'notes'        => $reason,
+		] );
+
+		if ( ! $change_id || ! Character::append_night_loss( $character_id, $kind, $entry ) ) {
+			Transaction::rollback( $savepoint );
+			return [
+				'applied' => false,
+				'code'    => 'write_failed',
+				'message' => __( 'The loss could not be recorded.', 'beyond-elysium' ),
+			];
+		}
+
+		Transaction::commit( $savepoint );
+
+		$key              = $kind === 'ability' ? 'expended_abilities' : 'lost_traits';
+		$losses[ $key ][] = $entry;
+
+		return [
+			'applied' => true,
+			'losses'  => $losses,
+		];
+	}
+
+	/**
+	 * Clears a character's night losses entirely, logged with a reason - the session close that reaches here already
+	 * names the session; a direct clear names whatever the caller gives.
+	 *
+	 * @return array{applied:bool,code?:string,message?:string,losses?:array{lost_traits:array<int,array<string,mixed>>,expended_abilities:array<int,array<string,mixed>>}}
+	 */
+	public static function clear_night_losses( int $character_id, string $reason, int $by ): array {
+		$savepoint = Transaction::begin( 'be_clear_night_losses' );
+
+		Character::lock( $character_id );
+		$losses = Character::night_losses( $character_id );
+		if ( $losses === null ) {
+			Transaction::rollback( $savepoint );
+			return [
+				'applied' => false,
+				'code'    => 'not_found',
+				'message' => __( 'That character no longer exists.', 'beyond-elysium' ),
+			];
+		}
+
+		if ( $losses['lost_traits'] === [] && $losses['expended_abilities'] === [] ) {
+			Transaction::commit( $savepoint );
+			return [
+				'applied' => true,
+				'losses'  => $losses,
+			];
+		}
+
+		$change_id = Change::create( [
+			'character_id' => $character_id,
+			'change_type'  => 'night_losses_cleared',
+			'category'     => '',
+			'change_data'  => $losses,
+			'xp_cost'      => 0,
+			'status'       => 'approved',
+			'submitted_by' => $by,
+			'notes'        => $reason,
+		] );
+
+		if ( ! $change_id || ! Character::clear_night_losses( $character_id ) ) {
+			Transaction::rollback( $savepoint );
+			return [
+				'applied' => false,
+				'code'    => 'write_failed',
+				'message' => __( 'The losses could not be cleared.', 'beyond-elysium' ),
+			];
+		}
+
+		Transaction::commit( $savepoint );
+
+		return [
+			'applied' => true,
+			'losses'  => [ 'lost_traits' => [], 'expended_abilities' => [] ],
+		];
+	}
+
+	/**
 	 * Grants one trait_list item to a character, paid for from the resource pool its block names in `_meta.paid_from`
 	 * rather than the character's own XP - a Storyteller-only action, never reachable through the ordinary purchase
 	 * flow.
