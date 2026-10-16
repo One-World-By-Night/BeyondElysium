@@ -155,6 +155,66 @@ class BotActAsThreadTest extends WP_UnitTestCase {
 		$this->assertSame( $before, $after );
 	}
 
+	public function test_a_linked_player_can_spend_their_own_pool_through_the_bot(): void {
+		Character::update_sheet_data( $this->character_id, [ 'vampire-resources' => [ 'Blood' => [ 'permanent' => 10, 'temporary' => 10 ] ] ] );
+
+		$response = $this->signed(
+			'POST',
+			"/be/v1/{$this->slug}/characters/{$this->character_id}/temporary/pool",
+			'77',
+			[ 'block_slug' => 'vampire-resources', 'pool_name' => 'Blood', 'delta' => -2, 'reason' => 'spent in play' ]
+		);
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( 8, $response->get_data()['temporary'] );
+	}
+
+	public function test_a_linked_player_can_log_a_wound_through_the_bot(): void {
+		$response = $this->signed(
+			'POST',
+			"/be/v1/{$this->slug}/characters/{$this->character_id}/wound",
+			'77',
+			[ 'type' => 'lethal', 'amount' => 2 ]
+		);
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( 2, $response->get_data()['wounds']['lethal'] );
+	}
+
+	public function test_a_linked_player_can_record_and_clear_a_night_loss_through_the_bot(): void {
+		$add = $this->signed(
+			'POST',
+			"/be/v1/{$this->slug}/characters/{$this->character_id}/night-losses",
+			'77',
+			[ 'kind' => 'trait', 'block_slug' => 'vampire-abilities', 'name' => 'Brawl' ]
+		);
+		$this->assertSame( 201, $add->get_status() );
+
+		$cleared = $this->signed( 'DELETE', "/be/v1/{$this->slug}/characters/{$this->character_id}/night-losses", '77' );
+		$this->assertSame( 200, $cleared->get_status() );
+		$this->assertCount( 0, $cleared->get_data()['lost_traits'] );
+	}
+
+	public function test_a_linked_storyteller_can_open_and_close_a_session_through_the_bot(): void {
+		$create = $this->signed( 'POST', "/be/v1/{$this->slug}/sessions", '88', [ 'game_date' => '2026-10-15' ] );
+		$this->assertSame( 201, $create->get_status() );
+		$session_id = $create->get_data()->id;
+
+		$listed = $this->signed( 'GET', "/be/v1/{$this->slug}/sessions", '88', null, [ 'from' => '2026-10-15', 'to' => '2026-10-15' ] );
+		$this->assertSame( 200, $listed->get_status() );
+		$this->assertCount( 1, $listed->get_data() );
+
+		$closed = $this->signed( 'POST', "/be/v1/{$this->slug}/sessions/{$session_id}/close", '88', [] );
+		$this->assertSame( 200, $closed->get_status() );
+	}
+
+	public function test_a_player_cannot_close_a_session_through_the_bot(): void {
+		$session_id = (int) \BeyondElysium\Models\Game_Session::create( [ 'game_id' => $this->game_id, 'game_date' => '2026-10-16', 'created_by' => $this->hst ] );
+
+		$response = $this->signed( 'POST', "/be/v1/{$this->slug}/sessions/{$session_id}/close", '77', [] );
+		$this->assertSame( 403, $response->get_status() );
+	}
+
 	public function test_a_request_without_the_bot_headers_is_untouched(): void {
 		wp_set_current_user( $this->hst );
 		$request = new WP_REST_Request( 'GET', "/be/v1/{$this->slug}/my/characters" );
