@@ -115,6 +115,14 @@ class Characters_Controller extends Base_Controller {
 			],
 		] );
 
+		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/characters/(?P<id>\d+)/posting-profile', [
+			[
+				'methods'             => 'GET',
+				'callback'            => [ $this, 'get_posting_profile' ],
+				'permission_callback' => $this->permission( 'be_view_characters' ),
+			],
+		] );
+
 		// Site-wide WordPress user search.
 		register_rest_route( $this->namespace, '/wp-users', [
 			[
@@ -446,6 +454,41 @@ class Characters_Controller extends Base_Controller {
 		$character->attachments = array_map( [ Attachment::class, 'public_shape' ], Attachment::for_entity( 'character', (int) $character->id ) );
 
 		return $this->success( $character );
+	}
+
+	/**
+	 * The minimal shape a Discord bot needs to post as a character: its Who's Who display name, its resolved
+	 * portrait, whether it is an NPC, and whether its own profile is public to the whole chronicle.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function get_posting_profile( $request ) {
+		$game = $this->resolve_game( $request['game_slug'] );
+		if ( is_wp_error( $game ) ) {
+			return $game;
+		}
+
+		$character = Character::find( (int) $request['id'] );
+		if ( ! $character || $character->owner_slug !== $request['game_slug'] ) {
+			return $this->error( 'character_not_found', __( 'Character not found in this game.', 'beyond-elysium' ), 404 );
+		}
+
+		$can_manage = \BeyondElysium\Core\Authorization::can( 'be_manage_characters' );
+		if ( ! $can_manage && (int) $character->wp_user_id !== get_current_user_id() ) {
+			return $this->error( 'ownership_denied', __( 'You do not have permission to post as this character.', 'beyond-elysium' ), 403 );
+		}
+
+		$image_id  = ! empty( $character->public_image_id ) ? (int) $character->public_image_id : ( $character->image_id ? (int) $character->image_id : null );
+		$image_url = $image_id ? wp_get_attachment_image_url( $image_id, 'medium' ) : null;
+
+		return $this->success( [
+			'id'             => (int) $character->id,
+			'display_name'   => Npc_Profiles_Controller::display_name( $character ),
+			'image_url'      => $image_url ?: null,
+			'is_npc'         => (bool) $character->is_npc,
+			'profile_public' => ( $character->profile_audience ?? 'storytellers' ) === 'everyone' && $character->status === 'active',
+		] );
 	}
 
 	/**

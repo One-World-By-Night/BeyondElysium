@@ -223,4 +223,63 @@ class BotActAsThreadTest extends WP_UnitTestCase {
 
 		$this->assertSame( 200, $response->get_status() );
 	}
+
+	public function test_a_linked_player_can_fetch_their_own_posting_profile(): void {
+		$response = $this->signed( 'GET', "/be/v1/{$this->slug}/characters/{$this->character_id}/posting-profile", '77' );
+
+		$this->assertSame( 200, $response->get_status() );
+		$data = $response->get_data();
+		$this->assertSame( 'Linked One', $data['display_name'] );
+		$this->assertNull( $data['image_url'] );
+		$this->assertFalse( $data['is_npc'] );
+		$this->assertFalse( $data['profile_public'] );
+	}
+
+	public function test_a_posting_profile_prefers_the_public_name_and_marks_itself_public_when_set(): void {
+		Character::update_header( $this->character_id, [
+			'public_name'      => 'The Masked Dilettante',
+			'profile_audience' => 'everyone',
+		] );
+
+		$response = $this->signed( 'GET', "/be/v1/{$this->slug}/characters/{$this->character_id}/posting-profile", '77' );
+
+		$this->assertSame( 200, $response->get_status() );
+		$data = $response->get_data();
+		$this->assertSame( 'The Masked Dilettante', $data['display_name'] );
+		$this->assertTrue( $data['profile_public'] );
+	}
+
+	public function test_a_posting_profile_resolves_its_portrait_to_a_real_url(): void {
+		$attachment_id = self::factory()->attachment->create_upload_object( DIR_TESTDATA . '/images/canola.jpg', 0 );
+		Character::update_header( $this->character_id, [ 'image_id' => $attachment_id ] );
+
+		$response = $this->signed( 'GET', "/be/v1/{$this->slug}/characters/{$this->character_id}/posting-profile", '77' );
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertStringContainsString( 'canola', $response->get_data()['image_url'] );
+	}
+
+	public function test_a_storyteller_can_fetch_an_npcs_posting_profile_through_the_bot(): void {
+		$npc_id = (int) Character::create( [
+			'name' => 'The Dockside Hunger', 'stack_slug' => 'vampire', 'owner_type' => 'chronicle', 'owner_slug' => $this->slug,
+			'is_npc' => 1,
+		] );
+
+		$response = $this->signed( 'GET', "/be/v1/{$this->slug}/characters/{$npc_id}/posting-profile", '88' );
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertTrue( $response->get_data()['is_npc'] );
+	}
+
+	public function test_a_player_cannot_fetch_someone_elses_posting_profile_through_the_bot(): void {
+		$other_player    = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+		$other_character = (int) Character::create( [
+			'name' => 'Someone Else Entirely', 'stack_slug' => 'vampire', 'owner_type' => 'chronicle', 'owner_slug' => $this->slug,
+			'wp_user_id' => $other_player,
+		] );
+
+		$response = $this->signed( 'GET', "/be/v1/{$this->slug}/characters/{$other_character}/posting-profile", '77' );
+
+		$this->assertSame( 403, $response->get_status() );
+	}
 }

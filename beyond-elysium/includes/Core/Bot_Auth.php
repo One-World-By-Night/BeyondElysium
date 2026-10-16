@@ -36,6 +36,7 @@ class Bot_Auth {
 		[ 'pattern' => '#^/be/v1/(?P<game_slug>[a-z0-9\-]+)/characters$#', 'method' => 'GET', 'kind' => 'user' ],
 		[ 'pattern' => '#^/be/v1/(?P<game_slug>[a-z0-9\-]+)/characters/(?P<id>\d+)$#', 'method' => 'GET', 'kind' => 'user' ],
 		[ 'pattern' => '#^/be/v1/(?P<game_slug>[a-z0-9\-]+)/characters/(?P<id>\d+)/sheet-document$#', 'method' => 'GET', 'kind' => 'user' ],
+		[ 'pattern' => '#^/be/v1/(?P<game_slug>[a-z0-9\-]+)/characters/(?P<id>\d+)/posting-profile$#', 'method' => 'GET', 'kind' => 'user' ],
 		[ 'pattern' => '#^/be/v1/(?P<game_slug>[a-z0-9\-]+)/characters/(?P<id>\d+)/temporary/pool$#', 'method' => 'POST', 'kind' => 'user' ],
 		[ 'pattern' => '#^/be/v1/(?P<game_slug>[a-z0-9\-]+)/characters/(?P<id>\d+)/wound$#', 'method' => 'POST', 'kind' => 'user' ],
 		[ 'pattern' => '#^/be/v1/(?P<game_slug>[a-z0-9\-]+)/characters/(?P<id>\d+)/heal$#', 'method' => 'POST', 'kind' => 'user' ],

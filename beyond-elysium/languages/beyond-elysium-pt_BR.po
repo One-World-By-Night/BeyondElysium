@@ -1974,6 +1974,10 @@ msgstr "Não foi possível concluir a compra."
 msgid "You do not have permission to view this character."
 msgstr "Você não tem permissão para ver este personagem."
 
+#: includes/REST/Characters_Controller.php:479
+msgid "You do not have permission to post as this character."
+msgstr "Você não tem permissão para postar como este personagem."
+
 #: includes/REST/Characters_Controller.php:561
 #: includes/REST/Creature_Stacks_Controller.php:208
 #: includes/REST/Factions_Controller.php:191
