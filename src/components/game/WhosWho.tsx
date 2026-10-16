@@ -2,9 +2,10 @@
  * "Who's Who": the NPC and player-character directory a plain player sees.
  */
 import { useEffect, useState } from '@wordpress/element';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
 import HelpButton from '../shared/HelpButton';
+import Modal from '../shared/Modal';
 import { groupProfiles } from '../../lib/profileGrouping';
 import type { CharacterProfile } from '../../types/character';
 import './WhosWho.css';
@@ -28,17 +29,70 @@ function portraitUrl(
 function ProfileCard( {
 	gameSlug,
 	profile,
+	onSelect,
+}: {
+	gameSlug: string;
+	profile: CharacterProfile;
+	onSelect: ( profile: CharacterProfile ) => void;
+} ) {
+	const image = portraitUrl( gameSlug, profile );
+	return (
+		<button
+			type="button"
+			className="be-whos-who__card"
+			key={ profile.id }
+			onClick={ () => onSelect( profile ) }
+			aria-label={ sprintf(
+				/* translators: %s: character or NPC name */
+				__( "View %s's profile", 'beyond-elysium' ),
+				profile.name
+			) }
+		>
+			{ image && (
+				<img className="be-whos-who__portrait" src={ image } alt="" />
+			) }
+			<h3>{ profile.name }</h3>
+			{ profile.played_by && (
+				<p className="be-whos-who__played-by">
+					{ __( 'Played by', 'beyond-elysium' ) }{ ' ' }
+					{ profile.played_by }
+				</p>
+			) }
+		</button>
+	);
+}
+
+function ProfileDetail( {
+	gameSlug,
+	profile,
 }: {
 	gameSlug: string;
 	profile: CharacterProfile;
 } ) {
 	const image = portraitUrl( gameSlug, profile );
+	const hasMore =
+		image ||
+		profile.played_by ||
+		profile.public_description ||
+		profile.titles.length > 0 ||
+		profile.factions.length > 0;
 	return (
-		<div className="be-whos-who__card" key={ profile.id }>
-			{ image && (
-				<img className="be-whos-who__portrait" src={ image } alt="" />
+		<div className="be-whos-who__detail">
+			{ ! hasMore && (
+				<p className="be-whos-who__empty">
+					{ __(
+						'Nothing more is shared about this profile yet.',
+						'beyond-elysium'
+					) }
+				</p>
 			) }
-			<h3>{ profile.name }</h3>
+			{ image && (
+				<img
+					className="be-whos-who__detail-portrait"
+					src={ image }
+					alt=""
+				/>
+			) }
 			{ profile.played_by && (
 				<p className="be-whos-who__played-by">
 					{ __( 'Played by', 'beyond-elysium' ) }{ ' ' }
@@ -78,10 +132,14 @@ export function WhosWho( { gameSlug }: WhosWhoProps ) {
 		null
 	);
 	const [ error, setError ] = useState< string | null >( null );
+	const [ selected, setSelected ] = useState< CharacterProfile | null >(
+		null
+	);
 
 	useEffect( () => {
 		setProfiles( null );
 		setError( null );
+		setSelected( null );
 		api.npcs( gameSlug )
 			.profiles()
 			.then( setProfiles )
@@ -128,6 +186,7 @@ export function WhosWho( { gameSlug }: WhosWhoProps ) {
 							<ProfileCard
 								gameSlug={ gameSlug }
 								profile={ profile }
+								onSelect={ setSelected }
 								key={ profile.id }
 							/>
 						) ) }
@@ -145,11 +204,21 @@ export function WhosWho( { gameSlug }: WhosWhoProps ) {
 							<ProfileCard
 								gameSlug={ gameSlug }
 								profile={ profile }
+								onSelect={ setSelected }
 								key={ profile.id }
 							/>
 						) ) }
 					</div>
 				</>
+			) }
+
+			{ selected && (
+				<Modal
+					title={ selected.name }
+					onClose={ () => setSelected( null ) }
+				>
+					<ProfileDetail gameSlug={ gameSlug } profile={ selected } />
+				</Modal>
 			) }
 		</div>
 	);

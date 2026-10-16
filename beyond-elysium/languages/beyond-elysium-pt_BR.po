@@ -15197,6 +15197,16 @@ msgstr "Títulos"
 msgid "Failed to load Who's Who."
 msgstr "Falha ao carregar o Quem é Quem."
 
+#. translators: %s: character or NPC name
+#: build/964.js:95
+#, js-format
+msgid "View %s's profile"
+msgstr "Ver o perfil de %s"
+
+#: build/964.js:95
+msgid "Nothing more is shared about this profile yet."
+msgstr "Nada mais foi compartilhado sobre este perfil ainda."
+
 #: build/964.js:94 build/964.js:102
 msgid "Who's Who"
 msgstr "Quem é Quem"

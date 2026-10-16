@@ -12,15 +12,15 @@ My Chronicle → Who's Who tab.
 
 ## The screen
 
-Two groups, each a grid of cards - **Characters** (player characters with a public profile) and **NPCs**:
+Two groups, each a grid of short cards - **Characters** (player characters with a public profile) and **NPCs**. A card shows only a name and, for a player character whose player has opted in, who plays it - click (or tap) a card to open the full profile in a pop-up:
 
 - **Portrait** - the character's own uploaded portrait if one is set, otherwise its Who's Who image (an NPC's own, or a character's main sheet portrait).
-- **Name** - the Who's Who display name if a Storyteller set one (NPCs only), otherwise the character's real name.
-- **Played by** - a player character's own account name, shown only when that player has ticked "Name me as the player behind this character."
-- **Description** - the write-up for players to read. A `[ST]...[/ST]` marked passage is stripped out here the same as everywhere else.
-- **Titles** / **Factions** - any public court position or faction membership the character holds, each filtered by its own visibility rule. A membership a Storyteller has marked hidden from profiles is left off for everyone but Storytellers.
+- **Name** - the Who's Who display name if a Storyteller set one (NPCs only), otherwise the character's real name. Shown on the card and as the pop-up's own title.
+- **Played by** - a player character's own account name, shown only when that player has ticked "Name me as the player behind this character." Shown on the card and again in the pop-up.
+- **Description** - the write-up for players to read, shown in the pop-up only. A `[ST]...[/ST]` marked passage is stripped out here the same as everywhere else.
+- **Titles** / **Factions** - any public court position or faction membership the character holds, shown in the pop-up only, each filtered by its own visibility rule. A membership a Storyteller has marked hidden from profiles is left off for everyone but Storytellers.
 
-A group with nothing in it is left off the page entirely, rather than shown empty.
+A profile with nothing beyond a name says so plainly in its pop-up, rather than opening to an empty space. A group with nothing in it is left off the page entirely, rather than shown empty.
 
 Nothing here is editable from this screen. A Storyteller sets up an NPC's profile from its own [Character Editor](character-editor.md), in the Who's Who Profile section shown only to staff; a player sets up their own character's profile from the same editor, in a narrower version of that section shown only to them.
 

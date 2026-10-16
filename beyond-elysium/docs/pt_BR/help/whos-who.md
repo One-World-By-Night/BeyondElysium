@@ -12,15 +12,15 @@ Minha Crônica → aba Quem é Quem.
 
 ## A tela
 
-Dois grupos, cada um uma grade de cartões - **Personagens** (personagens de jogadores com um perfil público) e **NPCs**:
+Dois grupos, cada um uma grade de cartões curtos - **Personagens** (personagens de jogadores com um perfil público) e **NPCs**. Um cartão mostra só um nome e, para um personagem de jogador cujo jogador optou por isso, quem o interpreta - clique (ou toque) num cartão para abrir o perfil completo numa janela:
 
 - **Retrato** - o retrato enviado do próprio personagem, se há um, senão a imagem dele no Quem é Quem (a de um NPC, ou o retrato principal da ficha de um personagem).
-- **Nome** - o nome de exibição do Quem é Quem se um Narrador definiu um (só NPCs), senão o nome real do personagem.
-- **Interpretado por** - o nome de conta do jogador de um personagem de jogador, mostrado só quando esse jogador marcou "Indicar meu nome como o jogador deste personagem."
-- **Descrição** - o texto para os jogadores lerem. Uma passagem marcada com `[ST]...[/ST]` é retirada aqui, igual a todo lugar.
-- **Títulos** / **Facções** - qualquer cargo da corte ou participação em facção pública que o personagem tenha, cada um filtrado pela sua própria regra de visibilidade. Uma participação que um Narrador marcou como oculta dos perfis fica de fora para todos, menos para os Narradores.
+- **Nome** - o nome de exibição do Quem é Quem se um Narrador definiu um (só NPCs), senão o nome real do personagem. Aparece no cartão e como título da janela.
+- **Interpretado por** - o nome de conta do jogador de um personagem de jogador, mostrado só quando esse jogador marcou "Indicar meu nome como o jogador deste personagem." Aparece no cartão e de novo na janela.
+- **Descrição** - o texto para os jogadores lerem, mostrado só na janela. Uma passagem marcada com `[ST]...[/ST]` é retirada aqui, igual a todo lugar.
+- **Títulos** / **Facções** - qualquer cargo da corte ou participação em facção pública que o personagem tenha, mostrados só na janela, cada um filtrado pela sua própria regra de visibilidade. Uma participação que um Narrador marcou como oculta dos perfis fica de fora para todos, menos para os Narradores.
 
-Um grupo sem nada dentro fica de fora da página por completo, em vez de aparecer vazio.
+Um perfil sem nada além de um nome diz isso claramente na sua janela, em vez de abrir para um espaço vazio. Um grupo sem nada dentro fica de fora da página por completo, em vez de aparecer vazio.
 
 Nada aqui é editável por esta tela. Um Narrador configura o perfil de um NPC no próprio [Editor de Personagem](character-editor.md), na seção Perfil do Quem é Quem mostrada só à equipe; um jogador configura o perfil do próprio personagem pelo mesmo editor, numa versão mais estreita dessa seção mostrada só a ele.
 

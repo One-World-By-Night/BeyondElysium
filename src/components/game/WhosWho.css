@@ -5,15 +5,32 @@
 }
 
 .be-whos-who__card {
+	display: block;
+	width: 100%;
 	padding: 0.75rem;
 	border: 1px solid var(--be-gray-20);
 	border-radius: 4px;
+	background: none;
+	text-align: left;
+	cursor: pointer;
+	font: inherit;
+	color: inherit;
+	white-space: normal;
+	overflow-wrap: break-word;
+}
+
+.be-whos-who__card:hover,
+.be-whos-who__card:focus,
+.be-whos-who__card:focus-visible {
+	background: none;
+	border-color: var(--be-gray-8);
+	color: inherit;
 }
 
 .be-whos-who__portrait {
 	display: block;
 	width: 100%;
-	max-height: 12rem;
+	max-height: 10rem;
 	object-fit: cover;
 	border-radius: 4px;
 	margin-bottom: 0.5rem;
@@ -21,6 +38,15 @@
 
 .be-whos-who__card h3 {
 	margin: 0 0 0.4rem;
+}
+
+.be-whos-who__detail-portrait {
+	display: block;
+	width: 100%;
+	max-height: 20rem;
+	object-fit: cover;
+	border-radius: 4px;
+	margin-bottom: 0.75rem;
 }
 
 .be-whos-who__group-title {
