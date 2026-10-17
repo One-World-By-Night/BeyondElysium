@@ -58,8 +58,18 @@ class BotConnectThreadTest extends WP_UnitTestCase {
 
 		$code2 = Bot_Connect_Code::generate( $this->game_id, $this->hst );
 		global $wpdb;
-		$wpdb->update( $wpdb->prefix . 'be_bot_connect_codes', [ 'expires_at' => wp_date( 'Y-m-d H:i:s', time() - 60 ) ], [ 'game_id' => $this->game_id ] );
+		$wpdb->update( $wpdb->prefix . 'be_bot_connect_codes', [ 'expires_at' => gmdate( 'Y-m-d H:i:s', time() - 60 ) ], [ 'game_id' => $this->game_id ] );
 		$this->assertNull( Bot_Connect_Code::consume( $code2 ), 'an expired code does not work' );
+	}
+
+	public function test_a_fresh_code_works_on_a_site_with_a_non_utc_timezone(): void {
+		update_option( 'timezone_string', 'America/New_York' );
+		try {
+			$code = Bot_Connect_Code::generate( $this->game_id, $this->hst );
+			$this->assertSame( $this->game_id, Bot_Connect_Code::consume( $code )['game_id'], 'a code generated the instant before is not already expired' );
+		} finally {
+			update_option( 'timezone_string', '' );
+		}
 	}
 
 	public function test_a_wrong_code_gives_one_message(): void {

@@ -116,8 +116,15 @@ class DiscordLinksThreadTest extends WP_UnitTestCase {
 	public function test_an_expired_or_reused_token_is_refused(): void {
 		$result = Discord_Link::start_or_renew( $this->game_id, '7', 'Expiring' );
 		global $wpdb;
-		$wpdb->update( $wpdb->prefix . 'be_discord_links', [ 'token_expires_at' => wp_date( 'Y-m-d H:i:s', time() - 60 ) ], [ 'id' => $result['link_id'] ] );
+		$wpdb->update( $wpdb->prefix . 'be_discord_links', [ 'token_expires_at' => gmdate( 'Y-m-d H:i:s', time() - 60 ) ], [ 'id' => $result['link_id'] ] );
 		$this->assertNull( Discord_Link::find_by_live_token( $result['token'] ) );
+		update_option( 'timezone_string', 'America/New_York' );
+		try {
+			$fresh = Discord_Link::start_or_renew( $this->game_id, '9', 'Fresh' );
+			$this->assertNotNull( Discord_Link::find_by_live_token( $fresh['token'] ), 'a token requested the instant before is not already expired' );
+		} finally {
+			update_option( 'timezone_string', '' );
+		}
 
 		$reused = Discord_Link::start_or_renew( $this->game_id, '8', 'Reusing' );
 		Discord_Link::confirm( Discord_Link::find( $reused['link_id'] ), $this->player, [], true );

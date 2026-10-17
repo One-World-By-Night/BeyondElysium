@@ -47,7 +47,7 @@ class Bot_Connect_Code {
 			'code_hash'  => $hash,
 			'created_by' => $created_by,
 			'created_at' => current_time( 'mysql' ),
-			'expires_at' => wp_date( 'Y-m-d H:i:s', time() + self::TTL_SECONDS ),
+			'expires_at' => gmdate( 'Y-m-d H:i:s', time() + self::TTL_SECONDS ),
 			'used_at'    => null,
 			'failures'   => 0,
 		];

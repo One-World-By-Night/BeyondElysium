@@ -50,7 +50,7 @@ class Discord_Link {
 
 		$token        = bin2hex( random_bytes( 32 ) );
 		$token_hash   = hash( 'sha256', $token );
-		$expires_at   = wp_date( 'Y-m-d H:i:s', time() + self::TOKEN_TTL_SECONDS );
+		$expires_at   = gmdate( 'Y-m-d H:i:s', time() + self::TOKEN_TTL_SECONDS );
 
 		if ( $active && $active->status === self::REQUESTED ) {
 			Manager::update( 'discord_links', [
