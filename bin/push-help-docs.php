@@ -12,7 +12,8 @@
  *   BE_HELP_PREFIX   put the pages under this slug prefix and out of the Help category, to rehearse a push
  *   BE_HELP_REMOVE   set to 1, with a prefix, to put the rehearsal's pages in the trash and delete its screenshots
  *
- * Every step is idempotent: a second run changes nothing.
+ * Every step is idempotent: a second run changes nothing. A page already live with a screenshot keeps it, untouched,
+ * when its local screenshot file isn't there to replace it with - a text-only push never strips a live image.
  */
 
 if ( ! class_exists( 'Be_Help_TranslatePress' ) ) {
@@ -267,6 +268,7 @@ if ( ! class_exists( 'Be_Help_Push' ) ) {
 			'created'   => 0,
 			'updated'   => 0,
 			'unchanged' => 0,
+			'skipped'   => 0,
 			'failed'    => 0,
 		];
 
@@ -322,7 +324,7 @@ if ( ! class_exists( 'Be_Help_Push' ) ) {
 					$posts[ $page['slug'] ] = $post;
 				}
 			}
-			echo "Created: {$this->count['created']}, Updated: {$this->count['updated']}, Unchanged: {$this->count['unchanged']}, Failed: {$this->count['failed']}\n";
+			echo "Created: {$this->count['created']}, Updated: {$this->count['updated']}, Unchanged: {$this->count['unchanged']}, Skipped: {$this->count['skipped']}, Failed: {$this->count['failed']}\n";
 
 			$this->portuguese( $pages, $posts );
 
@@ -413,7 +415,12 @@ if ( ! class_exists( 'Be_Help_Push' ) ) {
 				$existing = get_post( $id );
 			}
 
-			$images  = $this->screenshots( $page, (int) $existing->ID );
+			$images = $this->screenshots( $page, (int) $existing->ID );
+			if ( ! $images && ( $page['shots'] ?? [] ) && ! $created && str_contains( $existing->post_content, 'wp:image' ) ) {
+				$this->notes[] = "{$slug}: keeping its live screenshot, no local file to replace it with";
+				++$this->count['skipped'];
+				return get_post( $existing->ID );
+			}
 			$content = $this->content( $page, $images );
 			if ( $existing->post_content !== $content || $existing->post_title !== $title || 'publish' !== $existing->post_status ) {
 				$id = wp_update_post( wp_slash( $postarr + [ 'ID' => $existing->ID, 'post_content' => $content ] ), true );

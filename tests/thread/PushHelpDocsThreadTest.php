@@ -201,7 +201,7 @@ class PushHelpDocsThreadTest extends WP_UnitTestCase {
 		$this->assertSame( $block, get_page_by_path( 'thread-help-update', OBJECT, 'docs' )->post_content );
 
 		$again = $this->push( [ $page ] );
-		$this->assertStringContainsString( 'Created: 0, Updated: 0, Unchanged: 1, Failed: 0', $again );
+		$this->assertStringContainsString( 'Created: 0, Updated: 0, Unchanged: 1, Skipped: 0, Failed: 0', $again );
 	}
 
 	public function test_every_page_lands_in_the_help_category(): void {
@@ -245,7 +245,7 @@ class PushHelpDocsThreadTest extends WP_UnitTestCase {
 		$printed = $this->push( [ $page ] );
 
 		$this->assertSame( $first, get_page_by_path( 'thread-help-again', OBJECT, 'docs' )->post_content );
-		$this->assertStringContainsString( 'Created: 0, Updated: 0, Unchanged: 1, Failed: 0', $printed );
+		$this->assertStringContainsString( 'Created: 0, Updated: 0, Unchanged: 1, Skipped: 0, Failed: 0', $printed );
 		$all = get_posts( [ 'post_type' => 'attachment', 'post_status' => 'inherit', 'meta_key' => '_be_help_image', 'numberposts' => -1 ] ); // phpcs:ignore WordPress.DB.SlowDBQuery
 		$this->assertCount( 2, $all );
 	}
@@ -280,6 +280,23 @@ class PushHelpDocsThreadTest extends WP_UnitTestCase {
 		$this->assertStringNotContainsString( 'wp:image', $post->post_content );
 		$this->assertStringContainsString( 'thread-help-missing: no screenshots', $printed );
 		$this->assertCount( 0, get_posts( [ 'post_type' => 'attachment', 'post_status' => 'inherit', 'meta_key' => '_be_help_image', 'numberposts' => -1 ] ) ); // phpcs:ignore WordPress.DB.SlowDBQuery
+	}
+
+	public function test_a_page_already_live_with_a_screenshot_keeps_it_when_the_local_file_is_gone(): void {
+		$this->screenshot( 'en', 'thread-help-keep-1' );
+		$this->screenshot( 'pt_BR', 'thread-help-keep-1' );
+		$page = $this->page_with_shot( 'thread-help-keep' );
+		$this->push( [ $page ] );
+		$before = get_page_by_path( 'thread-help-keep', OBJECT, 'docs' )->post_content;
+		$this->assertStringContainsString( 'wp:image', $before );
+
+		unlink( "{$this->images}/en/thread-help-keep-1.webp" );
+		unlink( "{$this->images}/pt_BR/thread-help-keep-1.webp" );
+		$printed = $this->push( [ $page ] );
+
+		$this->assertSame( $before, get_page_by_path( 'thread-help-keep', OBJECT, 'docs' )->post_content );
+		$this->assertStringContainsString( 'Created: 0, Updated: 0, Unchanged: 0, Skipped: 1, Failed: 0', $printed );
+		$this->assertStringContainsString( 'thread-help-keep: keeping its live screenshot, no local file to replace it with', $printed );
 	}
 
 	public function test_the_portuguese_pass_is_skipped_when_translatepress_is_not_there(): void {
