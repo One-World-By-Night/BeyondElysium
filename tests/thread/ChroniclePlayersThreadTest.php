@@ -110,6 +110,12 @@ class ChroniclePlayersThreadTest extends WP_UnitTestCase {
 		$this->assertStringContainsString( 'join_slug=players-test', $linked['join_link'] );
 		$this->assertStringContainsString( 'join=1', $linked['join_link'] );
 		$this->assertStringContainsString( 'auth=sso', $linked['join_link'] );
+		$this->assertStringContainsString( 'redirect_uri=', $linked['join_link'], 'the SSO round trip needs an explicit redirect_uri - it drops every other query var otherwise' );
+		parse_str( (string) wp_parse_url( $linked['join_link'], PHP_URL_QUERY ), $query_params );
+		$decoded_redirect = (string) ( $query_params['redirect_uri'] ?? '' );
+		$this->assertStringContainsString( 'join_slug=players-test', $decoded_redirect );
+		$this->assertStringContainsString( 'join=1', $decoded_redirect );
+		$this->assertStringNotContainsString( 'auth=sso', $decoded_redirect, 'redirect_uri must not itself carry auth=sso, or the round trip loops' );
 
 		$this->link_chronicle( null, false );
 		$unlinked = $this->dispatch( $this->hst_id, 'GET', "/be/v1/{$this->slug}/players" )->get_data();

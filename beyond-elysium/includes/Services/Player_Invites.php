@@ -408,11 +408,11 @@ class Player_Invites {
 			return false;
 		}
 		$inviter = get_userdata( $invited_by );
-		$args    = [ 'game_slug' => (string) $game->slug ];
-		if ( \BeyondElysium\Core\Authorization::asc_role_path( $game, 'player' ) !== null ) {
-			$args['auth'] = 'sso';
-		}
+		$args = [ 'game_slug' => (string) $game->slug ];
 		$link = add_query_arg( $args, home_url( '/' . Page_Provisioner::PLAYER_SLUG . '/' ) );
+		if ( \BeyondElysium\Core\Authorization::asc_role_path( $game, 'player' ) !== null ) {
+			$link = add_query_arg( [ 'auth' => 'sso', 'redirect_uri' => urlencode( $link ) ], $link );
+		}
 		/* translators: %s: the chronicle's name */
 		$subject = sprintf( __( 'You are invited to play in %s', 'beyond-elysium' ), (string) $game->name );
 		$message = sprintf(

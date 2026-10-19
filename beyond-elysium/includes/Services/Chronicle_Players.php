@@ -101,10 +101,11 @@ class Chronicle_Players {
 	 */
 	public static function join_link( object $game ): string {
 		$args = [ 'join_slug' => (string) $game->slug, 'join' => '1' ];
+		$url  = add_query_arg( $args, home_url( '/' . Page_Provisioner::PLAYER_SLUG . '/' ) );
 		if ( Authorization::asc_role_path( $game, 'player' ) !== null ) {
-			$args['auth'] = 'sso';
+			$url = add_query_arg( [ 'auth' => 'sso', 'redirect_uri' => urlencode( $url ) ], $url );
 		}
-		return add_query_arg( $args, home_url( '/' . Page_Provisioner::PLAYER_SLUG . '/' ) );
+		return $url;
 	}
 
 	/**
@@ -117,10 +118,11 @@ class Chronicle_Players {
 	 */
 	public static function discord_confirm_link( object $game, string $token ): string {
 		$args = [ 'discord_link' => $token, 'discord_slug' => (string) $game->slug ];
+		$url  = add_query_arg( $args, home_url( '/' . Page_Provisioner::PLAYER_SLUG . '/' ) );
 		if ( Authorization::asc_role_path( $game, 'player' ) !== null ) {
-			$args['auth'] = 'sso';
+			$url = add_query_arg( [ 'auth' => 'sso', 'redirect_uri' => urlencode( $url ) ], $url );
 		}
-		return add_query_arg( $args, home_url( '/' . Page_Provisioner::PLAYER_SLUG . '/' ) );
+		return $url;
 	}
 
 	/**

@@ -602,6 +602,8 @@ export function ChroniclePlayers( { gameSlug }: ChroniclePlayersProps ) {
 				</div>
 			) }
 
+			<ChronicleDiscordLinks gameSlug={ gameSlug } />
+
 			<section className="be-chronicle-players__join-requests">
 				<h3>
 					{ sprintf(
@@ -1053,8 +1055,6 @@ export function ChroniclePlayers( { gameSlug }: ChroniclePlayersProps ) {
 					</ul>
 				) }
 			</section>
-
-			<ChronicleDiscordLinks gameSlug={ gameSlug } />
 		</div>
 	);
 }

@@ -52,6 +52,19 @@ Connecting and disconnecting is the Head Storyteller's. An Assistant Storyteller
 2. Click **Disconnect**.
 3. Players stay linked; they just can't act from Discord until the chronicle connects again.
 
+## Beyond connecting and linking
+
+Once a player is linked, the bot is a second way into the chronicle itself, not just the website:
+
+- **Sheets.** Read your own character, or any character a Storyteller names, with `/sheet`.
+- **Temporary state.** Spend and regain pool points, take and heal wounds, with `/spend`, `/regain`, `/wound` and `/heal` - none of them need approval. `/status` shows pools, health, and tonight's losses.
+- **Challenges.** Laws of the Night Revised challenges and static tests, settled on what each side claims, with `/challenge`, `/static`, `/test` and `/challenges`.
+- **In-character posting.** Post as a character through a trigger, a lock, or `/as`.
+- **Game night.** `/checkin`, `/aar`, `/downtime`, `/scene` and `/plot`; a Storyteller sets a linked player's room with `/room`.
+- **Dice.** General notation or a World of Darkness pool, with `/roll`.
+
+Every command runs as the real linked account, so it follows the exact same permissions and approval rules as the website. Run `/help` in the Discord server for the full list, or `/help topic:<area>` for one area in detail.
+
 ## Things to know
 
 - **One server, one chronicle.** A Discord server connects to exactly one chronicle, and a chronicle to exactly one server.

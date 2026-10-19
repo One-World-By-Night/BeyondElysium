@@ -52,6 +52,19 @@ Conectar e desconectar são do HST. Um AST vê o status da conexão, mas não os
 2. Clique em **Desconectar**.
 3. Os jogadores continuam vinculados; só não podem agir pelo Discord até a crônica conectar de novo.
 
+## Além de conectar e vincular
+
+Depois que um jogador está vinculado, o bot é uma segunda forma de acessar a própria crônica, não só o site:
+
+- **Fichas.** Leia o seu próprio personagem, ou qualquer personagem que um Narrador nomeie, com `/sheet`.
+- **Estado temporário.** Gaste e recupere pontos de reservas, sofra e cure feridas, com `/spend`, `/regain`, `/wound` e `/heal` - nenhum deles precisa de aprovação. `/status` mostra as reservas, a saúde e as perdas da noite.
+- **Desafios.** Desafios de Leis da Noite Revisadas e testes estáticos, resolvidos pelo que cada lado afirma, com `/challenge`, `/static`, `/test` e `/challenges`.
+- **Postagem em personagem.** Poste como um personagem por um gatilho, um bloqueio, ou `/as`.
+- **Noite de jogo.** `/checkin`, `/aar`, `/downtime`, `/scene` e `/plot`; um Narrador define a sala de um jogador vinculado com `/room`.
+- **Dados.** Notação geral ou uma reserva de Mundo das Trevas, com `/roll`.
+
+Todo comando roda como a conta vinculada real, então segue exatamente as mesmas regras de permissão e aprovação do site. Rode `/help` no servidor do Discord para a lista completa, ou `/help topic:<área>` para uma área em detalhe.
+
 ## O que saber
 
 - **Um servidor, uma crônica.** Um servidor do Discord conecta a exatamente uma crônica, e uma crônica a exatamente um servidor.
