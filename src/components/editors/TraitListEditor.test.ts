@@ -1,5 +1,7 @@
 import {
+	clampDraftCount,
 	findTraitRowIndex,
+	parseDraftCount,
 	rowRatingStyle,
 	saveTraitDraft,
 } from './TraitListEditor';
@@ -352,5 +354,35 @@ describe( 'rowRatingStyle', () => {
 				list( { count_is_cost: true, print_rings: false } )
 			)
 		).toBe( 'cost' );
+	} );
+} );
+
+/**
+ * Clearing the field to retype a rating must not snap back to 1 before the new digit lands - that is what left a
+ * typed "2" or "3" always landing beside the old "1" instead of replacing it.
+ */
+describe( 'parseDraftCount', () => {
+	it( 'reads a typed number', () => {
+		expect( parseDraftCount( '3' ) ).toBe( 3 );
+		expect( parseDraftCount( '12' ) ).toBe( 12 );
+	} );
+
+	it( 'reads a cleared field as 0, not the minimum', () => {
+		expect( parseDraftCount( '' ) ).toBe( 0 );
+	} );
+
+	it( 'reads a lone minus sign or letters as 0 rather than failing', () => {
+		expect( parseDraftCount( '-' ) ).toBe( 0 );
+		expect( parseDraftCount( 'abc' ) ).toBe( 0 );
+	} );
+} );
+
+describe( 'clampDraftCount', () => {
+	it( 'leaves a real count alone', () => {
+		expect( clampDraftCount( 5 ) ).toBe( 5 );
+	} );
+
+	it( 'raises a cleared or zeroed field back to 1 once editing is done', () => {
+		expect( clampDraftCount( 0 ) ).toBe( 1 );
 	} );
 } );

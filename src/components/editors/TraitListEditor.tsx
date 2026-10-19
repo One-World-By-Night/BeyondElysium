@@ -218,6 +218,21 @@ export function saveTraitDraft(
 }
 
 /**
+ * The count field's typed value, read while the field is still being edited: empty or non-numeric reads as 0 rather
+ * than snapping to the minimum, so clearing the field to type a new value never leaves a stale digit behind.
+ */
+export function parseDraftCount( raw: string ): number {
+	return Number( raw ) || 0;
+}
+
+/**
+ * The count field's value once editing it is done: never under 1.
+ */
+export function clampDraftCount( count: number ): number {
+	return Math.max( 1, count );
+}
+
+/**
  * Renders the trait list for a trait_list block.
  */
 export function TraitListEditor( {
@@ -303,7 +318,7 @@ export function TraitListEditor( {
 				definition,
 				{
 					name: draft.name,
-					count: draft.count,
+					count: clampDraftCount( draft.count ),
 					specialization: draft.specialization,
 					note: draft.note,
 					custom: draft.isCustom,
@@ -750,15 +765,27 @@ export function TraitListEditor( {
 									id={ `${ blockSlug }-trait-count` }
 									type="number"
 									min={ 1 }
-									value={ draft.count }
+									value={ draft.count || '' }
+									onFocus={ ( e ) => e.target.select() }
 									onChange={ ( e ) =>
 										setDraft( {
 											...draft,
-											count: Math.max(
-												1,
-												Number( e.target.value )
+											count: parseDraftCount(
+												e.target.value
 											),
 										} )
+									}
+									onBlur={ () =>
+										setDraft( ( current ) =>
+											current
+												? {
+														...current,
+														count: clampDraftCount(
+															current.count
+														),
+													}
+												: current
+										)
 									}
 								/>
 							</div>
