@@ -36,6 +36,12 @@
 	white-space: pre-line;
 }
 
+/* The change's description and everything under it, one block inside its cell. */
+.be-approval-queue__change {
+	flex: 1 1 8rem;
+	min-width: 0;
+}
+
 .be-approval-queue__section-name,
 .be-approval-queue__edited-by {
 	margin: 0.25rem 0 0;
@@ -77,7 +83,7 @@
 	white-space: pre-line;
 }
 
-.be-approval-queue__actions {
+.be-approval-queue__action-buttons {
 	display: flex;
 	gap: 0.35rem;
 	align-items: center;

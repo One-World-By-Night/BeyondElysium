@@ -1056,65 +1056,69 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 													'beyond-elysium'
 												) }
 											>
-												{ forwardedFromLabel(
-													item
-												) && (
-													<p className="be-approval-queue__forwarded-from">
-														{ forwardedFromLabel(
-															item
-														) }
-													</p>
-												) }
-												{ describeChange(
-													item.change_type,
-													item.change_data
-												) }
-												{ requestNote( item ) && (
-													<p className="be-approval-queue__request-note">
-														{ requestNote( item ) }
-													</p>
-												) }
-												{ item.host_note && (
-													<p className="be-approval-queue__host-note">
-														{ item.host_note }
-													</p>
-												) }
-												{ note && (
-													<p className="be-approval-queue__request-note">
-														{ sprintf(
-															/* translators: %s: the note a player put on the trait they are adding or changing */
-															__(
-																'Note: %s',
-																'beyond-elysium'
-															),
-															note
-														) }
-													</p>
-												) }
-												{ item.block_name && (
-													<p className="be-approval-queue__section-name">
-														{ sprintf(
-															/* translators: %s: the name of a sheet section, such as Rituals */
-															__(
-																'In %s',
-																'beyond-elysium'
-															),
-															item.block_name
-														) }
-													</p>
-												) }
-												{ item.edited_by_name && (
-													<p className="be-approval-queue__edited-by">
-														{ sprintf(
-															/* translators: %s: the display name of the Storyteller who edited the change */
-															__(
-																'Edited by %s',
-																'beyond-elysium'
-															),
-															item.edited_by_name
-														) }
-													</p>
-												) }
+												<div className="be-approval-queue__change">
+													{ forwardedFromLabel(
+														item
+													) && (
+														<p className="be-approval-queue__forwarded-from">
+															{ forwardedFromLabel(
+																item
+															) }
+														</p>
+													) }
+													{ describeChange(
+														item.change_type,
+														item.change_data
+													) }
+													{ requestNote( item ) && (
+														<p className="be-approval-queue__request-note">
+															{ requestNote(
+																item
+															) }
+														</p>
+													) }
+													{ item.host_note && (
+														<p className="be-approval-queue__host-note">
+															{ item.host_note }
+														</p>
+													) }
+													{ note && (
+														<p className="be-approval-queue__request-note">
+															{ sprintf(
+																/* translators: %s: the note a player put on the trait they are adding or changing */
+																__(
+																	'Note: %s',
+																	'beyond-elysium'
+																),
+																note
+															) }
+														</p>
+													) }
+													{ item.block_name && (
+														<p className="be-approval-queue__section-name">
+															{ sprintf(
+																/* translators: %s: the name of a sheet section, such as Rituals */
+																__(
+																	'In %s',
+																	'beyond-elysium'
+																),
+																item.block_name
+															) }
+														</p>
+													) }
+													{ item.edited_by_name && (
+														<p className="be-approval-queue__edited-by">
+															{ sprintf(
+																/* translators: %s: the display name of the Storyteller who edited the change */
+																__(
+																	'Edited by %s',
+																	'beyond-elysium'
+																),
+																item.edited_by_name
+															) }
+														</p>
+													) }
+												</div>
 											</td>
 											<td
 												data-label={ __(
@@ -1229,198 +1233,206 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 													'beyond-elysium'
 												) }
 											>
-												{ group ? (
-													<>
-														<span className="be-approval-queue__group-note">
-															{ __(
-																'Part of a submitted-together set - see Approve all / Refuse all above.',
-																'beyond-elysium'
-															) }
-														</span>
-														<button
-															type="button"
-															onClick={ () =>
-																setEditingId(
-																	item.id
-																)
-															}
-														>
-															{ __(
-																'Edit',
-																'beyond-elysium'
-															) }
-														</button>
-													</>
-												) : (
-													<>
-														{ isCostPending(
-															item
-														) && (
-															<PriceField
-																item={ item }
-																value={
-																	prices[
-																		item.id
-																	] ?? ''
-																}
-																onChange={ (
-																	text
-																) =>
-																	setPrices(
-																		(
-																			prev
-																		) => ( {
-																			...prev,
-																			[ item.id ]:
-																				text,
-																		} )
-																	)
-																}
-															/>
-														) }
-														{ isLogPending(
-															item
-														) && (
-															<SecretChoiceField
-																gameSlug={
-																	gameSlug
-																}
-																item={ item }
-																draft={
-																	secretChoices[
-																		item.id
-																	] ?? {
-																		mode: 'existing',
-																	}
-																}
-																onChange={ (
-																	next
-																) =>
-																	setSecretChoices(
-																		(
-																			prev
-																		) => ( {
-																			...prev,
-																			[ item.id ]:
-																				next,
-																		} )
-																	)
-																}
-															/>
-														) }
-														<button
-															type="button"
-															disabled={
-																! canApprove(
-																	item,
-																	prices
-																) ||
-																( isLogPending(
-																	item
-																) &&
-																	! secretChoiceValid(
-																		secretChoices[
-																			item
-																				.id
-																		]
-																	) )
-															}
-															onClick={ () =>
-																approveOne(
-																	item
-																)
-															}
-														>
-															{ __(
-																'Approve',
-																'beyond-elysium'
-															) }
-														</button>
-														{ rejecting ===
-														item.id ? (
-															<>
-																<input
-																	type="text"
-																	placeholder={ __(
-																		'Reason (required)',
-																		'beyond-elysium'
-																	) }
-																	value={
-																		rejectNote
-																	}
-																	onChange={ (
-																		e
-																	) =>
-																		setRejectNote(
-																			e
-																				.target
-																				.value
-																		)
-																	}
-																/>
-																<button
-																	type="button"
-																	disabled={
-																		! rejectNote.trim()
-																	}
-																	onClick={ () =>
-																		confirmReject(
-																			item.id
-																		)
-																	}
-																>
-																	{ __(
-																		'Confirm Reject',
-																		'beyond-elysium'
-																	) }
-																</button>
-																<button
-																	type="button"
-																	onClick={ () => {
-																		setRejecting(
-																			null
-																		);
-																		setRejectNote(
-																			''
-																		);
-																	} }
-																>
-																	{ __(
-																		'Cancel',
-																		'beyond-elysium'
-																	) }
-																</button>
-															</>
-														) : (
+												<div className="be-approval-queue__action-buttons">
+													{ group ? (
+														<>
+															<span className="be-approval-queue__group-note">
+																{ __(
+																	'Part of a submitted-together set - see Approve all / Refuse all above.',
+																	'beyond-elysium'
+																) }
+															</span>
 															<button
 																type="button"
 																onClick={ () =>
-																	setRejecting(
+																	setEditingId(
 																		item.id
 																	)
 																}
 															>
 																{ __(
-																	'Reject',
+																	'Edit',
 																	'beyond-elysium'
 																) }
 															</button>
-														) }
-														<button
-															type="button"
-															onClick={ () =>
-																setEditingId(
-																	item.id
-																)
-															}
-														>
-															{ __(
-																'Edit',
-																'beyond-elysium'
+														</>
+													) : (
+														<>
+															{ isCostPending(
+																item
+															) && (
+																<PriceField
+																	item={
+																		item
+																	}
+																	value={
+																		prices[
+																			item
+																				.id
+																		] ?? ''
+																	}
+																	onChange={ (
+																		text
+																	) =>
+																		setPrices(
+																			(
+																				prev
+																			) => ( {
+																				...prev,
+																				[ item.id ]:
+																					text,
+																			} )
+																		)
+																	}
+																/>
 															) }
-														</button>
-													</>
-												) }
+															{ isLogPending(
+																item
+															) && (
+																<SecretChoiceField
+																	gameSlug={
+																		gameSlug
+																	}
+																	item={
+																		item
+																	}
+																	draft={
+																		secretChoices[
+																			item
+																				.id
+																		] ?? {
+																			mode: 'existing',
+																		}
+																	}
+																	onChange={ (
+																		next
+																	) =>
+																		setSecretChoices(
+																			(
+																				prev
+																			) => ( {
+																				...prev,
+																				[ item.id ]:
+																					next,
+																			} )
+																		)
+																	}
+																/>
+															) }
+															<button
+																type="button"
+																disabled={
+																	! canApprove(
+																		item,
+																		prices
+																	) ||
+																	( isLogPending(
+																		item
+																	) &&
+																		! secretChoiceValid(
+																			secretChoices[
+																				item
+																					.id
+																			]
+																		) )
+																}
+																onClick={ () =>
+																	approveOne(
+																		item
+																	)
+																}
+															>
+																{ __(
+																	'Approve',
+																	'beyond-elysium'
+																) }
+															</button>
+															{ rejecting ===
+															item.id ? (
+																<>
+																	<input
+																		type="text"
+																		placeholder={ __(
+																			'Reason (required)',
+																			'beyond-elysium'
+																		) }
+																		value={
+																			rejectNote
+																		}
+																		onChange={ (
+																			e
+																		) =>
+																			setRejectNote(
+																				e
+																					.target
+																					.value
+																			)
+																		}
+																	/>
+																	<button
+																		type="button"
+																		disabled={
+																			! rejectNote.trim()
+																		}
+																		onClick={ () =>
+																			confirmReject(
+																				item.id
+																			)
+																		}
+																	>
+																		{ __(
+																			'Confirm Reject',
+																			'beyond-elysium'
+																		) }
+																	</button>
+																	<button
+																		type="button"
+																		onClick={ () => {
+																			setRejecting(
+																				null
+																			);
+																			setRejectNote(
+																				''
+																			);
+																		} }
+																	>
+																		{ __(
+																			'Cancel',
+																			'beyond-elysium'
+																		) }
+																	</button>
+																</>
+															) : (
+																<button
+																	type="button"
+																	onClick={ () =>
+																		setRejecting(
+																			item.id
+																		)
+																	}
+																>
+																	{ __(
+																		'Reject',
+																		'beyond-elysium'
+																	) }
+																</button>
+															) }
+															<button
+																type="button"
+																onClick={ () =>
+																	setEditingId(
+																		item.id
+																	)
+																}
+															>
+																{ __(
+																	'Edit',
+																	'beyond-elysium'
+																) }
+															</button>
+														</>
+													) }
+												</div>
 											</td>
 										</tr>
 									</>
