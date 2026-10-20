@@ -11,6 +11,7 @@ use BeyondElysium\Models\Creature_Stack;
 use BeyondElysium\Models\Schema_Block;
 use BeyondElysium\Models\Secret;
 use BeyondElysium\Models\Transfer;
+use BeyondElysium\Services\Change_Edit;
 use BeyondElysium\Services\Change_Engine;
 use BeyondElysium\Services\Change_Validator;
 use BeyondElysium\Services\Cost_Engine;
@@ -100,11 +101,25 @@ class Changes_Controller extends Base_Controller {
 			],
 		] );
 
-		// Approves or rejects a single change.
+		// The sections an added entry could be filed in instead.
+		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/changes/(?P<id>\d+)/sections', [
+			[
+				'methods'             => 'GET',
+				'callback'            => [ $this, 'get_sections' ],
+				'permission_callback' => $this->permission( 'be_manage_characters' ),
+			],
+		] );
+
+		// Approves or rejects a single change, or edits one that is still waiting.
 		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/changes/(?P<id>\d+)', [
 			[
 				'methods'             => 'PUT',
 				'callback'            => [ $this, 'update_item' ],
+				'permission_callback' => $this->permission( 'be_manage_characters' ),
+			],
+			[
+				'methods'             => 'PATCH',
+				'callback'            => [ $this, 'edit_item' ],
 				'permission_callback' => $this->permission( 'be_manage_characters' ),
 			],
 		] );
@@ -406,7 +421,7 @@ class Changes_Controller extends Base_Controller {
 			return $this->change_changed_error();
 		}
 
-		$notes  = $request->get_param( 'notes' );
+		$notes  = Change_Edit::clean_note( $request->get_param( 'notes' ) );
 		$result = false;
 
 		if ( $new_status === 'approved' ) {
@@ -467,6 +482,86 @@ class Changes_Controller extends Base_Controller {
 		Game_Stats_Controller::invalidate( $request['game_slug'] );
 
 		return $this->success( $updated );
+	}
+
+	/**
+	 * The sections an added entry could be filed in instead, the one it is on included.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function get_sections( $request ) {
+		$game = $this->resolve_game( $request['game_slug'] );
+		if ( is_wp_error( $game ) ) {
+			return $game;
+		}
+
+		$change = $this->resolve_change( (int) $request['id'], $request['game_slug'] );
+		if ( is_wp_error( $change ) ) {
+			return $change;
+		}
+
+		$character = Character::find( (int) $change->character_id );
+		$choices   = $character ? Change_Edit::section_choices( $character, (string) $change->change_type, (array) $change->change_data ) : [];
+
+		$sections = [];
+		foreach ( $choices as $slug => $name ) {
+			$sections[] = [ 'slug' => $slug, 'name' => $name ];
+		}
+		return $this->success( $sections );
+	}
+
+	/**
+	 * Edits a change that is still waiting: its content, its price and the note to the player. The change stays
+	 * pending.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function edit_item( $request ) {
+		$game = $this->resolve_game( $request['game_slug'] );
+		if ( is_wp_error( $game ) ) {
+			return $game;
+		}
+
+		$change = $this->resolve_change( (int) $request['id'], $request['game_slug'] );
+		if ( is_wp_error( $change ) ) {
+			return $change;
+		}
+
+		$token = $request->get_param( 'review_token' );
+		if ( ! is_string( $token ) || $token === '' ) {
+			return $this->error( 'invalid_param', __( 'Missing required field: review_token.', 'beyond-elysium' ), 400 );
+		}
+
+		$fields = $request->get_param( 'fields' ) ?? [];
+		if ( ! is_array( $fields ) ) {
+			return $this->error( 'invalid_param', __( 'fields must be an object.', 'beyond-elysium' ), 400 );
+		}
+
+		$price_per = $request->get_param( 'price_per' );
+		$notes     = $request->get_param( 'review_notes' );
+		$result    = Change_Edit::apply(
+			(int) $request['id'],
+			get_current_user_id(),
+			$token,
+			$fields,
+			$request->get_param( 'price' ),
+			is_string( $price_per ) ? $price_per : null,
+			$notes === null ? null : (string) $notes
+		);
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+		if ( ! $result['ok'] ) {
+			return $this->validation_error( $result['validation'] );
+		}
+
+		$edited = Change::find( (int) $request['id'] );
+		if ( ! $edited ) {
+			return $this->error( 'not_found', __( 'Change not found.', 'beyond-elysium' ), 404 );
+		}
+		return $this->success( $this->with_review_fields( [ $edited ] )[0] );
 	}
 
 	/**
@@ -537,7 +632,10 @@ class Changes_Controller extends Base_Controller {
 				] )
 				: [ 'level' => 'st', 'reason' => null ];
 			$item->approval_level = $resolved['level'];
-			$item->cost_units     = $this->cost_units( $character, $item );
+			$extras                = Change_Edit::review_extras( $character, $item );
+			$item->editable_fields = $extras['editable_fields'];
+			$item->price_basis     = $extras['price_basis'];
+			$item->block_name      = $extras['block_name'];
 
 			$submitter_id = (int) $item->submitted_by;
 			if ( ! array_key_exists( $submitter_id, $submitters ) ) {
@@ -545,6 +643,10 @@ class Changes_Controller extends Base_Controller {
 				$submitters[ $submitter_id ] = $user ? $user->display_name : null;
 			}
 			$item->submitted_by_name = $submitters[ $submitter_id ];
+
+			$edit                  = is_array( $item->change_data ) ? ( $item->change_data['st_edit'] ?? null ) : null;
+			$editor                = is_array( $edit ) ? get_userdata( (int) ( $edit['by'] ?? 0 ) ) : false;
+			$item->edited_by_name  = $editor ? $editor->display_name : null;
 
 			$item->host_chronicle = null;
 			if ( ! empty( $item->source_visit_id ) ) {
@@ -556,28 +658,6 @@ class Changes_Controller extends Base_Controller {
 			}
 		}
 		return $items;
-	}
-
-	/**
-	 * What a Storyteller's price would cover for a purchase waiting for one.
-	 *
-	 * @param object|null $character
-	 * @param object      $item      A change row.
-	 * @return array{per:string,units:int,negative:bool}|null
-	 */
-	private function cost_units( $character, object $item ): ?array {
-		$data = is_array( $item->change_data ) ? $item->change_data : [];
-		if ( ! $character || empty( $data['cost_pending'] ) ) {
-			return null;
-		}
-		$block_slug = (string) ( $data['block_slug'] ?? '' );
-		$block      = Schema_Block::find_for_game( $block_slug, (string) $character->owner_slug );
-		if ( ! $block || ! is_object( $block->definition ) ) {
-			return null;
-		}
-		$sheet = is_array( $character->sheet_data ) ? $character->sheet_data : [];
-		return Cost_Engine::price_units( $sheet, $block->definition, $block_slug, (string) $item->change_type, $data )
-			+ [ 'negative' => ! empty( $block->definition->negative ) ];
 	}
 
 	/**
@@ -817,8 +897,12 @@ class Changes_Controller extends Base_Controller {
 		$skipped    = [];
 		$needs_cost = [];
 		$needs_secret_choice = [];
+		$held       = [];
 		// Optional { change id: review token } for exactly what the reviewer saw.
 		$tokens = (array) ( $request->get_param( 'review_tokens' ) ?? [] );
+
+		// Submissions with a member this batch cannot approve.
+		$blocked = [];
 
 		// Screens every change first, same checks as a lone approval, without approving anything yet.
 		$eligible = [];
@@ -826,25 +910,42 @@ class Changes_Controller extends Base_Controller {
 			$change_id = (int) $change_id;
 			$change    = $this->resolve_change( $change_id, $request['game_slug'] );
 
-			if ( is_wp_error( $change ) || $change->status !== 'pending' ) {
+			if ( is_wp_error( $change ) ) {
 				$skipped[] = $change_id;
+				continue;
+			}
+			if ( $change->status !== 'pending' ) {
+				$skipped[] = $change_id;
+				$blocked[ (string) ( $change->submission_id ?? '' ) ] = true;
 				continue;
 			}
 			if ( ! empty( $change->change_data['cost_pending'] ) ) {
 				$needs_cost[] = $change_id;
+				$blocked[ (string) ( $change->submission_id ?? '' ) ] = true;
 				continue;
 			}
 			// A logged claim needs the reviewer to name which secret it belongs to; a batch can't supply that.
 			if ( $change->change_type === 'log_knowledge' ) {
 				$needs_secret_choice[] = $change_id;
+				$blocked[ (string) ( $change->submission_id ?? '' ) ] = true;
 				continue;
 			}
 			// A catalog-writing, faction-creating, or secret-writing proposal in a batch is skipped if denied.
 			if ( $this->catalog_capability_denied( $change ) || $this->faction_capability_denied( $change ) || $this->secret_capability_denied( $change ) ) {
 				$skipped[] = $change_id;
+				$blocked[ (string) ( $change->submission_id ?? '' ) ] = true;
 				continue;
 			}
 			$eligible[ $change_id ] = $change;
+		}
+
+		// A set approves whole or not at all: a member this batch cannot approve holds back the rest of its set.
+		foreach ( $eligible as $change_id => $change ) {
+			$submission_id = (string) ( $change->submission_id ?? '' );
+			if ( $submission_id !== '' && isset( $blocked[ $submission_id ] ) ) {
+				$held[] = $change_id;
+				unset( $eligible[ $change_id ] );
+			}
 		}
 
 		// Two or more eligible changes sharing a submission id, in this same batch, approve together, refunds first, all
@@ -917,6 +1018,7 @@ class Changes_Controller extends Base_Controller {
 				'skipped'             => $skipped,
 				'needs_cost'          => $needs_cost,
 				'needs_secret_choice' => $needs_secret_choice,
+				'held'                => $held,
 			]
 		);
 	}

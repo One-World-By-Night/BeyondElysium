@@ -1,8 +1,10 @@
 import {
+	batchNotices,
 	canApprove,
 	costNeededMessage,
 	isCostPending,
 	MAX_CUSTOM_PRICE,
+	membersNeedingPrice,
 	parsePrice,
 	priceTotal,
 	priceUnitLabel,
@@ -138,5 +140,58 @@ describe( 'previewPriceLabel', () => {
 		expect( previewPriceLabel( { priced: true, invalid: true } ) ).toBe(
 			'This change cannot be submitted as written.'
 		);
+	} );
+} );
+
+describe( 'membersNeedingPrice', () => {
+	it( 'counts the changes in a set still waiting for a price', () => {
+		expect(
+			membersNeedingPrice( [
+				{ change_data: { cost_pending: true } },
+				{ change_data: {} },
+				{ change_data: { cost_pending: true } },
+			] )
+		).toBe( 2 );
+		expect( membersNeedingPrice( [] ) ).toBe( 0 );
+	} );
+} );
+
+describe( 'priceUnitLabel for a price the book already has', () => {
+	it( 'names the whole change', () => {
+		expect( priceUnitLabel( 'change' ) ).toBe( 'XP for this change' );
+	} );
+} );
+
+describe( 'batchNotices', () => {
+	it( 'says nothing when everything was approved', () => {
+		expect( batchNotices( { approved: [ 1, 2 ], skipped: [] } ) ).toEqual(
+			[]
+		);
+	} );
+
+	it( 'says one thing for each kind of change it left alone', () => {
+		const notices = batchNotices( {
+			approved: [],
+			skipped: [ 1 ],
+			needs_cost: [ 2, 3 ],
+			needs_secret_choice: [ 4 ],
+			held: [ 5, 6, 7 ],
+		} );
+
+		expect( notices ).toHaveLength( 4 );
+		expect( notices[ 0 ] ).toContain( '1 change(s) were not approved' );
+		expect( notices[ 1 ] ).toBe( costNeededMessage( 2 ) );
+		expect( notices[ 2 ] ).toBe(
+			'1 change needs you to choose which secret it belongs to. Open it and choose one.'
+		);
+		expect( notices[ 3 ] ).toBe(
+			'3 changes were held back with the rest of their set.'
+		);
+	} );
+
+	it( 'says a single held change in the singular', () => {
+		expect(
+			batchNotices( { approved: [], skipped: [], held: [ 9 ] } )
+		).toEqual( [ '1 change was held back with the rest of its set.' ] );
 	} );
 } );

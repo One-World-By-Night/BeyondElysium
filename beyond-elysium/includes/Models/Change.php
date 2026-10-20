@@ -444,7 +444,42 @@ class Change {
 	}
 
 	/**
-	 * Update a change record's review outcome.
+	 * Writes a Storyteller's edit to a still-pending change: its content, its cost and, when asked, the note to the
+	 * player. The submitter, submission, submitted time, category, type and the player's own note stay as they were.
+	 *
+	 * @param int                 $id
+	 * @param array<string,mixed> $change_data
+	 * @param float               $xp_cost       Signed total.
+	 * @param bool                $replace_note  Whether `$review_notes` replaces the stored note.
+	 * @param string|null         $review_notes  The new note; null or empty clears it.
+	 * @param string|null         $category      The new category when the change is filed in another section; null keeps it.
+	 * @return bool
+	 */
+	public static function update_by_reviewer( int $id, array $change_data, float $xp_cost, bool $replace_note = false, ?string $review_notes = null, ?string $category = null ): bool {
+		$update = [
+			'change_data' => wp_json_encode( $change_data ),
+			'xp_cost'     => $xp_cost,
+		];
+		if ( $replace_note ) {
+			$update['review_notes'] = ( $review_notes === null || $review_notes === '' ) ? null : $review_notes;
+		}
+		if ( $category !== null ) {
+			$update['category'] = $category;
+		}
+
+		$updated = Manager::update( 'character_changes', $update, [ 'id' => $id, 'status' => 'pending' ] );
+		if ( $updated === false ) {
+			return false;
+		}
+		if ( $updated > 0 ) {
+			return true;
+		}
+		$status = Manager::get_var( 'SELECT status FROM ' . Manager::table( 'character_changes' ) . ' WHERE id = %d', $id );
+		return $status === 'pending';
+	}
+
+	/**
+	 * Update a change record's review outcome. A note already stored on the change stays unless a non-empty one is given.
 	 *
 	 * @param int      $id
 	 * @param string   $status      'approved' or 'rejected'.
@@ -454,11 +489,13 @@ class Change {
 	 */
 	public static function update_status( int $id, string $status, int $reviewed_by, $notes ): bool {
 		$update = [
-			'status'       => $status,
-			'reviewed_by'  => $reviewed_by,
-			'reviewed_at'  => current_time( 'mysql' ),
-			'review_notes' => $notes,
+			'status'      => $status,
+			'reviewed_by' => $reviewed_by,
+			'reviewed_at' => current_time( 'mysql' ),
 		];
+		if ( is_string( $notes ) && $notes !== '' ) {
+			$update['review_notes'] = $notes;
+		}
 		$result = Manager::update( 'character_changes', $update, [ 'id' => $id ] );
 		return $result !== false;
 	}

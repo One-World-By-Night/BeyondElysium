@@ -4,7 +4,7 @@
  * forwarded change arrived from.
  */
 import { isValidElement } from 'react';
-import { forwardedFromLabel, renderReason } from './ApprovalQueue';
+import { forwardedFromLabel, renderReason, traitNote } from './ApprovalQueue';
 import type { QueueChange } from '../../types/character';
 
 function queueChange( overrides: Partial< QueueChange > = {} ): QueueChange {
@@ -103,5 +103,41 @@ describe( 'forwardedFromLabel', () => {
 				} )
 			)
 		).toBe( 'From Boston' );
+	} );
+} );
+
+describe( 'traitNote', () => {
+	it( 'is the note a player put on the trait', () => {
+		expect(
+			traitNote(
+				queueChange( {
+					change_data: {
+						block_slug: 'vampire-rituals',
+						trait: {
+							name: 'Fettered Minion',
+							note: 'R1 Necromancy ( 4 xp)',
+						},
+					},
+				} )
+			)
+		).toBe( 'R1 Necromancy ( 4 xp)' );
+	} );
+
+	it( 'is null when the trait has no note, an empty one, or the change has no trait', () => {
+		expect(
+			traitNote(
+				queueChange( { change_data: { trait: { name: 'X' } } } )
+			)
+		).toBeNull();
+		expect(
+			traitNote(
+				queueChange( {
+					change_data: { trait: { name: 'X', note: '' } },
+				} )
+			)
+		).toBeNull();
+		expect(
+			traitNote( queueChange( { change_data: { amount: 5 } } ) )
+		).toBeNull();
 	} );
 } );

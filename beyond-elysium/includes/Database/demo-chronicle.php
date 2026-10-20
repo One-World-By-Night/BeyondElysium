@@ -77,7 +77,7 @@ return [
 			'character' => 'Isolde Marchetti', 'account' => 'player',
 			'change_type' => 'modify_trait', 'category' => 'vampire-abilities',
 			'change_data' => [ 'block_slug' => 'vampire-abilities', 'trait' => [ 'name' => 'Occult', 'count' => 5 ] ],
-			'xp_cost' => 5, 'notes' => 'Studying Tremere thaumaturgical theory with my Regent.',
+			'xp_cost' => 1, 'notes' => 'Studying Tremere thaumaturgical theory with my Regent.',
 		],
 		[
 			'character' => 'Ezra Stormcrow', 'account' => 'player',
@@ -87,23 +87,48 @@ return [
 		],
 		[
 			'character' => 'Dr. Adrian Voss', 'account' => 'player',
-			'change_type' => 'modify_power', 'category' => 'mage-spheres',
-			'change_data' => [ 'block_slug' => 'mage-spheres', 'power' => [ 'name' => 'Forces', 'level' => 3 ] ],
+			'change_type' => 'modify_trait', 'category' => 'mage-spheres',
+			'change_data' => [
+				'block_slug' => 'mage-spheres',
+				'trait'      => [ 'name' => 'Forces', 'level' => 3 ],
+				'previous'   => [ 'name' => 'Forces', 'level' => 2 ],
+			],
 			'xp_cost' => 20, 'notes' => 'Ready to push past Forces 2 after the ritual at the Chantry last game.',
 			'review' => 'approve',
 		],
 		[
 			'character' => 'Naomi Two Rivers', 'account' => null,
 			'change_type' => 'modify_identity', 'category' => 'werewolf-identity',
-			'change_data' => [ 'block_slug' => 'werewolf-identity', 'field' => 'Rank', 'value' => 2 ],
+			'change_data' => [ 'block_slug' => 'werewolf-identity', 'fields' => [ 'Rank' => 2 ] ],
 			'xp_cost' => 0, 'notes' => 'Promoted to Rank 2 after the Red Talon moot.',
 		],
 		[
 			'character' => 'Isolde Marchetti', 'account' => 'player',
 			'change_type' => 'modify_identity', 'category' => 'vampire-identity',
-			'change_data' => [ 'block_slug' => 'vampire-identity', 'field' => 'Notes', 'value' => 'Regent of the Chantry' ],
+			'change_data' => [ 'block_slug' => 'vampire-identity', 'fields' => [ 'Title' => 'Regent of the Chantry' ] ],
 			'xp_cost' => 0, 'notes' => 'Noting the Regent title on my own sheet.',
 			'review' => 'auto',
+		],
+		// Two homebrew Rituals sent in one save: a set, each waiting for a Storyteller to name its price.
+		[
+			'character' => 'Isolde Marchetti', 'account' => 'player', 'set' => 'chantry-rituals',
+			'change_type' => 'add_trait', 'category' => 'vampire-rituals',
+			'change_data' => [
+				'block_slug'   => 'vampire-rituals',
+				'trait'        => [ 'name' => 'Thaumaturgy: Wax Museum Ward', 'note' => 'Level 1 ritual from my Regent, should be free', 'count' => 1, 'custom' => true ],
+				'cost_pending' => true,
+			],
+			'xp_cost' => 0, 'notes' => null,
+		],
+		[
+			'character' => 'Isolde Marchetti', 'account' => 'player', 'set' => 'chantry-rituals',
+			'change_type' => 'add_trait', 'category' => 'vampire-rituals',
+			'change_data' => [
+				'block_slug'   => 'vampire-rituals',
+				'trait'        => [ 'name' => 'Thaumaturgy: Candle That Remembers', 'note' => 'Level 1 ritual, 4 xp', 'count' => 1, 'custom' => true ],
+				'cost_pending' => true,
+			],
+			'xp_cost' => 0, 'notes' => null,
 		],
 	],
 

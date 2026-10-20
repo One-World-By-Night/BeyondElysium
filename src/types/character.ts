@@ -434,9 +434,21 @@ export interface QueueChange extends CharacterChange {
 	 */
 	review_token: string;
 	/**
-	 * For a change waiting for a price: what one price would cover.
+	 * For a purchase: what a Storyteller's price would cover and what is charged now. Null for any other change.
 	 */
-	cost_units?: CostUnits | null;
+	price_basis?: PriceBasis | null;
+	/**
+	 * The fields a Storyteller may change on this change, by the names an edit request uses.
+	 */
+	editable_fields?: string[];
+	/**
+	 * The name of the section the change is headed for.
+	 */
+	block_name?: string | null;
+	/**
+	 * The display name of the Storyteller who last edited the change.
+	 */
+	edited_by_name?: string | null;
 }
 
 /**
@@ -463,15 +475,58 @@ export interface MyChangeAcrossGames extends CharacterChange {
 export type PriceUnit = 'dot' | 'pick';
 
 /**
- * How the server says a change waiting for a price is priced: per what, over how many.
+ * What one price is for: each dot, one pick, or the whole change.
  */
-export interface CostUnits {
-	per: PriceUnit;
+export type PriceScope = PriceUnit | 'change';
+
+/**
+ * How the server says a purchase is priced: whether the book has a price for it, what one price is for, how many of
+ * those there are, what the book charges and what a Storyteller has set.
+ */
+export interface PriceBasis {
+	/**
+	 * True when the book has no price for it, so a Storyteller names one.
+	 */
+	homebrew: boolean;
+	per: PriceScope;
 	units: number;
 	/**
 	 * A flaw: the price is recorded on the row and nothing is deducted for it.
 	 */
-	negative?: boolean;
+	negative: boolean;
+	book_xp: number | null;
+	/**
+	 * The price a Storyteller has set, in the unit the box names.
+	 */
+	current: number | null;
+}
+
+/**
+ * Request body for editing a change that is still waiting.
+ */
+export interface ChangeEditRequest {
+	review_token: string;
+	fields?: Record< string, string | number >;
+	/**
+	 * A whole number of XP from 0 to 500, or null for none.
+	 */
+	price?: number | null;
+	/**
+	 * What the typed price is for, as the box showed it.
+	 */
+	price_per?: PriceScope;
+	/**
+	 * Absent keeps the stored note; an empty string clears it.
+	 */
+	review_notes?: string;
+}
+
+/**
+ * A section an added entry could be filed in.
+ */
+export interface SectionChoice {
+	slug: string;
+	name: string;
 }
 
 /**
@@ -491,6 +546,14 @@ export interface BatchApproveResponse {
 	 * Changes left alone because they are waiting for a price; each needs its own review.
 	 */
 	needs_cost?: number[];
+	/**
+	 * Changes left alone because they are waiting for a secret to be named.
+	 */
+	needs_secret_choice?: number[];
+	/**
+	 * Changes that could be approved but wait with the rest of their set.
+	 */
+	held?: number[];
 }
 
 /**

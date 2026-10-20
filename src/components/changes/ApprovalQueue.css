@@ -36,6 +36,27 @@
 	white-space: pre-line;
 }
 
+.be-approval-queue__section-name,
+.be-approval-queue__edited-by {
+	margin: 0.25rem 0 0;
+	font-size: 0.8rem;
+	color: var(--be-gray-6);
+}
+
+.be-approval-queue__group-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5rem;
+	margin-top: 0.4rem;
+}
+
+.be-approval-queue__group-hint {
+	flex: 1 1 12rem;
+	font-size: 0.85rem;
+	color: var(--be-gold-5);
+}
+
 .be-approval-queue__row--visit {
 	background: var(--be-blue-6);
 }

@@ -1,8 +1,8 @@
 /**
- * The Approval Queue's pricing rules for a purchase that has no catalog price.
+ * The Approval Queue's pricing rules for a purchase, and what a batch approval says about the changes it left alone.
  */
 import { __, _n, sprintf } from '@wordpress/i18n';
-import type { CostUnits, PriceUnit } from '../types/character';
+import type { BatchApproveResponse, PriceScope } from '../types/character';
 
 /**
  * The most a Storyteller may price one unit of a custom purchase.
@@ -31,12 +31,17 @@ export function parsePrice( text: string | undefined ): number | null {
 }
 
 /**
- * What the price box is called: a trait list is priced per dot, a power as one pick.
+ * What the price box is called: a trait list is priced per dot, a power as one pick, and a price the book already
+ * has is set for the whole change.
  */
-export function priceUnitLabel( per: PriceUnit ): string {
-	return per === 'dot'
-		? __( 'XP per dot', 'beyond-elysium' )
-		: __( 'XP', 'beyond-elysium' );
+export function priceUnitLabel( per: PriceScope ): string {
+	if ( per === 'dot' ) {
+		return __( 'XP per dot', 'beyond-elysium' );
+	}
+	if ( per === 'change' ) {
+		return __( 'XP for this change', 'beyond-elysium' );
+	}
+	return __( 'XP', 'beyond-elysium' );
 }
 
 /**
@@ -44,7 +49,7 @@ export function priceUnitLabel( per: PriceUnit ): string {
  */
 export function priceTotal(
 	text: string | undefined,
-	basis: CostUnits | null | undefined
+	basis: { units: number; per?: PriceScope } | null | undefined
 ): number | null {
 	const price = parsePrice( text );
 	if ( price === null || ! basis ) {
@@ -63,6 +68,69 @@ export function canApprove(
 	return (
 		! isCostPending( change ) || parsePrice( prices[ change.id ] ) !== null
 	);
+}
+
+/**
+ * How many changes in a set are still waiting for a price.
+ */
+export function membersNeedingPrice(
+	group: ReadonlyArray< { change_data?: unknown } >
+): number {
+	return group.filter( ( change ) => isCostPending( change ) ).length;
+}
+
+/**
+ * What a batch approval says about the changes it left alone, one sentence for each kind.
+ */
+export function batchNotices( result: BatchApproveResponse ): string[] {
+	const notices: string[] = [];
+	if ( result.skipped.length > 0 ) {
+		notices.push(
+			sprintf(
+				// translators: %d: number of changes not approved.
+				__(
+					'%d change(s) were not approved - they were already reviewed or edited after the queue loaded. The queue has been reloaded.',
+					'beyond-elysium'
+				),
+				result.skipped.length
+			)
+		);
+	}
+	// Waiting for a price is a different thing from skipped: the reviewer has to open each one.
+	if ( ( result.needs_cost ?? [] ).length > 0 ) {
+		notices.push( costNeededMessage( ( result.needs_cost ?? [] ).length ) );
+	}
+	if ( ( result.needs_secret_choice ?? [] ).length > 0 ) {
+		const count = ( result.needs_secret_choice ?? [] ).length;
+		notices.push(
+			sprintf(
+				/* translators: %d: number of changes that need a secret chosen before they can be approved */
+				_n(
+					'%d change needs you to choose which secret it belongs to. Open it and choose one.',
+					'%d changes need you to choose which secret each belongs to. Open each one and choose.',
+					count,
+					'beyond-elysium'
+				),
+				count
+			)
+		);
+	}
+	if ( ( result.held ?? [] ).length > 0 ) {
+		const count = ( result.held ?? [] ).length;
+		notices.push(
+			sprintf(
+				/* translators: %d: number of changes held back because another change in their set could not be approved */
+				_n(
+					'%d change was held back with the rest of its set.',
+					'%d changes were held back with the rest of their set.',
+					count,
+					'beyond-elysium'
+				),
+				count
+			)
+		);
+	}
+	return notices;
 }
 
 /**

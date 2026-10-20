@@ -440,12 +440,34 @@ class Demo_Chronicle {
 		// Pending changes. A declared 'review' of 'approve' has the Storyteller review it right away; 'auto' does the
 		// same and then flags the row auto_approved, standing in for a chronicle whose rules would have cleared it on
 		// submission.
+		$sets_submitted = [];
 		foreach ( $d['pending_changes'] as $change ) {
 			$character_id = $character_ids[ $change['character'] ] ?? null;
 			if ( ! $character_id ) {
 				continue;
 			}
 			$submitted_by = $account_id_of( $change['account'] ) ?: $storyteller_id;
+
+			// Entries sharing a `set` key are submitted together under one submission id.
+			if ( isset( $change['set'] ) ) {
+				if ( isset( $sets_submitted[ $change['set'] ] ) ) {
+					continue;
+				}
+				$sets_submitted[ $change['set'] ] = true;
+				$members = array_values( array_filter(
+					$d['pending_changes'],
+					static fn( $other ) => ( $other['set'] ?? null ) === $change['set'] && $other['character'] === $change['character']
+				) );
+				Change_Engine::submit_set( $character_id, array_map(
+					static fn( $member ) => [
+						'change_type' => $member['change_type'], 'category' => $member['category'],
+						'change_data' => $member['change_data'], 'xp_cost' => $member['xp_cost'], 'notes' => $member['notes'],
+					],
+					$members
+				), $submitted_by );
+				continue;
+			}
+
 			$change_id    = Change_Engine::submit( $character_id, [
 				'change_type' => $change['change_type'], 'category' => $change['category'],
 				'change_data' => $change['change_data'], 'xp_cost' => $change['xp_cost'], 'notes' => $change['notes'],

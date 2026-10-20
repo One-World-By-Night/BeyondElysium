@@ -9,12 +9,12 @@ import { everyPage } from '../../lib/everyPage';
 import { batchApproval, toggleSelection } from '../../lib/queueSelection';
 import type { QueueSelection } from '../../lib/queueSelection';
 import {
+	batchNotices,
 	canApprove,
-	costNeededMessage,
 	isCostPending,
 	MAX_CUSTOM_PRICE,
+	membersNeedingPrice,
 	parsePrice,
-	priceTotal,
 	priceUnitLabel,
 } from '../../lib/queuePrice';
 import { SearchableSelect } from '../shared/SearchableSelect';
@@ -31,6 +31,8 @@ import {
 import type { SecretChoiceDraft } from '../../lib/secretChoice';
 import { errorMessage } from '../../lib/errorMessage';
 import HelpButton from '../shared/HelpButton';
+import PriceTotal from './PriceTotal';
+import QueueChangeEditor from './QueueChangeEditor';
 import './ApprovalQueue.css';
 
 export interface ApprovalQueueProps {
@@ -143,6 +145,17 @@ function requestNote( item: QueueChange ): string | null {
 	const request = data?.request as Record< string, unknown > | undefined;
 	return typeof request?.note === 'string' && request.note !== ''
 		? request.note
+		: null;
+}
+
+/**
+ * The note a player put on the trait they are adding or changing, if any.
+ */
+export function traitNote( item: QueueChange ): string | null {
+	const data = item.change_data as Record< string, unknown >;
+	const trait = data?.trait as Record< string, unknown > | undefined;
+	return typeof trait?.note === 'string' && trait.note !== ''
+		? trait.note
 		: null;
 }
 
@@ -365,8 +378,7 @@ function PriceField( {
 	value: string;
 	onChange: ( text: string ) => void;
 } ) {
-	const basis = item.cost_units ?? null;
-	const total = priceTotal( value, basis );
+	const basis = item.price_basis ?? null;
 	return (
 		<label className="be-approval-queue__price">
 			<span>{ priceUnitLabel( basis?.per ?? 'dot' ) }</span>
@@ -381,35 +393,7 @@ function PriceField( {
 				value={ value }
 				onChange={ ( e ) => onChange( e.target.value ) }
 			/>
-			{ total !== null && basis && (
-				<span className="be-approval-queue__price-total">
-					{ basis.per === 'dot' &&
-						sprintf(
-							/* translators: %d: how many dots the price is multiplied by */
-							_n(
-								'× %d dot',
-								'× %d dots',
-								basis.units,
-								'beyond-elysium'
-							),
-							basis.units
-						) }{ ' ' }
-					{ basis.negative
-						? sprintf(
-								/* translators: %d: the total price in XP, recorded on a flaw's row */
-								__(
-									'= %d XP, recorded - a flaw deducts nothing',
-									'beyond-elysium'
-								),
-								total
-							)
-						: sprintf(
-								/* translators: %d: the total price in XP */
-								__( '= %d XP', 'beyond-elysium' ),
-								total
-							) }
-				</span>
-			) }
+			<PriceTotal value={ value } basis={ basis } />
 		</label>
 	);
 }
@@ -444,6 +428,8 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 	const [ loading, setLoading ] = useState( true );
 	const [ error, setError ] = useState< string | null >( null );
 	const [ waitingCount, setWaitingCount ] = useState( 0 );
+	// The change being edited in the pop-up.
+	const [ editingId, setEditingId ] = useState< number | null >( null );
 
 	useEffect( () => {
 		// A player never sees either list (403).
@@ -636,8 +622,14 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 			group.forEach( ( item ) => {
 				tokens[ item.id ] = item.review_token;
 			} );
-			await api.changes( gameSlug ).batchApprove( ids, tokens );
+			const result = await api
+				.changes( gameSlug )
+				.batchApprove( ids, tokens );
 			load();
+			const notices = batchNotices( result );
+			if ( notices.length > 0 ) {
+				setError( notices.join( ' ' ) );
+			}
 		} catch ( err: unknown ) {
 			load();
 			setError(
@@ -694,25 +686,7 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 				.batchApprove( ids, tokens );
 			setSelected( new Map() );
 			load();
-			const notices: string[] = [];
-			if ( result.skipped.length > 0 ) {
-				notices.push(
-					sprintf(
-						// translators: %d: number of changes not approved.
-						__(
-							'%d change(s) were not approved - they were already reviewed or edited after the queue loaded. The queue has been reloaded.',
-							'beyond-elysium'
-						),
-						result.skipped.length
-					)
-				);
-			}
-			// Waiting for a price is a different thing from skipped: the reviewer has to open each one.
-			if ( ( result.needs_cost ?? [] ).length > 0 ) {
-				notices.push(
-					costNeededMessage( ( result.needs_cost ?? [] ).length )
-				);
-			}
+			const notices = batchNotices( result );
 			if ( notices.length > 0 ) {
 				setError( notices.join( ' ' ) );
 			}
@@ -726,6 +700,7 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 		}
 	}
 
+	const editing = items.find( ( row ) => row.id === editingId ) ?? null;
 	const groups = groupBySubmission( items );
 	const groupIdOf = new Map< number, string >();
 	const groupSizeOf = new Map< string, number >();
@@ -878,6 +853,7 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 												submissionId
 										) ?? [] )
 									: null;
+								const note = traitNote( item );
 								const isFirstOfGroup =
 									submissionId &&
 									groupFirstId.get( submissionId ) ===
@@ -912,6 +888,11 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 													<div className="be-approval-queue__group-actions">
 														<button
 															type="button"
+															disabled={
+																membersNeedingPrice(
+																	group
+																) > 0
+															}
 															onClick={ () =>
 																approveGroup(
 																	group
@@ -923,6 +904,16 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 																'beyond-elysium'
 															) }
 														</button>
+														{ membersNeedingPrice(
+															group
+														) > 0 && (
+															<span className="be-approval-queue__group-hint">
+																{ __(
+																	'Set a price on each change marked Needs a price first. Use Edit.',
+																	'beyond-elysium'
+																) }
+															</span>
+														) }
 														{ rejectingGroup ===
 														submissionId ? (
 															<>
@@ -1088,6 +1079,42 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 														{ item.host_note }
 													</p>
 												) }
+												{ note && (
+													<p className="be-approval-queue__request-note">
+														{ sprintf(
+															/* translators: %s: the note a player put on the trait they are adding or changing */
+															__(
+																'Note: %s',
+																'beyond-elysium'
+															),
+															note
+														) }
+													</p>
+												) }
+												{ item.block_name && (
+													<p className="be-approval-queue__section-name">
+														{ sprintf(
+															/* translators: %s: the name of a sheet section, such as Rituals */
+															__(
+																'In %s',
+																'beyond-elysium'
+															),
+															item.block_name
+														) }
+													</p>
+												) }
+												{ item.edited_by_name && (
+													<p className="be-approval-queue__edited-by">
+														{ sprintf(
+															/* translators: %s: the display name of the Storyteller who edited the change */
+															__(
+																'Edited by %s',
+																'beyond-elysium'
+															),
+															item.edited_by_name
+														) }
+													</p>
+												) }
 											</td>
 											<td
 												data-label={ __(
@@ -1203,12 +1230,27 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 												) }
 											>
 												{ group ? (
-													<span className="be-approval-queue__group-note">
-														{ __(
-															'Part of a submitted-together set - see Approve all / Refuse all above.',
-															'beyond-elysium'
-														) }
-													</span>
+													<>
+														<span className="be-approval-queue__group-note">
+															{ __(
+																'Part of a submitted-together set - see Approve all / Refuse all above.',
+																'beyond-elysium'
+															) }
+														</span>
+														<button
+															type="button"
+															onClick={ () =>
+																setEditingId(
+																	item.id
+																)
+															}
+														>
+															{ __(
+																'Edit',
+																'beyond-elysium'
+															) }
+														</button>
+													</>
 												) : (
 													<>
 														{ isCostPending(
@@ -1364,6 +1406,19 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 																) }
 															</button>
 														) }
+														<button
+															type="button"
+															onClick={ () =>
+																setEditingId(
+																	item.id
+																)
+															}
+														>
+															{ __(
+																'Edit',
+																'beyond-elysium'
+															) }
+														</button>
 													</>
 												) }
 											</td>
@@ -1374,6 +1429,32 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 						</tbody>
 					</table>
 				</div>
+			) }
+
+			{ editing && (
+				<QueueChangeEditor
+					gameSlug={ gameSlug }
+					change={ editing }
+					onClose={ () => setEditingId( null ) }
+					onSaved={ ( edited ) => {
+						setItems( ( prev ) =>
+							prev.map( ( row ) =>
+								row.id === edited.id ? edited : row
+							)
+						);
+						setSelected( ( prev ) => {
+							const next = new Map( prev );
+							next.delete( edited.id );
+							return next;
+						} );
+						setEditingId( null );
+					} }
+					onStale={ ( message ) => {
+						setEditingId( null );
+						load();
+						setError( message );
+					} }
+				/>
 			) }
 
 			<div className="be-approval-queue__pagination">

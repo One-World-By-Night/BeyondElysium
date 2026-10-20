@@ -326,13 +326,36 @@ class Change_Engine {
 	}
 
 	/**
+	 * The id of another pending change on this character that targets the same holding or field as the given change.
+	 *
+	 * @param int                 $character_id
+	 * @param string              $change_type
+	 * @param array<string,mixed> $change_data
+	 * @param string              $owner_slug  The character's chronicle.
+	 * @param int                 $except_id   A change that never counts as a duplicate of itself.
+	 * @return int|null
+	 */
+	public static function find_other_pending_duplicate( int $character_id, string $change_type, array $change_data, string $owner_slug, int $except_id ): ?int {
+		$key = self::pending_duplicate_key( $change_type, $change_data, $owner_slug );
+		if ( $key === null ) {
+			return null;
+		}
+		foreach ( Change::for_character( $character_id, [ 'status' => 'pending', 'change_type' => $change_type ] ) as $candidate ) {
+			if ( (int) $candidate->id !== $except_id && self::pending_duplicate_key( $change_type, (array) ( $candidate->change_data ?? [] ), $owner_slug ) === $key ) {
+				return (int) $candidate->id;
+			}
+		}
+		return null;
+	}
+
+	/**
 	 * One block's definition for this chronicle.
 	 *
 	 * @param string $owner_slug
 	 * @param string $block_slug
 	 * @return object|null
 	 */
-	private static function block_definition( string $owner_slug, string $block_slug ) {
+	public static function block_definition( string $owner_slug, string $block_slug ) {
 		$block = Purchase_Scope::widen( Schema_Block::find_for_game( $block_slug, $owner_slug ), $owner_slug );
 		return $block->definition ?? null;
 	}

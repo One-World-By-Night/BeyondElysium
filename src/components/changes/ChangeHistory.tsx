@@ -140,6 +140,14 @@ export function ChangeHistory( { characterId, gameSlug }: ChangeHistoryProps ) {
 							{ item.notes }
 						</p>
 					) }
+					{ item.change_data?.st_edit !== undefined && (
+						<p className="be-change-history__notes">
+							{ __(
+								'Changed by a Storyteller',
+								'beyond-elysium'
+							) }
+						</p>
+					) }
 					{ item.review_notes && (
 						<p className="be-change-history__notes">
 							{ sprintf(

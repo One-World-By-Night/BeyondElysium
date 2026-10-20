@@ -3,6 +3,7 @@
 namespace BeyondElysium\Tests\Thread;
 
 use BeyondElysium\Models\Attachment;
+use BeyondElysium\Models\Change;
 use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Connection;
 use BeyondElysium\Models\Game;
@@ -10,6 +11,7 @@ use BeyondElysium\Models\Game_Member;
 use BeyondElysium\Models\Game_Session;
 use BeyondElysium\Models\World_Object;
 use BeyondElysium\Services\Attachment_Storage;
+use BeyondElysium\Services\Cost_Engine;
 use BeyondElysium\Services\Demo_Chronicle;
 use WP_UnitTestCase;
 
@@ -260,6 +262,111 @@ class DemoChronicleThreadTest extends WP_UnitTestCase {
 		$this->assertFalse( $by_name['Dr. Adrian Voss']->profile_show_player );
 
 		$this->assertSame( 'storytellers', $by_name['Detective Rosa Alvarez']->profile_audience, 'left on the default, so hidden from Who\'s Who' );
+	}
+
+	public function test_reset_seeds_two_homebrew_rituals_as_one_set_waiting_for_a_price(): void {
+		$this->assertTrue( Demo_Chronicle::reset( $this->game ) );
+
+		$isolde  = Character::find_by_name_in_game( 'Isolde Marchetti', $this->game->slug );
+		$pending = array_values( array_filter(
+			Change::for_character( (int) $isolde->id, [ 'status' => 'pending' ] ),
+			static fn( $change ) => ( $change->change_data['block_slug'] ?? '' ) === 'vampire-rituals'
+		) );
+
+		$this->assertCount( 2, $pending );
+		$this->assertNotEmpty( $pending[0]->submission_id );
+		$this->assertSame( $pending[0]->submission_id, $pending[1]->submission_id, 'sent in one save' );
+		foreach ( $pending as $change ) {
+			$this->assertTrue( $change->change_data['cost_pending'] );
+			$this->assertTrue( $change->change_data['trait']['custom'] );
+			$this->assertNotSame( '', (string) $change->change_data['trait']['note'], 'the player names what they think it costs' );
+			$quote = Cost_Engine::quote_for_change( $isolde, [ 'change_type' => $change->change_type, 'change_data' => $change->change_data ], false );
+			$this->assertFalse( $quote['priced'], $change->change_data['trait']['name'] . ' has no catalog price' );
+		}
+	}
+
+	public function test_every_seeded_change_names_what_the_engine_reads(): void {
+		$this->assertTrue( Demo_Chronicle::reset( $this->game ) );
+
+		$changes = array_merge(
+			Change::for_game( $this->game->slug, [ 'status' => 'pending' ] ),
+			Change::for_game( $this->game->slug, [ 'status' => 'approved' ] )
+		);
+		$this->assertNotEmpty( $changes );
+
+		foreach ( $changes as $change ) {
+			$data = (array) $change->change_data;
+			if ( $change->change_type === 'modify_identity' ) {
+				$this->assertNotEmpty( $data['fields'] ?? null, "#{$change->id} changes an identity field through `fields`" );
+				$this->assertArrayNotHasKey( 'field', $data );
+				$this->assertArrayNotHasKey( 'value', $data );
+			}
+			if ( in_array( $change->change_type, [ 'add_trait', 'modify_trait' ], true ) ) {
+				$this->assertIsArray( $data['trait'] ?? null, "#{$change->id} carries a `trait`" );
+			}
+			$this->assertNotSame( 'modify_power', $change->change_type, 'not a change type' );
+		}
+	}
+
+	public function test_every_seeded_change_still_waiting_previews_as_the_engine_would_price_it(): void {
+		do_action( 'rest_api_init' );
+		$this->assertTrue( Demo_Chronicle::reset( $this->game ) );
+
+		$pending = Change::for_game( $this->game->slug, [ 'status' => 'pending' ] );
+		$this->assertCount( 5, $pending, 'Isolde\'s Occult, Ezra\'s Natural Leader, Naomi\'s Rank and the two Rituals' );
+
+		foreach ( $pending as $change ) {
+			$data = (array) $change->change_data;
+			unset( $data['cost_pending'] );
+
+			$owner = (int) Character::find( (int) $change->character_id )->wp_user_id;
+			wp_set_current_user( $owner === $this->player_id ? $this->player_id : $this->storyteller_id );
+			$request = new \WP_REST_Request( 'POST', "/be/v1/{$this->game->slug}/characters/{$change->character_id}/preview-changes" );
+			$request->set_header( 'Content-Type', 'application/json' );
+			$request->set_body( wp_json_encode( [ 'changes' => [ [ 'change_type' => $change->change_type, 'category' => $change->category, 'change_data' => $data ] ] ] ) );
+			$response = rest_get_server()->dispatch( $request );
+			wp_set_current_user( 0 );
+
+			$result = $response->get_data()['results'][0] ?? [];
+			$label  = "#{$change->id} {$change->change_type} " . wp_json_encode( $data );
+			$this->assertEmpty( $result['invalid'] ?? false, $label . ' ' . wp_json_encode( $result['error'] ?? null ) );
+			if ( ! empty( $change->change_data['cost_pending'] ) ) {
+				$this->assertFalse( $result['priced'], $label );
+			} else {
+				$this->assertTrue( $result['priced'], $label );
+				$this->assertSame( (int) $change->xp_cost, (int) $result['xp_cost'], $label );
+			}
+		}
+	}
+
+	public function test_a_seeded_identity_change_waiting_for_review_changes_the_sheet_when_approved(): void {
+		$this->assertTrue( Demo_Chronicle::reset( $this->game ) );
+
+		$naomi = Character::find_by_name_in_game( 'Naomi Two Rivers', $this->game->slug );
+		$rank  = array_values( array_filter(
+			Change::for_character( (int) $naomi->id, [ 'status' => 'pending' ] ),
+			static fn( $change ) => $change->change_type === 'modify_identity'
+		) );
+		$this->assertCount( 1, $rank );
+
+		$this->assertTrue( \BeyondElysium\Services\Change_Engine::approve( (int) $rank[0]->id, $this->storyteller_id, null ) );
+
+		$this->assertSame( 2, (int) Character::find( (int) $naomi->id )->sheet_data['werewolf-identity']['Rank'] );
+	}
+
+	public function test_the_seeded_approved_changes_are_on_the_sheets(): void {
+		$this->assertTrue( Demo_Chronicle::reset( $this->game ) );
+
+		$isolde = Character::find_by_name_in_game( 'Isolde Marchetti', $this->game->slug );
+		$this->assertSame( 'Regent of the Chantry', $isolde->sheet_data['vampire-identity']['Title'] );
+
+		$adrian = Character::find_by_name_in_game( 'Dr. Adrian Voss', $this->game->slug );
+		$forces = array_values( array_filter(
+			$adrian->sheet_data['mage-spheres'],
+			static fn( $row ) => ( $row['name'] ?? '' ) === 'Forces'
+		) );
+		$this->assertCount( 1, $forces );
+		$this->assertSame( 3, (int) $forces[0]['level'] );
 	}
 
 	public function test_reset_seeds_two_answered_downtimes_one_charged_and_one_not(): void {

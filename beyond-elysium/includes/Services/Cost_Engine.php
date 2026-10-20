@@ -245,6 +245,9 @@ class Cost_Engine {
 				$carried = (int) ( $held['chosen_cost'] ?? 0 );
 			}
 			$trait['chosen_cost'] = $carried + $set_cost;
+			if ( ! empty( $definition->count_is_cost ) && $units['units'] > 0 ) {
+				$trait['count'] = $trait['chosen_cost'];
+			}
 			$xp                   = ( ! empty( $definition->negative ) ? -1 : 1 ) * ( $units['units'] > 0 ? $set_cost : 0 );
 		} else {
 			$trait['chosen_cost'] = $set_cost;
@@ -271,7 +274,7 @@ class Cost_Engine {
 	 *
 	 * @param mixed $value
 	 */
-	private static function usable_price( $value ): ?int {
+	public static function usable_price( $value ): ?int {
 		if ( $value === null || ! is_numeric( $value ) || (float) $value !== (float) (int) $value ) {
 			return null;
 		}
@@ -1063,12 +1066,13 @@ class Cost_Engine {
 	// Rows priced per purchase or per dot.
 
 	/**
-	 * Whether each row of a trait_list block is one purchase, priced once whatever its count.
+	 * Whether each row of a trait_list block is one purchase, priced once whatever its count: a list of single picks, or
+	 * one whose stored number is its own price.
 	 *
 	 * @param object $definition
 	 */
 	public static function rows_are_purchases( $definition ): bool {
-		return ! empty( $definition->atomic );
+		return ! empty( $definition->atomic ) || ! empty( $definition->count_is_cost );
 	}
 
 	/**

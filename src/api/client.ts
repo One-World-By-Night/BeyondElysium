@@ -57,6 +57,8 @@ import type {
 	UpdateCharacterRequest,
 	ChangeRequest,
 	ChangeReviewRequest,
+	ChangeEditRequest,
+	SectionChoice,
 	BulkXPRequest,
 	BulkXPResponse,
 	XpApplyRequest,
@@ -1999,6 +2001,28 @@ export const changes = ( gameSlug: string ) => ( {
 			path: `${ BASE }/${ gameSlug }/changes/${ changeId }`,
 			method: 'PUT',
 			data,
+		} ),
+
+	/**
+	 * Edits a change that is still waiting - its content, its price and the note to the player - and leaves it pending.
+	 * Answers with the change as the queue shows it.
+	 */
+	edit: (
+		changeId: number,
+		data: ChangeEditRequest
+	): Promise< QueueChange > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/changes/${ changeId }`,
+			method: 'PATCH',
+			data,
+		} ),
+
+	/**
+	 * The sections an added entry could be filed in instead; empty for a change that cannot move.
+	 */
+	sections: ( changeId: number ): Promise< SectionChoice[] > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/changes/${ changeId }/sections`,
 		} ),
 
 	/**

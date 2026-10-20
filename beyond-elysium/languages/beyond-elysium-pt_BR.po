@@ -16182,3 +16182,139 @@ msgstr "BeyondElysium"
 
 #~ msgid "Add as player"
 #~ msgstr "Adicionar como jogador"
+
+#: includes/REST/Changes_Controller.php:534
+msgid "Missing required field: review_token."
+msgstr "Campo obrigatório ausente: review_token."
+
+#: includes/REST/Changes_Controller.php:539
+msgid "fields must be an object."
+msgstr "fields deve ser um objeto."
+
+#. translators: %s: the name of a field
+#: includes/Services/Change_Edit.php:263
+#, php-format
+msgid "That field cannot be edited on this change: %s"
+msgstr "Esse campo não pode ser editado nesta alteração: %s"
+
+#: includes/Services/Change_Edit.php:273 build/360.js:26 build/785.js:7
+msgid "Save the move first, then set the price."
+msgstr "Salve a mudança de seção primeiro e só então defina o preço."
+
+#: includes/Services/Change_Edit.php:276
+msgid "That section cannot take this entry."
+msgstr "Essa seção não pode receber esta entrada."
+
+#: includes/Services/Change_Edit.php:307
+msgid ""
+"Another waiting change already covers this. Review or refuse that one first."
+msgstr ""
+"Outra alteração pendente já cobre isto. Revise ou recuse essa primeiro."
+
+#: includes/Services/Change_Edit.php:435
+msgid "A request is for a positive amount of experience."
+msgstr "Um pedido é de uma quantidade positiva de experiência."
+
+#: includes/Services/Change_Edit.php:479
+msgid "This change has no price to set."
+msgstr "Esta alteração não tem preço a definir."
+
+#: includes/Services/Change_Edit.php:490
+msgid "This change is priced differently now. Check the price and save again."
+msgstr "Esta alteração agora tem outro preço. Confira o preço e salve de novo."
+
+#: build/10.js:12 build/964.js:58
+msgid "Changed by a Storyteller"
+msgstr "Alterada por um Narrador"
+
+#: build/10.js:79 build/28.js:85 build/360.js:151 build/785.js:53
+#: build/964.js:148
+msgid "XP for this change"
+msgstr "XP para esta alteração"
+
+#. translators: %d: number of changes that need a secret chosen before they can be approved
+#: build/10.js:84 build/28.js:90 build/360.js:156 build/785.js:58
+#: build/964.js:153
+msgid ""
+"%d change needs you to choose which secret it belongs to. Open it and choose "
+"one."
+msgid_plural ""
+"%d changes need you to choose which secret each belongs to. Open each one "
+"and choose."
+msgstr[0] ""
+"%d alteração precisa que você escolha a que segredo pertence. Abra-a e "
+"escolha um."
+msgstr[1] ""
+"%d alterações precisam que você escolha a que segredo cada uma pertence. "
+"Abra cada uma e escolha."
+
+#. translators: %d: number of changes held back because another change in their set could not be approved
+#: build/10.js:85 build/28.js:91 build/360.js:157 build/785.js:59
+#: build/964.js:154
+msgid "%d change was held back with the rest of its set."
+msgid_plural "%d changes were held back with the rest of their set."
+msgstr[0] "%d alteração ficou retida com o resto do seu conjunto."
+msgstr[1] "%d alterações ficaram retidas com o resto do seu conjunto."
+
+#: build/360.js:23 build/785.js:4
+msgid "Dots"
+msgstr "Pontos"
+
+#: build/360.js:23 build/785.js:4
+msgid "New value"
+msgstr "Novo valor"
+
+#. translators: %d: the XP the book charges for this change
+#: build/360.js:24 build/785.js:5
+msgid "Usual price: %d XP"
+msgstr "Preço de costume: %d XP"
+
+#. translators: %s: a plain description of the change, such as "Added Wax Ward"
+#: build/360.js:25 build/785.js:6
+msgid "Edit: %s"
+msgstr "Editar: %s"
+
+#: build/360.js:25 build/785.js:6
+msgid "Failed to save the change."
+msgstr "Falha ao salvar a alteração."
+
+#. translators: %s: the name of a sheet section, such as Rituals
+#: build/360.js:26 build/360.js:34 build/785.js:7 build/785.js:15
+msgid "In %s"
+msgstr "Em %s"
+
+#: build/360.js:26 build/785.js:7
+msgid "Leave empty to charge the usual price."
+msgstr "Deixe vazio para cobrar o preço de costume."
+
+#: build/360.js:26 build/785.js:7
+msgid "Leave empty to keep it waiting for a price."
+msgstr "Deixe vazio para mantê-la esperando um preço."
+
+#: build/360.js:26 build/785.js:7
+msgid "Note to the player"
+msgstr "Nota para o jogador"
+
+#: build/360.js:26 build/785.js:7
+msgid ""
+"The player sees this in their change history. Text between [ST] and [/ST] "
+"stays with Storytellers."
+msgstr ""
+"O jogador vê isto no histórico de alterações dele. O texto entre [ST] e "
+"[/ST] fica só com os Narradores."
+
+#: build/360.js:32 build/785.js:13
+msgid "Set a price on each change marked Needs a price first. Use Edit."
+msgstr ""
+"Defina um preço em cada alteração marcada como Precisa de um preço "
+"primeiro. Use Editar."
+
+#. translators: %s: the note a player put on the trait they are adding or changing
+#: build/360.js:33 build/785.js:14
+msgid "Note: %s"
+msgstr "Nota: %s"
+
+#. translators: %s: the display name of the Storyteller who edited the change
+#: build/360.js:35 build/785.js:16
+msgid "Edited by %s"
+msgstr "Editada por %s"

@@ -541,34 +541,44 @@ class CustomPurchasePricingThreadTest extends WP_UnitTestCase {
 
 		$row = $this->queue()[ $id ];
 
-		$this->assertSame( [ 'per' => 'dot', 'units' => 3, 'negative' => false ], $row->cost_units );
+		$this->assertTrue( $row->price_basis['homebrew'] );
+		$this->assertSame( 'dot', $row->price_basis['per'] );
+		$this->assertSame( 3, $row->price_basis['units'] );
+		$this->assertFalse( $row->price_basis['negative'] );
 	}
 
 	public function test_the_queue_counts_only_the_new_dots_of_a_raise(): void {
 		Character::update_sheet_data( $this->character_id, [ 'vampire-backgrounds' => [ [ 'name' => 'Occult Library', 'count' => 3, 'custom' => true ] ] ] );
 		$id = (int) $this->modify( 'vampire-backgrounds', [ 'name' => 'Occult Library', 'count' => 5, 'custom' => true ] )->get_data()->id;
 
-		$this->assertSame( 2, $this->queue()[ $id ]->cost_units['units'] );
+		$this->assertSame( 2, $this->queue()[ $id ]->price_basis['units'] );
 	}
 
 	public function test_the_queue_prices_a_waiting_power_as_one_pick(): void {
 		$id = (int) $this->submit( $this->player_id, 'vampire-disciplines', [ 'name' => 'My Own Path', 'level' => 3, 'custom' => true ] )->get_data()->id;
 
-		$this->assertSame( [ 'per' => 'pick', 'units' => 1, 'negative' => false ], $this->queue()[ $id ]->cost_units );
+		$basis = $this->queue()[ $id ]->price_basis;
+		$this->assertSame( 'pick', $basis['per'] );
+		$this->assertSame( 1, $basis['units'] );
+		$this->assertFalse( $basis['negative'] );
 	}
 
 	public function test_the_queue_marks_a_waiting_flaw_as_negative(): void {
 		$flaws = 'vampire-flaws';
 		$id    = (int) $this->submit( $this->player_id, $flaws, [ 'name' => 'Odd Curse', 'count' => 2, 'custom' => true ] )->get_data()->id;
 
-		$this->assertTrue( $this->queue()[ $id ]->cost_units['negative'] );
+		$this->assertTrue( $this->queue()[ $id ]->price_basis['negative'] );
 	}
 
-	public function test_a_change_that_already_has_a_price_carries_no_units(): void {
+	public function test_a_change_the_book_already_prices_says_so(): void {
 		$iron_will = 'vampire-merits';
-		$id        = (int) $this->submit( $this->player_id, $iron_will, [ 'name' => 'Iron Will' ] )->get_data()->id;
+		$change    = $this->submit( $this->player_id, $iron_will, [ 'name' => 'Iron Will' ] )->get_data();
+		$id        = (int) $change->id;
 
-		$this->assertNull( $this->queue()[ $id ]->cost_units ?? null );
+		$basis = $this->queue()[ $id ]->price_basis;
+
+		$this->assertFalse( $basis['homebrew'] );
+		$this->assertSame( (int) $change->xp_cost, $basis['book_xp'] );
 	}
 
 	// --- the record itself -------------------------------------------------------------

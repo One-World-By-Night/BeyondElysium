@@ -1,0 +1,67 @@
+.be-queue-editor {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
+.be-queue-editor__where {
+	margin: 0;
+	font-size: 0.85rem;
+	color: var(--be-gray-6);
+}
+
+.be-queue-editor__field {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+
+.be-queue-editor__field > span:first-child,
+.be-queue-editor__price > span:first-child {
+	font-weight: 600;
+	font-size: 0.8rem;
+	text-transform: uppercase;
+	color: var(--be-gray-6);
+}
+
+.be-queue-editor .be-queue-editor__input {
+	box-sizing: border-box;
+	width: 100%;
+	padding: 0.4rem 0.5rem;
+	font: inherit;
+}
+
+.be-queue-editor__price {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+
+.be-queue-editor .be-queue-editor__price-input {
+	max-width: 10rem;
+}
+
+.be-queue-editor__hint {
+	font-size: 0.8rem;
+	color: var(--be-gray-6);
+	white-space: normal;
+}
+
+.be-queue-editor__error {
+	padding: 0.6rem 0.75rem;
+	border: 1px solid var(--be-red-6);
+	background: var(--be-red-11);
+	color: var(--be-red-2);
+	border-radius: 3px;
+}
+
+.be-queue-editor__buttons {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: flex-end;
+	gap: 0.5rem;
+}
+
+.be-queue-editor__buttons button {
+	white-space: normal;
+}
