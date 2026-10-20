@@ -87,6 +87,42 @@ class Bot_Auth {
 	public static function register(): void {
 		add_filter( 'rest_pre_dispatch', [ self::class, 'handle' ], 10, 3 );
 		add_filter( 'rest_request_after_callbacks', [ self::class, 'audit' ], 10, 3 );
+		add_filter( 'rest_post_dispatch', [ self::class, 'never_cache' ], 10, 3 );
+	}
+
+	/**
+	 * The cache headers on every response to a signed call and every bot route: no cache may store it or serve it to
+	 * another request.
+	 *
+	 * @var array<string,string>
+	 */
+	public const NO_CACHE_HEADERS = [
+		'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0, private',
+		'Expires'       => 'Wed, 11 Jan 1984 05:00:00 GMT',
+	];
+
+	/**
+	 * Adds `NO_CACHE_HEADERS` to the response for a request that carries a bot signature or names a bot route,
+	 * refusals included.
+	 *
+	 * @param mixed            $response
+	 * @param \WP_REST_Server  $server
+	 * @param \WP_REST_Request $request
+	 * @return mixed
+	 */
+	public static function never_cache( $response, $server, $request ) {
+		if ( ! $response instanceof \WP_REST_Response || ! $request instanceof \WP_REST_Request ) {
+			return $response;
+		}
+		$signed    = (string) ( $request->get_header( 'X-BE-Bot-Connection' ) ?? '' ) !== '';
+		$bot_route = (bool) preg_match( '#^/be/v1/(?:[a-z0-9\-]+/)?bot(?:/|$)#', (string) $request->get_route() );
+		if ( ! $signed && ! $bot_route ) {
+			return $response;
+		}
+		foreach ( self::NO_CACHE_HEADERS as $name => $value ) {
+			$response->header( $name, $value );
+		}
+		return $response;
 	}
 
 	/**
