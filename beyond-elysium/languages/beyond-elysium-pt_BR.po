@@ -16318,3 +16318,7 @@ msgstr "Nota: %s"
 #: build/360.js:35 build/785.js:16
 msgid "Edited by %s"
 msgstr "Editada por %s"
+
+#: build/259.js:6 build/364.js:1
+msgid "A value the map does not list passes every family"
+msgstr "Um valor que o mapa não lista passa todas as famílias"

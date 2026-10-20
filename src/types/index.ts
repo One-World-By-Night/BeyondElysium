@@ -1120,7 +1120,7 @@ export interface StackSection {
  */
 export type InTypeSource =
 	| { field: string | string[] }
-	| { map: string; by: string[] }
+	| { map: string; by: string[]; unmapped?: 'pass' }
 	| { constant: string[] };
 
 /**

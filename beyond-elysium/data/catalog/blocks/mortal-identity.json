@@ -11,7 +11,8 @@
       "Association: GVM menu(s) \"Group\" (66 options)"
     ],
     "tool": "tools/catalog/emit_catalog.py",
-    "notes": "Options from the Grapevine menus, with `allow_custom` on so held free-text values stay valid."
+    "notes": "Options from the Grapevine menus, with `allow_custom` on so held free-text values stay valid.",
+    "revenant_disciplines_notes": "Each revenant family's Disciplines. The OWbN Tzimisce Genre Packet (Koldunism) pp. 10-11 gives Basarab, Bratovitch, Danislavs, Grimaldi, Khazi (the Khavi option), Krevcheski and Ducheski, Narov, Obertus, Oprichniki, Rustovitch, Ruthvenski and Zantosa (the Szantovich option), and reads a family it has no list for as the Tzimisce (Auspex, Protean, Vicissitude) or, for the Rustovitch, as the Bratovitch. The MET Sabbat Guide and Clanbook: Tzimisce Revised agree on Bratovitch, Grimaldi, Obertus, Oprichniki and Zantosa. Enrathi, Marijava and Rafastio are Dirty Secrets of the Black Hand's; Ducheski is Blood Magic: Secrets of the Thaumaturgy's; D'habi is the OWbN Baali Packet's, which says their Disciplines vary between Obfuscate and Dominate, so both are listed. Krevcheski has Thaumaturgy only as the Ducheski. Kairouan Brotherhood, Rossellini and Servants of Anushin-Rawan have no Discipline list in any of these and are left out: a family the map does not list reads every Discipline as in-type. A ghoul, who has no family, has Potence in-type and every other Discipline one more (Laws of the Night Revised, the ghoul rules under Mortals)."
   },
   "definition": {
     "fields": [
@@ -142,6 +143,103 @@
         ],
         "allow_custom": true
       }
-    ]
+    ],
+    "revenant_disciplines": {
+      "Basarab": [
+        "Dominate",
+        "Protean",
+        "Vicissitude"
+      ],
+      "Bratovitch": [
+        "Animalism",
+        "Potence",
+        "Vicissitude"
+      ],
+      "Danislavs": [
+        "Auspex",
+        "Protean",
+        "Vicissitude"
+      ],
+      "Ducheski": [
+        "Auspex",
+        "Dominate",
+        "Thaumaturgy"
+      ],
+      "D’habi": [
+        "Presence",
+        "Obfuscate",
+        "Dominate",
+        "Daimoinon"
+      ],
+      "Enrathi": [
+        "Dominate",
+        "Obfuscate",
+        "Potence"
+      ],
+      "Grimaldi": [
+        "Celerity",
+        "Dominate",
+        "Fortitude"
+      ],
+      "Khavi": [
+        "Animalism",
+        "Obfuscate",
+        "Vicissitude"
+      ],
+      "Khazi": [
+        "Animalism",
+        "Obfuscate",
+        "Vicissitude"
+      ],
+      "Krevcheski": [
+        "Auspex",
+        "Dominate"
+      ],
+      "Marijava": [
+        "Celerity",
+        "Obfuscate",
+        "Presence"
+      ],
+      "Narov": [
+        "Auspex",
+        "Protean",
+        "Vicissitude"
+      ],
+      "Obertus": [
+        "Auspex",
+        "Obfuscate",
+        "Vicissitude"
+      ],
+      "Oprichniki": [
+        "Animalism",
+        "Obfuscate",
+        "Vicissitude"
+      ],
+      "Rafastio": [
+        "Animalism",
+        "Auspex",
+        "Thaumaturgy"
+      ],
+      "Rustovitch": [
+        "Animalism",
+        "Potence",
+        "Vicissitude"
+      ],
+      "Ruthvenski": [
+        "Auspex",
+        "Protean",
+        "Vicissitude"
+      ],
+      "Szantovich": [
+        "Auspex",
+        "Presence",
+        "Vicissitude"
+      ],
+      "Zantosa": [
+        "Auspex",
+        "Presence",
+        "Vicissitude"
+      ]
+    }
   }
 }

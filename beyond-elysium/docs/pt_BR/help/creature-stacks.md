@@ -47,6 +47,7 @@ O botão **Dentro do tipo** de cada seção abre um pequeno editor para a regra 
 
 - **+ Adicionar teste** adiciona uma linha. Cada linha escolhe um **tipo** - `names` (o nome da própria entrada), `facet` (o `group` ou `subgroup` dela, para um bloco que os tem), `chosen` (algo que o jogador escolheu na criação, como uma escolha dentro do clã) ou `all` (todo teste aninhado precisa passar) - e, para todo tipo menos `chosen`, de onde vêm os valores: um campo do personagem (`field`), uma tabela de consulta guardada num campo de identidade (`map`) ou uma lista fixa (`constant`).
 - Uma condição opcional **Limitar a um campo** só roda o teste quando um campo nomeado tem, ou não tem, um valor, ou está definido ou não - necessária num caso como o de um ghoul, que é um Mortal sem Família Revenant, em que "não definido" em si é o estado que importa e não um valor a ignorar.
+- Um teste que lê um **mapa** também tem uma caixa, **Um valor que o mapa não lista passa todas as famílias**. Sem ela, um personagem cujo campo guarda um valor para o qual o mapa não tem entrada paga o preço de fora do tipo por toda entrada; com ela, nada diz que a compra é de fora do tipo. O tipo de criatura Mortal a usa nas famílias Revenant: uma família sem lista de Disciplinas nos livros lê toda Disciplina como dentro do tipo.
 - **Remover** exclui um teste; **Salvar** no modal o prepara na seção - ele ainda não é gravado até o botão **Salvar** principal abaixo.
 
 ### O editor de regras de criação

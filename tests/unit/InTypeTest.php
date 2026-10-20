@@ -79,6 +79,19 @@ class InTypeTest extends TestCase {
 		$this->assertFalse( self::passes( $tests, 'Life', $unknown ), 'a value the map does not know gives nothing' );
 	}
 
+	public function test_a_map_can_pass_a_value_it_does_not_list(): void {
+		$strict  = [ [ 'kind' => 'names', 'values' => [ 'map' => 'mage-identity.specialty', 'by' => [ 'Tradition' ] ] ] ];
+		$lenient = [ [ 'kind' => 'names', 'values' => [ 'map' => 'mage-identity.specialty', 'by' => [ 'Tradition' ], 'unmapped' => 'pass' ] ] ];
+		$listed  = [ 'mage-identity' => [ 'Tradition' => 'Verbena' ] ];
+		$unknown = [ 'mage-identity' => [ 'Tradition' => 'Orphans' ] ];
+
+		$this->assertFalse( self::passes( $strict, 'Forces', $unknown ), 'a map keeps reading an unlisted value as out of type' );
+		$this->assertTrue( self::passes( $lenient, 'Forces', $unknown ), 'with `unmapped: pass` nothing says the purchase is out of type' );
+		$this->assertTrue( self::passes( $lenient, 'Life', $listed ), 'a listed value still passes its own entries' );
+		$this->assertFalse( self::passes( $lenient, 'Forces', $listed ), 'and only its own' );
+		$this->assertTrue( self::passes( $lenient, 'Forces', [] ), 'a character who has not said what they are is never out of type' );
+	}
+
 	public function test_names_over_several_fields_counts_any_of_them(): void {
 		$tests = [ [ 'kind' => 'names', 'values' => [ 'field' => [ 'werewolf-identity.Breed', 'werewolf-identity.Auspice', 'werewolf-identity.Tribe' ] ] ] ];
 		$sheet = [ 'werewolf-identity' => [ 'Breed' => 'Homid', 'Auspice' => 'Ragabash', 'Tribe' => 'Bone Gnawers' ] ];

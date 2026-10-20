@@ -280,7 +280,8 @@ class Catalog_Validator {
 
 	/**
 	 * Where a test's values come from: exactly one of `field` (one "block_slug.Field" or a list of them), `map` (a
-	 * "block_slug.key" map with the fields it is keyed `by`, in order) or `constant` (a list of values).
+	 * "block_slug.key" map with the fields it is keyed `by`, in order, and optionally `unmapped: pass`) or `constant`
+	 * (a list of values).
 	 *
 	 * @param mixed $source
 	 * @return string[]
@@ -292,6 +293,9 @@ class Catalog_Validator {
 		$given = array_values( array_intersect( [ 'field', 'map', 'constant' ], array_keys( $source ) ) );
 		if ( count( $given ) !== 1 ) {
 			return [ "{$at} names " . ( $given === [] ? 'no source' : implode( ' and ', $given ) ) . ' - a test reads values from exactly one of `field`, `map` or `constant`' ];
+		}
+		if ( array_key_exists( 'unmapped', $source ) && $given[0] !== 'map' ) {
+			return [ "{$at} has `unmapped`, but only a `map` takes `unmapped`" ];
 		}
 		switch ( $given[0] ) {
 			case 'field':
@@ -305,6 +309,9 @@ class Catalog_Validator {
 				$by     = $source['by'] ?? null;
 				if ( ! is_array( $by ) || $by === [] || array_filter( $by, static fn( $f ): bool => ! is_string( $f ) || $f === '' ) !== [] ) {
 					$errors[] = "{$at}.by must list the fields the map is keyed by, in the order they are tried";
+				}
+				if ( array_key_exists( 'unmapped', $source ) && $source['unmapped'] !== 'pass' ) {
+					$errors[] = "{$at}.unmapped must be \"pass\" - a value the map does not list then passes every family";
 				}
 				return $errors;
 			default:

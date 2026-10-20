@@ -28,11 +28,7 @@
         "intermediate": 6,
         "advanced": 9
       },
-      "out_of_type": {
-        "basic": "+1",
-        "intermediate": "+1",
-        "advanced": "+1"
-      },
+      "out_of_type": null,
       "levels": null,
       "categories": null,
       "untiered": null

@@ -647,6 +647,19 @@ class CatalogValidatorTest extends TestCase {
 		] ) );
 	}
 
+	public function test_a_map_may_pass_the_values_it_does_not_list(): void {
+		$this->assertSame( '', $this->in_type_errors( [
+			[ 'kind' => 'names', 'values' => [ 'map' => 'werewolf-tribes.tribe_gifts', 'by' => [ 'Tribe' ], 'unmapped' => 'pass' ] ],
+		] ) );
+
+		$this->assertStringContainsString( '.unmapped must be "pass"', $this->in_type_errors( [
+			[ 'kind' => 'names', 'values' => [ 'map' => 'werewolf-tribes.tribe_gifts', 'by' => [ 'Tribe' ], 'unmapped' => 'allow' ] ],
+		] ) );
+		$this->assertStringContainsString( 'only a `map` takes `unmapped`', $this->in_type_errors( [
+			[ 'kind' => 'names', 'values' => [ 'constant' => [ 'Potence' ], 'unmapped' => 'pass' ] ],
+		] ) );
+	}
+
 	public function test_a_facet_test_names_a_tiered_powers_own_category_axis(): void {
 		$this->assertSame( '', $this->in_type_errors( [
 			[ 'kind' => 'facet', 'facet' => 'breed', 'values' => [ 'field' => 'werewolf-identity.Breed' ] ],

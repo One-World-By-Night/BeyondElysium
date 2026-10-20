@@ -13,7 +13,8 @@ defined( 'ABSPATH' ) || exit;
  * block, or from a constant, and passes when the family's name is one of them (`names`), when the family's own value
  * for a named facet is (`facet` - a trait_list item's `group`/`subgroup`, or one axis of a tiered_power family's
  * `category_values`), or when the family is one of the character's own picks (`chosen`); `all` passes when every test
- * it holds does, and `when` limits a test to characters with a given identity value.
+ * it holds does, and `when` limits a test to characters with a given identity value. A map reads a value it does not
+ * list as giving no names, unless its source says `unmapped: pass`, which lets every family through.
  */
 class In_Type {
 
@@ -164,8 +165,9 @@ class In_Type {
 	}
 
 	/**
-	 * The values a test's source gives for a character, or null when every identity field it reads is unset: nothing on
-	 * the sheet then says the purchase is out of type.
+	 * The values a test's source gives for a character, or null when every identity field it reads is unset, or the map
+	 * it reads does not list the value and says `unmapped: pass`: nothing on the sheet then says the purchase is out of
+	 * type.
 	 *
 	 * @param array<string,mixed> $source
 	 * @param array<string,mixed> $sheet
@@ -197,7 +199,7 @@ class In_Type {
 					}
 				}
 			}
-			return $known ? [] : null;
+			return $known && ( $source['unmapped'] ?? '' ) !== 'pass' ? [] : null;
 		}
 
 		return [];

@@ -47,6 +47,7 @@ Each section's **In-type** button opens a small editor for the rule that decides
 
 - **+ Add test** adds a row. Each row picks a **kind** - `names` (the entry's own name), `facet` (its `group` or `subgroup`, for a block that has them), `chosen` (something the player picked at creation, such as an in-clan choice), or `all` (every nested test must pass) - and, for every kind but `chosen`, where its values come from: a field on the character (`field`), a lookup table kept on an identity field (`map`), or a fixed list (`constant`).
 - An optional **Limit to a field** condition only runs the test when a named field holds, or doesn't hold, a value, or is set or unset at all - needed for a case like a ghoul, who is a Mortal with no Revenant Family, where "unset" itself is the meaningful state rather than a value to ignore.
+- A test that reads a **map** also has a checkbox, **A value the map does not list passes every family**. Without it, a character whose field holds a value the map has no entry for pays the out-of-type price for every entry; with it, nothing says the purchase is out of type. The Mortal creature type uses it for revenant families: a family with no Discipline list in the books reads every Discipline as in-type.
 - **Remove** deletes a test; **Save** in the modal stages it into the section - it still isn't persisted until the main **Save** button below.
 
 ### The creation rules editor

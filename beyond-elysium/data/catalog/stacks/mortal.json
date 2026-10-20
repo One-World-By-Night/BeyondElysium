@@ -109,7 +109,19 @@
         "block_slug": "vampire-disciplines",
         "label": "Disciplines (ghouls)",
         "display_order": 67,
-        "required": false
+        "required": false,
+        "in_type": [
+          {
+            "kind": "names",
+            "values": { "constant": ["Potence"] },
+            "when": { "field": "mortal-identity.Revenant Family", "set": false }
+          },
+          {
+            "kind": "names",
+            "values": { "map": "mortal-identity.revenant_disciplines", "by": ["Revenant Family"], "unmapped": "pass" },
+            "when": { "field": "mortal-identity.Revenant Family", "set": true }
+          }
+        ]
       },
       {
         "block_slug": "werewolf-gifts",

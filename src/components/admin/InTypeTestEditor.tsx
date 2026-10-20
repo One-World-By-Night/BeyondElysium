@@ -4,6 +4,7 @@
  */
 import { useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
+import { passesUnmapped, withUnmapped } from '../../lib/inTypeUnmapped';
 import type { InTypeSource, InTypeTest, InTypeWhen } from '../../types';
 import Modal from '../shared/Modal';
 import './Admin.css';
@@ -278,6 +279,25 @@ function TestRow( {
 										} as InTypeTest )
 									}
 								/>
+								<label>
+									<input
+										type="checkbox"
+										checked={ passesUnmapped( values ) }
+										onChange={ ( e ) =>
+											onChange( {
+												...test,
+												values: withUnmapped(
+													values as InTypeSource,
+													e.target.checked
+												),
+											} as InTypeTest )
+										}
+									/>{ ' ' }
+									{ __(
+										'A value the map does not list passes every family',
+										'beyond-elysium'
+									) }
+								</label>
 							</>
 						) }
 

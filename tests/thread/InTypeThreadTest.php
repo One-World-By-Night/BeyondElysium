@@ -224,4 +224,31 @@ class InTypeThreadTest extends WP_UnitTestCase {
 		$this->assertFalse( $this->in_type( $grimaldi, 'vampire-disciplines', 'Potence' ), "the ghoul's Potence is not a revenant's" );
 		$this->assertTrue( $this->in_type( $ghoul, 'werewolf-gifts', 'Homid' ), 'a section with no tests of its own' );
 	}
+
+	public function test_the_shipped_mortal_prices_a_ghoul_and_a_revenant_by_the_book(): void {
+		$ghoul       = $this->character( 'mortal', [ 'mortal-identity' => [ 'Regnant' => 'A Brujah' ] ] );
+		$bratovitch  = $this->character( 'mortal', [ 'mortal-identity' => [ 'Revenant Family' => 'Bratovitch' ] ] );
+		$grimaldi    = $this->character( 'mortal', [ 'mortal-identity' => [ 'Revenant Family' => 'Grimaldi' ] ] );
+		$unconfirmed = $this->character( 'mortal', [ 'mortal-identity' => [ 'Revenant Family' => 'Kairouan Brotherhood' ] ] );
+
+		$first_level = static fn( object $character, string $discipline ): int => Cost_Engine::cost_for_change( $character, [
+			'change_type' => 'add_trait',
+			'change_data' => [ 'block_slug' => 'vampire-disciplines', 'trait' => [ 'name' => $discipline, 'level' => 1 ] ],
+		] );
+
+		$this->assertSame( 3, $first_level( $ghoul, 'Potence' ) );
+		$this->assertSame( 4, $first_level( $ghoul, 'Auspex' ), 'every other Discipline costs a ghoul one more' );
+		$this->assertSame( 4, $first_level( $ghoul, 'Celerity' ) );
+
+		foreach ( [ 'Animalism', 'Potence', 'Vicissitude' ] as $discipline ) {
+			$this->assertSame( 3, $first_level( $bratovitch, $discipline ), "a Bratovitch's own $discipline" );
+		}
+		$this->assertSame( 4, $first_level( $bratovitch, 'Celerity' ) );
+		$this->assertSame( 4, $first_level( $grimaldi, 'Potence' ), "the ghoul's Potence is not a Grimaldi's" );
+		$this->assertSame( 3, $first_level( $grimaldi, 'Fortitude' ) );
+
+		foreach ( [ 'Auspex', 'Celerity', 'Potence' ] as $discipline ) {
+			$this->assertSame( 3, $first_level( $unconfirmed, $discipline ), "a family with no list reads $discipline as in-type" );
+		}
+	}
 }
