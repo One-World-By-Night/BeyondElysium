@@ -27,6 +27,7 @@ import { withHeldBlockSections } from '../../lib/heldBlockSections';
 import { sheetStyleVars } from '../../lib/sheetStyleVars';
 import { showsProseSection } from '../../lib/sheetProse';
 import { highlightStMarkers } from '../../lib/highlightStMarkers';
+import { stackableProseTables } from '../../lib/stackableProseTables';
 import { canIn } from '../../lib/chronicleCapabilities';
 import { sheetActions, type SheetAction } from '../../lib/sheetActions';
 import { sectionCount } from '../../lib/sectionTotal';
@@ -960,7 +961,9 @@ export function CharacterSheet( {
 					<div
 						dangerouslySetInnerHTML={ {
 							__html: highlightStMarkers(
-								character.biography ?? ''
+								stackableProseTables(
+									character.biography ?? ''
+								)
 							),
 						} }
 					/>
@@ -978,7 +981,9 @@ export function CharacterSheet( {
 					</h4>
 					<div
 						dangerouslySetInnerHTML={ {
-							__html: highlightStMarkers( character.notes ?? '' ),
+							__html: highlightStMarkers(
+								stackableProseTables( character.notes ?? '' )
+							),
 						} }
 					/>
 				</div>
