@@ -37,7 +37,7 @@ echo "    ok"
 # Runs PHPStan and shows its output only when it fails.
 run_phpstan() {
     local out
-    if ! out="$("$PHP" beyond-elysium/vendor/bin/phpstan analyse --no-progress --memory-limit=1G "$@" 2>&1)"; then
+    if ! out="$("$PHP" beyond-elysium/vendor/bin/phpstan analyse --no-progress --memory-limit=2G "$@" 2>&1)"; then
         printf '%s\n' "$out" >&2
         exit 1
     fi
