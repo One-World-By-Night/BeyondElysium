@@ -14,6 +14,7 @@ $ast = array_values( array_diff( $hst, [
 	'be_manage_templates',
 	'be_manage_chronicle_setup',
 	'be_delete_characters',
+	'be_grant_staff_access',
 ] ) );
 
 return [

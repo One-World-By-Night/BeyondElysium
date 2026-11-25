@@ -18,6 +18,7 @@ Abra o [Kit de Ferramentas do Narrador](storyteller-toolkit.md), escolha a crôn
 - **Aguardando o primeiro acesso** - todo convite para o qual ninguém entrou ainda: o e-mail, os personagens que o esperam, quem o enviou e quando, com um botão **Cancelar**.
 - **Jogadores** - todos que são jogadores nesta crônica, cada um com seus personagens. Cada personagem tem **Desvincular**; cada jogador tem **Adicionar personagens** e **Remover**.
 - **Discord** - contas do Discord pedindo para agir como membro da crônica: **Aguardando decisão**, com **Aprovar**/**Recusar**, e **Vinculada**, com **Revogar**. Cada linha nomeia a conta do Discord, a conta do site a que ela foi confirmada e os personagens que carrega. Veja [Discord](discord.md).
+- **Permissões da equipe** - só o HST vê isto. Cada pessoa a quem o HST deu mais do que o papel dela inclui, com o papel dela aqui, cinco caixas (**Catálogo**, **Regras de Aprovação**, **Modelos**, **Configuração da Crônica**, **Excluir personagens**) e **Salvar**; **Dar mais a alguém**, para achar outra conta e marcar caixas para ela; e **Alterações recentes**, uma linha para cada concessão e retirada com quem fez e quando. Catálogo e Excluir personagens dizem "No Kit de Ferramentas do Narrador". As outras três dizem "Abre no wp-admin. Exige uma conta de Editor neste site."
 - Uma linha sob **Jogadores** nomeia o papel do OWbN que acompanha ser jogador aqui, como `chronicle/kony/player`.
 - Depois de qualquer coisa que você faz, uma mensagem diz o que aconteceu: quem virou jogador, quais personagens foram vinculados, quais foram deixados em paz e por quê.
 
@@ -60,6 +61,17 @@ Abra o [Kit de Ferramentas do Narrador](storyteller-toolkit.md), escolha a crôn
 2. Confira os personagens que ela lista.
 3. Clique em **Aprovar**, ou em **Recusar** se ela não deve agir aqui.
 
+### Dar mais a um AST ou a um Condutor de Trama
+
+1. Em **Permissões da equipe**, digite três letras do nome em **Dar mais a alguém** e clique no nome.
+2. Marque o que a pessoa deve ter. **Excluir personagens** é para um AST, pois um Condutor de Trama não tem a lista de Personagens.
+3. Clique em **Salvar**. Vale a partir do próximo clique dela, e só nesta crônica.
+
+### Tirar de volta
+
+1. Desmarque a caixa e clique em **Salvar**, ou clique em **Remover tudo** ao lado do nome.
+2. O acesso fecha no próximo clique dela. **Alterações recentes** registra quem tirou e quando.
+
 ## O que saber
 
 - **Os pedidos de entrada podem ser desligados** em [Configuração da Crônica](chronicle-setup.md). Desligado, a crônica sai da lista de entrada e o link de entrada dela recusa um pedido novo; um que já espera ainda é revisado aqui.
@@ -77,8 +89,15 @@ Abra o [Kit de Ferramentas do Narrador](storyteller-toolkit.md), escolha a crôn
 - **Uma conta do Discord é aprovada para esta crônica, não para uma conta em todo o site.** Aprovar um vínculo novo para a mesma conta do site revoga qualquer vínculo aprovado antes dele; só um fica ativo por vez.
 - **Agir a partir do Discord segue as mesmas regras do site.** Nada que uma conta vinculada faz pelo bot pula uma permissão, uma aprovação ou um limite que encontraria aqui.
 
+- **Só o HST concede ou retira isto.** Um AST ou Condutor de Trama não pode dar mais a si mesmo nem a outra pessoa, seja o que for que tenha. Toda concessão e retirada é registrada com quem fez e quando.
+- **Uma concessão só vale enquanto a pessoa é AST ou Condutor de Trama aqui.** Se ela virar jogador ou perder o papel do OWbN, as caixas ficam mas não fazem nada até o papel voltar; o painel avisa e oferece **Remover tudo**.
+- **Regras de Aprovação, Modelos e Configuração da Crônica abrem só no wp-admin,** que exige uma conta de Editor no site. A concessão é a mesma de qualquer jeito.
+- **Uma concessão vale para uma crônica.** Não abre nada em outra.
+
 ## Solução de problemas
 
+- **Não acho Permissões da equipe.** Só o HST vê.
+- **"Dê a eles primeiro o cargo de Narrador Assistente ou de Condutor de Trama."** A conta não tem nenhum dos dois papéis nesta crônica. Dê o papel e volte.
 - **Não há aba Jogadores.** Você não é o HST nem o AST da crônica.
 - **"Este pedido traz um arquivo do Grapevine - revise e aceite-o em Importar, o que também encerra este pedido."** Aprovar foi recusado de propósito - vá revisar o arquivo em Importar, que também encerra o pedido depois que você aceitar.
 - **Um convite ainda espera depois de a pessoa entrar.** Ela usou outro endereço de e-mail. Confira o endereço da conta dela no OWbN.

@@ -339,6 +339,22 @@ class BotActAsThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 403, $response->get_status() );
 	}
 
+	public function test_a_staff_grant_applies_to_a_signed_call_as_it_does_on_the_website(): void {
+		$ast = self::factory()->user->create( [ 'role' => 'editor' ] );
+		Game_Member::set_role( $this->game_id, $ast, 'ast' );
+		$link = Discord_Link::start_or_renew( $this->game_id, '99', 'ast-discord' );
+		Discord_Link::confirm( Discord_Link::find( $link['link_id'] ), $ast, [], true );
+
+		$before = $this->signed( 'GET', "/be/v1/{$this->slug}/my/capabilities", '99' )->get_data()['capabilities'];
+		$this->assertFalse( $before['be_manage_schemas'] );
+
+		$this->assertNull( \BeyondElysium\Services\Staff_Grants::set( Game::find( $this->game_id ), $ast, [ 'be_manage_schemas' ], $this->hst ) );
+
+		$after = $this->signed( 'GET', "/be/v1/{$this->slug}/my/capabilities", '99' )->get_data()['capabilities'];
+		$this->assertTrue( $after['be_manage_schemas'] );
+		$this->assertFalse( $after['be_grant_staff_access'] );
+	}
+
 	public function test_a_player_can_search_and_read_a_visible_plot_through_the_bot(): void {
 		Plot::create( [
 			'game_id' => $this->game_id, 'title' => 'The Harbor Conspiracy', 'initiated_by' => 'st',

@@ -468,6 +468,7 @@ class Game {
 			) ),
 			Manager::delete( 'bot_connections', [ 'game_id' => $game_id ] ),
 			Manager::delete( 'bot_connect_codes', [ 'game_id' => $game_id ] ),
+			Manager::delete( 'staff_grants', [ 'game_id' => $game_id ] ),
 		];
 
 		if ( ! $ok || in_array( false, $deletes, true ) ) {

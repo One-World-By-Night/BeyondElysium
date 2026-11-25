@@ -211,6 +211,24 @@ class GamesControllerTest extends WP_UnitTestCase {
 		$this->assertFalse( $stranger_caps['be_manage_plots'] );
 	}
 
+	public function test_the_capabilities_map_tells_an_ast_they_cannot_delete_characters_and_an_hst_they_can(): void {
+		$game = $this->create_game( 'thread-test-caps-delete-game' )->get_data();
+
+		$hst = self::factory()->user->create( [ 'role' => 'editor' ] );
+		$ast = self::factory()->user->create( [ 'role' => 'editor' ] );
+		Game_Member::set_role( (int) $game->id, $hst, 'hst' );
+		Game_Member::set_role( (int) $game->id, $ast, 'ast' );
+
+		wp_set_current_user( $hst );
+		$hst_caps = rest_get_server()->dispatch( new WP_REST_Request( 'GET', "/be/v1/{$game->slug}/my/capabilities" ) )->get_data()['capabilities'];
+		$this->assertTrue( $hst_caps['be_delete_characters'] );
+
+		wp_set_current_user( $ast );
+		$ast_caps = rest_get_server()->dispatch( new WP_REST_Request( 'GET', "/be/v1/{$game->slug}/my/capabilities" ) )->get_data()['capabilities'];
+		$this->assertTrue( $ast_caps['be_manage_characters'] );
+		$this->assertFalse( $ast_caps['be_delete_characters'], 'the Characters list must not offer Delete to someone the route refuses' );
+	}
+
 	public function test_capabilities_for_a_boons_only_role_are_narrow(): void {
 		$game = $this->create_game( 'thread-test-caps-boons-game' )->get_data();
 

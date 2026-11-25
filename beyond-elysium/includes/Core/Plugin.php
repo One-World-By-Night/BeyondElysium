@@ -37,6 +37,7 @@ class Plugin {
 
 		// Cleans up be_game_members rows when a user is deleted, single-site or multisite.
 		add_action( 'deleted_user', [ '\BeyondElysium\Models\Game_Member', 'remove_user_everywhere' ] );
+		add_action( 'deleted_user', [ '\BeyondElysium\Services\Staff_Grants', 'remove_user_everywhere' ] );
 
 		// Drops this plugin's tables with a deleted subsite.
 		Multisite::register();
@@ -113,6 +114,8 @@ class Plugin {
 				'be_manage_sessions'      => current_user_can( 'be_manage_sessions' ),
 				// Gates GameNights.tsx's downtime-window editor.
 				'be_manage_apr'           => current_user_can( 'be_manage_apr' ),
+				// Gates the Characters list's Delete button.
+				'be_delete_characters'    => current_user_can( 'be_delete_characters' ),
 			],
 		] );
 
@@ -152,6 +155,8 @@ class Plugin {
 			new \BeyondElysium\REST\Game_Import_Controller(),
 			new \BeyondElysium\REST\Game_Members_Controller(),
 			new \BeyondElysium\REST\Chronicle_Players_Controller(),
+			new \BeyondElysium\REST\Staff_Grants_Controller(),
+			new \BeyondElysium\REST\Catalog_Controller(),
 			new \BeyondElysium\REST\Join_Requests_Controller(),
 			new \BeyondElysium\REST\Authorization_Settings_Controller(),
 			new \BeyondElysium\REST\Game_Stats_Controller(),

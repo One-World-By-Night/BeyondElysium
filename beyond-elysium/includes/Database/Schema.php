@@ -12,7 +12,7 @@ class Schema {
 	/**
 	 * The plugin's current database schema version, matching the plugin release version.
 	 */
-	const DB_VERSION = '1.7.1';
+	const DB_VERSION = '1.7.2';
 
 	/**
 	 * Option key holding the installed schema version.
@@ -84,6 +84,7 @@ class Schema {
 		'discord_link_characters',
 		'bot_audit',
 		'bot_notices',
+		'staff_grants',
 	];
 
 	/**
@@ -968,6 +969,21 @@ class Schema {
 			delivered_at datetime DEFAULT NULL,
 			PRIMARY KEY  (id),
 			KEY idx_game_undelivered (game_id, delivered_at)
+		) $charset_collate;" );
+
+		// be_staff_grants: one row per area an HST gave one person in one chronicle; taking it away stamps the row.
+		dbDelta( "CREATE TABLE {$prefix}staff_grants (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			game_id bigint(20) unsigned NOT NULL,
+			wp_user_id bigint(20) unsigned NOT NULL,
+			area varchar(40) NOT NULL,
+			granted_by bigint(20) unsigned NOT NULL,
+			granted_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			revoked_by bigint(20) unsigned DEFAULT NULL,
+			revoked_at datetime DEFAULT NULL,
+			PRIMARY KEY  (id),
+			KEY game_user (game_id, wp_user_id),
+			KEY idx_wp_user (wp_user_id)
 		) $charset_collate;" );
 
 		self::migrate();

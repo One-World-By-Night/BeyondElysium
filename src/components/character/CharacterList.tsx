@@ -120,8 +120,9 @@ export function CharacterList( {
 	const [ refreshCount, setRefreshCount ] = useState( 0 );
 	const [ assigning, setAssigning ] = useState< Character | null >( null );
 
-	// UI-only gate; the DELETE route itself re-checks be_manage_characters server-side.
 	const canManageCharacters = canIn( 'be_manage_characters', capabilities );
+	// UI-only gate; the DELETE route re-checks be_delete_characters server-side.
+	const canDeleteCharacters = canIn( 'be_delete_characters', capabilities );
 
 	// Held by character id, so a typed amount survives paging, sorting, filtering and searching.
 	const [ xpEntries, setXpEntries ] = useState< Record< number, string > >(
@@ -599,18 +600,20 @@ export function CharacterList( {
 															'beyond-elysium'
 														) }
 											</button>
-											<button
-												type="button"
-												className="be-character-list__delete"
-												onClick={ () =>
-													remove( character )
-												}
-											>
-												{ __(
-													'Delete',
-													'beyond-elysium'
-												) }
-											</button>
+											{ canDeleteCharacters && (
+												<button
+													type="button"
+													className="be-character-list__delete"
+													onClick={ () =>
+														remove( character )
+													}
+												>
+													{ __(
+														'Delete',
+														'beyond-elysium'
+													) }
+												</button>
+											) }
 										</td>
 									) }
 								</tr>

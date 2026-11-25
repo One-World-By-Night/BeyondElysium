@@ -1,10 +1,10 @@
 # Storyteller Toolkit
 
-The Storyteller-facing hub for a chronicle: pick which chronicle, then move between its Dashboard, My Queue, Approval Queue, Characters, Players, Plots & Rumors, Secrets, Boon Ledger, Items & Locations, Game Nights, Releases, Downtime, Factions, Relationships, and Email Log tabs.
+The Storyteller-facing hub for a chronicle: pick which chronicle, then move between its Dashboard, My Queue, Approval Queue, Characters, Players, Plots & Rumors, Secrets, Boon Ledger, Items & Locations, Catalog, Game Nights, Releases, Downtime, Factions, Relationships, and Email Log tabs.
 
 ## Who can use this
 
-Storytellers (HST and AST) see every tab, including Players on every chronicle. A Narrator sees My Queue, Plots & Rumors, Secrets, Game Nights, Releases, and Downtime - the tools tied to running plots and sessions, not sheet approval or the catalog. The chronicle's Harpy sees only Boon Ledger. A plain player sees none of these tabs - their own view of a chronicle is [My Chronicle](my-chronicle.md), not this page.
+The HST sees every tab, including Players on every chronicle. An AST sees the same tabs except Catalog, which the HST can give them on the Players tab. A Narrator sees My Queue, Plots & Rumors, Secrets, Game Nights, Releases, and Downtime - the tools tied to running plots and sessions, not sheet approval or the catalog. The chronicle's Harpy sees only Boon Ledger. A plain player sees none of these tabs - their own view of a chronicle is [My Chronicle](my-chronicle.md), not this page.
 
 ## How to get there
 
@@ -27,6 +27,7 @@ Look for a "Storyteller Toolkit" link in your site's navigation - this plugin cr
   - **Secrets** - every secret in the chronicle in one searchable list, each showing what it is attached to and who has been told. See [Secrets](secrets.md).
   - **Boon Ledger** - the chronicle's Harpy view. See [Boon Ledger](boon-ledger.md).
   - **Items & Locations** - the chronicle's item and location catalog, and the connections between them and characters. See [Items & Locations](world-objects.md).
+  - **Catalog** - add to and change what the chronicle's characters can buy: its own Disciplines, Gifts, Rituals, Merits and the rest, and the price and description of the book's entries (the HST, or an AST or Narrator the HST has given it to). See [Catalog](catalog.md).
   - **Game Nights** - sessions and attendance. See [Game Nights](game-nights.md).
   - **Releases** - scheduled and manual release batches for rumors and downtime results. See [Releases](release-batches.md).
   - **Downtime** - the downtime action queue. See [Downtime](downtime-queue.md).
@@ -58,7 +59,7 @@ The page keeps your chosen chronicle and tab in its web address, so refreshing o
 
 - **Tabs are chronicle-specific.** Switching to a chronicle where you hold a narrower role hides tabs you had a moment ago; the page falls back to the first tab still available to you there.
 - **This is the Storyteller-facing page.** Your own characters and your own plot feed live on [My Chronicle](my-chronicle.md) instead, even if you're also an HST or AST - a Storyteller opening My Chronicle's own Dashboard tab sees the same chronicle-wide view described in [Game Dashboard](game-dashboard.md), but every other My Chronicle tab is that Storyteller's own player-facing view.
-- **A Narrator reaches five tabs here** - My Queue, Plots & Rumors, Game Nights, Releases, and Downtime - the same Plots & Rumors tools a Storyteller has (Allocate actions and Generate rumors included, not only posting responses and notes), but not Dashboard, Approval Queue, Players, Boon Ledger, Items & Locations, or Factions.
+- **A Narrator reaches five tabs here** - My Queue, Plots & Rumors, Game Nights, Releases, and Downtime - the same Plots & Rumors tools a Storyteller has (Allocate actions and Generate rumors included, not only posting responses and notes), but not Dashboard, Approval Queue, Players, Boon Ledger, Items & Locations, or Factions, and not Catalog unless the HST has given it to them.
 - **The chronicle's Harpy sees only Boon Ledger here** - not Characters, Plots & Rumors, or the Approval Queue, even though a Harpy can look up characters to see who owes whom.
 
 ## Troubleshooting
@@ -77,6 +78,7 @@ The page keeps your chosen chronicle and tab in its web address, so refreshing o
 - [Plots & Rumors](plot-manager.md)
 - [Boon Ledger](boon-ledger.md)
 - [Items & Locations](world-objects.md)
+- [Catalog](catalog.md)
 - [Game Nights](game-nights.md)
 - [Releases](release-batches.md)
 - [Downtime](downtime-queue.md)

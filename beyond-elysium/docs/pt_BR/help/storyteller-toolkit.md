@@ -1,10 +1,10 @@
 # Kit de Ferramentas do Narrador
 
-O centro voltado ao Narrador de uma crônica: escolha a crônica e passe entre as abas Painel, Minha Fila, Fila de Aprovação, Personagens, Jogadores, Tramas e Rumores, Segredos, Registro de Favores, Itens e Locais, Noites de Jogo, Lançamentos, Tempo Livre, Facções, Relacionamentos e Registro de E-mails dela.
+O centro voltado ao Narrador de uma crônica: escolha a crônica e passe entre as abas Painel, Minha Fila, Fila de Aprovação, Personagens, Jogadores, Tramas e Rumores, Segredos, Registro de Favores, Itens e Locais, Catálogo, Noites de Jogo, Lançamentos, Tempo Livre, Facções, Relacionamentos e Registro de E-mails dela.
 
 ## Quem pode usar
 
-Os Narradores (HST e AST) veem todas as abas, inclusive Jogadores em toda crônica. Um Condutor de Trama vê Minha Fila, Tramas e Rumores, Segredos, Noites de Jogo, Lançamentos e Tempo Livre - as ferramentas ligadas a conduzir tramas e sessões, não à aprovação de fichas nem ao catálogo. A Harpia da crônica vê só o Registro de Favores. Um jogador comum não vê nenhuma dessas abas - a visão própria dele de uma crônica é [Minha Crônica](my-chronicle.md), não esta página.
+O HST vê todas as abas, inclusive Jogadores em toda crônica. Um AST vê as mesmas abas, menos Catálogo, que o HST pode dar a ele na aba Jogadores. Um Condutor de Trama vê Minha Fila, Tramas e Rumores, Segredos, Noites de Jogo, Lançamentos e Tempo Livre - as ferramentas ligadas a conduzir tramas e sessões, não à aprovação de fichas nem ao catálogo. A Harpia da crônica vê só o Registro de Favores. Um jogador comum não vê nenhuma dessas abas - a visão própria dele de uma crônica é [Minha Crônica](my-chronicle.md), não esta página.
 
 ## Como chegar lá
 
@@ -23,6 +23,7 @@ Procure um link "Kit de Ferramentas do Narrador" na navegação do seu site - es
   - **Segredos** - todo segredo da crônica em uma lista pesquisável, cada um mostrando a que está ligado e quem foi contado. Veja [Segredos](secrets.md).
   - **Registro de Favores** - a visão da Harpia da crônica. Veja [Registro de Favores](boon-ledger.md).
   - **Itens e Locais** - o catálogo de itens e locais da crônica, e as conexões entre eles e os personagens. Veja [Itens e Locais](world-objects.md).
+  - **Catálogo** - acrescente e altere o que os personagens da crônica podem comprar: as próprias Disciplinas, Dádivas, Rituais, Qualidades e o resto, e o preço e a descrição dos itens do livro (o HST, ou um AST ou Condutor de Trama a quem o HST o deu). Veja [Catálogo](catalog.md).
   - **Noites de Jogo** - sessões e presença. Veja [Noites de Jogo](game-nights.md).
   - **Lançamentos** - lotes de lançamento programados e manuais de rumores e resultados de tempo livre. Veja [Lançamentos](release-batches.md).
   - **Tempo Livre** - a fila de ações de tempo livre. Veja [Tempo Livre](downtime-queue.md).
@@ -54,7 +55,7 @@ A página guarda a crônica e a aba que você escolheu no endereço web dela, en
 
 - **As abas são específicas da crônica.** Trocar para uma crônica em que você tem um papel mais restrito esconde abas que você tinha um instante atrás; a página recua para a primeira aba que ainda está disponível a você ali.
 - **Esta é a página voltada ao Narrador.** Os seus próprios personagens e o seu próprio feed de tramas ficam em [Minha Crônica](my-chronicle.md), mesmo que você também seja HST ou AST - um Narrador que abre a aba Painel de Minha Crônica vê a mesma visão da crônica inteira descrita em [Painel do Jogo](game-dashboard.md), mas toda outra aba de Minha Crônica é a visão de jogador desse Narrador.
-- **Um Condutor de Trama alcança cinco abas aqui** - Minha Fila, Tramas e Rumores, Noites de Jogo, Lançamentos e Tempo Livre - com as mesmas ferramentas de Tramas e Rumores que um Narrador tem (Alocar ações e Gerar rumores inclusive, não só postar respostas e notas), mas não Painel, Fila de Aprovação, Jogadores, Registro de Favores, Itens e Locais nem Facções.
+- **Um Condutor de Trama alcança cinco abas aqui** - Minha Fila, Tramas e Rumores, Noites de Jogo, Lançamentos e Tempo Livre - com as mesmas ferramentas de Tramas e Rumores que um Narrador tem (Alocar ações e Gerar rumores inclusive, não só postar respostas e notas), mas não Painel, Fila de Aprovação, Jogadores, Registro de Favores, Itens e Locais nem Facções, e não Catálogo, a menos que o HST o tenha dado a ele.
 - **A Harpia da crônica vê só o Registro de Favores aqui** - não Personagens, Tramas e Rumores nem a Fila de Aprovação, embora uma Harpia possa procurar personagens para ver quem deve a quem.
 
 ## Solução de problemas
@@ -73,6 +74,7 @@ A página guarda a crônica e a aba que você escolheu no endereço web dela, en
 - [Tramas e Rumores](plot-manager.md)
 - [Registro de Favores](boon-ledger.md)
 - [Itens e Locais](world-objects.md)
+- [Catálogo](catalog.md)
 - [Noites de Jogo](game-nights.md)
 - [Lançamentos](release-batches.md)
 - [Tempo Livre](downtime-queue.md)

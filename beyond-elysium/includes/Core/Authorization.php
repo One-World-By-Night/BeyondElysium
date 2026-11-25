@@ -2,6 +2,8 @@
 
 namespace BeyondElysium\Core;
 
+use BeyondElysium\Services\Staff_Grants;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -140,6 +142,9 @@ class Authorization {
 					return true;
 				}
 			}
+			if ( self::granted_by_role_path( $game, $user, $capability ) ) {
+				return true;
+			}
 		}
 
 		if ( ! current_user_can( $capability ) ) {
@@ -155,7 +160,28 @@ class Authorization {
 			return false;
 		}
 
-		return in_array( $capability, self::role_grants( $member->role ), true );
+		if ( in_array( $capability, self::role_grants( $member->role ), true ) ) {
+			return true;
+		}
+
+		return Staff_Grants::counts_for( $capability, (string) $member->role )
+			&& in_array( $capability, Staff_Grants::held( $game_id, $user->ID ), true );
+	}
+
+	/**
+	 * Whether the user holds a grant of this capability here and holds an accessSchema role the grant counts for.
+	 */
+	private static function granted_by_role_path( object $game, \WP_User $user, string $capability ): bool {
+		if ( ! Staff_Grants::is_area( $capability ) || ! in_array( $capability, Staff_Grants::held( (int) $game->id, $user->ID ), true ) ) {
+			return false;
+		}
+		foreach ( Staff_Grants::roles_for( $capability ) as $role ) {
+			$role_path = self::asc_role_path( $game, $role );
+			if ( $role_path !== null && self::check_asc_role_path( $user->user_email, $role_path ) ) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

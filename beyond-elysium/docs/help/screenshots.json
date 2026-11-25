@@ -263,6 +263,17 @@
 				}
 			}
 		],
+		"catalog": [
+			{
+				"heading": "Catalog",
+				"path": "/be-storyteller/?game_slug=be-demo&tab=catalog",
+				"account": "storyteller",
+				"alt": {
+					"en": "The Catalog tab: the creature type and section pickers, how the section prices, a search box and filter, and the list of entries with their prices and badges.",
+					"pt_BR": "A aba Catálogo: os seletores de tipo de criatura e seção, como a seção cobra, uma caixa de busca e filtro, e a lista de itens com os preços e as etiquetas."
+				}
+			}
+		],
 		"chronicle-players": [
 			{
 				"heading": "Players",

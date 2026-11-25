@@ -24,6 +24,8 @@ describe( 'canIn', () => {
 		be_manage_apr: false,
 		be_manage_factions: false,
 		be_manage_chronicle_setup: false,
+		be_delete_characters: false,
+		be_grant_staff_access: false,
 	};
 
 	beforeEach( () => {
@@ -42,6 +44,20 @@ describe( 'canIn', () => {
 		expect(
 			canIn( 'be_manage_boons', { ...playerHere, be_manage_boons: true } )
 		).toBe( true );
+	} );
+
+	it( 'keeps Delete for a staff member whose chronicle map holds it and hides it for one whose map does not', () => {
+		const ast: MyCapabilities = {
+			...playerHere,
+			be_manage_characters: true,
+		};
+		const hst: MyCapabilities = {
+			...ast,
+			be_delete_characters: true,
+		};
+		expect( canIn( 'be_manage_characters', ast ) ).toBe( true );
+		expect( canIn( 'be_delete_characters', ast ) ).toBe( false );
+		expect( canIn( 'be_delete_characters', hst ) ).toBe( true );
 	} );
 
 	it( 'answers from the site-wide snapshot for a screen placed on its own, with no chronicle picker', () => {
@@ -67,6 +83,8 @@ describe( 'canAny', () => {
 		be_manage_apr: false,
 		be_manage_factions: false,
 		be_manage_chronicle_setup: false,
+		be_delete_characters: false,
+		be_grant_staff_access: false,
 	};
 
 	it( 'answers yes when any one capability is held', () => {

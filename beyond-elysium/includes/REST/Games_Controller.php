@@ -252,6 +252,10 @@ class Games_Controller extends Base_Controller {
 			'be_manage_factions',
 			// Gates Chronicle Setup's own connect and disconnect controls.
 			'be_manage_chronicle_setup',
+			// Gates the Characters list's Delete button.
+			'be_delete_characters',
+			// Gates the Players tab's Staff permissions section.
+			'be_grant_staff_access',
 		];
 
 		$game = Game::find_by_slug( $request['game_slug'] );

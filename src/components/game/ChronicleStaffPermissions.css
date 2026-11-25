@@ -1,0 +1,143 @@
+.be-staff-permissions {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
+.be-staff-permissions__hint {
+	margin: 0.3rem 0;
+	font-size: 0.9rem;
+	color: var(--be-gray-6);
+}
+
+.be-staff-permissions__error {
+	color: var(--be-red-7);
+}
+
+.be-staff-permissions__notice {
+	margin: 0.2rem 0;
+	padding: 0.5rem 0.85rem;
+	border: 1px solid var(--be-gray-18);
+	border-radius: 4px;
+	background: var(--be-gray-29);
+}
+
+.be-staff-permissions__people,
+.be-staff-permissions__found,
+.be-staff-permissions__log,
+.be-staff-permissions__areas {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.be-staff-permissions__people {
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+}
+
+.be-staff-permissions__person {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	border: 1px solid var(--be-gray-18);
+	border-radius: 4px;
+	padding: 0.6rem 0.75rem;
+}
+
+.be-staff-permissions__who {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	align-items: baseline;
+	overflow-wrap: anywhere;
+}
+
+.be-staff-permissions__role {
+	font-size: 0.85rem;
+	color: var(--be-gray-6);
+}
+
+.be-staff-permissions__areas {
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+}
+
+.be-staff-permissions__areas li {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 0.2rem 0.75rem;
+}
+
+.be-staff-permissions__area {
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+	min-height: var(--be-tap-min, 32px);
+}
+
+.be-staff-permissions__note {
+	font-size: 0.85rem;
+	color: var(--be-gray-6);
+}
+
+.be-staff-permissions__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+}
+
+.be-staff-permissions__search label {
+	display: flex;
+	flex-direction: column;
+	gap: 0.3rem;
+	font-weight: 600;
+}
+
+.be-staff-permissions__input.be-staff-permissions__input {
+	width: 100%;
+	max-width: 32rem;
+	min-height: var(--be-tap-min, 32px);
+	padding: 0.35rem 0.6rem;
+	border: 1px solid var(--be-gray-18);
+	border-radius: 3px;
+	font: inherit;
+	font-weight: 400;
+}
+
+.be-staff-permissions__found {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+	margin-top: 0.5rem;
+}
+
+.be-staff-permissions__button.be-staff-permissions__button {
+	min-height: var(--be-tap-min, 32px);
+	padding: 0.3rem 0.8rem;
+	border: 1px solid var(--be-blue-4);
+	border-radius: 3px;
+	background: var(--be-gray-29);
+	color: inherit;
+	font: inherit;
+	cursor: pointer;
+}
+
+.be-staff-permissions__button.be-staff-permissions__button--remove {
+	border-color: var(--be-red-7);
+}
+
+.be-staff-permissions__button.be-staff-permissions__button:disabled {
+	opacity: 0.6;
+	cursor: default;
+}
+
+.be-staff-permissions__log {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	font-size: 0.9rem;
+}

@@ -6,7 +6,6 @@ import { __, sprintf } from '@wordpress/i18n';
 import type {
 	ApprovalLevel,
 	ApprovalRange,
-	CatalogDescription,
 	CrossBlockRef,
 	IdentityField,
 	IdentityFieldDefinition,
@@ -23,8 +22,8 @@ import type {
 	TraitListMeta,
 } from '../../types';
 import Modal from '../shared/Modal';
-import HtmlEditor from '../shared/HtmlEditor';
 import HelpButton from '../shared/HelpButton';
+import { DescriptionEditorButton } from '../shared/CatalogDescriptionEditor';
 import {
 	setPlayerOrder,
 	showsReorderButton,
@@ -32,143 +31,6 @@ import {
 
 const APPROVAL_LEVELS: ApprovalLevel[] = [ 'auto', 'st' ];
 import './Admin.css';
-
-/**
- * Empty check across all three CatalogDescription sections, for the trigger button's "(set)" indicator.
- */
-function hasAnyDescriptionSection( value?: CatalogDescription ): boolean {
-	return !! ( value?.reference || value?.description || value?.source );
-}
-
-/**
- * A per-row trigger that opens a modal rich-text editor for one catalog item's/power's/level's `description`.
- */
-function DescriptionEditorButton( {
-	label,
-	value,
-	onSave,
-}: {
-	label: string;
-	value?: CatalogDescription;
-	onSave: ( value: CatalogDescription ) => void;
-} ) {
-	const [ isOpen, setIsOpen ] = useState( false );
-	const [ draft, setDraft ] = useState< CatalogDescription >( value ?? {} );
-
-	function open() {
-		setDraft( value ?? {} );
-		setIsOpen( true );
-	}
-
-	function save() {
-		onSave( draft );
-		setIsOpen( false );
-	}
-
-	return (
-		<>
-			<button
-				type="button"
-				className="be-def-editor__description-trigger"
-				onClick={ open }
-			>
-				{ hasAnyDescriptionSection( value )
-					? __( 'Description (set)', 'beyond-elysium' )
-					: __( 'Description', 'beyond-elysium' ) }
-			</button>
-			{ isOpen && (
-				<Modal
-					title={ sprintf(
-						/* translators: %s: the item, level, or field's label */
-						__( 'Description - %s', 'beyond-elysium' ),
-						label
-					) }
-					onClose={ () => setIsOpen( false ) }
-					footer={
-						<>
-							<button
-								type="button"
-								onClick={ () => setIsOpen( false ) }
-							>
-								{ __( 'Cancel', 'beyond-elysium' ) }
-							</button>
-							<button type="button" onClick={ save }>
-								{ __( 'Save', 'beyond-elysium' ) }
-							</button>
-						</>
-					}
-				>
-					<div className="be-help-heading">
-						<HelpButton helpKey="schema-block-notes" />
-					</div>
-					<p className="description">
-						{ __(
-							'Formatting, lists, and tables are kept in each section. Images and anything else are stripped when saved.',
-							'beyond-elysium'
-						) }
-					</p>
-
-					<div className="be-def-editor__description-section">
-						<label htmlFor="be-def-editor-description-reference">
-							{ __( 'Reference', 'beyond-elysium' ) }
-						</label>
-						<HtmlEditor
-							id="be-def-editor-description-reference"
-							defaultValue={ draft.reference ?? '' }
-							onChange={ ( html ) =>
-								setDraft( { ...draft, reference: html } )
-							}
-							tables
-							rows={ 5 }
-							aiAssist={ {
-								capability: 'be_manage_schemas',
-								fieldContext: 'schema_item_reference',
-							} }
-						/>
-					</div>
-
-					<div className="be-def-editor__description-section">
-						<label htmlFor="be-def-editor-description-body">
-							{ __( 'Description', 'beyond-elysium' ) }
-						</label>
-						<HtmlEditor
-							id="be-def-editor-description-body"
-							defaultValue={ draft.description ?? '' }
-							onChange={ ( html ) =>
-								setDraft( { ...draft, description: html } )
-							}
-							tables
-							rows={ 5 }
-							aiAssist={ {
-								capability: 'be_manage_schemas',
-								fieldContext: 'schema_item_description',
-							} }
-						/>
-					</div>
-
-					<div className="be-def-editor__description-section">
-						<label htmlFor="be-def-editor-description-source">
-							{ __( 'Source', 'beyond-elysium' ) }
-						</label>
-						<HtmlEditor
-							id="be-def-editor-description-source"
-							defaultValue={ draft.source ?? '' }
-							onChange={ ( html ) =>
-								setDraft( { ...draft, source: html } )
-							}
-							tables
-							rows={ 5 }
-							aiAssist={ {
-								capability: 'be_manage_schemas',
-								fieldContext: 'schema_item_source',
-							} }
-						/>
-					</div>
-				</Modal>
-			) }
-		</>
-	);
-}
 
 /**
  * A per-row trigger that opens a modal editor for a numeric per-value approval schedule ("reaching 4 or 5 needs

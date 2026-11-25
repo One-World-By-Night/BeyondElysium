@@ -1,0 +1,22 @@
+.be-def-editor__description-trigger.be-def-editor__description-trigger {
+	white-space: nowrap;
+}
+
+.be-def-editor__description-section {
+	margin-bottom: 1rem;
+}
+
+.be-def-editor__description-section label {
+	display: block;
+	font-weight: 600;
+	margin-bottom: 0.25rem;
+}
+
+.be-def-editor__description-warning {
+	margin: 0 0 1rem;
+	padding: 0.5rem 0.75rem;
+	border: 1px solid var(--be-gold-8);
+	border-radius: 4px;
+	background: var(--be-gold-2);
+	color: var(--be-gold-4);
+}

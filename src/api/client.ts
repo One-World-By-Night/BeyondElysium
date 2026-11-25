@@ -133,6 +133,17 @@ import type {
 	StaffQueueCastingRow,
 } from '../types/staffQueue';
 import type {
+	StaffGrantArea,
+	StaffGrantsResponse,
+	StaffGrantsSaved,
+} from '../types/staffGrants';
+import type {
+	CatalogEntryFlag,
+	CatalogEntry,
+	CatalogListing,
+	CatalogSectionsResponse,
+} from '../types/catalog';
+import type {
 	NpcCasting,
 	CreateNpcCastingRequest,
 	UpdateNpcCastingRequest,
@@ -1540,6 +1551,115 @@ export const joinRequests = {
 			method: 'DELETE',
 		} ),
 };
+
+/**
+ * REST client for a chronicle's Catalog screen: the sections that take entries of its own, and the entry-sized writes.
+ */
+export const catalog = ( gameSlug: string ) => ( {
+	sections: (): Promise< CatalogSectionsResponse > =>
+		apiFetch( { path: `${ BASE }/${ gameSlug }/catalog` } ),
+
+	entries: ( blockSlug: string, stack: string ): Promise< CatalogListing > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/catalog/${ blockSlug }${ toQuery( {
+				stack,
+			} ) }`,
+		} ),
+
+	add: (
+		blockSlug: string,
+		stack: string,
+		fields: Record< string, unknown >
+	): Promise< { entry: CatalogEntry | null } > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/catalog/${ blockSlug }/entries`,
+			method: 'POST',
+			data: { ...fields, stack },
+		} ),
+
+	change: (
+		blockSlug: string,
+		stack: string,
+		name: string,
+		etag: string,
+		changes: Record< string, unknown >
+	): Promise< { entry: CatalogEntry | null } > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/catalog/${ blockSlug }/entries`,
+			method: 'PUT',
+			data: { name, etag, changes, stack },
+		} ),
+
+	remove: (
+		blockSlug: string,
+		name: string,
+		etag: string
+	): Promise< { removed: boolean } > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/catalog/${ blockSlug }/entries`,
+			method: 'DELETE',
+			data: { name, etag },
+		} ),
+
+	revert: (
+		blockSlug: string,
+		stack: string,
+		name: string
+	): Promise< { entry: CatalogEntry | null } > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/catalog/${ blockSlug }/entries/revert`,
+			method: 'POST',
+			data: { name, stack },
+		} ),
+
+	setInType: (
+		blockSlug: string,
+		stack: string,
+		name: string,
+		etag: string,
+		filed: {
+			in_clan?: Record< string, string[] >;
+			category_values?: Record< string, string >;
+		}
+	): Promise< { entry: CatalogEntry | null } > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/catalog/${ blockSlug }/in-type`,
+			method: 'PUT',
+			data: { name, etag, stack, ...filed },
+		} ),
+
+	/**
+	 * Settles a flagged change: keeps the chronicle's value, or takes the book's.
+	 */
+	settle: (
+		action: 'keep' | 'take',
+		blockSlug: string,
+		path: CatalogEntryFlag[ 'path' ]
+	): Promise< unknown > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/catalog-corrections/${ action }`,
+			method: 'POST',
+			data: { kind: 'block', target: blockSlug, path },
+		} ),
+} );
+
+/**
+ * REST client for what an HST gives an AST or a Narrator beyond the role's own bundle.
+ */
+export const staffGrants = ( gameSlug: string ) => ( {
+	list: (): Promise< StaffGrantsResponse > =>
+		apiFetch( { path: `${ BASE }/${ gameSlug }/staff-grants` } ),
+
+	set: (
+		wpUserId: number,
+		areas: StaffGrantArea[]
+	): Promise< StaffGrantsSaved > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/staff-grants/${ wpUserId }`,
+			method: 'PUT',
+			data: { areas },
+		} ),
+} );
 
 /**
  * REST client for connecting a chronicle to a Discord server.
@@ -4528,6 +4648,8 @@ const api = {
 	gameMembers,
 	chroniclePlayers,
 	joinRequests,
+	staffGrants,
+	catalog,
 	bot,
 	discordLinks,
 	authorizationSettings,

@@ -47,6 +47,7 @@ export const STORYTELLER_TABS = {
 	factions: 'factions',
 	relationships: 'relationships',
 	emailLog: 'email-log',
+	catalog: 'catalog',
 } as const;
 
 /**

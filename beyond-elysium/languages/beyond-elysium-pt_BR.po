@@ -16465,3 +16465,421 @@ msgstr "Só quem pode editar o catálogo desta crônica pode adicionar a ele."
 #: includes/REST/Changes_Controller.php
 msgid "catalog must be an object or null."
 msgstr "catalog deve ser um objeto ou nulo."
+
+#: includes/REST/Staff_Grants_Controller.php:160
+msgid "That is not something a member can be given."
+msgstr "Isso não é algo que se possa dar a um membro."
+
+#: includes/REST/Staff_Grants_Controller.php:162
+msgid "Give them the AST or Narrator role first."
+msgstr "Dê a eles primeiro o cargo de Narrador Assistente ou de Condutor de Trama."
+
+#: includes/REST/Staff_Grants_Controller.php:164
+msgid "Only an AST can be given Delete characters; a Narrator has no Characters list."
+msgstr "Só um Narrador Assistente pode receber Excluir personagens; um Condutor de Trama não tem a lista de Personagens."
+
+#: includes/REST/Staff_Grants_Controller.php:166
+msgid "Could not save the change."
+msgstr "Não foi possível salvar a alteração."
+
+#: build/271.js:63
+msgid "Delete characters"
+msgstr "Excluir personagens"
+
+#: build/271.js:63
+msgid "Harpy"
+msgstr "Harpia"
+
+#: build/271.js:63
+msgid "No role here"
+msgstr "Nenhum cargo aqui"
+
+#: build/271.js:63
+msgid "A former member"
+msgstr "Um ex-membro"
+
+#. translators: 1: who gave it, 2: the area, 3: who received it, 4: the date
+#: build/271.js:64
+#, js-format
+msgid "%1$s gave %2$s to %3$s, %4$s."
+msgstr "%1$s deu %2$s a %3$s, %4$s."
+
+#. translators: 1: who took it away, 2: the area, 3: who lost it, 4: the date
+#: build/271.js:65
+#, js-format
+msgid "%1$s took away %2$s from %3$s, %4$s."
+msgstr "%1$s retirou %2$s de %3$s, %4$s."
+
+#: build/271.js:65
+msgid "In the Storyteller Toolkit"
+msgstr "No Kit de Ferramentas do Narrador"
+
+#: build/271.js:65
+msgid "Opens in wp-admin. Needs an Editor account on this site."
+msgstr "Abre no wp-admin. Exige uma conta de Editor neste site."
+
+#: build/271.js:65
+msgid "Not an AST or Narrator here now, so these do nothing."
+msgstr "Não é Narrador Assistente nem Condutor de Trama aqui agora, então estas permissões não fazem nada."
+
+#: build/271.js:65
+msgid "Remove all"
+msgstr "Remover tudo"
+
+#: build/271.js:65
+msgid "Failed to load the staff permissions."
+msgstr "Falha ao carregar as permissões da equipe."
+
+#. translators: %s: a member's name
+#: build/271.js:66
+#, js-format
+msgid "Saved for %s."
+msgstr "Salvo para %s."
+
+#: build/271.js:66
+msgid "Failed to save the staff permissions."
+msgstr "Falha ao salvar as permissões da equipe."
+
+#: build/271.js:66
+msgid "Staff permissions"
+msgstr "Permissões da equipe"
+
+#: build/271.js:66
+msgid "Give an AST or a Narrator more than their role holds, one person at a time. Only an HST gives or takes these away, and every change is recorded."
+msgstr "Dê a um Narrador Assistente ou a um Condutor de Trama mais do que o cargo dele inclui, uma pessoa por vez. Só o Narrador-Chefe concede ou retira estas permissões, e toda alteração fica registrada."
+
+#: build/271.js:66
+msgid "Nobody has been given more than their role yet."
+msgstr "Ninguém recebeu mais do que o seu cargo ainda."
+
+#: build/271.js:66
+msgid "Give someone more"
+msgstr "Dar mais a alguém"
+
+#: build/271.js:66
+msgid "Find an account by name"
+msgstr "Encontrar uma conta pelo nome"
+
+#: build/271.js:66
+msgid "Choose someone else"
+msgstr "Escolher outra pessoa"
+
+#: build/271.js:66
+msgid "Recent changes"
+msgstr "Alterações recentes"
+
+#: includes/REST/Catalog_Controller.php:202
+msgid "That section does not read an in-clan list by that name."
+msgstr "Essa seção não lê uma lista de clã com esse nome."
+
+#: includes/REST/Catalog_Controller.php:215
+msgid "That is not a value this section files a family under."
+msgstr "Esse não é um valor sob o qual esta seção classifica uma família."
+
+#: includes/REST/Catalog_Controller.php:275
+msgid "Two powers in this family have the same name."
+msgstr "Dois poderes desta família têm o mesmo nome."
+
+#: includes/REST/Catalog_Controller.php:290
+msgid "A book entry cannot be taken away here. An approval rule is what disallows one."
+msgstr "Um item do livro não pode ser removido aqui. Uma regra de aprovação é o que proíbe um."
+
+#: includes/REST/Catalog_Controller.php:291
+msgid "Only an entry from the book has a book version to go back to."
+msgstr "Só um item do livro tem uma versão do livro à qual voltar."
+
+#: includes/REST/Catalog_Controller.php:292
+msgid "Which clans take a book entry in-clan is changed in wp-admin's Schema Blocks."
+msgstr "Quais clãs têm um item do livro como de clã é alterado nos Blocos de Esquema do wp-admin."
+
+#: includes/REST/Catalog_Controller.php:293
+msgid "A power from the book cannot be taken away here."
+msgstr "Um poder do livro não pode ser removido aqui."
+
+#: includes/REST/Catalog_Controller.php:297
+msgid "A book entry can only have its price and description changed here."
+msgstr "Um item do livro só pode ter o preço e a descrição alterados aqui."
+
+#. translators: %d: the most a price may be, 500
+#: includes/REST/Catalog_Controller.php:307
+#, php-format
+msgid "A price is a whole number, a range such as 1-3 or a choice such as 1 or 3, with no number above %d."
+msgstr "Um preço é um número inteiro, uma faixa como 1-3 ou uma escolha como 1 ou 3, sem nenhum número acima de %d."
+
+#: includes/REST/Catalog_Controller.php:314
+msgid "Each power needs a name and a rank this section has above its levels."
+msgstr "Cada poder precisa de um nome e de um grau que esta seção tenha acima de seus níveis."
+
+#: includes/REST/Catalog_Controller.php:319
+msgid "Some of what was sent is not usable."
+msgstr "Parte do que foi enviado não pode ser usada."
+
+#: includes/REST/Catalog_Controller.php:270
+msgid "That entry is not in this chronicle's catalog."
+msgstr "Esse item não está no catálogo desta crônica."
+
+#: includes/REST/Catalog_Controller.php:272
+msgid "Someone changed this since you opened it."
+msgstr "Alguém alterou isto desde que você abriu."
+
+#: includes/REST/Catalog_Controller.php:276
+msgid "An entry with that name is already there."
+msgstr "Já existe um item com esse nome."
+
+#: includes/REST/Catalog_Controller.php:312
+msgid "Give it a name."
+msgstr "Dê um nome a ele."
+
+#: includes/REST/Catalog_Controller.php:313
+msgid "That is not a rank this list uses."
+msgstr "Esse não é um grau que esta lista usa."
+
+#: includes/REST/Catalog_Controller.php:315
+msgid "That is not a level of this section."
+msgstr "Esse não é um nível desta seção."
+
+#: includes/REST/Catalog_Controller.php:316
+msgid "That is not a tradition this list has."
+msgstr "Essa não é uma tradição que esta lista tem."
+
+#: includes/REST/Catalog_Controller.php:317
+msgid "That is not a key of the list this section reads."
+msgstr "Essa não é uma chave da lista que esta seção lê."
+
+#: includes/REST/Catalog_Controller.php:363
+msgid "This chronicle has no such catalog section."
+msgstr "Esta crônica não tem essa seção do catálogo."
+
+#. translators: 1: "4 characters hold this", 2: "1 change waiting names it"
+#: includes/Services/Catalog_Holders.php:100
+#, php-format
+msgid "%1$s, and %2$s."
+msgstr "%1$s, e %2$s."
+
+#. translators: %d: how many waiting changes name an entry
+#: includes/Services/Catalog_Holders.php:89
+#, php-format
+msgid "%d change waiting names it"
+msgid_plural "%d changes waiting name it"
+msgstr[0] "%d alteração pendente cita isto"
+msgstr[1] "%d alterações pendentes citam isto"
+
+#. translators: %d: how many characters hold an entry
+#: includes/Services/Catalog_Holders.php:84
+#, php-format
+msgid "%d character holds this"
+msgid_plural "%d characters hold this"
+msgstr[0] "%d personagem tem isto"
+msgstr[1] "%d personagens têm isto"
+
+#: build/271.js:99
+msgid "Priced per pick."
+msgstr "Preço por escolha."
+
+#: build/271.js:100
+#, js-format
+msgid "Priced by rank: %s."
+msgstr "Preço por grau: %s."
+
+#: build/271.js:101
+#, js-format
+msgid "Out-of-clan %s."
+msgstr "Fora do clã %s."
+
+#: build/271.js:101
+#: build/271.js:107
+msgid "Price"
+msgstr "Preço"
+
+#: build/271.js:102
+#, js-format
+msgid "%1$s: you set %2$s; the book now says %3$s (it said %4$s when you made your change)."
+msgstr "%1$s: você definiu %2$s; o livro agora diz %3$s (dizia %4$s quando você fez a sua alteração)."
+
+#: build/271.js:102
+msgid "Gifts"
+msgstr "Dádivas"
+
+#: build/271.js:104
+#, js-format
+msgid "%s choose their own."
+msgstr "%s escolhem as suas."
+
+#: build/271.js:105
+msgid "From the book. Its names and levels stay; you can describe it and add or price powers for this chronicle."
+msgstr "Do livro. Os nomes e os níveis ficam; você pode descrevê-lo e adicionar ou precificar poderes nesta crônica."
+
+#: build/271.js:105
+#: build/271.js:109
+msgid "It cannot be renamed or removed."
+msgstr "Não pode ser renomeado nem removido."
+
+#: build/271.js:108
+msgid "The tradition's own name for it"
+msgstr "O nome que a tradição dá a ele"
+
+#: build/271.js:108
+msgid "In-clan for"
+msgstr "De clã para"
+
+#: build/271.js:108
+#: build/271.js:110
+msgid "Reload"
+msgstr "Recarregar"
+
+#: build/271.js:110
+msgid "Price per pick"
+msgstr "Preço por escolha"
+
+#: build/271.js:110
+msgid "Add to and change what this chronicle's characters can buy. What you change here is this chronicle's own; the book and every other chronicle stay as they are."
+msgstr "Acrescente e altere o que os personagens desta crônica podem comprar. O que você muda aqui é só desta crônica; o livro e as outras crônicas ficam como estão."
+
+#: build/295.js:27
+#: build/915.js:37
+msgid "Open the Catalog tab"
+msgstr "Abrir a aba Catálogo"
+
+#: build/271.js:99
+#: build/271.js:101
+msgid "Added here"
+msgstr "Adicionado aqui"
+
+#: build/271.js:99
+#: build/271.js:101
+msgid "Changed here"
+msgstr "Alterado aqui"
+
+#: build/271.js:99
+msgid "Needs a look"
+msgstr "Precisa de uma olhada"
+
+#: build/271.js:99
+msgid "Priced per dot."
+msgstr "Preço por ponto."
+
+#: build/271.js:101
+msgid "The book changed this"
+msgstr "O livro alterou isto"
+
+#: build/271.js:101
+msgid "a different description"
+msgstr "uma descrição diferente"
+
+#: build/271.js:101
+msgid "The book no longer has this entry."
+msgstr "O livro não tem mais este item."
+
+#: build/271.js:102
+msgid "Elder powers"
+msgstr "Poderes de Ancião"
+
+#: build/271.js:102
+#: build/271.js:108
+msgid "Failed to save the entry."
+msgstr "Falha ao salvar o item."
+
+#: build/271.js:102
+#: build/271.js:108
+msgid "New entry"
+msgstr "Novo item"
+
+#: build/271.js:105
+#: build/271.js:109
+#, js-format
+msgid "Take \"%s\" out of this chronicle's catalog? Characters cannot pick it afterwards."
+msgstr "Tirar \"%s\" do catálogo desta crônica? Os personagens não poderão mais escolhê-lo."
+
+#: build/271.js:105
+msgid "Levels"
+msgstr "Níveis"
+
+#: build/271.js:106
+#, js-format
+msgid "Level %1$d, %2$s, %3$s XP"
+msgstr "Nível %1$d, %2$s, %3$s XP"
+
+#: build/271.js:107
+#, js-format
+msgid "Name of level %d"
+msgstr "Nome do nível %d"
+
+#: build/271.js:107
+msgid "Characters hold this, so it stays."
+msgstr "Personagens têm isto, então fica."
+
+#: build/271.js:107
+msgid "+ Add a Gift"
+msgstr "+ Adicionar uma Dádiva"
+
+#: build/271.js:107
+msgid "+ Add an elder power"
+msgstr "+ Adicionar um poder de Ancião"
+
+#: build/271.js:108
+#, js-format
+msgid "%s's name for it"
+msgstr "Nome de %s para ele"
+
+#: build/271.js:108
+msgid "A book entry's in-clan lists are changed in wp-admin's Schema Blocks."
+msgstr "As listas de clã de um item do livro são alteradas nos Blocos de Esquema do wp-admin."
+
+#: build/271.js:108
+msgid "Filed under"
+msgstr "Classificado em"
+
+#: build/271.js:109
+msgid "From the book. You can change its price and description for this chronicle."
+msgstr "Do livro. Você pode alterar o preço e a descrição dele nesta crônica."
+
+#: build/271.js:109
+msgid "No rank"
+msgstr "Sem grau"
+
+#: build/271.js:109
+msgid "New group…"
+msgstr "Novo grupo…"
+
+#: build/271.js:109
+msgid "New group"
+msgstr "Novo grupo"
+
+#: build/271.js:110
+#, js-format
+msgid "Stored as: %s"
+msgstr "Guardado como: %s"
+
+#: build/271.js:110
+msgid "Price per dot"
+msgstr "Preço por ponto"
+
+#: build/271.js:110
+msgid "A whole number, a range such as 1–3, or a choice such as 1 or 3."
+msgstr "Um número inteiro, uma faixa como 1–3, ou uma escolha como 1 ou 3."
+
+#: build/271.js:110
+msgid "Failed to load the catalog."
+msgstr "Falha ao carregar o catálogo."
+
+#: build/271.js:110
+msgid "Failed to load the entries."
+msgstr "Falha ao carregar os itens."
+
+#: build/271.js:110
+msgid "No section of this chronicle takes entries of its own."
+msgstr "Nenhuma seção desta crônica aceita itens próprios."
+
+#: build/271.js:110
+msgid "+ New"
+msgstr "+ Novo"
+
+#: build/271.js:110
+msgid "Nothing matches."
+msgstr "Nada corresponde."
+
+#: build/259.js:147
+#: build/271.js:119
+#: build/353.js:81
+msgid "This is long. Write your chronicle's own short note in your own words, with a page reference, and leave the book's wording out."
+msgstr "Está longo. Escreva a anotação curta da própria crônica com as suas palavras, com uma referência de página, e deixe de fora o texto do livro."

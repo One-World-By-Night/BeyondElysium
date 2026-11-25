@@ -18,6 +18,7 @@ Open the [Storyteller Toolkit](storyteller-toolkit.md), pick the chronicle, then
 - **Waiting to sign in** - every invite nobody has signed in for yet: the email, the characters waiting for it, who sent it and when, with a **Cancel** button.
 - **Players** - everyone who is a player in this chronicle, each with their characters. Each character has **Unlink**; each player has **Add characters** and **Remove**.
 - **Discord** - Discord accounts asking to act as a chronicle member: **Waiting for a decision**, with **Approve**/**Decline**, and **Linked**, with **Revoke**. Each row names the Discord account, the website account it's confirmed to, and the characters it carries. See [Discord](discord.md).
+- **Staff permissions** - only the HST sees this. Each person the HST has given more than their role holds, with their role here, five boxes (**Catalog**, **Approval Rules**, **Templates**, **Chronicle Setup**, **Delete characters**) and **Save**; **Give someone more**, to find another account and tick boxes for it; and **Recent changes**, one line for each grant and removal with who made it and when. Catalog and Delete characters say "In the Storyteller Toolkit". The other three say "Opens in wp-admin. Needs an Editor account on this site."
 - A line under **Players** names the OWbN role that goes with being a player here, such as `chronicle/kony/player`.
 - After anything you do, a message says what happened: who became a player, which characters were linked, which were left alone and why.
 
@@ -60,6 +61,17 @@ Open the [Storyteller Toolkit](storyteller-toolkit.md), pick the chronicle, then
 2. Check the characters it lists.
 3. Click **Approve**, or **Decline** if it shouldn't act here.
 
+### Give an AST or Narrator more
+
+1. Under **Staff permissions**, type three letters of their name under **Give someone more** and click their name.
+2. Tick what they should have. **Delete characters** is for an AST, since a Narrator has no Characters list.
+3. Click **Save**. It works from their next click, and only in this chronicle.
+
+### Take it away again
+
+1. Untick the box and click **Save**, or click **Remove all** beside their name.
+2. Their access closes on their next click. **Recent changes** records who took it away and when.
+
 ## Things to know
 
 - **Join requests can be turned off** on [Chronicle Setup](chronicle-setup.md). Off, the chronicle leaves the join list and its join link refuses a new request; one already waiting is still reviewed here.
@@ -77,9 +89,16 @@ Open the [Storyteller Toolkit](storyteller-toolkit.md), pick the chronicle, then
 - **A Discord account is approved for this chronicle, not for an account site-wide.** Approving a new link for the same website account revokes whichever link was approved before it; only one is active at a time.
 - **Acting from Discord follows the same rules as the website.** Nothing a linked account does through the bot skips a permission, an approval, or a limit it would hit here.
 
+- **Only an HST gives or takes these away.** An AST or Narrator can't give themselves or anyone else more, whatever they hold. Every grant and removal is recorded with who made it and when.
+- **A grant counts only while the person is an AST or a Narrator here.** If they become a player or lose the OWbN role, their boxes stay but do nothing until the role is back; the panel says so and offers **Remove all**.
+- **Approval Rules, Templates and Chronicle Setup open only in wp-admin,** which needs an Editor account on the site. The grant is the same either way.
+- **A grant is for one chronicle.** It opens nothing in another.
+
 ## Troubleshooting
 
 - **There is no Players tab.** You are not the chronicle's HST or AST.
+- **I can't find Staff permissions.** Only the HST sees it.
+- **"Give them the AST or Narrator role first."** The account holds neither role in this chronicle. Give it the role, then come back.
 - **"This request carries a Grapevine file - review and accept it from Import..."** Approve refused on purpose - go review the file from Import, which closes the request too once you accept it.
 - **An invite is still waiting after they signed in.** They used a different email address. Check the address on their OWbN account.
 - **"... is linked to ..., so it was left alone."** Unlink that character from the other player first, then add it again.

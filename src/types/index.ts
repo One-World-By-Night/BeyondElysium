@@ -139,6 +139,8 @@ export interface MyCapabilities {
 	be_manage_apr: boolean;
 	be_manage_factions: boolean;
 	be_manage_chronicle_setup: boolean;
+	be_delete_characters: boolean;
+	be_grant_staff_access: boolean;
 }
 
 /**

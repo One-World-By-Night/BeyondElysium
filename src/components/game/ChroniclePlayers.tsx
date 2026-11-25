@@ -10,6 +10,7 @@ import { everyPage } from '../../lib/everyPage';
 import { pickerRows, type PickerRow } from '../../lib/characterPicker';
 import { inviteMessages, linkMessages } from '../../lib/playerInviteMessages';
 import { ChronicleDiscordLinks } from './ChronicleDiscordLinks';
+import { ChronicleStaffPermissions } from './ChronicleStaffPermissions';
 import type {
 	ChroniclePlayer,
 	ChroniclePlayerList,
@@ -32,6 +33,10 @@ function looksLikeEmail( text: string ): boolean {
 
 export interface ChroniclePlayersProps {
 	gameSlug: string;
+	/**
+	 * Whether the viewer holds the right to give staff more permissions here, which shows the Staff permissions section.
+	 */
+	canGrantStaffAccess?: boolean;
 }
 
 /**
@@ -259,7 +264,10 @@ function toggled( set: Set< number >, id: number ): Set< number > {
 	return next;
 }
 
-export function ChroniclePlayers( { gameSlug }: ChroniclePlayersProps ) {
+export function ChroniclePlayers( {
+	gameSlug,
+	canGrantStaffAccess = false,
+}: ChroniclePlayersProps ) {
 	const [ list, setList ] = useState< ChroniclePlayerList | null >( null );
 	const [ invites, setInvites ] = useState< PlayerInvite[] >( [] );
 	const [ characters, setCharacters ] = useState< Character[] >( [] );
@@ -1055,6 +1063,10 @@ export function ChroniclePlayers( { gameSlug }: ChroniclePlayersProps ) {
 					</ul>
 				) }
 			</section>
+
+			{ canGrantStaffAccess && (
+				<ChronicleStaffPermissions gameSlug={ gameSlug } />
+			) }
 		</div>
 	);
 }

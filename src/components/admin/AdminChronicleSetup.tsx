@@ -18,6 +18,8 @@ import HelpButton from '../shared/HelpButton';
 import {
 	preselectedChronicle,
 	sendFileLinkUrl,
+	STORYTELLER_TABS,
+	storytellerTabUrl,
 	writeGameToUrl,
 } from '../../lib/pluginPages';
 import {
@@ -680,6 +682,28 @@ export function AdminChronicleSetup() {
 										'beyond-elysium'
 									) }
 								</button>
+							) : undefined }
+							{ row.id === 'catalog_customisation' &&
+							row.actionable &&
+							row.fix.href ? (
+								<>
+									<a className="button" href={ row.fix.href }>
+										{ __( 'Go', 'beyond-elysium' ) }
+									</a>{ ' ' }
+									<a
+										className="button"
+										href={ `${ storytellerTabUrl(
+											STORYTELLER_TABS.catalog
+										) }&game_slug=${ encodeURIComponent(
+											gameSlug
+										) }` }
+									>
+										{ __(
+											'Open the Catalog tab',
+											'beyond-elysium'
+										) }
+									</a>
+								</>
 							) : undefined }
 						</StatusRow>
 					) ) }

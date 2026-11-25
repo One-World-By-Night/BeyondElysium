@@ -23,6 +23,7 @@ import { DowntimeQueue } from '../game/DowntimeQueue';
 import { StaffQueue } from '../game/StaffQueue';
 import { FactionsAndPositions } from '../faction/FactionsAndPositions';
 import { ChroniclePlayers } from '../game/ChroniclePlayers';
+import { CatalogTab } from '../catalog/CatalogTab';
 import { RelationshipChart } from '../apr/RelationshipChart';
 import { EmailLog } from '../game/EmailLog';
 import {
@@ -106,6 +107,10 @@ export function StorytellerToolkitPage() {
 		capabilities.be_manage_world_objects && {
 			key: STORYTELLER_TABS.worldObjects,
 			label: __( 'Items & Locations', 'beyond-elysium' ),
+		},
+		capabilities.be_manage_schemas && {
+			key: STORYTELLER_TABS.catalog,
+			label: __( 'Catalog', 'beyond-elysium' ),
 		},
 		capabilities.be_manage_sessions && {
 			key: STORYTELLER_TABS.gameNights,
@@ -250,6 +255,9 @@ export function StorytellerToolkitPage() {
 							<ChroniclePlayers
 								key={ gameSlug }
 								gameSlug={ gameSlug }
+								canGrantStaffAccess={
+									capabilities.be_grant_staff_access
+								}
 							/>
 						) }
 
@@ -282,6 +290,13 @@ export function StorytellerToolkitPage() {
 								key={ gameSlug }
 								gameSlug={ gameSlug }
 								showEditor
+							/>
+						) }
+
+						{ tab === STORYTELLER_TABS.catalog && (
+							<CatalogTab
+								key={ gameSlug }
+								gameSlug={ gameSlug }
 							/>
 						) }
 

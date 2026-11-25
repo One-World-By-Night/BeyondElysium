@@ -47,6 +47,8 @@ class Capabilities {
 		'be_manage_factions'       => [ 'administrator', 'editor' ],
 		// Catalog term translations, site-wide.
 		'be_manage_translations'  => [ 'administrator', 'editor' ],
+		// Giving an AST or a Narrator one of the five areas the AST role leaves out, in one chronicle.
+		'be_grant_staff_access'   => [ 'administrator', 'editor' ],
 	];
 
 	/**
