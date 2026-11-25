@@ -939,7 +939,7 @@ class Cost_Engine {
 	 * @param object $definition
 	 * @return array<string,int>
 	 */
-	private static function block_tier_costs( $definition ): array {
+	public static function block_tier_costs( $definition ): array {
 		static $cache = null;
 		if ( $cache !== null && $cache[0] === $definition ) {
 			return $cache[1];
@@ -980,7 +980,7 @@ class Cost_Engine {
 	 * @param object|array<string,mixed> $definition
 	 * @return array<string,int>
 	 */
-	private static function meta_ladder( $definition ): array {
+	public static function meta_ladder( $definition ): array {
 		if ( is_object( $definition ) && isset( $definition->_meta->ladder ) ) {
 			return (array) $definition->_meta->ladder;
 		}

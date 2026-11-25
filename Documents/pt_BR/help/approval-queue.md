@@ -57,6 +57,7 @@ No celular, Nível, Enviado por e Quando ficam atrás de um **Detalhes** em cada
 - **Seção** - numa entrada que o livro não tem. Lista as seções que aceitam o mesmo tipo de entrada, então um "Fettered Minion" digitado em Rituais pode ser colocado em Disciplinas Combo, ou em Qualidades, Defeitos, Habilidades e assim por diante. Escolher outra seção move a entrada. Ela é conferida ali como uma sua: um nome que o catálogo da nova seção tem vira essa entrada, pelo preço do livro, e qualquer outro nome continua sendo uma entrada do próprio jogador na nova seção, esperando um preço. Uma mudança de seção é salva sozinha, então a caixa de preço fica cinza até você salvá-la.
 - **As caixas da própria mudança** - Nome, Pontos, Especialização e Nota num traço, Nível num poder, a classificação numa reserva, o novo valor numa mudança de identidade, Quantidade e Motivo numa mudança de experiência. Só aparecem as caixas que a mudança realmente tem.
 - **Uma caixa de preço**, numa compra - veja [Definir um preço](#definir-um-preço).
+- **Adicionar também ao catálogo desta crônica**, numa entrada caseira, para o HST - veja [Adicionar ao catálogo](#adicionar-ao-catálogo).
 - **Nota para o jogador** - texto simples. O jogador a lê no histórico de mudanças dele, sob "Alterada por um Narrador". O texto entre `[ST]` e `[/ST]` é cortado do que ele vê, então serve para um recado ao próximo Narrador.
 
 **Salvar** grava a sua edição e deixa a mudança esperando. Você ainda a decide com **Aprovar**, **Aprovar tudo** ou **Aprovar Selecionados**, e nada é enviado ao jogador até você decidir. Salvar dá à mudança uma linha nova "Editada por" e um novo código de revisão, então um Narrador que abriu a versão antiga é avisado para recarregar.
@@ -71,6 +72,18 @@ A caixa de preço na janela depende de o livro já ter preço para a entrada.
 - **Uma entrada para a qual o livro já tem preço.** A caixa diz **XP para esta alteração** e começa vazia, com o preço de costume como dica ("Preço de costume: 6 XP"). Deixe vazia para cobrar esse preço. Digite um número para cobrar esse no lugar, só para esta mudança; nada é gravado na entrada, então uma subida depois é precificada pelo livro de novo.
 
 Nos dois casos o número é inteiro, de 0 a 500, e 0 vale. Numa lista que dá pontos em vez de custá-los, como os Defeitos, o valor é registrado e nada sai do XP do jogador.
+
+### Adicionar ao catálogo
+
+Uma entrada caseira a que você dá um preço pode entrar no catálogo desta crônica, para que o próximo personagem que a quiser a escolha na lista em vez de digitá-la de novo. A caixa **Adicionar também ao catálogo desta crônica** fica na janela, abaixo da caixa de preço. Só o HST a vê, os Narradores que já podem editar o catálogo da crônica. Um AST vê a linha "Adiciona ao catálogo" numa mudança que um HST marcou, e aprová-la cumpre a marca.
+
+- **Ela precisa de um preço.** A caixa fica desativada, dizendo "Defina um preço primeiro", até a caixa de preço ter um número, e enquanto a entrada está sendo movida para outra seção. Tirar o preço depois desfaz a marca.
+- **Nada é adicionado até a mudança ser aprovada.** Salvar só marca, e a linha da fila diz "Adiciona ao catálogo". Recuse a mudança e o catálogo fica como está. Aprovar tudo e Aprovar selecionadas também cumprem a marca.
+- **Uma entrada de lista de traços** (Rituais, Disciplinas Combo, Ritae, Méritos, Defeitos e semelhantes) entra pelo preço que você deu, por ponto ou por escolha, como a caixa diz. Se a lista é agrupada, como os Rituais por tradição, aparece uma lista **Grupo**, começando no grupo com que o nome começa ("Necromancy: Mortis: Fettered Minion" começa em Necromancy).
+- **Uma Disciplina, Arcano ou Esfera inteira e nova** entra com todos os níveis da escada da seção, pelos custos habituais da seção, com o nível que o jogador comprou nomeado. Os outros níveis ficam sem nome para o HST preencher depois. Ela conta como fora do clã para todos até você torná-la do clã.
+- **Um Dom** entra sob uma família: uma raça, um augúrio ou uma tribo, ou uma nova. Ponha em Nome a família e em Poder o Dom, e escolha o **Grau do poder**. Ele entra nessa família nesse grau, pelo custo habitual da seção.
+- **É o catálogo desta crônica.** A lista do livro não é tocada e as outras crônicas não veem a entrada. As escolhas seguintes são precificadas pelo catálogo e aprovadas do jeito que a sua crônica aprova aquela seção. Crie uma Regra de Aprovação se quiser que toda escolha seja revisada.
+- **Se dois personagens enviam a mesma entrada** e as duas estão marcadas, a primeira aprovada a adiciona. A segunda fica com o preço que recebeu.
 
 ### Uma mudança que precisa de um preço
 
@@ -153,6 +166,12 @@ Uma mudança que precisa de um preço não pode ser marcada. Dê o preço e apro
 1. Clique em **Editar** na entrada. Se ela pode mudar de lugar, a janela tem uma lista **Seção**.
 2. Escolha a seção a que ela pertence, como Disciplinas Combo em vez de Rituais.
 3. Clique em **Salvar**. Depois abra **Editar** de novo para dar o preço, já que o preço depende da nova seção.
+
+### Adicionar uma entrada caseira ao catálogo da crônica
+
+1. Clique em **Editar** na entrada e digite o preço.
+2. Marque **Adicionar também ao catálogo desta crônica**. Escolha o grupo, ou o grau do poder para um Dom, se a janela pedir, e clique em **Salvar**.
+3. Aprove a mudança. A entrada entra no catálogo quando é aprovada.
 
 ### Deixar uma nota para o jogador
 

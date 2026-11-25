@@ -11,11 +11,14 @@ import { MAX_CUSTOM_PRICE, priceUnitLabel } from '../../lib/queuePrice';
 import {
 	SECTION_FIELD,
 	buildEditRequest,
+	catalogBoxEnabled,
+	catalogLine,
 	draftFor,
 	inputFields,
 	isMove,
 	priceBoxKind,
 	priceTextValid,
+	rankLabel,
 	usualPriceHint,
 } from '../../lib/queueEdit';
 import type { EditDraft } from '../../lib/queueEdit';
@@ -68,6 +71,8 @@ export function QueueChangeEditor( {
 	const basis = change.price_basis ?? null;
 	const priceKind = priceBoxKind( basis );
 	const moving = isMove( change, draft );
+	const offer = change.catalog_offer ?? null;
+	const boxEnabled = catalogBoxEnabled( change, draft );
 
 	useEffect( () => {
 		if ( ! ( change.editable_fields ?? [] ).includes( SECTION_FIELD ) ) {
@@ -78,6 +83,13 @@ export function QueueChangeEditor( {
 			.then( setSections )
 			.catch( () => setSections( [] ) );
 	}, [ gameSlug, change.id, change.editable_fields ] );
+
+	function setCatalog( patch: Partial< EditDraft[ 'catalog' ] > ) {
+		setDraft( ( prev ) => ( {
+			...prev,
+			catalog: { ...prev.catalog, ...patch },
+		} ) );
+	}
 
 	function setField( key: string, value: string ) {
 		setDraft( ( prev ) => ( {
@@ -239,6 +251,118 @@ export function QueueChangeEditor( {
 											'beyond-elysium'
 										) }
 						</span>
+					</div>
+				) }
+
+				{ offer && (
+					<div className="be-queue-editor__field">
+						<label className="be-queue-editor__check">
+							<input
+								type="checkbox"
+								checked={ draft.catalog.on && boxEnabled }
+								disabled={ ! boxEnabled }
+								onChange={ ( e ) =>
+									setCatalog( { on: e.target.checked } )
+								}
+							/>
+							<span>
+								{ __(
+									"Also add to this chronicle's catalog",
+									'beyond-elysium'
+								) }
+							</span>
+						</label>
+						{ ! boxEnabled && (
+							<span className="be-queue-editor__hint">
+								{ moving
+									? __(
+											'Save the move first, then set the price.',
+											'beyond-elysium'
+										)
+									: __(
+											'Set a price first',
+											'beyond-elysium'
+										) }
+							</span>
+						) }
+						{ draft.catalog.on && boxEnabled && (
+							<>
+								<span className="be-queue-editor__hint">
+									{ catalogLine( offer, draft ) }
+								</span>
+								{ offer.kind === 'item' &&
+									offer.groups.length > 0 && (
+										<label className="be-queue-editor__price">
+											<span>
+												{ __(
+													'Group',
+													'beyond-elysium'
+												) }
+											</span>
+											<select
+												className="be-queue-editor__input"
+												value={ draft.catalog.group }
+												onChange={ ( e ) =>
+													setCatalog( {
+														group: e.target.value,
+													} )
+												}
+											>
+												<option value="">
+													{ __(
+														'No group',
+														'beyond-elysium'
+													) }
+												</option>
+												{ offer.groups.map(
+													( group ) => (
+														<option
+															key={ group }
+															value={ group }
+														>
+															{ group }
+														</option>
+													)
+												) }
+											</select>
+										</label>
+									) }
+								{ offer.kind === 'pick' && (
+									<label className="be-queue-editor__price">
+										<span>
+											{ __(
+												'Power rank',
+												'beyond-elysium'
+											) }
+										</span>
+										<select
+											className="be-queue-editor__input"
+											value={ draft.catalog.rank }
+											onChange={ ( e ) =>
+												setCatalog( {
+													rank: e.target.value,
+												} )
+											}
+										>
+											<option value="">
+												{ __(
+													'Choose a rank',
+													'beyond-elysium'
+												) }
+											</option>
+											{ offer.ranks.map( ( rank ) => (
+												<option
+													key={ rank }
+													value={ rank }
+												>
+													{ rankLabel( rank ) }
+												</option>
+											) ) }
+										</select>
+									</label>
+								) }
+							</>
+						) }
 					</div>
 				) }
 

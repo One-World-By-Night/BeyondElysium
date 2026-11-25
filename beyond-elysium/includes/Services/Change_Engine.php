@@ -535,6 +535,17 @@ class Change_Engine {
 			$priced_xp           = $priced['xp'];
 		}
 
+		// A homebrew entry a Storyteller ticked joins the chronicle's catalog, and lands on the sheet as that entry.
+		$tick = is_array( $change->change_data['st_catalog'] ?? null ) ? $change->change_data['st_catalog'] : null;
+		if ( $tick !== null && $change->change_type === 'add_trait' ) {
+			$carried = Catalog_Entry::add_from_change( (string) ( $character->owner_slug ?? '' ), (array) $change->change_data, $tick );
+			if ( $carried === null ) {
+				Transaction::rollback( $savepoint );
+				return false;
+			}
+			$change->change_data = $carried;
+		}
+
 		// Apply change to sheet_data.
 		$new_sheet = self::apply_to_sheet( $character, $change );
 		$written   = Character::update_sheet_data( (int) $character->id, $new_sheet );

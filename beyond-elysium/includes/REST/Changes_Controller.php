@@ -539,6 +539,17 @@ class Changes_Controller extends Base_Controller {
 			return $this->error( 'invalid_param', __( 'fields must be an object.', 'beyond-elysium' ), 400 );
 		}
 
+		$catalog = false;
+		if ( array_key_exists( 'catalog', $request->get_params() ) ) {
+			$catalog = $request->get_param( 'catalog' );
+			if ( $catalog !== null && ! is_array( $catalog ) ) {
+				return $this->error( 'invalid_param', __( 'catalog must be an object or null.', 'beyond-elysium' ), 400 );
+			}
+			if ( ! \BeyondElysium\Core\Authorization::can( 'be_manage_schemas' ) ) {
+				return $this->error( 'catalog_not_allowed', __( 'Only someone who can edit this chronicle\'s catalog can add to it.', 'beyond-elysium' ), 403 );
+			}
+		}
+
 		$price_per = $request->get_param( 'price_per' );
 		$notes     = $request->get_param( 'review_notes' );
 		$result    = Change_Edit::apply(
@@ -548,7 +559,8 @@ class Changes_Controller extends Base_Controller {
 			$fields,
 			$request->get_param( 'price' ),
 			is_string( $price_per ) ? $price_per : null,
-			$notes === null ? null : (string) $notes
+			$notes === null ? null : (string) $notes,
+			$catalog
 		);
 		if ( is_wp_error( $result ) ) {
 			return $result;
@@ -617,6 +629,7 @@ class Changes_Controller extends Base_Controller {
 		$characters = [];
 		$submitters = [];
 		$visits     = [];
+		$may_catalog = \BeyondElysium\Core\Authorization::can( 'be_manage_schemas' );
 		foreach ( $items as $item ) {
 			$item->review_token = Change::review_token( $item );
 			$id = (int) $item->character_id;
@@ -632,10 +645,12 @@ class Changes_Controller extends Base_Controller {
 				] )
 				: [ 'level' => 'st', 'reason' => null ];
 			$item->approval_level = $resolved['level'];
-			$extras                = Change_Edit::review_extras( $character, $item );
+			$extras                = Change_Edit::review_extras( $character, $item, $may_catalog );
 			$item->editable_fields = $extras['editable_fields'];
 			$item->price_basis     = $extras['price_basis'];
 			$item->block_name      = $extras['block_name'];
+			$item->catalog_offer   = $extras['catalog_offer'];
+			$item->catalog         = $extras['catalog'];
 
 			$submitter_id = (int) $item->submitted_by;
 			if ( ! array_key_exists( $submitter_id, $submitters ) ) {

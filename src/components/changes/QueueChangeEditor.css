@@ -41,6 +41,13 @@
 	max-width: 10rem;
 }
 
+.be-queue-editor__check {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	font-weight: 600;
+}
+
 .be-queue-editor__hint {
 	font-size: 0.8rem;
 	color: var(--be-gray-6);

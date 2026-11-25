@@ -16383,3 +16383,85 @@ msgstr "%d XP acima do saldo"
 #, js-format
 msgid "%d XP left"
 msgstr "%d XP restantes"
+
+#: build/360.js:20 build/785.js:1
+msgid "Also add to this chronicle's catalog"
+msgstr "Adicionar também ao catálogo desta crônica"
+
+#. translators: %s: the name of a new family of powers, such as a Discipline
+#: build/360.js:25 build/785.js:6
+#, js-format
+msgid "Adds %s to this chronicle's list with all its levels, at this section's usual costs."
+msgstr "Adiciona %s à lista desta crônica com todos os níveis, pelos custos habituais desta seção."
+
+#. translators: 1: the name of a power, such as a Gift, 2: the name of the family it belongs to
+#: build/360.js:26 build/785.js:7
+#, js-format
+msgid "Adds %1$s to %2$s at the section's usual cost for its rank."
+msgstr "Adiciona %1$s a %2$s pelo custo habitual da seção para o seu grau."
+
+#: build/360.js:27 build/785.js:8
+msgid "Other characters in this chronicle can then pick it at this price."
+msgstr "Os outros personagens desta crônica poderão escolhê-lo por este preço."
+
+#: build/360.js:28 build/785.js:9
+msgid "Set a price first"
+msgstr "Defina um preço primeiro"
+
+#: build/360.js:29 build/785.js:10
+msgid "No group"
+msgstr "Sem grupo"
+
+#: build/360.js:30 build/785.js:11
+msgid "Power rank"
+msgstr "Grau do poder"
+
+#: build/360.js:31 build/785.js:12
+msgid "Choose a rank"
+msgstr "Escolha um grau"
+
+#: build/360.js:32 build/785.js:13
+msgid "Adds to the catalog"
+msgstr "Adiciona ao catálogo"
+
+#. translators: %s: the group a new catalog item is filed under
+#: build/360.js:33 build/785.js:14
+#, js-format
+msgid "Adds to the catalog, in %s"
+msgstr "Adiciona ao catálogo, em %s"
+
+#: includes/Services/Change_Edit.php
+msgid "This entry cannot be added to the catalog."
+msgstr "Esta entrada não pode ser adicionada ao catálogo."
+
+#: includes/Services/Change_Edit.php
+msgid "Set a price before adding this entry to the catalog."
+msgstr "Defina um preço antes de adicionar esta entrada ao catálogo."
+
+#: includes/Services/Change_Edit.php
+msgid "That group is not in this section."
+msgstr "Esse grupo não está nesta seção."
+
+#: includes/Services/Change_Edit.php
+msgid "Set a level within this section's ladder first."
+msgstr "Defina primeiro um nível dentro da escada desta seção."
+
+#: includes/Services/Change_Edit.php
+msgid "Name the power first."
+msgstr "Dê primeiro um nome ao poder."
+
+#: includes/Services/Change_Edit.php
+msgid "Choose one of this section's ranks."
+msgstr "Escolha um dos graus desta seção."
+
+#: includes/Services/Change_Edit.php
+msgid "Save the move first, then add it to the catalog."
+msgstr "Salve primeiro a mudança de seção e só então adicione-a ao catálogo."
+
+#: includes/REST/Changes_Controller.php
+msgid "Only someone who can edit this chronicle's catalog can add to it."
+msgstr "Só quem pode editar o catálogo desta crônica pode adicionar a ele."
+
+#: includes/REST/Changes_Controller.php
+msgid "catalog must be an object or null."
+msgstr "catalog deve ser um objeto ou nulo."

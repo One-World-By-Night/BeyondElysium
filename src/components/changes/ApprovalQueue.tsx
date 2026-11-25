@@ -1110,6 +1110,25 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 															) }
 														</p>
 													) }
+													{ item.catalog && (
+														<p className="be-approval-queue__edited-by">
+															{ item.catalog.group
+																? sprintf(
+																		/* translators: %s: the group a new catalog item is filed under */
+																		__(
+																			'Adds to the catalog, in %s',
+																			'beyond-elysium'
+																		),
+																		item
+																			.catalog
+																			.group
+																	)
+																: __(
+																		'Adds to the catalog',
+																		'beyond-elysium'
+																	) }
+														</p>
+													) }
 													{ item.edited_by_name && (
 														<p className="be-approval-queue__edited-by">
 															{ sprintf(

@@ -39,7 +39,7 @@ class Change_Edit {
 	/**
 	 * Keys a Storyteller's edit adds beside the change's own content.
 	 */
-	const REVIEW_KEYS = [ 'cost_pending', 'st_price', 'st_edit' ];
+	const REVIEW_KEYS = [ 'cost_pending', 'st_price', 'st_edit', 'st_catalog' ];
 
 	/**
 	 * A reviewer's note as it is stored: plain text, no longer than `NOTE_MAX`. Null stays null.
@@ -117,18 +117,54 @@ class Change_Edit {
 	 * purchase, what a price would cover.
 	 *
 	 * @param object|null $character
-	 * @param object      $change    A decoded change row.
-	 * @return array{editable_fields:string[],price_basis:array<string,mixed>|null,block_name:string|null}
+	 * @param object      $change             A decoded change row.
+	 * @param bool        $may_edit_catalog   Whether the viewer may add to the chronicle's catalog.
+	 * @return array{editable_fields:string[],price_basis:array<string,mixed>|null,block_name:string|null,catalog_offer:array<string,mixed>|null,catalog:array<string,mixed>|null}
 	 */
-	public static function review_extras( ?object $character, object $change ): array {
+	public static function review_extras( ?object $character, object $change, bool $may_edit_catalog = false ): array {
 		$data  = is_array( $change->change_data ) ? $change->change_data : [];
 		$block = $character ? self::block( $character, $data ) : null;
+		$tick  = is_array( $data['st_catalog'] ?? null ) ? array_intersect_key( $data['st_catalog'], [ 'group' => true, 'rank' => true ] ) : null;
 
 		return [
 			'editable_fields' => self::editable_fields( (string) $change->change_type, $data, $block->section_type ?? null ),
 			'price_basis'     => $character && $block ? self::price_basis( $character, $change, $block ) : null,
 			'block_name'      => $block ? (string) ( $block->name ?? '' ) : null,
+			'catalog_offer'   => $may_edit_catalog && $character && $block ? self::catalog_offer( $character, $change, $block ) : null,
+			'catalog'         => $tick,
 		];
+	}
+
+	/**
+	 * What the box "Also add to this chronicle's catalog" offers for a change, or null when the change cannot be added:
+	 * it must be a homebrew add on a list that takes entries, and the catalog must not hold it already.
+	 *
+	 * @param object $character
+	 * @param object $change    A decoded change row.
+	 * @param object $block     The block the change is on.
+	 * @return array<string,mixed>|null
+	 */
+	private static function catalog_offer( object $character, object $change, object $block ): ?array {
+		$kind  = Catalog_Entry::kind( $block );
+		$data  = is_array( $change->change_data ) ? $change->change_data : [];
+		$trait = is_array( $data['trait'] ?? null ) ? $data['trait'] : [];
+		$name  = (string) ( $trait['name'] ?? '' );
+		if ( null === $kind || 'add_trait' !== $change->change_type || '' === $name ) {
+			return null;
+		}
+		$basis = self::price_basis( $character, $change, $block );
+		if ( null === $basis || ! $basis['homebrew'] || Catalog_Entry::holds( $block, $kind, $name, (string) ( $trait['power_name'] ?? '' ) ) ) {
+			return null;
+		}
+
+		if ( Catalog_Entry::ITEM === $kind ) {
+			$groups = Catalog_Entry::groups( $block );
+			return [ 'kind' => $kind, 'groups' => $groups, 'suggested_group' => Catalog_Entry::suggest_group( $name, $groups ) ];
+		}
+		if ( Catalog_Entry::PICK === $kind ) {
+			return [ 'kind' => $kind, 'ranks' => Cost_Engine::meta_ranks( $block->definition ) ?? [] ];
+		}
+		return [ 'kind' => $kind ];
 	}
 
 	/**
@@ -221,9 +257,10 @@ class Change_Edit {
 	 * @param mixed               $price        A whole number of XP, or blank for none.
 	 * @param string|null         $price_per    What the typed price is for, as the reviewer saw it; null skips the check.
 	 * @param string|null         $review_notes The new note to the player; null keeps the stored one, an empty string clears it.
+	 * @param array<string,mixed>|null|false $catalog Whether to add the entry to the chronicle's catalog when approved: false keeps what is stored, null clears it, an array sets it (`group` for an item, `rank` for a pick).
 	 * @return array{ok:true}|array{ok:false,validation:array<string,mixed>}|\WP_Error
 	 */
-	public static function apply( int $change_id, int $reviewer_id, string $token, array $fields, $price, ?string $price_per, ?string $review_notes ) {
+	public static function apply( int $change_id, int $reviewer_id, string $token, array $fields, $price, ?string $price_per, ?string $review_notes, $catalog = false ) {
 		$unit = Transaction::begin( 'be_change_edit' );
 
 		$change = Change::find_for_update( $change_id );
@@ -273,6 +310,9 @@ class Change_Edit {
 				if ( $typed !== null ) {
 					return self::refuse( $unit, 'price_with_move', __( 'Save the move first, then set the price.', 'beyond-elysium' ), 400 );
 				}
+				if ( is_array( $catalog ) ) {
+					return self::refuse( $unit, 'catalog_with_move', __( 'Save the move first, then add it to the catalog.', 'beyond-elysium' ), 400 );
+				}
 				if ( ! isset( self::section_choices( $character, $type, $data )[ $target ] ) ) {
 					return self::refuse( $unit, 'invalid_section', __( 'That section cannot take this entry.', 'beyond-elysium' ), 400 );
 				}
@@ -282,8 +322,21 @@ class Change_Edit {
 			}
 		}
 
+		$stored_tick = is_array( $change->change_data['st_catalog'] ?? null ) ? $change->change_data['st_catalog'] : null;
+		$tick        = false === $catalog ? $stored_tick : $catalog;
+		if ( $moved !== null ) {
+			$tick = null;
+		}
+
 		if ( $fields !== [] || $moved !== null ) {
 			$data = self::with_fields( $type, $data, $fields );
+
+			// A pick the catalog does not hold yet is checked as its family alone, then named again.
+			$named_pick = null;
+			if ( is_array( $tick ) && Catalog_Entry::PICK === Catalog_Entry::kind( $block ) && in_array( $type, self::SHEET_TYPES, true ) && ( $data['trait']['power_name'] ?? '' ) !== '' ) {
+				$named_pick = (string) $data['trait']['power_name'];
+				unset( $data['trait']['power_name'] );
+			}
 
 			if ( in_array( $type, self::XP_TYPES, true ) ) {
 				$checked = self::check_xp( $type, $data );
@@ -299,6 +352,10 @@ class Change_Edit {
 					return [ 'ok' => false, 'validation' => $result ];
 				}
 				$data = (array) $result['change_data'];
+				if ( $named_pick !== null ) {
+					$data['trait']['power_name'] = $named_pick;
+					$data['trait']['custom']     = true;
+				}
 			}
 
 			$duplicate = in_array( $type, self::SHEET_TYPES, true )
@@ -316,6 +373,15 @@ class Change_Edit {
 		}
 		$data = $priced['change_data'];
 
+		$entry = self::checked_tick( $character, $type, $data, $block, $tick, is_array( $catalog ), $reviewer_id, $stored_tick );
+		if ( is_wp_error( $entry ) ) {
+			Transaction::rollback( $unit );
+			return $entry;
+		}
+		if ( $entry !== null ) {
+			$data['st_catalog'] = $entry;
+		}
+
 		$data['st_edit'] = [ 'by' => $reviewer_id, 'at' => current_time( 'mysql' ) ];
 
 		$note = self::clean_note( $review_notes );
@@ -325,6 +391,72 @@ class Change_Edit {
 
 		Transaction::commit( $unit );
 		return [ 'ok' => true ];
+	}
+
+	/**
+	 * The tick to store with a change, or null for none. A tick asked for in this edit that the change cannot take is
+	 * refused; a tick stored earlier that no longer fits is dropped.
+	 *
+	 * @param object                    $character
+	 * @param string                    $type
+	 * @param array<string,mixed>       $data      The change's data once priced.
+	 * @param object|null               $block
+	 * @param array<string,mixed>|null  $tick
+	 * @param bool                      $requested Whether this edit asked for the tick.
+	 * @param int                       $reviewer_id
+	 * @param array<string,mixed>|null  $stored    The tick as stored before this edit.
+	 * @return array<string,mixed>|null|\WP_Error
+	 */
+	private static function checked_tick( object $character, string $type, array $data, ?object $block, ?array $tick, bool $requested, int $reviewer_id, ?array $stored ) {
+		if ( $tick === null ) {
+			return null;
+		}
+		$fail = static fn( string $code, string $message ) => $requested ? new \WP_Error( $code, $message, [ 'status' => 400 ] ) : null;
+
+		$kind       = Catalog_Entry::kind( $block );
+		$trait      = is_array( $data['trait'] ?? null ) ? $data['trait'] : [];
+		$name       = (string) ( $trait['name'] ?? '' );
+		$power_name = (string) ( $trait['power_name'] ?? '' );
+		if ( $block === null || $kind === null || $type !== 'add_trait' || $name === '' ) {
+			return $fail( 'catalog_not_applicable', __( 'This entry cannot be added to the catalog.', 'beyond-elysium' ) );
+		}
+		$basis = self::price_basis( $character, (object) [ 'change_type' => $type, 'change_data' => $data ], $block );
+		if ( $basis === null || ! $basis['homebrew'] || Catalog_Entry::holds( $block, $kind, $name, $power_name ) ) {
+			return $fail( 'catalog_not_applicable', __( 'This entry cannot be added to the catalog.', 'beyond-elysium' ) );
+		}
+		if ( ! isset( $data['st_price'] ) || ! empty( $data['cost_pending'] ) ) {
+			return $fail( 'catalog_needs_price', __( 'Set a price before adding this entry to the catalog.', 'beyond-elysium' ) );
+		}
+
+		$entry = [];
+		if ( Catalog_Entry::ITEM === $kind ) {
+			$group = isset( $tick['group'] ) && is_string( $tick['group'] ) ? trim( $tick['group'] ) : '';
+			if ( $group !== '' ) {
+				if ( ! in_array( $group, Catalog_Entry::groups( $block ), true ) ) {
+					return $fail( 'invalid_group', __( 'That group is not in this section.', 'beyond-elysium' ) );
+				}
+				$entry['group'] = $group;
+			}
+		} elseif ( Catalog_Entry::FAMILY === $kind ) {
+			$level = (int) ( $trait['level'] ?? 0 );
+			if ( $level < 1 || $level > Catalog_Entry::rung_count( $block->definition ) ) {
+				return $fail( 'catalog_incomplete', __( 'Set a level within this section\'s ladder first.', 'beyond-elysium' ) );
+			}
+		} else {
+			if ( $power_name === '' ) {
+				return $fail( 'catalog_incomplete', __( 'Name the power first.', 'beyond-elysium' ) );
+			}
+			$rank  = isset( $tick['rank'] ) && is_string( $tick['rank'] ) ? $tick['rank'] : '';
+			$ranks = Cost_Engine::meta_ranks( $block->definition );
+			if ( $rank === '' || ( $ranks !== null && ! in_array( $rank, $ranks, true ) ) ) {
+				return $fail( 'invalid_rank', __( 'Choose one of this section\'s ranks.', 'beyond-elysium' ) );
+			}
+			$entry['rank'] = $rank;
+		}
+
+		$entry['by'] = $requested ? $reviewer_id : (int) ( $stored['by'] ?? $reviewer_id );
+		$entry['at'] = $requested ? current_time( 'mysql' ) : (string) ( $stored['at'] ?? current_time( 'mysql' ) );
+		return $entry;
 	}
 
 	/**

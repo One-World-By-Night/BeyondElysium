@@ -1,16 +1,20 @@
 import {
 	buildEditRequest,
 	canMove,
+	catalogBoxEnabled,
+	catalogLine,
+	catalogTickFor,
 	draftFor,
 	inputFields,
 	isMove,
 	priceBoxKind,
 	priceStart,
 	priceTextValid,
+	rankLabel,
 	readField,
 	usualPriceHint,
 } from './queueEdit';
-import type { PriceBasis, QueueChange } from '../types/character';
+import type { CatalogOffer, PriceBasis, QueueChange } from '../types/character';
 
 function change( overrides: Partial< QueueChange > = {} ): QueueChange {
 	return {
@@ -263,5 +267,221 @@ describe( 'buildEditRequest', () => {
 		const request = buildEditRequest( c, draft );
 		expect( request.fields ).toEqual( { amount: 3 } );
 		expect( request ).not.toHaveProperty( 'price' );
+	} );
+} );
+
+const ITEM_OFFER: CatalogOffer = {
+	kind: 'item',
+	groups: [ 'Thaumaturgy', 'Necromancy' ],
+	suggested_group: 'Necromancy',
+};
+
+describe( 'the catalog box in the draft', () => {
+	it( 'starts unticked on the suggested group when the change has no tick', () => {
+		const draft = draftFor( change( { catalog_offer: ITEM_OFFER } ) );
+		expect( draft.catalog ).toEqual( {
+			on: false,
+			group: 'Necromancy',
+			rank: '',
+		} );
+	} );
+
+	it( 'starts on no group when nothing is suggested', () => {
+		const offer: CatalogOffer = {
+			...ITEM_OFFER,
+			suggested_group: null,
+		} as CatalogOffer;
+		expect(
+			draftFor( change( { catalog_offer: offer } ) ).catalog.group
+		).toBe( '' );
+	} );
+
+	it( 'starts ticked on the stored group or rank', () => {
+		const item = draftFor(
+			change( {
+				catalog_offer: ITEM_OFFER,
+				catalog: { group: 'Thaumaturgy' },
+			} )
+		);
+		expect( item.catalog ).toEqual( {
+			on: true,
+			group: 'Thaumaturgy',
+			rank: '',
+		} );
+
+		const pick = draftFor(
+			change( {
+				catalog_offer: { kind: 'pick', ranks: [ 'basic', 'legend' ] },
+				catalog: { rank: 'legend' },
+			} )
+		);
+		expect( pick.catalog ).toEqual( {
+			on: true,
+			group: '',
+			rank: 'legend',
+		} );
+	} );
+} );
+
+describe( 'catalogTickFor', () => {
+	it( 'is the group for an item, with none when no group is chosen', () => {
+		expect(
+			catalogTickFor( ITEM_OFFER, {
+				on: true,
+				group: 'Thaumaturgy',
+				rank: '',
+			} )
+		).toEqual( { group: 'Thaumaturgy' } );
+		expect(
+			catalogTickFor( ITEM_OFFER, { on: true, group: '', rank: '' } )
+		).toEqual( {} );
+	} );
+
+	it( 'is nothing to say for a family, and the rank for a pick', () => {
+		expect(
+			catalogTickFor(
+				{ kind: 'family' },
+				{ on: true, group: '', rank: '' }
+			)
+		).toEqual( {} );
+		expect(
+			catalogTickFor(
+				{ kind: 'pick', ranks: [ 'basic' ] },
+				{ on: true, group: '', rank: 'basic' }
+			)
+		).toEqual( { rank: 'basic' } );
+	} );
+} );
+
+describe( 'buildEditRequest and the catalog box', () => {
+	const offered = ( extra: Partial< QueueChange > = {} ) =>
+		change( {
+			catalog_offer: ITEM_OFFER,
+			price_basis: {
+				...( change().price_basis as PriceBasis ),
+				current: 2,
+			},
+			...extra,
+		} );
+
+	it( 'sends no catalog key when the box was not touched', () => {
+		const c = offered();
+		expect( buildEditRequest( c, draftFor( c ) ).catalog ).toBeUndefined();
+	} );
+
+	it( 'sends the tick when the box is ticked', () => {
+		const c = offered();
+		const draft = draftFor( c );
+		draft.catalog = { on: true, group: 'Thaumaturgy', rank: '' };
+		expect( buildEditRequest( c, draft ).catalog ).toEqual( {
+			group: 'Thaumaturgy',
+		} );
+	} );
+
+	it( 'sends null when a ticked box is cleared', () => {
+		const c = offered( { catalog: { group: 'Thaumaturgy' } } );
+		const draft = draftFor( c );
+		draft.catalog = { ...draft.catalog, on: false };
+		expect( buildEditRequest( c, draft ).catalog ).toBeNull();
+	} );
+
+	it( 'sends the new group when only the group changed', () => {
+		const c = offered( { catalog: { group: 'Thaumaturgy' } } );
+		const draft = draftFor( c );
+		draft.catalog = { ...draft.catalog, group: 'Necromancy' };
+		expect( buildEditRequest( c, draft ).catalog ).toEqual( {
+			group: 'Necromancy',
+		} );
+	} );
+
+	it( 'sends nothing for a viewer who is not offered the box, so a stored tick stays', () => {
+		const c = change( { catalog: { group: 'Thaumaturgy' } } );
+		expect( buildEditRequest( c, draftFor( c ) ).catalog ).toBeUndefined();
+	} );
+
+	it( 'leaves the tick out of a move', () => {
+		const c = offered( { editable_fields: [ 'block_slug', 'name' ] } );
+		const draft = draftFor( c );
+		draft.catalog = { on: true, group: 'Thaumaturgy', rank: '' };
+		draft.fields.block_slug = 'vampire-combo-disciplines';
+		expect( buildEditRequest( c, draft ).catalog ).toBeUndefined();
+	} );
+} );
+
+describe( 'catalogBoxEnabled', () => {
+	const c = ( current: number | null, extra: Partial< QueueChange > = {} ) =>
+		change( {
+			catalog_offer: ITEM_OFFER,
+			price_basis: { ...( change().price_basis as PriceBasis ), current },
+			...extra,
+		} );
+
+	it( 'is on once a price is in the box', () => {
+		const change2 = c( 2 );
+		expect( catalogBoxEnabled( change2, draftFor( change2 ) ) ).toBe(
+			true
+		);
+	} );
+
+	it( 'is off while the price box is empty or not a price', () => {
+		const change2 = c( null );
+		expect( catalogBoxEnabled( change2, draftFor( change2 ) ) ).toBe(
+			false
+		);
+		const draft = draftFor( c( 2 ) );
+		draft.price = 'abc';
+		expect( catalogBoxEnabled( c( 2 ), draft ) ).toBe( false );
+	} );
+
+	it( 'is off while the entry is moving to another section', () => {
+		const change2 = c( 2, { editable_fields: [ 'block_slug', 'name' ] } );
+		const draft = draftFor( change2 );
+		draft.fields.block_slug = 'vampire-combo-disciplines';
+		expect( catalogBoxEnabled( change2, draft ) ).toBe( false );
+	} );
+} );
+
+describe( 'catalogLine', () => {
+	const draftWith = ( fields: Record< string, string > ) => ( {
+		fields,
+		price: '2',
+		note: '',
+		catalog: { on: true, group: '', rank: '' },
+	} );
+
+	it( 'says an item can then be picked at the price', () => {
+		expect( catalogLine( ITEM_OFFER, draftWith( {} ) ) ).toBe(
+			'Other characters in this chronicle can then pick it at this price.'
+		);
+	} );
+
+	it( 'names the family a whole new power list entry adds', () => {
+		expect(
+			catalogLine(
+				{ kind: 'family' },
+				draftWith( { name: 'Hollow Vein' } )
+			)
+		).toBe(
+			"Adds Hollow Vein to this chronicle's list with all its levels, at this section's usual costs."
+		);
+	} );
+
+	it( 'names the Gift and its family for a pick', () => {
+		expect(
+			catalogLine(
+				{ kind: 'pick', ranks: [ 'basic' ] },
+				draftWith( { name: 'Philodox', power_name: 'Oath of Silence' } )
+			)
+		).toBe(
+			"Adds Oath of Silence to Philodox at the section's usual cost for its rank."
+		);
+	} );
+} );
+
+describe( 'rankLabel', () => {
+	it( 'capitalizes a stored rank', () => {
+		expect( rankLabel( 'intermediate' ) ).toBe( 'Intermediate' );
+		expect( rankLabel( 'legend' ) ).toBe( 'Legend' );
+		expect( rankLabel( '' ) ).toBe( '' );
 	} );
 } );

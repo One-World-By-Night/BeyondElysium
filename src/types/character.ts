@@ -449,6 +449,32 @@ export interface QueueChange extends CharacterChange {
 	 * The display name of the Storyteller who last edited the change.
 	 */
 	edited_by_name?: string | null;
+	/**
+	 * What the box "Also add to this chronicle's catalog" offers, or null when it is not offered to this viewer or not
+	 * for this change.
+	 */
+	catalog_offer?: CatalogOffer | null;
+	/**
+	 * The tick a Storyteller has put on the change, or null when there is none.
+	 */
+	catalog?: CatalogTick | null;
+}
+
+/**
+ * What adding a homebrew entry to the chronicle's catalog takes: an item on a trait list (filed under a group), a whole
+ * family on a power list with a ladder, or a pick under a family on a power list without one (at a rank).
+ */
+export type CatalogOffer =
+	| { kind: 'item'; groups: string[]; suggested_group: string | null }
+	| { kind: 'family' }
+	| { kind: 'pick'; ranks: string[] };
+
+/**
+ * A tick on a change: the group an item is filed under, or the rank a pick sits at.
+ */
+export interface CatalogTick {
+	group?: string;
+	rank?: string;
 }
 
 /**
@@ -519,6 +545,10 @@ export interface ChangeEditRequest {
 	 * Absent keeps the stored note; an empty string clears it.
 	 */
 	review_notes?: string;
+	/**
+	 * Absent keeps the tick; null clears it; an object ticks it.
+	 */
+	catalog?: CatalogTick | null;
 }
 
 /**

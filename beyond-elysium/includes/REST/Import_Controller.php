@@ -15,6 +15,7 @@ use BeyondElysium\Models\Schema_Block;
 use BeyondElysium\Models\World_Object;
 use BeyondElysium\Services\Action_Allocator;
 use BeyondElysium\Services\Audience;
+use BeyondElysium\Services\Catalog_Entry;
 use BeyondElysium\Services\Change_Engine;
 use BeyondElysium\Services\Character_Diff;
 use BeyondElysium\Services\Field_Registry;
@@ -1389,22 +1390,6 @@ class Import_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Returns the standard numbered-rung cost/tier ladder for a tiered_power family's levels 1-5: costs 3/3/6/6/9 at
-	 * tiers basic/basic/intermediate/intermediate/advanced.
-	 *
-	 * @return array<int,array{level:int,tier:string,cost:string,power_name:string}>
-	 */
-	private static function met_numbered_ladder(): array {
-		return [
-			[ 'level' => 1, 'tier' => 'basic', 'cost' => '3', 'power_name' => '' ],
-			[ 'level' => 2, 'tier' => 'basic', 'cost' => '3', 'power_name' => '' ],
-			[ 'level' => 3, 'tier' => 'intermediate', 'cost' => '6', 'power_name' => '' ],
-			[ 'level' => 4, 'tier' => 'intermediate', 'cost' => '6', 'power_name' => '' ],
-			[ 'level' => 5, 'tier' => 'advanced', 'cost' => '9', 'power_name' => '' ],
-		];
-	}
-
-	/**
 	 * Normalizes a raw trait's tier note (written abbreviated, such as "int." or "adv.") to the numbered-ladder tier
 	 * label used by the catalog, or null when the note is not a numbered-rung tier at all.
 	 *
@@ -1437,6 +1422,14 @@ class Import_Controller extends Base_Controller {
 		}
 
 		try {
+			$numbered_tier = self::normalize_numbered_tier( $raw_tier );
+			if ( $numbered_tier !== null && Catalog_Entry::FAMILY === Catalog_Entry::kind( Schema_Block::find_for_game( $block_slug, $game_slug ) ) ) {
+				$outcome = Catalog_Entry::add_family_at_tier( $block_slug, $game_slug, $family, $numbered_tier, $power_name );
+				if ( Catalog_Entry::FAILED !== $outcome ) {
+					return;
+				}
+			}
+
 			$block = Schema_Block::find_or_create_fork_for_game( $block_slug, $game_slug );
 			if ( ! $block || $block->section_type !== 'tiered_power' ) {
 				return;
@@ -1453,16 +1446,9 @@ class Import_Controller extends Base_Controller {
 				}
 			}
 
-			$numbered_tier = self::normalize_numbered_tier( $raw_tier );
-
 			if ( $target_power === null ) {
 				$target_power = (object) [ 'name' => $family, 'levels' => [] ];
-				if ( $numbered_tier !== null ) {
-					foreach ( self::met_numbered_ladder() as $rung ) {
-						$target_power->levels[] = (object) $rung;
-					}
-				}
-				$powers[] = $target_power;
+				$powers[]     = $target_power;
 			}
 
 			$filled = false;
@@ -1513,23 +1499,9 @@ class Import_Controller extends Base_Controller {
 		}
 
 		try {
-			$block = Schema_Block::find_or_create_fork_for_game( $block_slug, $game_slug );
-			if ( ! $block || $block->section_type !== 'trait_list' ) {
-				return;
+			if ( Catalog_Entry::FAILED === Catalog_Entry::add_item( $block_slug, $game_slug, $name ) ) {
+				error_log( "Beyond Elysium: failed to add \"{$name}\" to {$block_slug}'s catalog." );
 			}
-
-			$definition = $block->definition;
-			$items      = is_array( $definition->items ?? null ) ? $definition->items : [];
-
-			foreach ( $items as $item ) {
-				if ( strcasecmp( (string) ( $item->name ?? '' ), $name ) === 0 ) {
-					return; // Already in this chronicle's catalog - nothing to do.
-				}
-			}
-
-			$items[]            = (object) [ 'name' => $name ];
-			$definition->items  = $items;
-			Schema_Block::update( $block_slug, [ 'definition' => $definition ], $game_slug );
 		} catch ( \Throwable $e ) {
 			error_log( "Beyond Elysium: failed to add \"{$name}\" to {$block_slug}'s catalog: " . $e->getMessage() );
 		}

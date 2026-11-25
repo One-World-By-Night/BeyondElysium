@@ -4,6 +4,8 @@
  */
 import { __, sprintf } from '@wordpress/i18n';
 import type {
+	CatalogOffer,
+	CatalogTick,
 	ChangeEditRequest,
 	PriceBasis,
 	PriceScope,
@@ -186,6 +188,22 @@ export interface EditDraft {
 	fields: Record< string, string >;
 	price: string;
 	note: string;
+	catalog: CatalogDraft;
+}
+
+/**
+ * The box "Also add to this chronicle's catalog" as the editor holds it.
+ */
+export interface CatalogDraft {
+	on: boolean;
+	/**
+	 * The group an item is filed under; empty for none.
+	 */
+	group: string;
+	/**
+	 * The rank a pick sits at; empty until one is chosen.
+	 */
+	rank: string;
 }
 
 /**
@@ -199,11 +217,97 @@ export function draftFor( change: QueueChange ): EditDraft {
 	if ( canMove( change ) ) {
 		fields[ SECTION_FIELD ] = currentSection( change );
 	}
+	const offer = change.catalog_offer ?? null;
+	const stored = change.catalog ?? null;
 	return {
 		fields,
 		price: priceStart( change.price_basis ),
 		note: change.review_notes ?? '',
+		catalog: {
+			on: stored !== null,
+			group:
+				stored !== null
+					? ( stored.group ?? '' )
+					: offer?.kind === 'item'
+						? ( offer.suggested_group ?? '' )
+						: '',
+			rank: stored?.rank ?? '',
+		},
 	};
+}
+
+/**
+ * What the box asks for: the group of an item, the rank of a pick, and nothing for a family.
+ */
+export function catalogTickFor(
+	offer: CatalogOffer,
+	draft: CatalogDraft
+): CatalogTick {
+	if ( offer.kind === 'item' ) {
+		return draft.group !== '' ? { group: draft.group } : {};
+	}
+	return offer.kind === 'pick' ? { rank: draft.rank } : {};
+}
+
+/**
+ * Whether the box can be ticked: it needs a price in the price box, and the entry must not be moving, since both a
+ * price and a tick wait for a move to be saved.
+ */
+export function catalogBoxEnabled(
+	change: QueueChange,
+	draft: EditDraft
+): boolean {
+	return (
+		!! change.catalog_offer &&
+		draft.price.trim() !== '' &&
+		parsePrice( draft.price ) !== null &&
+		! isMove( change, draft )
+	);
+}
+
+/**
+ * The line under a ticked box saying what will be added.
+ */
+export function catalogLine( offer: CatalogOffer, draft: EditDraft ): string {
+	const name = draft.fields.name || '…';
+	if ( offer.kind === 'family' ) {
+		return sprintf(
+			/* translators: %s: the name of a new family of powers, such as a Discipline */
+			__(
+				"Adds %s to this chronicle's list with all its levels, at this section's usual costs.",
+				'beyond-elysium'
+			),
+			name
+		);
+	}
+	if ( offer.kind === 'pick' ) {
+		return sprintf(
+			/* translators: 1: the name of a power, such as a Gift, 2: the name of the family it belongs to */
+			__(
+				"Adds %1$s to %2$s at the section's usual cost for its rank.",
+				'beyond-elysium'
+			),
+			draft.fields.power_name || '…',
+			name
+		);
+	}
+	return __(
+		'Other characters in this chronicle can then pick it at this price.',
+		'beyond-elysium'
+	);
+}
+
+/**
+ * Whether two ticks say the same thing.
+ */
+function sameTick( a: CatalogTick | null, b: CatalogTick | null ): boolean {
+	if ( a === null || b === null ) {
+		return a === b;
+	}
+	return (
+		( a.group ?? '' ) === ( b.group ?? '' ) &&
+		( a.rank ?? '' ) === ( b.rank ?? '' )
+	);
 }
 
 /**
@@ -261,8 +365,26 @@ export function buildEditRequest(
 		}
 	}
 
+	const offer = change.catalog_offer ?? null;
+	if ( offer && ! moving ) {
+		const wanted =
+			draft.catalog.on && catalogBoxEnabled( change, draft )
+				? catalogTickFor( offer, draft.catalog )
+				: null;
+		if ( ! sameTick( wanted, change.catalog ?? null ) ) {
+			request.catalog = wanted;
+		}
+	}
+
 	if ( draft.note !== ( change.review_notes ?? '' ) ) {
 		request.review_notes = draft.note;
 	}
 	return request;
+}
+
+/**
+ * A rank as a list shows it: its stored word with a capital letter.
+ */
+export function rankLabel( rank: string ): string {
+	return rank === '' ? rank : rank[ 0 ].toUpperCase() + rank.slice( 1 );
 }

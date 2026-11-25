@@ -57,6 +57,7 @@ On a phone, Level, Submitted by, and When sit behind a **Details** disclosure on
 - **Section** - on an entry the book doesn't have. It lists the sections that take the same kind of entry, so a "Fettered Minion" typed into Rituals can be filed under Combination Disciplines, or Merits, Flaws, Abilities and so on. Choosing another section moves it. The entry is checked there like one of your own: a name the new section's catalog holds becomes that entry at the book's price, and any other name stays the player's own entry in the new section, waiting for a price. A move is saved on its own, so the price box is greyed out until you save it.
 - **The change's own boxes** - Name, Dots, Specialization and Note on a trait, Level on a power, the rating on a pool, the new value on an identity change, Amount and Reason on an experience change. Only the boxes that change really has are shown.
 - **A price box**, on a purchase - see [Setting a price](#setting-a-price).
+- **Also add to this chronicle's catalog**, on a homebrew entry, for the HST - see [Adding it to the catalog](#adding-it-to-the-catalog).
 - **Note to the player** - plain text. The player reads it in their change history, under "Changed by a Storyteller". Text between `[ST]` and `[/ST]` is cut out of what they see, so it works for a word to the next Storyteller.
 
 **Save** writes your edit and leaves the change waiting. You still decide it yourself with **Approve**, **Approve all** or **Approve Selected**, and nothing is sent to the player until you do. Saving gives the change a new "Edited by" line, and a new review token, so a Storyteller who opened the old version is told to reload.
@@ -71,6 +72,18 @@ The price box in the pop-up depends on whether the book already prices the entry
 - **An entry the book already prices.** The box says **XP for this change** and starts empty, with the usual price shown as a hint ("Usual price: 6 XP"). Leave it empty to charge that price. Type a number to charge that instead, for this change only; nothing is written on the entry, so a later raise is priced from the book again.
 
 Either way the number is a whole number from 0 to 500, and 0 is allowed. On a list that gives points instead of costing them, such as Flaws, the figure is recorded and nothing is taken from the player's XP.
+
+### Adding it to the catalog
+
+A homebrew entry you price can join this chronicle's own catalog, so the next character who wants it picks it from the list instead of typing it again. The box **Also add to this chronicle's catalog** sits in the pop-up under the price box. Only an HST sees it, the Storytellers who can already edit the chronicle's catalog. An AST sees the line "Adds to the catalog" on a change an HST has ticked, and approving it carries the tick out.
+
+- **It needs a price.** The box stays greyed out, saying "Set a price first", until the price box holds a number, and while the entry is being moved to another section. Taking the price away later drops the tick.
+- **Nothing is added until the change is approved.** Saving only marks it, and the row in the queue says "Adds to the catalog". Refuse the change and the catalog is left alone. Approve all and Approve Selected carry it out too.
+- **A trait list entry** (Rituals, Combination Disciplines, Ritae, Merits, Flaws and the like) is added at the price you set, per dot or per pick, as the box says. If the list is grouped, as Rituals are by tradition, a **Group** list appears, starting on the group the name begins with ("Necromancy: Mortis: Fettered Minion" starts on Necromancy).
+- **A whole new Discipline, Arcanos or Sphere** is added with every level of the section's ladder, at the section's usual costs, with the level the player bought named. The other levels stay unnamed for the HST to fill in later. It counts as out-of-clan for everyone until you make it in-clan.
+- **A Gift** is added under a family: a breed, an auspice or a tribe, or a new one. Set Name to the family and Power to the Gift, then choose its **Power rank**. It joins that family at that rank, at the section's usual cost.
+- **It is this chronicle's own catalog.** The book's list isn't touched and other chronicles don't see the entry. Later picks are priced from the catalog and approved the way your chronicle approves that section. Add an Approval Rule if you want every pick reviewed.
+- **If two characters send the same entry** and both are ticked, the first one approved adds it. The second keeps the price it was given.
 
 ### A change that needs a price
 
@@ -153,6 +166,12 @@ A change that needs a price can't be checked. Price and approve it on its own ro
 1. Click **Edit** on the entry. If it can move, the pop-up has a **Section** list.
 2. Pick the section it belongs in, such as Combination Disciplines instead of Rituals.
 3. Click **Save**. Then open **Edit** again to price it, since the price depends on the new section.
+
+### Add a homebrew entry to the chronicle's catalog
+
+1. Click **Edit** on the entry and type its price.
+2. Tick **Also add to this chronicle's catalog**. Choose its group, or its power rank for a Gift, if the pop-up asks, and click **Save**.
+3. Approve the change. The entry joins the catalog as it is approved.
 
 ### Leave the player a note
 
