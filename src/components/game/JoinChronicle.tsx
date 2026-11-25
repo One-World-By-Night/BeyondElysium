@@ -15,6 +15,7 @@ import { CharacterEditor } from '../character/CharacterEditor';
 import HelpButton from '../shared/HelpButton';
 import type { JoinableChronicle, MyJoinRequest } from '../../types';
 import './JoinChronicle.css';
+import { formatStoredTime } from '../../lib/storedTime';
 
 /**
  * `join_slug` carries the panel's own target chronicle, kept separate from `game_slug` so opening it for a
@@ -235,7 +236,7 @@ export function JoinChronicle( { hasMemberships }: JoinChronicleProps ) {
 								{ sprintf(
 									/* translators: %s: the date the request was sent */
 									__( 'Waiting since %s.', 'beyond-elysium' ),
-									waiting.created_at.slice( 0, 10 )
+									formatStoredTime( waiting.created_at )
 								) }
 							</p>
 							{ waiting.character_id && (

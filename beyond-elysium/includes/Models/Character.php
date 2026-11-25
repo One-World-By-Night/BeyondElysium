@@ -289,6 +289,21 @@ class Character {
 	}
 
 	/**
+	 * A plot's title as a person reads it: a character's own plot reads "<name>'s plot" without its stored id, and
+	 * any other title reads as written.
+	 *
+	 * @param string $title
+	 * @return string
+	 */
+	public static function plot_display_title( string $title ): string {
+		if ( ! preg_match( '/^(.+) \[\d+\] Plot$/', $title, $own ) ) {
+			return $title;
+		}
+		/* translators: %s: a character's name, shown as the title of that character's own plot */
+		return sprintf( __( "%s's plot", 'beyond-elysium' ), $own[1] );
+	}
+
+	/**
 	 * A character's own plot: linked to it as its actor.
 	 *
 	 * @param int $id

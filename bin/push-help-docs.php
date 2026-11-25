@@ -12,8 +12,8 @@
  *   BE_HELP_PREFIX   put the pages under this slug prefix and out of the Help category, to rehearse a push
  *   BE_HELP_REMOVE   set to 1, with a prefix, to put the rehearsal's pages in the trash and delete its screenshots
  *
- * Every step is idempotent: a second run changes nothing. A page already live with a screenshot keeps it, untouched,
- * when its local screenshot file isn't there to replace it with - a text-only push never strips a live image.
+ * Every step is idempotent: a second run changes nothing. A screenshot whose local file isn't there stays as it is on
+ * the live page while the page's text still updates - a text-only push never strips a live image.
  */
 
 if ( ! class_exists( 'Be_Help_TranslatePress' ) ) {
@@ -476,7 +476,8 @@ if ( ! class_exists( 'Be_Help_Push' ) ) {
 		}
 
 		/**
-		 * Uploads a page's screenshots in both languages, or none of them when a file is missing.
+		 * A page's screenshots in both languages, each from its local file or, when the file is not on this machine,
+		 * the copy already uploaded; none of them when a screenshot has neither.
 		 *
 		 * @param array<string,mixed> $page
 		 * @return array<int,array<string,array>>
@@ -489,7 +490,7 @@ if ( ! class_exists( 'Be_Help_Push' ) ) {
 			foreach ( $shots as $shot ) {
 				foreach ( [ 'en', self::LANGUAGE ] as $language ) {
 					$file = "{$this->images}/{$language}/{$page['slug']}-{$shot['number']}.webp";
-					if ( ! is_readable( $file ) ) {
+					if ( ! is_readable( $file ) && ! $this->attachment( "{$this->prefix}{$page['slug']}-{$shot['number']}-{$language}" ) ) {
 						$this->notes[] = "{$page['slug']}: no screenshots, {$file} is missing";
 						return [];
 					}
@@ -503,7 +504,10 @@ if ( ! class_exists( 'Be_Help_Push' ) ) {
 					self::LANGUAGE  => 'pt_BR',
 				] as $language => $alt_key ) {
 					$file  = "{$this->images}/{$language}/{$page['slug']}-{$shot['number']}.webp";
-					$image = $this->image( $file, "{$this->prefix}{$page['slug']}-{$shot['number']}-{$language}", $shot['alt'][ $alt_key ], $post_id );
+					$key   = "{$this->prefix}{$page['slug']}-{$shot['number']}-{$language}";
+					$image = is_readable( $file )
+						? $this->image( $file, $key, $shot['alt'][ $alt_key ], $post_id )
+						: $this->reuse( $this->attachment( $key ), $shot['alt'][ $alt_key ] );
 					if ( null === $image ) {
 						return [];
 					}
@@ -511,6 +515,22 @@ if ( ! class_exists( 'Be_Help_Push' ) ) {
 				}
 			}
 			return $images;
+		}
+
+		/**
+		 * An image already in the media library, with its alt text brought up to date.
+		 *
+		 * @return array{id: int, url: string, alt: string}
+		 */
+		private function reuse( int $id, string $alt ): array {
+			if ( get_post_meta( $id, '_wp_attachment_image_alt', true ) !== $alt ) {
+				update_post_meta( $id, '_wp_attachment_image_alt', wp_slash( $alt ) );
+			}
+			return [
+				'id'  => $id,
+				'url' => (string) wp_get_attachment_url( $id ),
+				'alt' => $alt,
+			];
 		}
 
 		/**
@@ -533,14 +553,7 @@ if ( ! class_exists( 'Be_Help_Push' ) ) {
 			$old   = $found ? (int) $found[0] : 0;
 
 			if ( $old && get_post_meta( $old, self::IMAGE_HASH, true ) === $hash ) {
-				if ( get_post_meta( $old, '_wp_attachment_image_alt', true ) !== $alt ) {
-					update_post_meta( $old, '_wp_attachment_image_alt', wp_slash( $alt ) );
-				}
-				return [
-					'id'  => $old,
-					'url' => (string) wp_get_attachment_url( $old ),
-					'alt' => $alt,
-				];
+				return $this->reuse( $old, $alt );
 			}
 
 			require_once ABSPATH . 'wp-admin/includes/file.php';

@@ -10,6 +10,7 @@ import HtmlEditor from '../shared/HtmlEditor';
 import type { GenerateRumorsResponse, Plot } from '../../types/plot';
 import HelpButton from '../shared/HelpButton';
 import './RumorPanel.css';
+import { plotDisplayTitle } from '../../lib/plotTitle';
 
 export interface RumorPanelProps {
 	gameSlug: string;
@@ -176,7 +177,7 @@ export function RumorPanel( {
 						</option>
 						{ plots.map( ( p ) => (
 							<option key={ p.id } value={ p.id }>
-								{ p.title }
+								{ plotDisplayTitle( p.title ) }
 							</option>
 						) ) }
 					</select>

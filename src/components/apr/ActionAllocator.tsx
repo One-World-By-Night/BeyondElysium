@@ -10,6 +10,7 @@ import type { Plot, Subaction } from '../../types/plot';
 import { BackgroundLedger } from './BackgroundLedger';
 import HelpButton from '../shared/HelpButton';
 import './ActionAllocator.css';
+import { plotDisplayTitle } from '../../lib/plotTitle';
 
 export interface ActionAllocatorProps {
 	gameSlug: string;
@@ -168,7 +169,7 @@ export function ActionAllocator( {
 					</option>
 					{ topLevelPlots.map( ( p ) => (
 						<option key={ p.id } value={ p.id }>
-							{ p.title }
+							{ plotDisplayTitle( p.title ) }
 						</option>
 					) ) }
 				</select>

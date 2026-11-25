@@ -111,6 +111,22 @@ export function nextSelectableRow(
 }
 
 /**
+ * The options on screen for a list scrolled to `scrollTop` with rows `rowHeight` tall and `visibleRows` showing: those
+ * rows, two before and two after, without headings.
+ */
+export function onScreenOptions(
+	rows: OptionRow[],
+	scrollTop: number,
+	rowHeight: number,
+	visibleRows: number
+): string[] {
+	const first = Math.max( 0, Math.floor( scrollTop / rowHeight ) - 2 );
+	return rows
+		.slice( first, first + visibleRows + 4 )
+		.flatMap( ( row ) => ( row.kind === 'option' ? [ row.value ] : [] ) );
+}
+
+/**
  * Every option across every group, in order.
  */
 export function flattenGroups( groups: OptionGroup[] ): string[] {

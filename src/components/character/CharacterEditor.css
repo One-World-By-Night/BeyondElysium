@@ -130,7 +130,7 @@
 	background: var(--be-gray-29);
 	border: 1px solid var(--be-gray-16);
 	border-radius: 4px;
-	padding: 1rem;
+	padding: 0.5rem 1rem;
 	margin-top: 1.5rem;
 
 	max-height: 33vh;
@@ -140,12 +140,32 @@
 	flex-direction: column;
 }
 
-.be-character-editor__summary > .be-collapsible__body {
+/* The bar's one line: the count, the cost and what is left, with the button that opens the list. */
+.be-character-editor__chip {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+}
+
+.be-character-editor__chip-line {
+	margin: 0;
+	min-width: 0;
+	font-weight: 600;
+}
+
+.be-character-editor__review {
 	display: flex;
 	flex-direction: column;
 
 	min-height: 0;
 	flex: 1 1 auto;
+	margin-top: 0.5rem;
+}
+
+/* What a submit reported, shown on its own once nothing is pending. */
+.be-character-editor__result {
+	margin-top: 1.5rem;
 }
 
 /* The unbounded part, and the only scroller. */

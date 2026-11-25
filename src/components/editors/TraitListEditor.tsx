@@ -13,6 +13,7 @@ import { costChoices } from '../../lib/costChoices';
 import { DOT } from '../../lib/displayTemper';
 import { numberBesideName } from '../../lib/displayTrait';
 import { useCostVisibility } from '../../lib/costDisplayMode';
+import { useOptionPrices } from '../../lib/useOptionPrices';
 import {
 	moveUp,
 	moveDown,
@@ -62,6 +63,10 @@ export interface TraitListEditorProps {
 	 * first.
 	 */
 	sheetData?: Record< string, unknown >;
+	/**
+	 * Present when the add picker shows each option's price; `saved` is this block's saved data.
+	 */
+	pricing?: { saved: unknown };
 }
 
 /**
@@ -244,6 +249,7 @@ export function TraitListEditor( {
 	gameSlug,
 	characterId,
 	sheetData,
+	pricing,
 }: TraitListEditorProps ) {
 	// Memoized: large catalogs make this expensive to recompute on every keystroke.
 	const itemNames = useMemo(
@@ -261,6 +267,24 @@ export function TraitListEditor( {
 	);
 	const [ draft, setDraft ] = useState< DraftState | null >( null );
 	const [ showCost, setShowCost ] = useCostVisibility();
+	const prices = useOptionPrices( {
+		pricing,
+		gameSlug,
+		characterId,
+		blockSlug,
+		sectionType: 'trait_list',
+		definition,
+		nextFor: ( name ) =>
+			saveTraitDraft(
+				( pricing?.saved as EditableTrait[] | undefined ) ?? [],
+				definition,
+				{ name, count: 1 }
+			),
+		isVariable: ( name ) =>
+			costChoices(
+				definition.items.find( ( item ) => item.name === name )?.cost
+			) !== null,
+	} );
 
 	const emit = ( next: EditableTrait[] ) => onChange( blockSlug, next );
 
@@ -745,6 +769,8 @@ export function TraitListEditor( {
 											'Name',
 											'beyond-elysium'
 										) }
+										hint={ prices?.hint }
+										onVisibleOptions={ prices?.request }
 										onChange={ ( name, isCustom ) =>
 											setDraft( {
 												...draft,

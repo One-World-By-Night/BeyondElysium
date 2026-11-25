@@ -20,6 +20,7 @@ import {
 	reorderErrorMessage,
 } from '../../lib/reorderArray';
 import type { OptionGroup } from '../../lib/searchableSelect';
+import { useOptionPrices } from '../../lib/useOptionPrices';
 import api from '../../api/client';
 import type { TieredPowerDefinition } from '../../types';
 import './TieredPowerEditor.css';
@@ -63,6 +64,10 @@ export interface TieredPowerEditorProps {
 	 */
 	gameSlug?: string;
 	characterId?: number;
+	/**
+	 * Present when the add pickers show each option's price; `saved` is this block's saved data.
+	 */
+	pricing?: { saved: unknown };
 }
 
 /**
@@ -373,6 +378,7 @@ export function TieredPowerEditor( {
 	readOnly,
 	gameSlug,
 	characterId,
+	pricing,
 }: TieredPowerEditorProps ) {
 	const emit = ( next: EditableHeldPower[] ) => onChange( blockSlug, next );
 
@@ -487,6 +493,40 @@ export function TieredPowerEditor( {
 		() => pickOptionsFor( definition, data ),
 		[ definition, data ]
 	);
+	// A Blood Magic add asks for its tradition first, so it has no price to show.
+	const addPricing = definition.blood_magic ? undefined : pricing;
+	const savedRows =
+		( pricing?.saved as EditableHeldPower[] | undefined ) ?? [];
+	const addPrices = useOptionPrices( {
+		pricing: addPricing,
+		gameSlug,
+		characterId,
+		blockSlug,
+		sectionType: 'tiered_power',
+		definition,
+		nextFor: ( name ) => [ ...savedRows, { name, level: 1 } ],
+	} );
+	const pickPrices = useOptionPrices( {
+		pricing: addPricing,
+		gameSlug,
+		characterId,
+		blockSlug,
+		sectionType: 'tiered_power',
+		definition,
+		nextFor: ( value ) => {
+			const found = pickOptions.find( ( o ) => o.value === value );
+			return found
+				? [
+						...savedRows,
+						{
+							name: found.family,
+							power_name: found.powerName,
+							tier: found.rank,
+						},
+					]
+				: null;
+		},
+	} );
 	const pickSearchGroups: OptionGroup[] = useMemo(
 		() =>
 			pickGroups.map( ( group ) => ( {
@@ -1129,6 +1169,8 @@ export function TieredPowerEditor( {
 									'beyond-elysium'
 								) }
 								allowCustom={ definition.allow_custom ?? false }
+								hint={ addPrices?.hint }
+								onVisibleOptions={ addPrices?.request }
 								onChange={ addPower }
 							/>
 						</div>
@@ -1233,6 +1275,8 @@ export function TieredPowerEditor( {
 										'beyond-elysium'
 									) }
 									allowCustom={ false }
+									hint={ pickPrices?.hint }
+									onVisibleOptions={ pickPrices?.request }
 									onChange={ addPick }
 								/>
 							</div>

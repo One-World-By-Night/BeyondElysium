@@ -9,6 +9,7 @@ import CollapsiblePanel from '../shared/CollapsiblePanel';
 import { storytellerTabUrl, STORYTELLER_TABS } from '../../lib/pluginPages';
 import type { CharacterHook } from '../../api/client';
 import './NpcHooksPanel.css';
+import { formatStoredTime } from '../../lib/storedTime';
 
 export interface NpcHooksPanelProps {
 	gameSlug: string;
@@ -40,7 +41,7 @@ function HookList( {
 					<a href={ hookLink( gameSlug, hook ) }>{ hook.title }</a>
 					{ hook.latest_entry_date && (
 						<span className="be-npc-hooks-panel__date">
-							{ hook.latest_entry_date }
+							{ formatStoredTime( hook.latest_entry_date ) }
 						</span>
 					) }
 				</li>

@@ -19,6 +19,7 @@ import { SignInRoster } from './SignInRoster';
 import { SessionRecapPanel } from './SessionRecapPanel';
 import HelpButton from '../shared/HelpButton';
 import './GameNights.css';
+import { formatStoredTime } from '../../lib/storedTime';
 
 export interface GameNightsProps {
 	gameSlug: string;
@@ -436,7 +437,7 @@ export function GameNights( { gameSlug, capabilities }: GameNightsProps ) {
 							{ __( 'All sessions', 'beyond-elysium' ) }
 						</button>
 						<span>/</span>
-						<span>{ selected.game_date }</span>
+						<span>{ formatStoredTime( selected.game_date ) }</span>
 					</nav>
 				) }
 			</header>
@@ -700,7 +701,11 @@ export function GameNights( { gameSlug, capabilities }: GameNightsProps ) {
 										className="be-game-nights__session-card"
 										onClick={ () => setSelected( session ) }
 									>
-										<strong>{ session.game_date }</strong>
+										<strong>
+											{ formatStoredTime(
+												session.game_date
+											) }
+										</strong>
 										{ session.start_time && (
 											<span>{ session.start_time }</span>
 										) }

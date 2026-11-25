@@ -18,6 +18,7 @@ import ResourcePoolEditor from './ResourcePoolEditor';
 import IdentityFieldEditor, {
 	type IdentityFieldValue,
 } from './IdentityFieldEditor';
+import { pricingEnabled } from '../../lib/optionPrice';
 import './BlockEditor.css';
 
 export interface BlockEditorProps {
@@ -49,6 +50,10 @@ export interface BlockEditorProps {
 	 * True while a new character is being made, so a pool only play can raise takes its free dots directly.
 	 */
 	creating?: boolean;
+	/**
+	 * This block's saved data. A player's add pickers show each option's price from it.
+	 */
+	savedData?: unknown;
 }
 
 /**
@@ -68,7 +73,19 @@ export function BlockEditor( {
 	characterId,
 	isManager,
 	creating,
+	savedData,
 }: BlockEditorProps ) {
+	const pricing = pricingEnabled( {
+		gameSlug,
+		characterId,
+		isManager,
+		readOnly,
+		creating,
+		unpriced: !! ( definition as { unpriced?: boolean } ).unpriced,
+	} )
+		? { saved: savedData }
+		: undefined;
+
 	switch ( sectionType ) {
 		case 'trait_list':
 			return (
@@ -86,6 +103,7 @@ export function BlockEditor( {
 					gameSlug={ gameSlug }
 					characterId={ characterId }
 					sheetData={ sheetData }
+					pricing={ pricing }
 				/>
 			);
 
@@ -105,6 +123,7 @@ export function BlockEditor( {
 					readOnly={ readOnly }
 					gameSlug={ gameSlug }
 					characterId={ characterId }
+					pricing={ pricing }
 				/>
 			);
 

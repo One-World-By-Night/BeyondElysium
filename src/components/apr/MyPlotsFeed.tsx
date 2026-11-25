@@ -8,6 +8,8 @@ import type { MyPlotsResponse } from '../../types/plot';
 import { PlotThread } from './PlotThread';
 import HelpButton from '../shared/HelpButton';
 import './MyPlotsFeed.css';
+import { plotDisplayTitle } from '../../lib/plotTitle';
+import { formatStoredTime } from '../../lib/storedTime';
 
 export interface MyPlotsFeedProps {
 	gameSlug: string;
@@ -89,10 +91,12 @@ export function MyPlotsFeed( { gameSlug }: MyPlotsFeedProps ) {
 								onClick={ () => setSelected( plot.id ) }
 							>
 								<span className="be-my-plots__title">
-									{ plot.title }
+									{ plotDisplayTitle( plot.title ) }
 								</span>
 								<span className="be-my-plots__updated">
-									{ plot.updated_at }
+									{ formatStoredTime( plot.updated_at, {
+										time: true,
+									} ) }
 								</span>
 							</button>
 						</li>

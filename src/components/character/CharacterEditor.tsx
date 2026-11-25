@@ -69,6 +69,8 @@ export interface CharacterEditorProps {
 }
 
 import { errorMessage } from '../../lib/errorMessage';
+import { approvalLevelLabel } from '../../lib/characterLabels';
+import { pendingLine } from '../../lib/pendingLine';
 
 function sortedSections(
 	resolved: TemplateResolveResponse | null,
@@ -145,6 +147,22 @@ export function CharacterEditor( {
 		null
 	);
 	const [ confirmingReset, setConfirmingReset ] = useState( false );
+	const [ reviewOpen, setReviewOpen ] = useState( false );
+	const pendingCount = store.pendingChanges.length;
+	const hasInvalidPending = !! store.previewCosts?.results.some(
+		( result ) => result.invalid
+	);
+	const hasFailedSubmit = ( submitResult?.failed.length ?? 0 ) > 0;
+	useEffect( () => {
+		if ( hasInvalidPending || hasFailedSubmit ) {
+			setReviewOpen( true );
+		}
+	}, [ hasInvalidPending, hasFailedSubmit ] );
+	useEffect( () => {
+		if ( pendingCount === 0 ) {
+			setReviewOpen( false );
+		}
+	}, [ pendingCount ] );
 
 	// Background/Notes are header fields that save directly, independent of the pending-changes flow below.
 	const biographyDraft = useRef< string >( '' );
@@ -874,6 +892,53 @@ export function CharacterEditor( {
 		store.previewCosts?.running_xp_unspent ?? store.character.xp_unspent;
 	const overBudget = ! canManage && resultingUnspent < 0;
 
+	const pendingSummary = pendingLine(
+		pendingTotal,
+		canManage || ! store.previewCosts ? null : totalCost,
+		canManage || ! store.previewCosts ? null : resultingUnspent
+	);
+	const submitMessages =
+		submitResult &&
+		( submitResult.failed.length > 0 ||
+			submitResult.pending.length > 0 ) ? (
+			<>
+				{ submitResult.failed.length > 0 && (
+					<p className="be-character-editor__error" role="alert">
+						{ sprintf(
+							/* translators: 1: number of changes saved, 2: total number of changes submitted, 3: number that failed and need retrying */
+							_n(
+								'%1$d of %2$d changes were saved. %3$d did not - review and submit again to retry it.',
+								'%1$d of %2$d changes were saved. %3$d did not - review and submit again to retry them.',
+								submitResult.failed.length,
+								'beyond-elysium'
+							),
+							submitResult.submitted.length,
+							submitResult.submitted.length +
+								submitResult.failed.length,
+							submitResult.failed.length
+						) }
+					</p>
+				) }
+				{ submitResult.pending.length > 0 && (
+					<p
+						className="be-character-editor__pending-notice"
+						role="status"
+					>
+						{ sprintf(
+							/* translators: %d: number of changes submitted and awaiting Storyteller approval */
+							_n(
+								'%d change was submitted and is awaiting Storyteller approval - it will not appear on the sheet until then.',
+								'%d changes were submitted and are awaiting Storyteller approval - they will not appear on the sheet until then.',
+								submitResult.pending.length,
+								'beyond-elysium'
+							),
+							submitResult.pending.length
+						) }
+					</p>
+				) }
+			</>
+		) : null;
+
 	// Seeds the drafts from the loaded character once per character, not on every re-render.
 	if ( headerDraftsSeeded.current !== effectiveCharacterId ) {
 		biographyDraft.current = store.character.biography ?? '';
@@ -1456,6 +1521,11 @@ export function CharacterEditor( {
 								gameSlug={ gameSlug }
 								characterId={ effectiveCharacterId }
 								isManager={ canManage }
+								savedData={
+									store.originalSheetData[
+										section.block_slug
+									]
+								}
 							/>
 						</CollapsiblePanel>
 					);
@@ -1470,151 +1540,160 @@ export function CharacterEditor( {
 				/>
 			) }
 
-			{ ! readOnly && (
-				<CollapsiblePanel
-					id="character-editor-pending"
+			{ ! readOnly && pendingTotal > 0 && (
+				<div
 					className="be-character-editor__summary"
-					forceOpenKey={ pendingTotal }
-					heading={
-						<h4>
-							{ sprintf(
-								/* translators: %d: number of unsaved pending changes */
-								__( 'Pending Changes (%d)', 'beyond-elysium' ),
-								pendingTotal
-							) }
-						</h4>
-					}
+					id="character-editor-pending"
 				>
-					{ pendingTotal === 0 && (
-						<p>{ __( 'No unsaved changes.', 'beyond-elysium' ) }</p>
-					) }
-					<ul className="be-character-editor__pending-list">
-						{ store.pendingChanges.map( ( change, i ) => {
-							const preview = store.previewCosts?.results[ i ];
-							return (
-								<li
-									key={ i }
-									className={
-										preview?.invalid
-											? 'be-character-editor__pending--invalid'
-											: undefined
-									}
-								>
-									{ describeChange(
-										change.change_type,
-										change.change_data
-									) }
-									{ preview && (
-										<>
-											{ ' ' }
-											(
-											{ previewPriceLabel( preview ) ?? (
-												<>
-													{ preview.xp_cost >= 0
-														? '+'
-														: '' }
-													{ sprintf(
-														/* translators: %d: the XP cost or refund for this pending change */
-														__(
-															'%d XP',
-															'beyond-elysium'
-														),
-														preview.xp_cost
-													) }
-												</>
-											) }
-											{ ! preview.invalid && (
-												<>
-													, { preview.approval_level }
-												</>
-											) }
-											)
-										</>
-									) }
-								</li>
-							);
-						} ) }
-					</ul>
-					{ pendingTotal > 0 && (
-						<p className="be-character-editor__totals">
-							{ sprintf(
-								/* translators: 1: total signed XP cost of every pending change, already formatted with a sign, 2: unspent XP remaining after applying them */
-								__(
-									'Total: %1$s XP — Unspent after: %2$d',
-									'beyond-elysium'
-								),
-								`${ totalCost >= 0 ? '+' : '' }${ totalCost }`,
-								resultingUnspent
-							) }
-							{ overBudget && (
-								<span className="be-character-editor__over-budget">
-									{ ' ' }
-									{ __(
-										'(exceeds available XP)',
-										'beyond-elysium'
-									) }
-								</span>
-							) }
-						</p>
-					) }
-
-					<div className="be-character-editor__actions">
-						<button
-							type="button"
-							disabled={
-								store.saving || pendingTotal === 0 || overBudget
-							}
-							onClick={ handleSubmit }
-						>
-							{ store.saving
-								? __( 'Submitting…', 'beyond-elysium' )
-								: __( 'Submit Changes', 'beyond-elysium' ) }
-						</button>
-						<button
-							type="button"
-							disabled={ store.saving || pendingTotal === 0 }
-							onClick={ () => setConfirmingReset( true ) }
-						>
-							{ __( 'Discard', 'beyond-elysium' ) }
-						</button>
-					</div>
-
-					{ submitResult && submitResult.failed.length > 0 && (
-						<p className="be-character-editor__error" role="alert">
-							{ sprintf(
-								/* translators: 1: number of changes saved, 2: total number of changes submitted, 3: number that failed and need retrying */
-								_n(
-									'%1$d of %2$d changes were saved. %3$d did not - review and submit again to retry it.',
-									'%1$d of %2$d changes were saved. %3$d did not - review and submit again to retry them.',
-									submitResult.failed.length,
-									'beyond-elysium'
-								),
-								submitResult.submitted.length,
-								submitResult.submitted.length +
-									submitResult.failed.length,
-								submitResult.failed.length
-							) }
-						</p>
-					) }
-
-					{ submitResult && submitResult.pending.length > 0 && (
+					<div className="be-character-editor__chip">
 						<p
-							className="be-character-editor__pending-notice"
+							className="be-character-editor__chip-line"
 							role="status"
 						>
-							{ sprintf(
-								/* translators: %d: number of changes submitted and awaiting Storyteller approval */
-								_n(
-									'%d change was submitted and is awaiting Storyteller approval - it will not appear on the sheet until then.',
-									'%d changes were submitted and are awaiting Storyteller approval - they will not appear on the sheet until then.',
-									submitResult.pending.length,
-									'beyond-elysium'
-								),
-								submitResult.pending.length
+							{ pendingSummary.lead }
+							{ pendingSummary.tail && (
+								<>
+									{ ' · ' }
+									<span
+										className={
+											pendingSummary.over
+												? 'be-character-editor__over-budget'
+												: undefined
+										}
+									>
+										{ pendingSummary.tail }
+									</span>
+								</>
 							) }
 						</p>
+						<button
+							type="button"
+							aria-expanded={ reviewOpen }
+							aria-controls="character-editor-review"
+							onClick={ () =>
+								setReviewOpen( ( open ) => ! open )
+							}
+						>
+							{ reviewOpen
+								? __( 'Close', 'beyond-elysium' )
+								: __( 'Review', 'beyond-elysium' ) }
+						</button>
+					</div>
+					{ reviewOpen && (
+						<div
+							className="be-character-editor__review"
+							id="character-editor-review"
+						>
+							<ul className="be-character-editor__pending-list">
+								{ store.pendingChanges.map( ( change, i ) => {
+									const preview =
+										store.previewCosts?.results[ i ];
+									return (
+										<li
+											key={ i }
+											className={
+												preview?.invalid
+													? 'be-character-editor__pending--invalid'
+													: undefined
+											}
+										>
+											{ describeChange(
+												change.change_type,
+												change.change_data
+											) }
+											{ preview && (
+												<>
+													{ ' ' }
+													(
+													{ previewPriceLabel(
+														preview
+													) ?? (
+														<>
+															{ preview.xp_cost >=
+															0
+																? '+'
+																: '' }
+															{ sprintf(
+																/* translators: %d: the XP cost or refund for this pending change */
+																__(
+																	'%d XP',
+																	'beyond-elysium'
+																),
+																preview.xp_cost
+															) }
+														</>
+													) }
+													{ ! preview.invalid && (
+														<>
+															,{ ' ' }
+															{ approvalLevelLabel(
+																preview.approval_level
+															) }
+														</>
+													) }
+													)
+												</>
+											) }
+										</li>
+									);
+								} ) }
+							</ul>
+							<p className="be-character-editor__totals">
+								{ sprintf(
+									/* translators: 1: total signed XP cost of every pending change, already formatted with a sign, 2: unspent XP remaining after applying them */
+									__(
+										'Total: %1$s XP — Unspent after: %2$d',
+										'beyond-elysium'
+									),
+									`${ totalCost >= 0 ? '+' : '' }${ totalCost }`,
+									resultingUnspent
+								) }
+								{ overBudget && (
+									<span className="be-character-editor__over-budget">
+										{ ' ' }
+										{ __(
+											'(exceeds available XP)',
+											'beyond-elysium'
+										) }
+									</span>
+								) }
+							</p>
+							<div className="be-character-editor__actions">
+								<button
+									type="button"
+									disabled={
+										store.saving ||
+										pendingTotal === 0 ||
+										overBudget
+									}
+									onClick={ handleSubmit }
+								>
+									{ store.saving
+										? __( 'Submitting…', 'beyond-elysium' )
+										: __(
+												'Submit Changes',
+												'beyond-elysium'
+											) }
+								</button>
+								<button
+									type="button"
+									disabled={
+										store.saving || pendingTotal === 0
+									}
+									onClick={ () => setConfirmingReset( true ) }
+								>
+									{ __( 'Discard', 'beyond-elysium' ) }
+								</button>
+							</div>
+							{ submitMessages }
+						</div>
 					) }
-				</CollapsiblePanel>
+				</div>
+			) }
+			{ ! readOnly && pendingTotal === 0 && submitMessages && (
+				<div className="be-character-editor__result">
+					{ submitMessages }
+				</div>
 			) }
 
 			<ConfirmDialog

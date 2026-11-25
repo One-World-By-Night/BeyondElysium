@@ -1,50 +1,32 @@
 # Trait Lists
 
-The editor for a trait-list section of a character's sheet - catalogs like Abilities,
-Backgrounds, Merits, and Flaws, where each held entry is a name and a count or level.
+The editor for a trait-list section of a character's sheet - catalogs like Abilities, Backgrounds, Merits, and Flaws, where each held entry is a name and a count or level.
 
 ## Who can use this
 
-Anyone editing a character sees this inside the Edit tab - a player editing their own
-character, or a Storyteller editing any character in the chronicle. If you can only view the
-character, every trait here shows as a plain read-only list with no Add or edit control. See
-[Character Editor](character-editor.md) for who can open the Edit tab at all.
+Anyone editing a character sees this inside the Edit tab - a player editing their own character, or a Storyteller editing any character in the chronicle. If you can only view the character, every trait here shows as a plain read-only list with no Add or edit control. See [Character Editor](character-editor.md) for who can open the Edit tab at all.
 
 ## How to get there
 
-My Chronicle → Edit tab, inside any section built as a trait list (Abilities, Backgrounds,
-Merits, Flaws, and similar, depending on the chronicle's own template).
+My Chronicle → Edit tab, inside any section built as a trait list (Abilities, Backgrounds, Merits, Flaws, and similar, depending on the chronicle's own template).
 
 ## The screen
 
-- Held entries, one row each: the name, a dot or count display for anything held above zero,
-  and, when set, a specialization in parentheses, a note, and the cost chosen for it. Some
-  sections group their entries
-  under heading and subheading rows instead of one flat list, depending on how that section is
-  built.
+- Held entries, one row each: the name, a dot or count display for anything held above zero, and, when set, a specialization in parentheses, a note, and the cost chosen for it. Some sections group their entries under heading and subheading rows instead of one flat list, depending on how that section is built.
 - **✎** on each row - opens the same modal used for adding one, for editing.
 - **+ Add** - opens a blank modal to add a new entry.
 - **Reorder** - on Rituals, and on any other trait list your chronicle has set to let players choose their own order. Puts what you hold in whatever order you like instead of the usual alphabetical list - see [Your Own Order](player-order.md).
 
 ### The Add/Edit modal
 
-- **Name** - a searchable dropdown of this section's catalog. Typing filters the list; where
-  this section allows a custom entry, typing a name that isn't in the list adds it as one.
-  Shown only when adding - a held entry's name can't be changed, only removed and re-added.
+- **Name** - a searchable dropdown of this section's catalog. Typing filters the list; where this section allows a custom entry, typing a name that isn't in the list adds it as one. Shown only when adding - a held entry's name can't be changed, only removed and re-added.
+- **The price beside each name.** As a player editing a character you've already saved, each option shows its cost at the right of its row: "3 XP", "from 2 XP" for an entry with a choice of costs, "Storyteller prices it" for one nobody has priced yet, and a "· Storyteller" tag when picking it will need a Storyteller's approval. The prices load as you scroll. A Storyteller, and anyone making a new character, sees names alone.
 - **Count / Level** - a number, minimum 1.
-- **Cost** - shown only for an entry the catalog prices at a choice of costs, such as a Merit
-  listed "1 or 3" or "3-5". It starts at the lowest, which is what you pay if you leave it.
-- **Specialization**, or **Who or what?** - shown for a section that supports a
-  specialization (for example, an Ability like Academics can carry one such as "Byzantine
-  History"), and also for an entry you can hold more than once even on a section that
-  doesn't otherwise use this field - see [Things to know](#things-to-know) below. Whichever
-  question is asked, leaving it blank (or repeating an answer you already used) adds to the
-  matching existing row instead of starting a new one.
+- **Cost** - shown only for an entry the catalog prices at a choice of costs, such as a Merit listed "1 or 3" or "3-5". It starts at the lowest, which is what you pay if you leave it.
+- **Specialization**, or **Who or what?** - shown for a section that supports a specialization (for example, an Ability like Academics can carry one such as "Byzantine History"), and also for an entry you can hold more than once even on a section that doesn't otherwise use this field - see [Things to know](#things-to-know) below. Whichever question is asked, leaving it blank (or repeating an answer you already used) adds to the matching existing row instead of starting a new one.
 - **Note** - a free-text field, always available.
-- **Remove** / **Undo removal** - marks the entry for removal, or brings it back, without
-  leaving the modal.
-- **Save** - disabled until a name is chosen; writes the entry back into this screen's own copy
-  of the section - it doesn't reach the sheet until you submit changes.
+- **Remove** / **Undo removal** - marks the entry for removal, or brings it back, without leaving the modal.
+- **Save** - disabled until a name is chosen; writes the entry back into this screen's own copy of the section - it doesn't reach the sheet until you submit changes.
 
 ## Common tasks
 
@@ -52,8 +34,7 @@ Merits, Flaws, and similar, depending on the chronicle's own template).
 
 1. Open the section and click **+ Add**.
 2. Choose a name from the list (or type one, where allowed).
-3. Set the **Count / Level**, and a specialization or note if you want one. For an entry
-   with a choice of costs, pick its **Cost**.
+3. Set the **Count / Level**, and a specialization or note if you want one. For an entry with a choice of costs, pick its **Cost**.
 4. Click **Save**.
 
 ### Change an entry's count or level
@@ -71,34 +52,19 @@ Merits, Flaws, and similar, depending on the chronicle's own template).
 ## Things to know
 
 - **Adding the same name again adds to it, not a duplicate row** - for most sections, choosing a name you already hold raises its existing count instead of creating a second entry, whatever specialization you type alongside it. A specialization labels one holding, so `Brawl 5 (Wrestling)` is a single Brawl at 5: picking a different focus doesn't buy you a second Brawl, it re-labels or adds to the one you have.
-- **A few entries really can be held more than once**, and those are the ones where the
-  label is part of what you hold - two different Retainers, or two fields of study under one
-  Ability. For these, the modal asks **Who or what?** instead of Specialization, even on a
-  section (like Backgrounds) that doesn't otherwise show this field at all. Your chronicle's
-  own catalog says which entries work that way; for them, a new answer is a new row with its
-  own dots and its own cost, and repeating an answer you already used raises that row
-  instead. A few sections - Merits and Flaws, for example - always keep each pick as its own
-  row, however it is named.
+- **A few entries really can be held more than once**, and those are the ones where the label is part of what you hold - two different Retainers, or two fields of study under one Ability. For these, the modal asks **Who or what?** instead of Specialization, even on a section (like Backgrounds) that doesn't otherwise show this field at all. Your chronicle's own catalog says which entries work that way; for them, a new answer is a new row with its own dots and its own cost, and repeating an answer you already used raises that row instead. A few sections - Merits and Flaws, for example - always keep each pick as its own row, however it is named.
 - **Re-labelling onto a label you already hold merges the two** - where a name can be held more than once, editing one row's label to match another row's combines them into the one you already had, rather than leaving two rows nothing can tell apart.
-- **A custom name always needs review.** Typing a name that isn't in the catalog only saves
-  where this section allows custom entries at all, and even then it always goes to a
-  Storyteller for approval, no matter how your chronicle has auto-approval configured.
-- **Removing marks, it doesn't delete** - nothing actually leaves the sheet until you submit
-  changes from the Edit tab, so you can undo a removal right up until then.
-- **Every dot is the same size** - the count display here matches the sheet and a signed PDF
-  exactly.
-- **Nothing here is priced or saved on its own.** Every add, change, or removal queues in the
-  Edit tab's Pending Changes until you submit it.
+- **A custom name always needs review.** Typing a name that isn't in the catalog only saves where this section allows custom entries at all, and even then it always goes to a Storyteller for approval, no matter how your chronicle has auto-approval configured.
+- **Removing marks, it doesn't delete** - nothing actually leaves the sheet until you submit changes from the Edit tab, so you can undo a removal right up until then.
+- **Every dot is the same size** - the count display here matches the sheet and a signed PDF exactly.
+- **The price beside a name is a preview, and nothing here is saved on its own.** Every add, change, or removal queues in the Edit tab's Pending Changes until you submit it, and that bar prices the whole set together. A price in the dropdown is worked out against the sheet as it's saved, so a queued change that moves it (a new Clan, say) isn't counted there; the bar's total always is.
 
 ## Troubleshooting
 
 - **Save won't click.** Choose a name first - it's required.
-- **A name I typed says it isn't in the catalog.** Check the spelling. If it's genuinely new,
-  this section may not accept custom entries at all - ask a Storyteller.
-- **I don't see + Add or the ✎ button.** You're viewing a character you can't edit - see
-  [Character Editor](character-editor.md).
-- **My removal disappeared.** You likely reopened the entry and clicked Undo removal, or
-  discarded your pending changes before submitting.
+- **A name I typed says it isn't in the catalog.** Check the spelling. If it's genuinely new, this section may not accept custom entries at all - ask a Storyteller.
+- **I don't see + Add or the ✎ button.** You're viewing a character you can't edit - see [Character Editor](character-editor.md).
+- **My removal disappeared.** You likely reopened the entry and clicked Undo removal, or discarded your pending changes before submitting.
 
 ## Related
 

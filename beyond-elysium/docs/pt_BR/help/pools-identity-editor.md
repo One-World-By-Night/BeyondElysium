@@ -38,14 +38,14 @@ Cada campo aparece como um destes, conforme como o modelo da crônica o montou:
 1. Abra o personagem na aba **Editar**.
 2. Ache a linha da reserva.
 3. Clique em **+** ao lado de **P** para subir a classificação permanente, ou ao lado de **T** para gastar ou recuperar pontos em jogo.
-4. Confira o custo em **Alterações Pendentes** e clique em **Enviar Alterações**.
+4. Clique em **Revisar** na barra no pé da tela para conferir o custo e depois em **Enviar Alterações**.
 
 ### Mudar um campo de identidade
 
 1. Abra o personagem na aba **Editar**.
 2. Ache o campo.
 3. Escolha um valor novo, ou digite um onde o campo permitir.
-4. Clique em **Enviar Alterações**.
+4. Clique em **Revisar** na barra no pé da tela e depois em **Enviar Alterações**.
 
 ### Escolher mais de uma opção num campo de seleção múltipla
 

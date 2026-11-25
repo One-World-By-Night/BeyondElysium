@@ -8,7 +8,7 @@ import type {
 	ResourcePoolDefinition,
 	SectionType,
 } from '../types';
-import { identityValueText } from './identityValue';
+import { filledIdentityFields } from './identityValue';
 
 export function sectionHasContent(
 	sectionType: SectionType,
@@ -27,11 +27,11 @@ export function sectionHasContent(
 			);
 
 		case 'identity_field': {
-			const values = ( data ?? {} ) as Record< string, unknown >;
 			return (
-				( definition as IdentityFieldDefinition ).fields ?? []
-			).some(
-				( field ) => identityValueText( values[ field.name ] ) !== null
+				filledIdentityFields(
+					( definition as IdentityFieldDefinition ).fields ?? [],
+					data as Record< string, unknown > | null | undefined
+				).length > 0
 			);
 		}
 

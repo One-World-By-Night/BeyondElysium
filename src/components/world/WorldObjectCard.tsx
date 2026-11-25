@@ -13,6 +13,7 @@ import AttachmentList from '../shared/AttachmentList';
 import SecretsPanel from '../shared/SecretsPanel';
 import WhatYouKnow from '../shared/WhatYouKnow';
 import './WorldObjectCard.css';
+import { formatStoredTime } from '../../lib/storedTime';
 
 export interface WorldObjectCardProps {
 	gameSlug: string;
@@ -411,7 +412,9 @@ function ItemHistory( {
 						<li key={ event.id }>
 							{ EVENT_LABELS[ event.event ] }
 							{ ' · ' }
-							{ event.created_at }
+							{ formatStoredTime( event.created_at, {
+								time: true,
+							} ) }
 							{ event.note && (
 								<>
 									{ ' — ' }

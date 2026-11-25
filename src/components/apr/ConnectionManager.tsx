@@ -14,6 +14,7 @@ import type { Character } from '../../types/character';
 import type { Connection, EntityType, Plot } from '../../types/plot';
 import type { ObjectType, WorldObject } from '../../types/world';
 import './ConnectionManager.css';
+import { plotDisplayTitle, plotTitleById } from '../../lib/plotTitle';
 
 export interface ConnectionManagerProps {
 	gameSlug: string;
@@ -167,7 +168,7 @@ export function ConnectionManager( {
 		}
 		if ( type === 'plot' ) {
 			return (
-				plots.find( ( p ) => idOf( p.id ) === id )?.title ??
+				plotTitleById( plots, id ) ??
 				sprintf(
 					/* translators: %d: the plot's numeric id, shown when its title can't be resolved */
 					__( 'plot #%d', 'beyond-elysium' ),
@@ -264,7 +265,7 @@ export function ConnectionManager( {
 		[ characters ]
 	);
 	const plotNames = useMemo(
-		() => pickerNames( plots, ( p ) => p.title ),
+		() => pickerNames( plots, ( p ) => plotDisplayTitle( p.title ) ),
 		[ plots ]
 	);
 	const worldObjectDisplayToId = useMemo(

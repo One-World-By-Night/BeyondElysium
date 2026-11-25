@@ -20,6 +20,7 @@ My Chronicle → Edit tab, inside any section built as a trait list (Abilities, 
 ### The Add/Edit modal
 
 - **Name** - a searchable dropdown of this section's catalog. Typing filters the list; where this section allows a custom entry, typing a name that isn't in the list adds it as one. Shown only when adding - a held entry's name can't be changed, only removed and re-added.
+- **The price beside each name.** As a player editing a character you've already saved, each option shows its cost at the right of its row: "3 XP", "from 2 XP" for an entry with a choice of costs, "Storyteller prices it" for one nobody has priced yet, and a "· Storyteller" tag when picking it will need a Storyteller's approval. The prices load as you scroll. A Storyteller, and anyone making a new character, sees names alone.
 - **Count / Level** - a number, minimum 1.
 - **Cost** - shown only for an entry the catalog prices at a choice of costs, such as a Merit listed "1 or 3" or "3-5". It starts at the lowest, which is what you pay if you leave it.
 - **Specialization**, or **Who or what?** - shown for a section that supports a specialization (for example, an Ability like Academics can carry one such as "Byzantine History"), and also for an entry you can hold more than once even on a section that doesn't otherwise use this field - see [Things to know](#things-to-know) below. Whichever question is asked, leaving it blank (or repeating an answer you already used) adds to the matching existing row instead of starting a new one.
@@ -56,7 +57,7 @@ My Chronicle → Edit tab, inside any section built as a trait list (Abilities, 
 - **A custom name always needs review.** Typing a name that isn't in the catalog only saves where this section allows custom entries at all, and even then it always goes to a Storyteller for approval, no matter how your chronicle has auto-approval configured.
 - **Removing marks, it doesn't delete** - nothing actually leaves the sheet until you submit changes from the Edit tab, so you can undo a removal right up until then.
 - **Every dot is the same size** - the count display here matches the sheet and a signed PDF exactly.
-- **Nothing here is priced or saved on its own.** Every add, change, or removal queues in the Edit tab's Pending Changes until you submit it.
+- **The price beside a name is a preview, and nothing here is saved on its own.** Every add, change, or removal queues in the Edit tab's Pending Changes until you submit it, and that bar prices the whole set together. A price in the dropdown is worked out against the sheet as it's saved, so a queued change that moves it (a new Clan, say) isn't counted there; the bar's total always is.
 
 ## Troubleshooting
 

@@ -112,14 +112,16 @@ Uma lista de traços ou seção de poderes que a crônica configurou para deixar
 
 ### Alterações Pendentes
 
-Tudo o que você muda nas seções acima fica na fila aqui em vez de tocar a ficha na hora:
+Tudo o que você muda nas seções acima fica na fila aqui em vez de tocar a ficha na hora. Uma barra no pé da tela mostra o que está na fila, e ela só aparece enquanto houver algo:
 
+- **A linha única.** Fechada, a barra diz algo como "3 alterações · +6 XP · 4 XP restantes": quantas alterações estão na fila, quanto custam no total e quanto sobraria para você. Como jogador, "4 XP restantes" vira "2 XP acima do saldo", em vermelho, se as alterações custarem mais do que você tem. Um Narrador vê só a contagem. O custo e o que sobra aparecem quando os preços carregam.
+- **Revisar** - abre a lista completa embaixo dessa linha, e **Fechar** a guarda de volta. A barra se abre sozinha quando uma alteração na fila não pode ser enviada como está, ou quando um envio falha, para você ver o motivo.
 - Uma lista corrida, uma linha por mudança, nomeando o que mudou e, quando o preço carrega, o custo em XP e se precisa de revisão do Narrador. Um traço ou poder que não está no catálogo diz "Preço definido por um Narrador na aprovação" em vez de um custo: ainda não tem preço, e o total o deixa de fora até um Narrador definir um.
 - O **Total** de XP de tudo o que está na fila e **Não gasto após** - como ficaria o seu XP depois que tudo for aplicado. Como jogador, isso vira um aviso se ficar negativo.
 - **Enviar Alterações** - envia tudo o que está na fila ao servidor junto, num só pedido. Como jogador, fica desativado se deixaria você com XP negativo.
 - **Descartar** - abre uma confirmação ("Descartar alterações não salvas?") antes de reverter todo campo ao que está na ficha agora e levar você de volta à Ficha do personagem.
 
-Depois de enviar, você pode ver um destes, ou os dois:
+Depois de enviar, você pode ver um destes, ou os dois. Quando nada mais resta na fila, a barra some e eles aparecem na própria página:
 
 - Um aviso de que o envio falhou - nada nele foi salvo, já que o conjunto inteiro dá certo ou falha junto. Revise e clique em **Enviar Alterações** de novo para tentar outra vez.
 - Um aviso de que algumas mudanças foram enviadas e aguardam a aprovação do Narrador - não aparecem na ficha até lá. Se a sua crônica sempre espera numa remoção, numa classificação menor, num novo rótulo ou numa troca de nome (Regras de Aprovação), tudo o que essa regra pegar espera junto com o que mais você enviou ao lado, até uma adição que de outro modo passaria direto.
@@ -140,7 +142,7 @@ Se você sair com algo na fila sem enviar, o navegador avisa antes de você nave
 
 1. Abra a Ficha do personagem e clique em **Editar este personagem** (ou abra a aba **Editar** com esse personagem já escolhido).
 2. Use o controle de cada seção para adicionar, mudar ou remover um traço, poder, valor de reserva ou campo de identidade.
-3. Confira o **Total** e o **Não gasto após** corridos em Alterações Pendentes.
+3. Clique em **Revisar** na barra no pé da tela e confira cada alteração, o **Total** e o **Não gasto após** corridos.
 4. Clique em **Enviar Alterações**.
 
 ### Atualizar o Antecedente ou as Notas
@@ -156,7 +158,7 @@ Se você sair com algo na fila sem enviar, o navegador avisa antes de você nave
 
 ### Descartar alterações antes de enviar
 
-1. Em Alterações Pendentes, clique em **Descartar**.
+1. Na barra no pé da tela, clique em **Revisar** e depois em **Descartar**.
 2. Confirme "Descartar alterações não salvas?" - isso reverte todo campo e leva você de volta à Ficha do personagem.
 
 ## O que saber
@@ -178,7 +180,8 @@ Se você sair com algo na fila sem enviar, o navegador avisa antes de você nave
 ## Solução de problemas
 
 - **As minhas mudanças sumiram depois que enviei.** Provavelmente estão pendentes da revisão do Narrador, não perdidas - confira o "Ver histórico" da Ficha ou as mudanças pendentes do seu Painel.
-- **Enviar Alterações não clica.** Ou nada está na fila ainda, ou (como jogador) enviar deixaria você com XP negativo - reduza o que está comprando, ou peça mais a um Narrador.
+- **Não vejo a barra.** Ela só aparece enquanto houver algo na fila. Mude alguma coisa e ela aparece no pé da tela.
+- **Enviar Alterações não clica.** Como jogador, enviar deixaria você com XP negativo - reduza o que está comprando, ou peça mais a um Narrador.
 - **Um nome que digitei diz que não está no catálogo.** Confira a grafia primeiro. Se é mesmo novo, esta seção pode não aceitar entradas personalizadas - pergunte a um Narrador.
 - **"O seu personagem já está esperando os Narradores desta crônica aprovarem."** Você já tem um pedido de entrada pendente aqui - espere um Narrador revisá-lo antes de começar outro.
 - **Não consigo abrir um personagem que sei que existe.** Ou ele não está ligado à sua conta ainda, ou pertence a outra pessoa e você não é Narrador aqui - peça a um Narrador que o atribua a você.

@@ -184,6 +184,31 @@ class MailLogThreadTest extends WP_UnitTestCase {
 		$this->assertNull( $this->row_for( $poster ), 'the poster is not emailed about their own post' );
 	}
 
+	public function test_a_post_on_a_characters_own_plot_names_the_plot_without_its_stored_id(): void {
+		$hst     = $this->make_member( $this->game, 'hst' );
+		$poster  = $this->make_member( $this->game, 'player' );
+		$plot_id = $this->make_plot( $this->game, Character::plot_title( 'Raine', 301 ) );
+
+		$this->post_action( $this->game, $plot_id, $poster );
+
+		$row = $this->row_for( $hst );
+		$this->assertNotNull( $row );
+		$this->assertStringContainsString( "Raine's plot", $row->subject );
+		$this->assertStringNotContainsString( '[301]', $row->subject );
+		$this->assertSame( "Raine's plot", Mail_Log::entity_label( 'plot', $plot_id ) );
+	}
+
+	public function test_a_plot_a_storyteller_titled_keeps_its_title_in_the_subject_and_the_label(): void {
+		$hst     = $this->make_member( $this->game, 'hst' );
+		$poster  = $this->make_member( $this->game, 'player' );
+		$plot_id = $this->make_plot( $this->game, 'The Siege of Boston [12] Plot twist' );
+
+		$this->post_action( $this->game, $plot_id, $poster );
+
+		$this->assertStringContainsString( 'The Siege of Boston [12] Plot twist', $this->row_for( $hst )->subject );
+		$this->assertSame( 'The Siege of Boston [12] Plot twist', Mail_Log::entity_label( 'plot', $plot_id ) );
+	}
+
 	public function test_staff_left_out_of_a_plot_post_are_recorded_with_the_reason(): void {
 		$opted_out = $this->make_member( $this->game, 'ast' );
 		$no_plots  = $this->make_member( $this->game, 'ast' );

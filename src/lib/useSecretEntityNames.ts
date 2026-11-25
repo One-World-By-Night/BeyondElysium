@@ -10,6 +10,7 @@ import type { Character } from '../types/character';
 import type { Plot } from '../types/plot';
 import type { WorldObject } from '../types/world';
 import type { SecretEntityType } from '../types/secret';
+import { plotDisplayTitle, plotTitleById } from './plotTitle';
 
 export interface SecretEntityNames {
 	characters: Character[];
@@ -37,7 +38,7 @@ export function buildSecretNamesByType(
 			characters.filter( ( c ) => c.is_npc ),
 			( c ) => c.name
 		),
-		plot: pickerNames( plots, ( p ) => p.title ),
+		plot: pickerNames( plots, ( p ) => plotDisplayTitle( p.title ) ),
 		item: pickerNames(
 			worldObjects.filter( ( w ) => w.object_type === 'item' ),
 			( w ) => w.name
@@ -61,7 +62,7 @@ export function resolveSecretEntityName(
 	worldObjects: WorldObject[]
 ): string | null {
 	if ( entityType === 'plot' ) {
-		return plots.find( ( p ) => p.id === entityId )?.title ?? null;
+		return plotTitleById( plots, entityId );
 	}
 	if ( entityType === 'item' || entityType === 'location' ) {
 		return (

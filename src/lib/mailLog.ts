@@ -88,10 +88,3 @@ export function entityFilterFromSearch( search: string ): EntityFilter | null {
 	}
 	return { entity_type: type, entity_id: id };
 }
-
-/**
- * How a row's time reads: the stored date and time to the minute.
- */
-export function shortTime( createdAt: string ): string {
-	return createdAt.slice( 0, 16 );
-}

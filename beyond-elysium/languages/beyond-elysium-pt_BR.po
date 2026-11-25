@@ -16322,3 +16322,64 @@ msgstr "Editada por %s"
 #: build/259.js:6 build/364.js:1
 msgid "A value the map does not list passes every family"
 msgstr "Um valor que o mapa não lista passa todas as famílias"
+
+#: build/814.js:44 build/887.js:27 build/964.js:116 build/997.js:2
+msgid "Automatic"
+msgstr "Automático"
+
+#: build/814.js:44 build/887.js:27 build/964.js:116 build/997.js:2
+msgid "Not started"
+msgstr "Não iniciado"
+
+#: build/814.js:44 build/887.js:27 build/964.js:116 build/997.js:2
+msgid "Under way"
+msgstr "Em andamento"
+
+#: build/814.js:44 build/887.js:27 build/964.js:116 build/997.js:2
+msgid "Finished"
+msgstr "Concluído"
+
+#: build/814.js:44 build/887.js:27 build/964.js:116 build/997.js:2
+msgid "Forwarded"
+msgstr "Encaminhado"
+
+#. translators: %s: a character's name, shown as the title of that character's own plot
+#: includes/Models/Character.php:295 build/814.js:80 build/887.js:30
+#: build/964.js:154
+#, php-format, js-format
+msgid "%s's plot"
+msgstr "Trama de %s"
+
+#: build/175.js:1 build/964.js:14
+msgid "Storyteller prices it"
+msgstr "O Narrador define o preço"
+
+#. translators: %d: the lowest XP an item can be bought for
+#: build/175.js:2 build/964.js:15
+#, js-format
+msgid "from %d XP"
+msgstr "a partir de %d XP"
+
+#: build/175.js:3 build/964.js:16
+msgid "Storyteller"
+msgstr "Narrador"
+
+#. translators: %d: number of changes waiting to be submitted
+#: build/175.js:31 build/964.js:44
+#, js-format
+msgid "%d change"
+msgid_plural "%d changes"
+msgstr[0] "%d alteração"
+msgstr[1] "%d alterações"
+
+#. translators: %d: how many XP the pending changes cost beyond what is unspent
+#: build/175.js:33 build/964.js:46
+#, js-format
+msgid "%d XP over"
+msgstr "%d XP acima do saldo"
+
+#. translators: %d: XP left unspent after the pending changes
+#: build/175.js:34 build/964.js:47
+#, js-format
+msgid "%d XP left"
+msgstr "%d XP restantes"

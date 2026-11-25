@@ -474,7 +474,7 @@ class Report_Document {
 			}
 
 			$blocks[] = [
-				'title'  => $plot->title,
+				'title'  => Character::plot_display_title( (string) $plot->title ),
 				'status' => $plot->status,
 				'lines'  => [
 					'Initiated by: ' . ( $plot->initiated_by ?? '—' ),
@@ -717,7 +717,7 @@ class Report_Document {
 				$post['line']->result = $one_voice
 					? wp_strip_all_tags( (string) $entry->content )
 					/* translators: %s: plot title */
-					: sprintf( __( 'Reply came after several actions, see "%s"', 'beyond-elysium' ), (string) $plot->title );
+					: sprintf( __( 'Reply came after several actions, see "%s"', 'beyond-elysium' ), Character::plot_display_title( (string) $plot->title ) );
 			}
 			$waiting = [];
 		}

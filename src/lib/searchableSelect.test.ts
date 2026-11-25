@@ -4,6 +4,7 @@ import {
 	filterOptions,
 	flattenGroups,
 	nextSelectableRow,
+	onScreenOptions,
 	pickList,
 	resolveBlurCommit,
 	type OptionGroup,
@@ -265,5 +266,39 @@ describe( 'pickList', () => {
 		expect( list.keyOf( 'Elsewhere' ) ).toBeUndefined();
 		expect( list.labelOf( 'elsewhere' ) ).toBe( '' );
 		expect( list.labelOf( '' ) ).toBe( '' );
+	} );
+} );
+
+describe( 'onScreenOptions', () => {
+	const rows = [
+		{ kind: 'heading' as const, label: 'Group' },
+		...Array.from( { length: 40 }, ( _, i ) => ( {
+			kind: 'option' as const,
+			value: `option ${ i }`,
+		} ) ),
+	];
+
+	it( 'names the options in the first screenful and a few rows past it, leaving out headings', () => {
+		const values = onScreenOptions( rows, 0, 20, 10 );
+		expect( values[ 0 ] ).toBe( 'option 0' );
+		expect( values ).toHaveLength( 13 );
+		expect( values ).not.toContain( 'Group' );
+	} );
+
+	it( 'follows the scroll position', () => {
+		const values = onScreenOptions( rows, 400, 20, 10 );
+		expect( values[ 0 ] ).toBe( 'option 17' );
+		expect( values ).toHaveLength( 14 );
+	} );
+
+	it( 'stops at the end of the list', () => {
+		expect( onScreenOptions( rows, 100000, 20, 10 ) ).toEqual( [] );
+		expect( onScreenOptions( rows, 780, 20, 10 ).slice( -1 ) ).toEqual( [
+			'option 39',
+		] );
+	} );
+
+	it( 'has nothing for an empty list', () => {
+		expect( onScreenOptions( [], 0, 20, 10 ) ).toEqual( [] );
 	} );
 } );

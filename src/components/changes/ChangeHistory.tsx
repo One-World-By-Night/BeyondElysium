@@ -12,6 +12,7 @@ import {
 import { isCostPending } from '../../lib/queuePrice';
 import type { CharacterChange } from '../../types/character';
 import './ChangeHistory.css';
+import { formatStoredTime } from '../../lib/storedTime';
 
 export interface ChangeHistoryProps {
 	characterId: number;
@@ -125,14 +126,18 @@ export function ChangeHistory( { characterId, gameSlug }: ChangeHistoryProps ) {
 						{ sprintf(
 							/* translators: %s: date and time the change was submitted */
 							__( 'submitted %s', 'beyond-elysium' ),
-							item.submitted_at
+							formatStoredTime( item.submitted_at, {
+								time: true,
+							} )
 						) }
 						{ item.reviewed_at &&
 							' ' +
 								sprintf(
 									/* translators: %s: date and time the change was reviewed */
 									__( '· reviewed %s', 'beyond-elysium' ),
-									item.reviewed_at
+									formatStoredTime( item.reviewed_at, {
+										time: true,
+									} )
 								) }
 					</span>
 					{ item.notes && (

@@ -18,7 +18,7 @@ A line above the filters links to the Import page whenever a transfer or a playe
 
 - **Character** - "All characters," or any one character in this chronicle.
 - **Change type** - "All change types," or one of: `add_trait` (a new trait, power, or item), `remove_trait` (one taken off the sheet), `modify_trait` (an existing trait's count or a power's level), `modify_resource` (a pool's permanent or temporary rating), `modify_identity` (a field such as Clan or Nature), `xp_earn` (experience granted), `xp_adjust` (a Storyteller correction to experience), `import_note` (a note recorded automatically by an import), `log_knowledge` (a player's claim about what their character learned, waiting to be tied to a secret), or `pass_secret` (a player telling another character a secret they know).
-- **Approval level** - "All approval levels," `auto`, or `st`. The list, its pages, and its total count only that level.
+- **Approval level** - "All approval levels," Automatic, or Needs a Storyteller. The list, its pages, and its total count only that level.
 
 Changing any filter starts again from the first page, with nothing checked.
 
@@ -35,10 +35,10 @@ A table (stacked into cards on a narrow screen) with a checkbox per row, then:
 | Character | Who the change is on |
 | Change | A plain description, such as a trait's old and new value. A player's own [XP request](character-editor.md#request-xp) reads "+N XP (Requested: where, date)," with any details they added shown underneath. A change forwarded here from a host chronicle shows **"From Boston"** (or whichever chronicle sent it) above the description, and the host's own free-text note, if any, beneath it - see [A change forwarded from a host chronicle](#a-change-forwarded-from-a-host-chronicle). Beneath that: the note the player put on a trait ("Note: R1 Necromancy ( 4 xp)"), the section the entry is headed for ("In Rituals"), and, once a Storyteller has edited it, "Edited by" and their name |
 | XP | The cost, positive or negative. A homebrew purchase shows **Needs a price** until you set one |
-| Level | `auto` or `st` |
+| Level | Automatic or Needs a Storyteller |
 | Approval Reason | Why it landed at that level, when there is one. A bylaw-sourced reason ends with a clickable clause citation, e.g. `[OWBN Character Bylaws 10.e.v, clause 7838]`, opening the real clause on council.owbn.net; several reasons on one change each sit on their own line |
 | Submitted by | Who sent it |
-| When | When it was submitted |
+| When | When it was submitted, as a date and time |
 | Actions | Approve / Reject / Edit |
 
 On a phone, Level, Submitted by, and When sit behind a **Details** disclosure on each card; Character, Change, XP, and Actions stay visible up top.
@@ -169,7 +169,7 @@ A change that needs a price can't be checked. Price and approve it on its own ro
 
 ## Things to know
 
-- **Two approval levels only: `auto` and `st`.** Beyond Elysium has no separate coordinator step. A rule's reason may tell you to get a coordinator's sign-off before you approve it, but the approving click here is always a Storyteller's.
+- **Two approval levels only: Automatic and Needs a Storyteller.** Beyond Elysium has no separate coordinator step. A rule's reason may tell you to get a coordinator's sign-off before you approve it, but the approving click here is always a Storyteller's.
 - **Approve Selected is a shortcut, not a different mechanism.** It applies the same approval, individually, to every change you've checked - not a bulk override.
 - **The queue is tied to what you were shown.** If a player resubmits a pending change, or someone else reviews it first, your click is refused and the queue reloads with what's actually there now - you never approve something different from what you saw.
 - **A checked row stays checked across a page turn**, and Approve Selected acts on everything you've checked, not only what's on screen - each one as you saw it when you checked it. A change edited after you checked it is skipped, whichever page it's on. Changing a filter clears the checks.

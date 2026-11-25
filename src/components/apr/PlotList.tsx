@@ -15,6 +15,8 @@ import type {
 	PlotStatus,
 } from '../../types/plot';
 import './PlotList.css';
+import { plotDisplayTitle } from '../../lib/plotTitle';
+import { plotBadgeLabel } from '../../lib/characterLabels';
 
 export interface PlotListProps {
 	gameSlug: string;
@@ -294,7 +296,7 @@ export function PlotList( {
 									</option>
 									{ allPlots.map( ( p ) => (
 										<option key={ p.id } value={ p.id }>
-											{ p.title }
+											{ plotDisplayTitle( p.title ) }
 										</option>
 									) ) }
 								</select>
@@ -436,7 +438,7 @@ export function PlotList( {
 								<div className="be-plot-card__cover--empty" />
 							) }
 							<span className="be-plot-card__title">
-								{ plot.title }
+								{ plotDisplayTitle( plot.title ) }
 							</span>
 							<span className="be-plot-card__meta">
 								{ plot.plot_category && (
@@ -447,7 +449,10 @@ export function PlotList( {
 								<span
 									className={ `be-st-badge be-st-badge--${ plot.derived_status }` }
 								>
-									{ plot.status }
+									{ plotBadgeLabel(
+										plot.status,
+										plot.derived_status
+									) }
 								</span>
 								{ plot.audience !== 'everyone' && (
 									<span className="be-st-badge be-st-badge--audience">

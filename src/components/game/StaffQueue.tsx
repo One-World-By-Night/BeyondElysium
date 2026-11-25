@@ -33,6 +33,8 @@ export interface StaffQueueProps {
 }
 
 import { errorMessage } from '../../lib/errorMessage';
+import { plotDisplayTitle } from '../../lib/plotTitle';
+import { formatStoredTime } from '../../lib/storedTime';
 
 const EMPTY: StaffQueueData = {
 	downtime: [],
@@ -155,7 +157,9 @@ export function StaffQueue( { gameSlug, capabilities }: StaffQueueProps ) {
 											</strong>
 											{ row.game_date && (
 												<span className="be-st-badge">
-													{ row.game_date }
+													{ formatStoredTime(
+														row.game_date
+													) }
 												</span>
 											) }
 											<span>
@@ -203,7 +207,11 @@ export function StaffQueue( { gameSlug, capabilities }: StaffQueueProps ) {
 												STORYTELLER_TABS.plots
 											) }&open_plot=${ row.plot_id }` }
 										>
-											<strong>{ row.title }</strong>
+											<strong>
+												{ plotDisplayTitle(
+													row.title
+												) }
+											</strong>
 										</a>
 									</li>
 								) ) }
@@ -247,7 +255,9 @@ export function StaffQueue( { gameSlug, capabilities }: StaffQueueProps ) {
 												{ row.character_name }
 											</strong>
 											<span className="be-st-badge">
-												{ row.game_date }
+												{ formatStoredTime(
+													row.game_date
+												) }
 											</span>
 										</button>
 									</li>

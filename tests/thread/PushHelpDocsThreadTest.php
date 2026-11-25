@@ -282,7 +282,7 @@ class PushHelpDocsThreadTest extends WP_UnitTestCase {
 		$this->assertCount( 0, get_posts( [ 'post_type' => 'attachment', 'post_status' => 'inherit', 'meta_key' => '_be_help_image', 'numberposts' => -1 ] ) ); // phpcs:ignore WordPress.DB.SlowDBQuery
 	}
 
-	public function test_a_page_already_live_with_a_screenshot_keeps_it_when_the_local_file_is_gone(): void {
+	public function test_a_page_already_live_with_a_screenshot_stays_unchanged_when_the_local_files_are_gone(): void {
 		$this->screenshot( 'en', 'thread-help-keep-1' );
 		$this->screenshot( 'pt_BR', 'thread-help-keep-1' );
 		$page = $this->page_with_shot( 'thread-help-keep' );
@@ -295,8 +295,65 @@ class PushHelpDocsThreadTest extends WP_UnitTestCase {
 		$printed = $this->push( [ $page ] );
 
 		$this->assertSame( $before, get_page_by_path( 'thread-help-keep', OBJECT, 'docs' )->post_content );
-		$this->assertStringContainsString( 'Created: 0, Updated: 0, Unchanged: 0, Skipped: 1, Failed: 0', $printed );
-		$this->assertStringContainsString( 'thread-help-keep: keeping its live screenshot, no local file to replace it with', $printed );
+		$this->assertStringContainsString( 'Created: 0, Updated: 0, Unchanged: 1, Skipped: 0, Failed: 0', $printed );
+		$this->assertStringNotContainsString( 'no screenshots', $printed );
+	}
+
+	public function test_new_text_goes_up_with_the_live_screenshots_when_the_local_files_are_gone(): void {
+		$this->screenshot( 'en', 'thread-help-text-1' );
+		$this->screenshot( 'pt_BR', 'thread-help-text-1' );
+		$page = $this->page_with_shot( 'thread-help-text' );
+		$this->push( [ $page ] );
+		$live = get_posts( [ 'post_type' => 'attachment', 'post_status' => 'inherit', 'meta_key' => '_be_help_image', 'numberposts' => -1, 'fields' => 'ids', 'orderby' => 'ID', 'order' => 'ASC' ] ); // phpcs:ignore WordPress.DB.SlowDBQuery
+		$this->assertCount( 2, $live );
+
+		unlink( "{$this->images}/en/thread-help-text-1.webp" );
+		unlink( "{$this->images}/pt_BR/thread-help-text-1.webp" );
+		$page['blocks'][1] = "<!-- wp:paragraph -->\n<p>New words for thread-help-text.</p>\n<!-- /wp:paragraph -->";
+		$printed           = $this->push( [ $page ] );
+
+		$content = get_page_by_path( 'thread-help-text', OBJECT, 'docs' )->post_content;
+		$this->assertStringContainsString( 'New words for thread-help-text.', $content );
+		$this->assertStringNotContainsString( 'Body of thread-help-text.', $content );
+		$this->assertStringContainsString( "wp-image-{$live[0]}", $content );
+		$this->assertStringContainsString( 'Created: 0, Updated: 1, Unchanged: 0, Skipped: 0, Failed: 0', $printed );
+		$after = get_posts( [ 'post_type' => 'attachment', 'post_status' => 'inherit', 'meta_key' => '_be_help_image', 'numberposts' => -1, 'fields' => 'ids', 'orderby' => 'ID', 'order' => 'ASC' ] ); // phpcs:ignore WordPress.DB.SlowDBQuery
+		$this->assertSame( $live, $after );
+	}
+
+	public function test_the_portuguese_pass_still_pairs_the_live_screenshots_when_the_local_files_are_gone(): void {
+		$this->screenshot( 'en', 'thread-help-ptlive-1' );
+		$this->screenshot( 'pt_BR', 'thread-help-ptlive-1' );
+		$fake = $this->fake_translator();
+		$page = $this->page_with_shot( 'thread-help-ptlive' );
+		$page['portuguese'] = [
+			'title' => 'Título thread-help-ptlive',
+			'pairs' => [ [ 'kind' => 'text', 'original' => 'Body of thread-help-ptlive.', 'translated' => 'Corpo de thread-help-ptlive.' ] ],
+		];
+		$this->push( [ $page ] );
+
+		unlink( "{$this->images}/en/thread-help-ptlive-1.webp" );
+		unlink( "{$this->images}/pt_BR/thread-help-ptlive-1.webp" );
+		$this->push( [ $page ] );
+
+		$this->assertCount( 2, $fake->planned );
+		$this->assertSame( [ 'text', 'text', 'src', 'alt' ], array_column( $fake->planned[1], 'kind' ) );
+		$this->assertSame( $fake->planned[0][2], $fake->planned[1][2], 'the same two images are paired as before' );
+	}
+
+	public function test_a_file_missing_for_one_language_with_no_live_copy_leaves_the_page_text_only(): void {
+		$this->screenshot( 'en', 'thread-help-half-1' );
+		$this->screenshot( 'pt_BR', 'thread-help-half-1' );
+		$page = $this->page_with_shot( 'thread-help-half' );
+		$this->push( [ $page ] );
+		$pt = get_posts( [ 'post_type' => 'attachment', 'post_status' => 'inherit', 'meta_key' => '_be_help_image', 'meta_value' => 'thread-help-half-1-pt_BR', 'numberposts' => 1, 'fields' => 'ids' ] ); // phpcs:ignore WordPress.DB.SlowDBQuery
+		wp_delete_attachment( $pt[0], true );
+		unlink( "{$this->images}/pt_BR/thread-help-half-1.webp" );
+
+		$printed = $this->push( [ $page ] );
+
+		$this->assertStringContainsString( 'thread-help-half: no screenshots', $printed );
+		$this->assertStringContainsString( 'Skipped: 1', $printed );
 	}
 
 	public function test_the_portuguese_pass_is_skipped_when_translatepress_is_not_there(): void {

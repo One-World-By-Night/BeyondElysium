@@ -114,14 +114,16 @@ A trait list or powers section a chronicle has set to let players choose their o
 
 ### Pending Changes
 
-Everything you change in the sections above queues here instead of touching the sheet immediately:
+Everything you change in the sections above queues here instead of touching the sheet immediately. A bar at the bottom of the screen shows what's queued, and it's only there while something is:
 
+- **The one line.** Closed, the bar reads something like "3 changes · +6 XP · 4 XP left": how many changes are queued, what they cost in all, and what you'd have left. As a player, "4 XP left" turns into "2 XP over" in red if the changes cost more than you have. A Storyteller sees the count alone. The cost and what's left show once the prices load.
+- **Review** - opens the full list under that line, and **Close** puts it away. The bar opens itself when a queued change can't be submitted as written, or a submit fails, so you can see why.
 - A running list, one line per change, naming what changed and, once its price loads, its XP cost and whether it needs Storyteller review. A trait or power that isn't in the catalog reads "Price set by a Storyteller on approval" instead of a cost: it has no price yet, and the total leaves it out until a Storyteller sets one.
 - **Total** XP across everything queued, and **Unspent after** - what your XP would be once it's all applied. As a player, this turns into a warning if it would go negative.
 - **Submit Changes** - sends everything queued to the server together, in one request. As a player, this is disabled if it would leave you with negative XP.
 - **Discard** - opens a confirmation ("Discard unsaved changes?") before reverting every field to what's on the sheet now and returning you to the character's Sheet.
 
-After submitting, you may see one or both of these:
+After submitting, you may see one or both of these. Once nothing is left queued the bar goes away, and they show on the page by themselves:
 
 - A note that the submission failed - nothing in it was saved, since the whole set succeeds or fails together. Review it and click **Submit Changes** again to retry.
 - A note that some changes were submitted and are awaiting Storyteller approval - they won't appear on the sheet until then. If your chronicle always waits on a removal, a lower rating, a relabel or a rename (Approval Rules), anything caught by that switch waits together with whatever else you submitted alongside it, even an addition that would otherwise go straight through.
@@ -142,7 +144,7 @@ If you leave with anything queued and unsubmitted, your browser warns you before
 
 1. Open the character's Sheet and click **Edit this character** (or open the **Edit** tab with that character already selected).
 2. Use each section's own control to add, change, or remove a trait, power, pool value, or identity field.
-3. Check the running **Total** and **Unspent after** in Pending Changes.
+3. Click **Review** in the bar at the bottom, and check each change, the running **Total** and **Unspent after**.
 4. Click **Submit Changes**.
 
 ### Update Background or Notes
@@ -158,7 +160,7 @@ If you leave with anything queued and unsubmitted, your browser warns you before
 
 ### Discard changes before submitting
 
-1. In Pending Changes, click **Discard**.
+1. In the bar at the bottom, click **Review**, then **Discard**.
 2. Confirm "Discard unsaved changes?" - this reverts every field and returns you to the character's Sheet.
 
 ## Things to know
@@ -180,7 +182,8 @@ If you leave with anything queued and unsubmitted, your browser warns you before
 ## Troubleshooting
 
 - **My changes disappeared after I submitted.** They're most likely pending Storyteller review, not lost - check the Sheet's "View history" or your Dashboard's pending changes.
-- **Submit Changes won't click.** Either nothing is queued yet, or (as a player) submitting would leave you with negative XP - reduce what you're buying, or ask a Storyteller for more.
+- **I can't see the bar.** It only shows while something is queued. Change something and it appears at the bottom of the screen.
+- **Submit Changes won't click.** As a player, submitting would leave you with negative XP - reduce what you're buying, or ask a Storyteller for more.
 - **A name I typed says it isn't in the catalog.** Check the spelling first. If it's genuinely new, this section may not accept custom entries at all - ask a Storyteller.
 - **"Your character is already waiting for this chronicle's Storytellers to approve it."** You already have a join request pending here - wait for a Storyteller to review it before starting another.
 - **I can't open a character I know exists.** Either it isn't linked to your account yet, or it belongs to someone else and you're not a Storyteller here - ask a Storyteller to assign it to you.

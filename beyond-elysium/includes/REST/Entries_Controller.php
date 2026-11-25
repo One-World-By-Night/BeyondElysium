@@ -278,7 +278,7 @@ class Entries_Controller extends Base_Controller {
 
 		$author_id  = (int) $entry->author_id;
 		$plot_id    = property_exists( $plot, 'id' ) ? (int) $plot->id : 0;
-		$plot_title = property_exists( $plot, 'title' ) ? (string) $plot->title : '';
+		$plot_title = property_exists( $plot, 'title' ) ? Character::plot_display_title( (string) $plot->title ) : '';
 
 		if ( $entry->entry_type === 'action' ) {
 			$label = $this->action_poster_label( $plot );

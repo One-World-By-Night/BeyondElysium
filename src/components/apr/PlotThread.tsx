@@ -22,6 +22,9 @@ import { EntryForm } from './EntryForm';
 import { storedChargeLabel } from '../../lib/answerCharge';
 import { highlightStMarkers } from '../../lib/highlightStMarkers';
 import './PlotThread.css';
+import { plotDisplayTitle } from '../../lib/plotTitle';
+import { plotBadgeLabel } from '../../lib/characterLabels';
+import { formatStoredTime } from '../../lib/storedTime';
 
 export interface PlotThreadProps {
 	gameSlug: string;
@@ -314,7 +317,9 @@ export function PlotThread( {
 				) }
 
 				<div className="be-plot-thread__header-text">
-					<h2 className="be-plot-thread__title">{ plot.title }</h2>
+					<h2 className="be-plot-thread__title">
+						{ plotDisplayTitle( plot.title ) }
+					</h2>
 					<div className="be-plot-thread__meta">
 						{ plot.plot_category && (
 							<span className="be-st-badge be-st-badge--category">
@@ -324,7 +329,10 @@ export function PlotThread( {
 						<span
 							className={ `be-st-badge be-st-badge--${ plot.derived_status }` }
 						>
-							{ plot.status } ({ plot.derived_status })
+							{ plotBadgeLabel(
+								plot.status,
+								plot.derived_status
+							) }
 						</span>
 						{ plot.audience !== 'everyone' && (
 							<span className="be-st-badge be-st-badge--audience">
@@ -591,7 +599,7 @@ export function PlotThread( {
 									<img src={ child.image_url } alt="" />
 								) }
 								<span className="be-plot-thread__child-title">
-									{ child.title }
+									{ plotDisplayTitle( child.title ) }
 								</span>
 								<span className="be-plot-card__meta">
 									{ child.plot_category && (
@@ -602,7 +610,10 @@ export function PlotThread( {
 									<span
 										className={ `be-st-badge be-st-badge--${ child.derived_status }` }
 									>
-										{ child.status }
+										{ plotBadgeLabel(
+											child.status,
+											child.derived_status
+										) }
 									</span>
 								</span>
 							</button>
@@ -744,11 +755,13 @@ export function PlotThread( {
 								) }
 								{ entry.event_date && (
 									<span className="be-plot-thread__entry-event-date">
-										{ entry.event_date }
+										{ formatStoredTime( entry.event_date ) }
 									</span>
 								) }
 								<span className="be-plot-thread__entry-date">
-									{ entry.created_at }
+									{ formatStoredTime( entry.created_at, {
+										time: true,
+									} ) }
 								</span>
 							</div>
 							{ renderEntryContent( entry.content ) }

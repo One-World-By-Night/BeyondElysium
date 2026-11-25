@@ -12,6 +12,7 @@ import { useRevealOnOpen } from '../../lib/revealEditor';
 import HelpButton from '../shared/HelpButton';
 import DemoChronicleSection from './DemoChronicleSection';
 import './Admin.css';
+import { formatStoredTime } from '../../lib/storedTime';
 
 const EMPTY_FORM = { name: '', slug: '', game_type: 'met', description: '' };
 
@@ -238,7 +239,11 @@ export function AdminGames() {
 									<code>{ game.slug }</code>
 								</td>
 								<td>{ game.game_type }</td>
-								<td>{ game.created_at }</td>
+								<td>
+									{ formatStoredTime( game.created_at, {
+										time: true,
+									} ) }
+								</td>
 								<td>
 									<button
 										type="button"

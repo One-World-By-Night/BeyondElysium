@@ -1,6 +1,6 @@
 /**
- * The words a reader sees for a character's status, a creature type and a group's kind, in place of the stored
- * values.
+ * The words a reader sees for a character's status, a change's status, an approval level, a plot's status, a
+ * creature type and a group's kind, in place of the stored values.
  */
 import { __ } from '@wordpress/i18n';
 
@@ -19,6 +19,65 @@ export function characterStatusLabel( status: string ): string {
 			return __( 'Dead', 'beyond-elysium' );
 		case 'pending':
 			return __( 'Pending', 'beyond-elysium' );
+		default:
+			return status;
+	}
+}
+
+/**
+ * A stored change's status as a reader sees it; an unknown one reads as stored.
+ */
+export function changeStatusLabel( status: string ): string {
+	switch ( status ) {
+		case 'pending':
+			return __( 'Pending', 'beyond-elysium' );
+		case 'approved':
+			return __( 'Approved', 'beyond-elysium' );
+		case 'rejected':
+			return __( 'Refused', 'beyond-elysium' );
+		case 'forwarded':
+			return __( 'Forwarded', 'beyond-elysium' );
+		default:
+			return status;
+	}
+}
+
+/**
+ * What an approval level means to a reader; an unknown one reads as stored.
+ */
+export function approvalLevelLabel( level: string ): string {
+	switch ( level ) {
+		case 'auto':
+			return __( 'Automatic', 'beyond-elysium' );
+		case 'st':
+			return __( 'Needs a Storyteller', 'beyond-elysium' );
+		default:
+			return level;
+	}
+}
+
+/**
+ * A plot's badge: an active plot shows where it stands, a resolved or archived one shows that; an unknown status
+ * reads as stored.
+ */
+export function plotBadgeLabel(
+	status: string,
+	derivedStatus: string
+): string {
+	switch ( status ) {
+		case 'active':
+			switch ( derivedStatus ) {
+				case 'pending':
+					return __( 'Not started', 'beyond-elysium' );
+				case 'finished':
+					return __( 'Finished', 'beyond-elysium' );
+				default:
+					return __( 'Under way', 'beyond-elysium' );
+			}
+		case 'resolved':
+			return __( 'Resolved', 'beyond-elysium' );
+		case 'archived':
+			return __( 'Archived', 'beyond-elysium' );
 		default:
 			return status;
 	}

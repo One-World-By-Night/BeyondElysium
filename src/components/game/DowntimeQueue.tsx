@@ -26,6 +26,7 @@ export interface DowntimeQueueProps {
 }
 
 import { errorMessage } from '../../lib/errorMessage';
+import { formatStoredTime } from '../../lib/storedTime';
 
 const RELEASE_STATE_LABELS: Record< string, string > = {
 	not_answered: __( 'Not answered', 'beyond-elysium' ),
@@ -222,7 +223,7 @@ export function DowntimeQueue( {
 					>
 						{ sessions.map( ( s ) => (
 							<option key={ s.game_date } value={ s.game_date }>
-								{ s.game_date }
+								{ formatStoredTime( s.game_date ) }
 							</option>
 						) ) }
 					</select>

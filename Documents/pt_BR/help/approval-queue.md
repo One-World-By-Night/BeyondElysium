@@ -18,7 +18,7 @@ Uma linha acima dos filtros leva à página Importar sempre que uma transferênc
 
 - **Personagem** - "Todos os personagens", ou qualquer um dos personagens desta crônica.
 - **Tipo de alteração** - "Todos os tipos de alteração", ou um destes: `add_trait` (um traço, poder ou item novo), `remove_trait` (um tirado da ficha), `modify_trait` (a contagem de um traço existente ou o nível de um poder), `modify_resource` (a classificação permanente ou temporária de uma reserva), `modify_identity` (um campo como Clã ou Natureza), `xp_earn` (experiência concedida), `xp_adjust` (uma correção de experiência feita por um Narrador), `import_note` (uma nota registrada automaticamente por uma importação), `log_knowledge` (a afirmação de um jogador sobre o que o personagem aprendeu, esperando ser ligada a um segredo) ou `pass_secret` (um jogador contando a outro personagem um segredo que sabe).
-- **Nível de aprovação** - "Todos os níveis de aprovação", `auto` ou `st`. A lista, as páginas e a contagem total só consideram esse nível.
+- **Nível de aprovação** - "Todos os níveis de aprovação", Automático ou Precisa de um Narrador. A lista, as páginas e a contagem total só consideram esse nível.
 
 Mudar qualquer filtro recomeça da primeira página, sem nada marcado.
 
@@ -35,10 +35,10 @@ Uma tabela (empilhada em cartões numa tela estreita) com uma caixa de seleção
 | Personagem | Em quem é a mudança |
 | Alteração | Uma descrição simples, como o valor antigo e o novo de um traço. O [pedido de XP](character-editor.md#solicitar-xp) de um jogador diz "+N XP (Solicitado: onde, data)", com quaisquer detalhes que ele acrescentou mostrados embaixo. Uma mudança encaminhada para cá por uma crônica anfitriã mostra **"De Boston"** (ou a crônica que a enviou) acima da descrição, e a nota de texto livre da própria anfitriã, se houver, embaixo - veja [Uma mudança encaminhada de uma crônica anfitriã](#uma-mudança-encaminhada-de-uma-crônica-anfitriã). Abaixo disso: a nota que o jogador pôs no traço ("Nota: R1 Necromancy ( 4 xp)"), a seção para onde a entrada vai ("Em Rituais") e, depois que um Narrador a edita, "Editada por" e o nome dele |
 | XP | O custo, positivo ou negativo. Uma compra caseira mostra **Precisa de um preço** até você definir um |
-| Nível | `auto` ou `st` |
+| Nível | Automático ou Precisa de um Narrador |
 | Motivo da Aprovação | Por que parou nesse nível, quando há um. Um motivo vindo de um estatuto termina com uma citação de cláusula clicável, por exemplo `[OWBN Character Bylaws 10.e.v, clause 7838]`, que abre a cláusula de verdade em council.owbn.net; vários motivos numa mudança ficam cada um na própria linha |
 | Enviado por | Quem enviou |
-| Quando | Quando foi enviada |
+| Quando | Quando foi enviada, como data e hora |
 | Ações | Aprovar / Rejeitar / Editar |
 
 No celular, Nível, Enviado por e Quando ficam atrás de um **Detalhes** em cada cartão; Personagem, Alteração, XP e Ações continuam visíveis no topo.
@@ -169,7 +169,7 @@ Uma mudança que precisa de um preço não pode ser marcada. Dê o preço e apro
 
 ## O que saber
 
-- **Só dois níveis de aprovação: `auto` e `st`.** O Beyond Elysium não tem uma etapa de coordenador à parte. O motivo de uma regra pode dizer para você obter a aprovação de um coordenador antes de aprovar, mas o clique que aprova aqui é sempre de um Narrador.
+- **Só dois níveis de aprovação: Automático e Precisa de um Narrador.** O Beyond Elysium não tem uma etapa de coordenador à parte. O motivo de uma regra pode dizer para você obter a aprovação de um coordenador antes de aprovar, mas o clique que aprova aqui é sempre de um Narrador.
 - **Aprovar Selecionados é um atalho, não um mecanismo diferente.** Aplica a mesma aprovação, individualmente, a toda mudança que você marcou - não uma sobreposição em lote.
 - **A fila fica presa ao que lhe foi mostrado.** Se um jogador reenvia uma mudança pendente, ou outra pessoa a revisa primeiro, o seu clique é recusado e a fila recarrega com o que realmente está lá agora - você nunca aprova algo diferente do que viu.
 - **Uma linha marcada continua marcada ao virar a página**, e Aprovar Selecionados age em tudo o que você marcou, não só no que está na tela - cada uma como você a viu quando a marcou. Uma mudança editada depois de você marcá-la é pulada, seja em que página estiver. Mudar um filtro limpa as marcas.

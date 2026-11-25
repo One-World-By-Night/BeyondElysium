@@ -1,6 +1,7 @@
 /**
  * How a game night reads in the Game Calendar.
  */
+import { siteLocale } from './storedTime';
 
 export interface CalendarRow {
 	date: string;
@@ -27,7 +28,7 @@ export function formatGameDate( date: string, locale?: string ): string {
 	if ( Number.isNaN( when.getTime() ) ) {
 		return date;
 	}
-	return new Intl.DateTimeFormat( locale, {
+	return new Intl.DateTimeFormat( locale ?? siteLocale(), {
 		weekday: 'long',
 		year: 'numeric',
 		month: 'long',

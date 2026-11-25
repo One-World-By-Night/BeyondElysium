@@ -12,6 +12,7 @@ import type { ReleaseBatch, ReleaseBatchItems } from '../../types/releaseBatch';
 import type { ReleaseScheduleRule } from '../../types/session';
 import HelpButton from '../shared/HelpButton';
 import './ReleaseBatches.css';
+import { plotDisplayTitle } from '../../lib/plotTitle';
 
 const WEEKDAYS: { value: string; label: string }[] = [
 	{ value: 'sunday', label: __( 'Sunday', 'beyond-elysium' ) },
@@ -763,7 +764,11 @@ export function ReleaseBatches( {
 								<ul className="be-release-batches__item-list">
 									{ items.rumors.map( ( item ) => (
 										<li key={ `plot-${ item.id }` }>
-											<span>{ item.title }</span>
+											<span>
+												{ plotDisplayTitle(
+													item.title ?? ''
+												) }
+											</span>
 											{ selected.status !==
 												'released' && (
 												<div className="be-release-batches__item-actions">
@@ -854,7 +859,9 @@ export function ReleaseBatches( {
 									{ items.entries.map( ( item ) => (
 										<li key={ `entry-${ item.id }` }>
 											<span>
-												{ item.plot_title }
+												{ plotDisplayTitle(
+													item.plot_title ?? ''
+												) }
 												{ item.content
 													? ` — ${ item.content }`
 													: '' }

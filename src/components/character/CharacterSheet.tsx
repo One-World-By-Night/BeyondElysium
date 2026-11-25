@@ -882,10 +882,12 @@ export function CharacterSheet( {
 						<dt>{ __( 'Status', 'beyond-elysium' ) }</dt>
 						<dd>{ characterStatusLabel( character.status ) }</dd>
 					</div>
-					<div>
-						<dt>{ __( 'Player', 'beyond-elysium' ) }</dt>
-						<dd>{ character.player_name ?? '—' }</dd>
-					</div>
+					{ character.player_name && (
+						<div>
+							<dt>{ __( 'Player', 'beyond-elysium' ) }</dt>
+							<dd>{ character.player_name }</dd>
+						</div>
+					) }
 					<div>
 						<dt>{ __( 'XP Earned', 'beyond-elysium' ) }</dt>
 						<dd>{ character.xp_earned }</dd>

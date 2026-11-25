@@ -16,6 +16,7 @@ import {
 	canUseCustomEntry,
 	flattenGroups,
 	nextSelectableRow,
+	onScreenOptions,
 	resolveBlurCommit,
 	type OptionGroup,
 } from '../../lib/searchableSelect';
@@ -39,6 +40,14 @@ interface SearchableSelectCommonProps {
 	 * Lets an external <label htmlFor> target this component's internal <input>.
 	 */
 	id?: string;
+	/**
+	 * Text shown at the right of an option's row, or null for none. A picker with no `hint` shows names alone.
+	 */
+	hint?: ( value: string ) => string | null;
+	/**
+	 * Called with the options on screen once the list has settled, each time the open list scrolls or filters.
+	 */
+	onVisibleOptions?: ( values: string[] ) => void;
 }
 
 /**
@@ -59,6 +68,10 @@ const VIRTUALIZE_THRESHOLD = 200;
  */
 const FALLBACK_ROW_HEIGHT = 28;
 const VISIBLE_ROWS = 10;
+/**
+ * How long the open list stays still before `onVisibleOptions` reports what is on screen.
+ */
+const VISIBLE_SETTLE_MS = 150;
 
 /**
  * Renders a text input with a filtered dropdown listbox, wired up with ARIA combobox semantics.
@@ -73,6 +86,8 @@ export function SearchableSelect( {
 	disabled,
 	ariaLabel,
 	id,
+	hint,
+	onVisibleOptions,
 }: SearchableSelectProps ) {
 	const [ query, setQuery ] = useState( value );
 	const [ open, setOpen ] = useState( false );
@@ -228,6 +243,26 @@ export function SearchableSelect( {
 		? rows.slice( firstVisible, lastVisible )
 		: rows;
 
+	// The options on screen, named whether or not the list renders every row.
+	const onScreenKey = onScreenOptions(
+		rows,
+		scrollTop,
+		rowHeight,
+		VISIBLE_ROWS
+	).join( '\u0000' );
+	const visibleCallback = useRef( onVisibleOptions );
+	visibleCallback.current = onVisibleOptions;
+	useEffect( () => {
+		if ( ! open || ! visibleCallback.current || onScreenKey === '' ) {
+			return undefined;
+		}
+		const timer = window.setTimeout(
+			() => visibleCallback.current?.( onScreenKey.split( '\u0000' ) ),
+			VISIBLE_SETTLE_MS
+		);
+		return () => window.clearTimeout( timer );
+	}, [ open, onScreenKey ] );
+
 	const dropdown = open && rowCount > 0 && listRect && (
 		<ul
 			className="be-searchable-select__list be-searchable-select__list--portaled"
@@ -281,13 +316,29 @@ export function SearchableSelect( {
 							aria-selected={ index === highlighted }
 							className={
 								'be-searchable-select__option' +
+								( hint
+									? ' be-searchable-select__option--hinted'
+									: '' ) +
 								( index === highlighted
 									? ' be-searchable-select__option--highlighted'
 									: '' )
 							}
 							onMouseDown={ () => selectIndex( index ) }
 						>
-							{ row.value }
+							{ hint ? (
+								<>
+									<span className="be-searchable-select__name">
+										{ row.value }
+									</span>
+									{ hint( row.value ) && (
+										<span className="be-searchable-select__hint">
+											{ hint( row.value ) }
+										</span>
+									) }
+								</>
+							) : (
+								row.value
+							) }
 						</li>
 					);
 				} );

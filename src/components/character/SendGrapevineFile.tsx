@@ -19,6 +19,7 @@ import HelpButton from '../shared/HelpButton';
 import './SendGrapevineFile.css';
 
 import { errorMessage } from '../../lib/errorMessage';
+import { formatStoredTime } from '../../lib/storedTime';
 
 const STATUS_LABEL: Record< Submission[ 'state' ], string > = {
 	waiting: __( 'Waiting for review', 'beyond-elysium' ),
@@ -438,7 +439,9 @@ export function SendGrapevineFile() {
 											'beyond-elysium'
 										) }
 									>
-										{ row.created_at }
+										{ formatStoredTime( row.created_at, {
+											time: true,
+										} ) }
 									</td>
 									<td
 										data-label={ __(

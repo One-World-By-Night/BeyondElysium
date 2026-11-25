@@ -7,7 +7,6 @@ import {
 	emailLogHref,
 	entityFilterFromSearch,
 	entityHref,
-	shortTime,
 } from './mailLog';
 import type { MailLogEntry } from '../types/mailLog';
 
@@ -163,11 +162,5 @@ describe( 'entityFilterFromSearch', () => {
 		expect(
 			entityFilterFromSearch( '?entity_type=plot%27--&entity_id=5' )
 		).toBeNull();
-	} );
-} );
-
-describe( 'shortTime', () => {
-	it( 'cuts a stored time to the minute', () => {
-		expect( shortTime( '2026-10-07 23:03:40' ) ).toBe( '2026-10-07 23:03' );
 	} );
 } );

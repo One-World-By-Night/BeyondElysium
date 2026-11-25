@@ -19,6 +19,7 @@ import type { Character, CharacterProfile } from '../../types/character';
 import './WhatIKnow.css';
 import { highlightStMarkers } from '../../lib/highlightStMarkers';
 import { peopleFor, tellerFields } from '../../lib/secretPeople';
+import { plotDisplayTitle } from '../../lib/plotTitle';
 
 export interface WhatIKnowProps {
 	gameSlug: string;
@@ -427,7 +428,7 @@ export function WhatIKnow( { gameSlug }: WhatIKnowProps ) {
 							className="be-what-i-know__waiting-row"
 							key={ `${ row.change_type }-${ row.id }` }
 						>
-							<strong>{ row.title }</strong>
+							<strong>{ plotDisplayTitle( row.title ) }</strong>
 							<span>
 								{ row.character_name }
 								{ ' — ' }
@@ -463,7 +464,9 @@ export function WhatIKnow( { gameSlug }: WhatIKnowProps ) {
 							key={ row.reveal_id }
 						>
 							<div className="be-what-i-know__item-header">
-								<strong>{ row.title }</strong>
+								<strong>
+									{ plotDisplayTitle( row.title ) }
+								</strong>
 								{ row.entity_type && (
 									<span className="be-st-badge">
 										{ ENTITY_LABELS[ row.entity_type ] ??

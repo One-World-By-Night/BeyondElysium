@@ -38,14 +38,14 @@ Each field renders as one of these, depending on how the chronicle's template bu
 1. Open the character in the **Edit** tab.
 2. Find the pool's row.
 3. Click **+** next to **P** to raise its permanent rating, or next to **T** to spend or regain points in play.
-4. Check **Pending Changes** for its cost, then click **Submit Changes**.
+4. Click **Review** in the bar at the bottom to check its cost, then click **Submit Changes**.
 
 ### Change an identity field
 
 1. Open the character in the **Edit** tab.
 2. Find the field.
 3. Pick a new value, or type one where the field allows it.
-4. Click **Submit Changes**.
+4. Click **Review** in the bar at the bottom, then click **Submit Changes**.
 
 ### Pick more than one option on a multiselect field
 

@@ -50,7 +50,7 @@ This isn't a screen of its own. You submit a change from the [Character Editor](
 
 ## Things to know
 
-- **Two levels only: `auto` and `st`.** There's no separate coordinator tier - a reason naming a coordinator's approval is still a Storyteller's own click.
+- **Two levels only: Automatic and Needs a Storyteller.** There's no separate coordinator tier - a reason naming a coordinator's approval is still a Storyteller's own click.
 - **The most specific rule always wins, in either direction.** A narrow rule set to auto still applies even under a chronicle set to Pending by default, and a narrow rule set to Storyteller review is never quietly skipped just because the chronicle defaults to auto-approve.
 - **A resource pool's rule checks its permanent rating only.** Spending or regaining points during play never triggers review - only a permanent, XP-funded increase can.
 - **An identity field's rule checks every value you pick.** For a field that allows more than one choice, the strictest requirement among your picks applies.

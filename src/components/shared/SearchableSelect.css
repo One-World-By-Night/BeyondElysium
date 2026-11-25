@@ -41,6 +41,29 @@
 	cursor: pointer;
 }
 
+/* A row with a hint keeps to one line, so the list's row height holds. */
+.be-searchable-select__option--hinted {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 0.75rem;
+}
+
+.be-searchable-select__name {
+	flex: 1 1 auto;
+	min-width: 0;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.be-searchable-select__hint {
+	flex: 0 0 auto;
+	white-space: nowrap;
+	font-size: 0.9em;
+	color: var(--be-gray-6);
+}
+
 .be-searchable-select__option--highlighted {
 	background: var(--be-gray-21);
 }

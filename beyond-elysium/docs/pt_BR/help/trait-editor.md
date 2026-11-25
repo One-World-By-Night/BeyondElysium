@@ -20,6 +20,7 @@ Minha Crônica → aba Editar, dentro de qualquer seção montada como lista de 
 ### O modal de Adicionar/Editar
 
 - **Nome** - uma lista suspensa com busca do catálogo desta seção. Digitar filtra a lista; onde a seção permite uma entrada personalizada, digitar um nome que não está na lista o adiciona como uma. Mostrado só ao adicionar - o nome de uma entrada mantida não pode ser mudado, só removido e adicionado de novo.
+- **O preço ao lado de cada nome.** Como jogador editando um personagem já salvo, cada opção mostra o custo à direita da linha: "3 XP", "a partir de 2 XP" para uma entrada com escolha de custos, "O Narrador define o preço" para uma que ninguém precificou ainda, e a marca "· Narrador" quando escolhê-la vai precisar da aprovação de um Narrador. Os preços carregam conforme você rola. Um Narrador, e quem está criando um personagem novo, vê só os nomes.
 - **Contagem / Nível** - um número, mínimo 1.
 - **Custo** - mostrado só para uma entrada que o catálogo precifica com uma escolha de custos, como uma Qualidade listada "1 ou 3" ou "3-5". Começa no mais baixo, que é o que você paga se o deixar.
 - **Especialização**, ou **Quem ou o quê?** - mostrado numa seção que aceita especialização (por exemplo, uma Habilidade como Ciências Acadêmicas pode ter uma como "História Bizantina"), e também para uma entrada que você pode ter mais de uma vez mesmo numa seção que de outro modo não usa este campo - veja [O que saber](#o-que-saber) abaixo. Seja qual for a pergunta feita, deixá-la em branco (ou repetir uma resposta que você já usou) soma à linha existente correspondente em vez de começar uma nova.
@@ -56,7 +57,7 @@ Minha Crônica → aba Editar, dentro de qualquer seção montada como lista de 
 - **Um nome personalizado sempre precisa de revisão.** Digitar um nome que não está no catálogo só salva onde esta seção aceita entradas personalizadas, e mesmo assim sempre vai a um Narrador para aprovação, não importa como a sua crônica configurou a aprovação automática.
 - **Remover marca, não apaga** - nada sai de fato da ficha até você enviar as alterações pela aba Editar, então você pode desfazer uma remoção até esse momento.
 - **Todos os pontos têm o mesmo tamanho** - a exibição da contagem aqui combina exatamente com a ficha e com um PDF assinado.
-- **Nada aqui é precificado nem salvo por si só.** Toda adição, mudança ou remoção vai para a fila de Alterações Pendentes da aba Editar até você enviá-la.
+- **O preço ao lado de um nome é uma prévia, e nada aqui é salvo por si só.** Toda adição, mudança ou remoção vai para a fila de Alterações Pendentes da aba Editar até você enviá-la, e essa barra precifica o conjunto inteiro junto. O preço na lista é calculado sobre a ficha como está salva, então uma alteração na fila que o mude (um Clã novo, por exemplo) não entra ali; o total da barra sempre a conta.
 
 ## Solução de problemas
 

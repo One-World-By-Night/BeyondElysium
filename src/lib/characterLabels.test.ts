@@ -1,7 +1,10 @@
 import {
+	approvalLevelLabel,
+	changeStatusLabel,
 	characterStatusLabel,
 	creatureTypeName,
 	factionTypeLabel,
+	plotBadgeLabel,
 } from './characterLabels';
 
 describe( 'characterStatusLabel', () => {
@@ -47,5 +50,46 @@ describe( 'factionTypeLabel', () => {
 		expect( factionTypeLabel( 'Wolf Pack of the North' ) ).toBe(
 			'Wolf Pack of the North'
 		);
+	} );
+} );
+
+describe( 'changeStatusLabel', () => {
+	it( 'names each status a stored change can have', () => {
+		expect( changeStatusLabel( 'pending' ) ).toBe( 'Pending' );
+		expect( changeStatusLabel( 'approved' ) ).toBe( 'Approved' );
+		expect( changeStatusLabel( 'rejected' ) ).toBe( 'Refused' );
+		expect( changeStatusLabel( 'forwarded' ) ).toBe( 'Forwarded' );
+	} );
+
+	it( 'reads a status it does not know as stored', () => {
+		expect( changeStatusLabel( 'on_hold' ) ).toBe( 'on_hold' );
+	} );
+} );
+
+describe( 'approvalLevelLabel', () => {
+	it( 'says what each approval level means', () => {
+		expect( approvalLevelLabel( 'auto' ) ).toBe( 'Automatic' );
+		expect( approvalLevelLabel( 'st' ) ).toBe( 'Needs a Storyteller' );
+	} );
+
+	it( 'reads a level it does not know as stored', () => {
+		expect( approvalLevelLabel( 'council' ) ).toBe( 'council' );
+	} );
+} );
+
+describe( 'plotBadgeLabel', () => {
+	it( 'shows where an active plot stands', () => {
+		expect( plotBadgeLabel( 'active', 'pending' ) ).toBe( 'Not started' );
+		expect( plotBadgeLabel( 'active', 'active' ) ).toBe( 'Under way' );
+		expect( plotBadgeLabel( 'active', 'finished' ) ).toBe( 'Finished' );
+	} );
+
+	it( 'shows a resolved or archived plot as that', () => {
+		expect( plotBadgeLabel( 'resolved', 'finished' ) ).toBe( 'Resolved' );
+		expect( plotBadgeLabel( 'archived', 'active' ) ).toBe( 'Archived' );
+	} );
+
+	it( 'reads a status it does not know as stored', () => {
+		expect( plotBadgeLabel( 'paused', 'active' ) ).toBe( 'paused' );
 	} );
 } );

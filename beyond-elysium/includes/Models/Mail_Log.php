@@ -180,7 +180,7 @@ class Mail_Log {
 		switch ( $type ) {
 			case 'plot':
 				$plot = Plot::find( $id );
-				return $plot ? (string) $plot->title : '';
+				return $plot ? Character::plot_display_title( (string) $plot->title ) : '';
 			case 'secret':
 				$secret = Secret::find( $id );
 				return $secret ? (string) $secret->title : '';

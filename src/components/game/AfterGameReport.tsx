@@ -13,6 +13,7 @@ import type {
 	GameSession,
 } from '../../types/session';
 import './AfterGameReport.css';
+import { formatStoredTime } from '../../lib/storedTime';
 
 export interface AfterGameReportProps {
 	gameSlug: string;
@@ -138,7 +139,7 @@ export function AfterGameReport( { gameSlug }: AfterGameReportProps ) {
 						</option>
 						{ sessions.map( ( s ) => (
 							<option key={ s.id } value={ s.id }>
-								{ s.game_date }
+								{ formatStoredTime( s.game_date ) }
 							</option>
 						) ) }
 					</select>

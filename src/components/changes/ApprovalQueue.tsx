@@ -6,6 +6,8 @@ import { __, _n, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
 import { describeChange } from '../../lib/describeChange';
 import { everyPage } from '../../lib/everyPage';
+import { approvalLevelLabel } from '../../lib/characterLabels';
+import { formatStoredTime } from '../../lib/storedTime';
 import { batchApproval, toggleSelection } from '../../lib/queueSelection';
 import type { QueueSelection } from '../../lib/queueSelection';
 import {
@@ -793,8 +795,10 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 					<option value="">
 						{ __( 'All approval levels', 'beyond-elysium' ) }
 					</option>
-					<option value="auto">auto</option>
-					<option value="st">st</option>
+					<option value="auto">
+						{ approvalLevelLabel( 'auto' ) }
+					</option>
+					<option value="st">{ approvalLevelLabel( 'st' ) }</option>
 				</select>
 
 				<button
@@ -1161,9 +1165,9 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 															) }
 														</dt>
 														<dd>
-															{
+															{ approvalLevelLabel(
 																item.approval_level
-															}
+															) }
 														</dd>
 														<dt>
 															{ __(
@@ -1183,9 +1187,10 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 															) }
 														</dt>
 														<dd>
-															{
-																item.submitted_at
-															}
+															{ formatStoredTime(
+																item.submitted_at,
+																{ time: true }
+															) }
 														</dd>
 													</dl>
 												</details>
@@ -1197,7 +1202,9 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 												) }
 												className="be-approval-queue__detail-column"
 											>
-												{ item.approval_level }
+												{ approvalLevelLabel(
+													item.approval_level
+												) }
 											</td>
 											<td
 												className="be-approval-queue__reason"
@@ -1224,7 +1231,10 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 												) }
 												className="be-approval-queue__detail-column"
 											>
-												{ item.submitted_at }
+												{ formatStoredTime(
+													item.submitted_at,
+													{ time: true }
+												) }
 											</td>
 											<td
 												className="be-approval-queue__actions"

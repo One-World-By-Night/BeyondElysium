@@ -50,7 +50,7 @@ Esta não é uma tela própria. Você envia uma mudança pelo [Editor de Persona
 
 ## O que saber
 
-- **Só dois níveis: `auto` e `st`.** Não há um nível de coordenador à parte - um motivo que cita a aprovação de um coordenador continua sendo o clique do próprio Narrador.
+- **Só dois níveis: Automático e Precisa de um Narrador.** Não há um nível de coordenador à parte - um motivo que cita a aprovação de um coordenador continua sendo o clique do próprio Narrador.
 - **A regra mais específica sempre vence, nos dois sentidos.** Uma regra estreita definida como auto ainda se aplica mesmo numa crônica definida como Pendente por padrão, e uma regra estreita definida como revisão do Narrador nunca é pulada em silêncio só porque a crônica tem a aprovação automática como padrão.
 - **A regra de uma reserva de recurso confere só a classificação permanente.** Gastar ou recuperar pontos durante o jogo nunca dispara revisão - só um aumento permanente, pago com XP, pode.
 - **A regra de um campo de identidade confere todo valor que você escolhe.** Para um campo que permite mais de uma escolha, vale a exigência mais rígida entre as suas escolhas.

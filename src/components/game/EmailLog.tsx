@@ -9,12 +9,12 @@ import {
 	describeResult,
 	entityFilterFromSearch,
 	entityHref,
-	shortTime,
 } from '../../lib/mailLog';
 import type { EntityFilter } from '../../lib/mailLog';
 import HelpButton from '../shared/HelpButton';
 import type { MailLogEntry, MailLogOptions } from '../../types/mailLog';
 import './EmailLog.css';
+import { formatStoredTime } from '../../lib/storedTime';
 
 export interface EmailLogProps {
 	gameSlug: string;
@@ -261,7 +261,10 @@ export function EmailLog( { gameSlug }: EmailLogProps ) {
 												'beyond-elysium'
 											) }
 										>
-											{ shortTime( entry.created_at ) }
+											{ formatStoredTime(
+												entry.created_at,
+												{ time: true }
+											) }
 										</td>
 										<td
 											data-label={ __(

@@ -24,6 +24,7 @@ import type { Character } from '../../types/character';
 import type { Connection } from '../../types/plot';
 import type { Faction } from '../../types/faction';
 import './RelationshipChart.css';
+import { formatStoredTime } from '../../lib/storedTime';
 
 export interface RelationshipChartProps {
 	gameSlug: string;
@@ -659,7 +660,7 @@ export function RelationshipChart( { gameSlug }: RelationshipChartProps ) {
 									</p>
 								) }
 								<p className="description">
-									{ c.created_at.slice( 0, 10 ) }
+									{ formatStoredTime( c.created_at ) }
 								</p>
 							</li>
 						) ) }

@@ -6,6 +6,12 @@ import { useEffect, useState } from '@wordpress/element';
 import api from '../../api/client';
 import { describeChange } from '../../lib/describeChange';
 import { errorMessage } from '../../lib/errorMessage';
+import {
+	changeStatusLabel,
+	characterStatusLabel,
+	creatureTypeName,
+} from '../../lib/characterLabels';
+import { useCreatureTypeNames } from '../../lib/useCreatureTypeNames';
 import { PlayerDashboard } from './PlayerDashboard';
 import { canIn } from '../../lib/chronicleCapabilities';
 import type {
@@ -44,6 +50,7 @@ export function GameDashboard( {
 	capabilities,
 }: GameDashboardProps ) {
 	const canManage = canIn( 'be_manage_characters', capabilities );
+	const creatureTypes = useCreatureTypeNames( gameSlug );
 
 	const [ stats, setStats ] = useState< GameStats | null >( null );
 	const [ loading, setLoading ] = useState( true );
@@ -157,7 +164,11 @@ export function GameDashboard( {
 									stats.characters_by_stack
 								).map( ( [ stack, count ] ) => (
 									<li key={ stack }>
-										{ stack }: { count }
+										{ creatureTypeName(
+											stack,
+											creatureTypes
+										) }
+										: { count }
 									</li>
 								) ) }
 							</ul>
@@ -216,7 +227,8 @@ export function GameDashboard( {
 									stats.characters_by_status
 								).map( ( [ status, count ] ) => (
 									<li key={ status }>
-										{ status }: { count }
+										{ characterStatusLabel( status ) }:{ ' ' }
+										{ count }
 									</li>
 								) ) }
 							</ul>
@@ -293,7 +305,9 @@ export function GameDashboard( {
 											change.change_data
 										) }{ ' ' }
 										<span className="be-game-dashboard__badge">
-											{ change.status }
+											{ changeStatusLabel(
+												change.status
+											) }
 										</span>
 									</li>
 								) ) }

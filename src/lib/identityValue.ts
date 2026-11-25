@@ -14,3 +14,15 @@ export function identityValueText( value: unknown ): string | null {
 		? null
 		: String( text );
 }
+
+/**
+ * The fields that hold something to show, in the order given.
+ */
+export function filledIdentityFields< T extends { name: string } >(
+	fields: ReadonlyArray< T >,
+	values: Record< string, unknown > | null | undefined
+): T[] {
+	return fields.filter(
+		( field ) => identityValueText( values?.[ field.name ] ) !== null
+	);
+}
