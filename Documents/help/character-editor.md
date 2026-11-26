@@ -10,9 +10,9 @@ You can only open this screen for a character you own, unless you're a Storytell
 
 ## How to get there
 
-My Chronicle → Edit tab.
+My Chronicle → **Character** tab → **Edit** view.
 
-- With a character already picked - from the Characters tab, or the "Edit this character" link on that character's Sheet - this opens straight into editing it.
+- With a character already picked - from the Characters tab, or the **Edit** view of the Character section - this opens straight into editing it.
 - With no character picked yet, this opens a blank form to start a new one.
 
 A Storyteller creating a character from wp-admin's Characters page lands on this same screen.
@@ -35,35 +35,16 @@ If you're already a member of this chronicle, the character exists right away (o
 
 ### Header (editing an existing character)
 
-- Portrait, with an **Add a portrait…** / **Change portrait…** button.
+- The character's portrait, if it has one. Add or change it on the **Story** view.
 - The character's name.
 - **This is an NPC** - a checkbox, shown only to a Storyteller looking at a character they can manage. Flipping it re-loads the sheet under the other layout immediately.
 - **Assigned to** - which Storyteller owns this NPC, shown once it's flagged as one. See [My Queue](my-queue.md).
 - **Make Full NPC** - shown only on a Quick NPC. Switches it to the full layout for good; there's no way back to Quick from here.
 - A note reading "You can view this sheet but not edit it" in place of every edit control, if you can see this character but can't change it.
 
-### Who's Who Profile (NPCs only)
+### Background, Notes, and the Who's Who profile
 
-Shown only to a Storyteller editing an NPC, separate from the sheet above - what a player sees about this NPC in the chronicle's [Who's Who](whos-who.md) directory, not the sheet itself:
-
-- **Display Name** - shown instead of the character's real name in Who's Who, if set.
-- **Description** - the write-up a player reads. A `[ST]...[/ST]` marked passage is still stripped out for a non-Storyteller viewer, same as everywhere else.
-- A portrait, separate from the sheet's own.
-- Who can see this profile at all - the same audience picker a plot or item uses. An NPC with no profile set up simply doesn't appear in Who's Who for anyone but a Storyteller.
-- **Save Profile**.
-
-### Who's Who Profile (a player's own non-NPC character)
-
-Shown only to a player editing their own character that isn't an NPC - a narrower version of the section above, with no choice of audience beyond showing or hiding the character:
-
-- **Display Name** - shown instead of the character's real name in Who's Who, if set.
-- **Description** - the write-up other players read. A `[ST]...[/ST]` marked passage is stripped out for a non-Storyteller viewer, same as everywhere else.
-- **Show this character in Who's Who** - a checkbox. Unchecked, the default, the character doesn't appear in [Who's Who](whos-who.md) at all, for anyone but a Storyteller.
-- **Name me as the player behind this character** - a checkbox. Checked, your account's own display name shows alongside the character in Who's Who.
-- A portrait, uploaded directly from this screen - separate from the character's main sheet portrait, and separate from an NPC's own Who's Who image.
-- **Save Profile**.
-
-A player can't pick a restricted audience here - a rule-based audience stays a Storyteller's own tool, set from the NPC section above on a character a Storyteller manages.
+Background, Notes, and the [Who's Who](whos-who.md) profile moved to the **Story** view of the Character section, where they save as you type and a Storyteller's RP notes sit. See [My Chronicle](my-chronicle.md).
 
 ### Secrets (NPCs only)
 
@@ -73,13 +54,9 @@ Shown only to a Storyteller editing an NPC, once it already exists - a write-up 
 
 Shown only to a Storyteller editing an NPC that already exists - a folded panel listing every plot this NPC is connected to, split into **Open** and **Resolved**, each with its latest entry's date. Click a plot's name to open it on the Storyteller Toolkit. An NPC connected to nothing yet shows "None." under both headings.
 
-### Background and Notes
-
-Two rich-text fields, saved independently of everything else on this screen - typing here and clicking **Save Background & Notes** takes effect immediately, with no XP cost and no Storyteller review, regardless of what else is queued below. An **AI Assist** button appears next to each field only for a Storyteller, even on a player's own character; a player types their own text directly.
-
 ### Request XP
 
-Shown only to a player, on their own character - not to a Storyteller editing it. Folded by default. For experience earned somewhere this chronicle can't see for itself, most often a game or event run outside Beyond Elysium entirely:
+Shown only to a player, on their own character, on the **Story** view - not to a Storyteller. Folded by default. For experience earned somewhere this chronicle can't see for itself, most often a game or event run outside Beyond Elysium entirely:
 
 - **Amount** - a whole number from 1 to 10,000.
 - **Where you earned it** - required, up to 200 characters.
@@ -142,20 +119,20 @@ If you leave with anything queued and unsubmitted, your browser warns you before
 
 ### Edit an existing character
 
-1. Open the character's Sheet and click **Edit this character** (or open the **Edit** tab with that character already selected).
+1. Open the character and click **Edit** in the row of views.
 2. Use each section's own control to add, change, or remove a trait, power, pool value, or identity field.
 3. Click **Review** in the bar at the bottom, and check each change, the running **Total** and **Unspent after**.
 4. Click **Submit Changes**.
 
 ### Update Background or Notes
 
-1. Open the character in the **Edit** tab.
+1. Open the character and click **Story**.
 2. Type into **Background** or **Notes**.
-3. Click **Save Background & Notes**. This saves right away, independent of anything queued in Pending Changes.
+3. There is nothing to click: it saves a moment after you stop typing, and the line under the fields reads **Saved**. This is independent of anything queued in Pending Changes.
 
 ### Restore a draft from a previous session
 
-1. Open the character in the **Edit** tab. If you left unsaved changes here before, a banner tells you so and names when they were saved.
+1. Open the character's **Edit** view. If you left unsaved changes here before, a banner tells you so and names when they were saved.
 2. Click **Restore** to bring them back, or **Discard** to drop them for good.
 
 ### Discard changes before submitting
@@ -181,7 +158,7 @@ If you leave with anything queued and unsubmitted, your browser warns you before
 
 ## Troubleshooting
 
-- **My changes disappeared after I submitted.** They're most likely pending Storyteller review, not lost - check the Sheet's "View history" or your Dashboard's pending changes.
+- **My changes disappeared after I submitted.** They're most likely pending Storyteller review, not lost - check the **History** view or your Dashboard's pending changes.
 - **I can't see the bar.** It only shows while something is queued. Change something and it appears at the bottom of the screen.
 - **Submit Changes won't click.** As a player, submitting would leave you with negative XP - reduce what you're buying, or ask a Storyteller for more.
 - **A name I typed says it isn't in the catalog.** Check the spelling first. If it's genuinely new, this section may not accept custom entries at all - ask a Storyteller.

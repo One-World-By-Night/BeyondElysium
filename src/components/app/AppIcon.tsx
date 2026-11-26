@@ -17,6 +17,7 @@ const PATHS: Record< string, string > = {
  */
 const BY_SECTION: Record< string, string > = {
 	dashboard: 'home',
+	character: 'person',
 	sheet: 'person',
 	characters: 'people',
 	plots: 'scroll',

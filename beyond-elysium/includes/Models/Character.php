@@ -564,6 +564,33 @@ class Character {
 	}
 
 	/**
+	 * Writes both ratings onto one held resource pool.
+	 *
+	 * @param int    $id
+	 * @param string $block_slug
+	 * @param string $pool_name
+	 * @param int    $permanent
+	 * @param int    $temporary
+	 * @return bool False when the character does not exist, or does not hold that pool.
+	 */
+	public static function set_pool_ratings( int $id, string $block_slug, string $pool_name, int $permanent, int $temporary ): bool {
+		$character = self::find( $id );
+		if ( ! $character ) {
+			return false;
+		}
+
+		$sheet_data = $character->sheet_data;
+		$pool       = $sheet_data[ $block_slug ][ $pool_name ] ?? null;
+		if ( ! is_array( $pool ) || ! array_key_exists( 'permanent', $pool ) ) {
+			return false;
+		}
+
+		$sheet_data[ $block_slug ][ $pool_name ]['permanent'] = $permanent;
+		$sheet_data[ $block_slug ][ $pool_name ]['temporary'] = $temporary;
+		return self::update_sheet_data( $id, $sheet_data );
+	}
+
+	/**
 	 * Resets every resource pool a character holds back to its permanent rating, found directly on sheet_data - a
 	 * pool is any `{permanent, temporary}` pair, wherever it is held.
 	 *

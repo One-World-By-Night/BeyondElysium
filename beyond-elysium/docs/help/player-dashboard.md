@@ -37,7 +37,7 @@ My Chronicle → Dashboard tab. It's the first tab, and where the page opens by 
 
 - Everything here is scoped to you - your characters, your changes, your plots. It never shows another player's data.
 - **My Changes** looks across every chronicle you have a character in, not just the one selected at the top of the page - it's the one place that does. Nothing else on this page crosses chronicles.
-- A decided change stays listed here for about a month, then drops off - it isn't a running log. For the full history on one character, open its sheet and click **View history**.
+- A decided change stays listed here for about a month, then drops off - it isn't a running log. For the full history on one character, open it and click **History**.
 - **Auto-approved** means the chronicle's own rules cleared it without a Storyteller looking at it individually - not that no one could ever review it.
 - This view doesn't say why a change needed Storyteller review - only its current status.
 

@@ -23,7 +23,7 @@
       { "block_slug": "hunter-virtues", "label": "Virtues", "display_order": 70, "required": true },
       { "block_slug": "hunter-edges", "label": "Edges", "display_order": 75, "required": false },
       { "block_slug": "hunter-resources", "label": "Resources", "display_order": 80, "required": true },
-      { "block_slug": "hunter-health", "label": "Health", "display_order": 82, "required": false },
+      { "block_slug": "hunter-health", "health_track": true, "label": "Health", "display_order": 82, "required": false },
       { "block_slug": "hunter-merits", "label": "Merits", "display_order": 90, "required": false, "replaces": [ "met-merits" ] },
       { "block_slug": "hunter-flaws", "label": "Flaws", "display_order": 91, "required": false, "replaces": [ "met-flaws" ] },
       { "block_slug": "met-derangements", "label": "Derangements", "display_order": 92, "required": false }

@@ -4,11 +4,11 @@ The editor for a trait-list section of a character's sheet - catalogs like Abili
 
 ## Who can use this
 
-Anyone editing a character sees this inside the Edit tab - a player editing their own character, or a Storyteller editing any character in the chronicle. If you can only view the character, every trait here shows as a plain read-only list with no Add or edit control. See [Character Editor](character-editor.md) for who can open the Edit tab at all.
+Anyone editing a character sees this inside the Edit view - a player editing their own character, or a Storyteller editing any character in the chronicle. If you can only view the character, every trait here shows as a plain read-only list with no Add or edit control. See [Character Editor](character-editor.md) for who can open the Edit view at all.
 
 ## How to get there
 
-My Chronicle → Edit tab, inside any section built as a trait list (Abilities, Backgrounds, Merits, Flaws, and similar, depending on the chronicle's own template).
+My Chronicle → Edit view, inside any section built as a trait list (Abilities, Backgrounds, Merits, Flaws, and similar, depending on the chronicle's own template).
 
 ## The screen
 
@@ -55,9 +55,9 @@ My Chronicle → Edit tab, inside any section built as a trait list (Abilities, 
 - **A few entries really can be held more than once**, and those are the ones where the label is part of what you hold - two different Retainers, or two fields of study under one Ability. For these, the modal asks **Who or what?** instead of Specialization, even on a section (like Backgrounds) that doesn't otherwise show this field at all. Your chronicle's own catalog says which entries work that way; for them, a new answer is a new row with its own dots and its own cost, and repeating an answer you already used raises that row instead. A few sections - Merits and Flaws, for example - always keep each pick as its own row, however it is named.
 - **Re-labelling onto a label you already hold merges the two** - where a name can be held more than once, editing one row's label to match another row's combines them into the one you already had, rather than leaving two rows nothing can tell apart.
 - **A custom name always needs review.** Typing a name that isn't in the catalog only saves where this section allows custom entries at all, and even then it always goes to a Storyteller for approval, no matter how your chronicle has auto-approval configured.
-- **Removing marks, it doesn't delete** - nothing actually leaves the sheet until you submit changes from the Edit tab, so you can undo a removal right up until then.
+- **Removing marks, it doesn't delete** - nothing actually leaves the sheet until you submit changes from the Edit view, so you can undo a removal right up until then.
 - **Every dot is the same size** - the count display here matches the sheet and a signed PDF exactly.
-- **The price beside a name is a preview, and nothing here is saved on its own.** Every add, change, or removal queues in the Edit tab's Pending Changes until you submit it, and that bar prices the whole set together. A price in the dropdown is worked out against the sheet as it's saved, so a queued change that moves it (a new Clan, say) isn't counted there; the bar's total always is.
+- **The price beside a name is a preview, and nothing here is saved on its own.** Every add, change, or removal queues in the Edit view's Pending Changes until you submit it, and that bar prices the whole set together. A price in the dropdown is worked out against the sheet as it's saved, so a queued change that moves it (a new Clan, say) isn't counted there; the bar's total always is.
 
 ## Troubleshooting
 

@@ -1,0 +1,70 @@
+.be-story__section {
+	margin: 0 0 24px;
+}
+
+.be-story__section h3,
+.be-story__section h4 {
+	margin: 12px 0 6px;
+}
+
+.be-story__hint {
+	margin: 0 0 8px;
+	color: var(--be-gray-6);
+	font-size: 0.9rem;
+}
+
+.be-story__field {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	margin: 8px 0;
+	font-weight: 600;
+}
+
+.be-story__field input[type="text"] {
+	min-height: var(--be-tap, 44px);
+	font: inherit;
+	font-weight: 400;
+}
+
+.be-story__check {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin: 8px 0;
+}
+
+.be-story__portrait {
+	display: block;
+	max-width: 160px;
+	height: auto;
+	margin: 0 0 8px;
+}
+
+.be-story__rp-notes {
+	box-sizing: border-box;
+	width: 100%;
+	font: inherit;
+}
+
+.be-story__status {
+	min-height: 1.4em;
+	margin: 6px 0 0;
+	color: var(--be-gray-6);
+	font-size: 0.9rem;
+}
+
+.be-story__failed {
+	color: var(--be-red-9);
+}
+
+.be-story .be-story__retry.be-story__retry {
+	min-height: 32px;
+	padding: 2px 10px;
+	border: 1px solid var(--be-st-accent, var(--be-blue-4));
+	border-radius: 4px;
+	background: transparent;
+	color: var(--be-st-accent, var(--be-blue-4));
+	font: inherit;
+	cursor: pointer;
+}

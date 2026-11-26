@@ -31,6 +31,14 @@ class Temporary_State_Controller extends Base_Controller {
 			],
 		] );
 
+		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/characters/(?P<id>\d+)/permanent/pool', [
+			[
+				'methods'             => 'POST',
+				'callback'            => [ $this, 'spend_permanent' ],
+				'permission_callback' => $this->permission( 'be_view_characters' ),
+			],
+		] );
+
 		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/characters/(?P<id>\d+)/wound', [
 			[
 				'methods'             => 'POST',
@@ -97,6 +105,54 @@ class Temporary_State_Controller extends Base_Controller {
 		}
 
 		return $this->success( [
+			'permanent' => $result['permanent'],
+			'temporary' => $result['temporary'],
+		] );
+	}
+
+	/**
+	 * Spends one permanent point of a pool the character's books spend permanently: at once, or waiting for a
+	 * Storyteller where the chronicle holds changes that lower a rating and the caller is not one.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function spend_permanent( $request ) {
+		$character = $this->resolve_character( $request );
+		if ( is_wp_error( $character ) ) {
+			return $character;
+		}
+
+		$block_slug = (string) $request->get_param( 'block_slug' );
+		$pool_name  = (string) $request->get_param( 'pool_name' );
+		if ( $block_slug === '' || $pool_name === '' ) {
+			return $this->error( 'invalid_param', __( 'block_slug and pool_name are required.', 'beyond-elysium' ), 400 );
+		}
+
+		$game       = Game::find_by_slug( (string) $request['game_slug'] );
+		$can_manage = Authorization::check_request( 'be_manage_characters', $request );
+		$wait       = ! $can_manage && $game && ( $game->settings->approval_on_removal ?? false ) === true;
+
+		$result = Change_Engine::spend_pool_permanent(
+			(int) $character->id,
+			$block_slug,
+			$pool_name,
+			sanitize_text_field( (string) $request->get_param( 'reason' ) ),
+			get_current_user_id(),
+			$wait
+		);
+
+		if ( ! empty( $result['waiting'] ) ) {
+			return $this->success( [ 'applied' => false, 'waiting' => true, 'change_id' => $result['change_id'] ], 202 );
+		}
+		if ( ! $result['applied'] ) {
+			$status = ( $result['code'] ?? '' ) === 'not_found' ? 404 : 400;
+			return $this->error( (string) ( $result['code'] ?? 'spend_failed' ), (string) ( $result['message'] ?? __( 'The change could not be applied.', 'beyond-elysium' ) ), $status );
+		}
+
+		return $this->success( [
+			'applied'   => true,
+			'waiting'   => false,
 			'permanent' => $result['permanent'],
 			'temporary' => $result['temporary'],
 		] );

@@ -6,6 +6,7 @@ import { __ } from '@wordpress/i18n';
 import { localizedPowerName } from '../../lib/localizeName';
 import { seamQualifier } from '../../lib/levelQualifier';
 import { allLevels, pickRank } from '../../lib/powerLevels';
+import TapTarget, { type TraitTap } from './TapTarget';
 import type {
 	TieredPowerDefinition,
 	TieredPower,
@@ -42,6 +43,10 @@ export interface TieredPowerRendererProps {
 	data: HeldPower[];
 	definition: TieredPowerDefinition;
 	displayMode?: 'named' | 'numeric';
+	/**
+	 * Opens the trait panel for a held power; rows are plain text without it.
+	 */
+	onTrait?: TraitTap;
 }
 
 function findPower(
@@ -220,6 +225,7 @@ export function TieredPowerRenderer( {
 	data,
 	definition,
 	displayMode,
+	onTrait,
 }: TieredPowerRendererProps ) {
 	const mode = displayMode ?? 'numeric';
 
@@ -240,10 +246,17 @@ export function TieredPowerRenderer( {
 					if ( mode === 'numeric' ) {
 						return (
 							<li key={ `${ held.name }-${ index }` }>
-								{ withTradition(
-									held,
-									numericLabel( definition, held )
-								) }
+								<TapTarget
+									onTrait={ onTrait }
+									blockSlug={ blockSlug }
+									name={ held.name }
+									powerName={ held.power_name }
+								>
+									{ withTradition(
+										held,
+										numericLabel( definition, held )
+									) }
+								</TapTarget>
 							</li>
 						);
 					}
@@ -251,10 +264,17 @@ export function TieredPowerRenderer( {
 					const rows = namedModeRows( definition, held );
 					return (
 						<li key={ `${ held.name }-${ index }` }>
-							{ withTradition(
-								held,
-								numericLabel( definition, held )
-							) }
+							<TapTarget
+								onTrait={ onTrait }
+								blockSlug={ blockSlug }
+								name={ held.name }
+								powerName={ held.power_name }
+							>
+								{ withTradition(
+									held,
+									numericLabel( definition, held )
+								) }
+							</TapTarget>
 							{ rows.length > 0 && (
 								<ul className="be-tiered-power__rank-rows">
 									{ rows.map( ( row, rowIndex ) => (

@@ -16944,3 +16944,254 @@ msgstr "%1$s · %2$s"
 #: build/271.js:122 build/704.js:112
 msgid "Sign in to see your chronicles."
 msgstr "Entre para ver as suas crônicas."
+
+#: includes/REST/Temporary_State_Controller.php:129
+msgid "block_slug and pool_name are required."
+msgstr "block_slug e pool_name são obrigatórios."
+
+#: includes/Services/Change_Engine.php:1683
+msgid "The books don't spend that pool permanently."
+msgstr "Os livros não gastam essa reserva de forma permanente."
+
+#: includes/Services/Change_Engine.php:1703
+msgid "That pool has no permanent rating left to spend."
+msgstr "Essa reserva não tem mais classificação permanente para gastar."
+
+#: includes/Services/Change_Engine.php:1721
+msgid "A permanent spend lowers a rating, and this chronicle approves those."
+msgstr "Um gasto permanente reduz uma classificação, e esta crônica aprova esse tipo de mudança."
+
+#. translators: 1: a pool's name, such as Willpower, 2: its permanent rating before the spend, 3: after it
+#: build/271.js:159 build/285.js:160 build/431.js:74 build/488.js:79
+#: build/507.js:37 build/785.js:47
+msgid "Spent 1 permanent %1$s (%2$d → %3$d)"
+msgstr "Gastou 1 ponto permanente de %1$s (%2$d → %3$d)"
+
+#: build/285.js:91 build/431.js:42
+msgid "Held"
+msgstr "Possui"
+
+#. translators: %d: the level a character holds a power at
+#: build/285.js:92 build/431.js:43
+msgid "Level %d"
+msgstr "Nível %d"
+
+#. translators: %d: how many dots or points a character holds of a trait
+#: build/285.js:93 build/431.js:44
+msgid "Held: %d"
+msgstr "Possui: %d"
+
+#: build/285.js:93 build/431.js:44
+msgid "Already at the most this can be."
+msgstr "Já está no máximo possível."
+
+#: build/285.js:93 build/431.js:44
+msgid "Needs a Storyteller."
+msgstr "Precisa de um Narrador."
+
+#: build/285.js:93 build/431.js:44
+msgid "No Storyteller needed."
+msgstr "Não precisa de um Narrador."
+
+#: build/285.js:93 build/431.js:44
+msgid "About"
+msgstr "Sobre"
+
+#. translators: %s: where a trait is described, such as a book and page
+#: build/285.js:94 build/431.js:45
+msgid "Source: %s"
+msgstr "Fonte: %s"
+
+#. translators: 1: the power a trait needs, 2: the level of it
+#: build/285.js:95 build/431.js:46
+msgid "Needs %1$s %2$d"
+msgstr "Precisa de %1$s %2$d"
+
+#: build/285.js:95 build/431.js:46
+msgid "Nothing recorded for this yet."
+msgstr "Nada registrado sobre isso ainda."
+
+#: build/285.js:95 build/431.js:46
+msgid "See all in History"
+msgstr "Ver tudo no Histórico"
+
+#: build/285.js:95 build/431.js:46
+msgid "Change it in Edit"
+msgstr "Alterar em Editar"
+
+#: build/285.js:100
+msgid "Saved"
+msgstr "Salvo"
+
+#: build/285.js:100
+msgid "Couldn't save. Trying again…"
+msgstr "Não foi possível salvar. Tentando de novo…"
+
+#: build/285.js:100
+msgid "Retry"
+msgstr "Tentar de novo"
+
+#: build/285.js:100
+msgid "What a player sees about this NPC in the chronicle's Who's Who directory - separate from the sheet."
+msgstr "O que um jogador vê sobre este NPC no diretório Quem é Quem da crônica - separado da ficha."
+
+#: build/285.js:100
+msgid "RP notes"
+msgstr "Anotações de RP"
+
+#: build/285.js:100
+msgid "Only Storytellers see these; the player never does."
+msgstr "Só os Narradores veem estas anotações; o jogador nunca as vê."
+
+#: build/285.js:100 build/285.js:113
+msgid "Story"
+msgstr "História"
+
+#: build/285.js:100
+msgid "Bashing"
+msgstr "Contundente"
+
+#: build/285.js:100
+msgid "Lethal"
+msgstr "Letal"
+
+#: build/285.js:100
+msgid "Aggravated"
+msgstr "Agravado"
+
+#: build/285.js:100
+msgid "That could not be saved."
+msgstr "Não foi possível salvar isso."
+
+#: build/285.js:100 build/285.js:113
+msgid "Play"
+msgstr "Jogar"
+
+#: build/285.js:100
+msgid "Pools"
+msgstr "Reservas"
+
+#. translators: %s: a pool's name, such as Blood
+#: build/285.js:101
+msgid "Spend a point of %s"
+msgstr "Gastar um ponto de %s"
+
+#: build/285.js:101 build/285.js:112
+msgid "Spend"
+msgstr "Gastar"
+
+#. translators: %s: a pool's name, such as Blood
+#: build/285.js:102
+msgid "Regain a point of %s"
+msgstr "Recuperar um ponto de %s"
+
+#: build/285.js:102
+msgid "Regain"
+msgstr "Recuperar"
+
+#. translators: %s: a pool's name, such as Willpower
+#: build/285.js:103 build/285.js:112
+msgid "Spend a permanent point of %s"
+msgstr "Gastar um ponto permanente de %s"
+
+#: build/285.js:103
+msgid "Spend permanent"
+msgstr "Gastar permanente"
+
+#. translators: %d: how many permanent spends of one pool wait for a Storyteller
+#: build/285.js:104
+msgid "%d permanent spend waiting"
+msgid_plural "%d permanent spends waiting"
+msgstr[0] "%d gasto permanente aguardando"
+msgstr[1] "%d gastos permanentes aguardando"
+
+#: build/285.js:104
+msgid "Health"
+msgstr "Saúde"
+
+#. translators: %s: the health level a character stands at, such as Bruised
+#: build/285.js:105
+msgid "Level: %s"
+msgstr "Nível: %s"
+
+#: build/285.js:106
+msgid "Undamaged"
+msgstr "Sem dano"
+
+#. translators: %d: levels of damage past the last box of the health track
+#: build/285.js:107
+msgid "+%d beyond the track"
+msgstr "+%d além da trilha"
+
+#. translators: %s: a kind of damage, such as Lethal
+#: build/285.js:108
+msgid "Take a level of %s damage"
+msgstr "Sofrer um nível de dano: %s"
+
+#: build/285.js:108
+msgid "Take"
+msgstr "Sofrer"
+
+#. translators: %s: a kind of damage, such as Lethal
+#: build/285.js:109
+msgid "Heal a level of %s damage"
+msgstr "Curar um nível de dano: %s"
+
+#: build/285.js:109
+msgid "Heal"
+msgstr "Curar"
+
+#: build/285.js:109
+msgid "Tonight"
+msgstr "Hoje à noite"
+
+#. translators: %s: the name of a Trait lost tonight
+#: build/285.js:110
+msgid "Lost: %s"
+msgstr "Perdeu: %s"
+
+#. translators: 1: an Ability's name, 2: how many of its levels were expended tonight
+#: build/285.js:111
+msgid "Expended: %1$s x%2$d"
+msgstr "Gastou: %1$s x%2$d"
+
+#: build/285.js:111
+msgid "Cleared when the Storyteller closes the night."
+msgstr "Zerado quando o Narrador encerra a noite."
+
+#. translators: 1: a pool's name, such as Willpower, 2: its permanent rating now, 3: its rating after the spend
+#: build/285.js:113
+msgid "Spend 1 permanent %1$s? Your rating goes from %2$d to %3$d, and raising it again costs XP."
+msgstr "Gastar 1 ponto permanente de %1$s? Sua classificação vai de %2$d para %3$d, e aumentá-la de novo custa XP."
+
+#: build/285.js:113
+msgid "What for?"
+msgstr "Para quê?"
+
+#: build/285.js:113
+msgid "Find a trait"
+msgstr "Buscar um traço"
+
+#: build/285.js:113
+msgid "Nothing found."
+msgstr "Nada encontrado."
+
+#: build/285.js:113
+msgid "Pick a character on the Characters tab to open it."
+msgstr "Escolha um personagem na aba Personagens para abri-lo."
+
+#. translators: %d: experience points the character has not spent
+#: build/285.js:114
+msgid "%d XP to spend"
+msgstr "%d XP para gastar"
+
+#. translators: %d: how many of this character's changes wait for a Storyteller
+#: build/285.js:115
+msgid "%d change waiting"
+msgid_plural "%d changes waiting"
+msgstr[0] "%d mudança aguardando"
+msgstr[1] "%d mudanças aguardando"
+
+#: build/285.js:115
+msgid "Views"
+msgstr "Visualizações"

@@ -18,7 +18,7 @@ A seção **Health** do seu novo personagem já vem preenchida - isso não é al
 
 ## 2. Editando Sua Ficha
 
-Abra o seu personagem em **Personagens** (ou vá direto à aba **Editar**). Cada seção da ficha - traços, poderes, reservas de recursos, campos de identidade - é editável na mesma página. As mudanças não são gravadas na ficha no instante em que você as faz; ficam em fila até você clicar em **Enviar Alterações**.
+Abra o seu personagem em **Personagens** (ou vá direto à visualização **Editar** da aba Personagem). Cada seção da ficha - traços, poderes, reservas de recursos, campos de identidade - é editável na mesma página. As mudanças não são gravadas na ficha no instante em que você as faz; ficam em fila até você clicar em **Enviar Alterações**.
 
 Se este personagem está visitando outra crônica e os dois lados concordaram em mantê-lo atualizado lá, a edição fica desligada aqui até a visita terminar - "Mantido atualizado a partir de [crônica]. Faça as mudanças lá." Edite em casa; a atualização chega ao anfitrião sozinha.
 
@@ -36,7 +36,7 @@ Não envie de novo a mesma mudança enquanto ela ainda está pendente - isso cri
 
 A sua experiência não gasta e a total aparecem no editor. Gastá-la em um aumento de traço, poder ou reserva reduz o que sobra para gastar, seguindo os custos em pontos da própria crônica. Os poderes são comprados nível a nível: subir uma Disciplina (ou uma Arte, um Arcanos, um caminho de Hekau, ou um Numina) de 1 a 3 custa o nível 2 mais o nível 3, e um poder novo no nível 3 custa os três níveis. Um Narrador pode conceder experiência direto a você (presença em sessão, participação em tramas) - prêmios assim costumam valer na hora, sem precisar de um envio seu.
 
-Experiência ganha em algum lugar que esta crônica não conheceria de outro modo - um jogo ou evento que não usa o Beyond Elysium - abra **Solicitar XP** na aba Editar do seu personagem, diga aos seus Narradores onde e quando foi e envie. O pedido sempre espera a aprovação de um Narrador, seja como for que a sua crônica trate as outras mudanças, e você recebe o e-mail de costume quando ele aprovar. Veja [Editor de Personagem](help/character-editor.md#solicitar-xp).
+Experiência ganha em algum lugar que esta crônica não conheceria de outro modo - um jogo ou evento que não usa o Beyond Elysium - abra **Solicitar XP** na visualização História do seu personagem, diga aos seus Narradores onde e quando foi e envie. O pedido sempre espera a aprovação de um Narrador, seja como for que a sua crônica trate as outras mudanças, e você recebe o e-mail de costume quando ele aprovar. Veja [Editor de Personagem](help/character-editor.md#solicitar-xp).
 
 ## 3. Notificações
 
@@ -96,7 +96,7 @@ Editar no celular funciona, mas não é a experiência polida que a leitura é -
 
 ## 11. Quem é Quem e o Seu Perfil Público
 
-**Quem é Quem** lista os NPCs da crônica e os personagens de jogadores cujos jogadores escolheram aparecer, cada um com um nome, um texto e um retrato. Nada de uma ficha aparece ali. Para listar o seu próprio personagem, abra a aba **Editar** dele e ache **Perfil do Quem é Quem**: escreva um nome de exibição e uma descrição se quiser, marque **Exibir este personagem no Quem é Quem** e clique em **Salvar Perfil**. Marque **Indicar meu nome como o jogador deste personagem** para mostrar o seu nome junto. Deixe a primeira caixa desmarcada e o personagem fica fora da lista para todos, menos os Narradores. Veja [Quem é Quem](help/whos-who.md) e [Editor de Personagem](help/character-editor.md).
+**Quem é Quem** lista os NPCs da crônica e os personagens de jogadores cujos jogadores escolheram aparecer, cada um com um nome, um texto e um retrato. Nada de uma ficha aparece ali. Para listar o seu próprio personagem, abra a visualização **História** dele e ache **Perfil do Quem é Quem**: escreva um nome de exibição e uma descrição se quiser, marque **Exibir este personagem no Quem é Quem** e clique em **Salvar Perfil**. Marque **Indicar meu nome como o jogador deste personagem** para mostrar o seu nome junto. Deixe a primeira caixa desmarcada e o personagem fica fora da lista para todos, menos os Narradores. Veja [Quem é Quem](help/whos-who.md) e [Editor de Personagem](help/character-editor.md).
 
 ## 12. O Que Eu Sei: Segredos
 
@@ -116,4 +116,4 @@ Além de um item, você pode propor um coterie, uma matilha, uma cabala ou um mo
 
 ## 16. Sua Própria Ordem
 
-Rituais e caminhos de Blood Magic têm um botão **Reordenar** na aba Editar, e qualquer outra seção que os seus Narradores ligarem também tem. Mova uma linha com as setas para cima e para baixo, ou arraste no computador, e depois clique em **Salvar ordem**. Vale na hora, não custa experiência e não precisa de aprovação. Veja [Sua Própria Ordem](help/player-order.md).
+Rituais e caminhos de Blood Magic têm um botão **Reordenar** na visualização Editar, e qualquer outra seção que os seus Narradores ligarem também tem. Mova uma linha com as setas para cima e para baixo, ou arraste no computador, e depois clique em **Salvar ordem**. Vale na hora, não custa experiência e não precisa de aprovação. Veja [Sua Própria Ordem](help/player-order.md).

@@ -11,6 +11,7 @@ import {
 import { groupTraitsByField } from '../../lib/groupTraitsByField';
 import { localizedItemName } from '../../lib/localizeName';
 import WithDots from '../shared/Dots';
+import TapTarget, { type TraitTap } from './TapTarget';
 import type { TraitListDefinition, TraitListItem } from '../../types';
 import './TraitListRenderer.css';
 
@@ -26,6 +27,10 @@ export interface TraitListRendererProps {
 	 * Whether a count_is_cost block's flat XP price is shown at all.
 	 */
 	showCost?: boolean;
+	/**
+	 * Opens the trait panel for a held row; rows are plain text without it.
+	 */
+	onTrait?: TraitTap;
 }
 
 interface TraitGroup {
@@ -166,6 +171,7 @@ export function TraitListRenderer( {
 	definition,
 	display,
 	showCost,
+	onTrait,
 }: TraitListRendererProps ) {
 	const mode = resolveScreenMode( definition, display, showCost );
 	const nested = groupsAndSorts( definition )
@@ -211,15 +217,21 @@ export function TraitListRenderer( {
 										definition.alphabetize
 									).map( ( trait, i ) => (
 										<li key={ `${ trait.name }-${ i }` }>
-											<WithDots
-												text={ displayTrait(
-													localizeTraitForDisplay(
-														trait,
-														catalogByName
-													),
-													mode
-												) }
-											/>
+											<TapTarget
+												onTrait={ onTrait }
+												blockSlug={ blockSlug }
+												name={ trait.name }
+											>
+												<WithDots
+													text={ displayTrait(
+														localizeTraitForDisplay(
+															trait,
+															catalogByName
+														),
+														mode
+													) }
+												/>
+											</TapTarget>
 										</li>
 									) ) }
 								</ul>
@@ -256,15 +268,21 @@ export function TraitListRenderer( {
 							: group.traits
 						).map( ( trait, i ) => (
 							<li key={ `${ trait.name }-${ i }` }>
-								<WithDots
-									text={ displayTrait(
-										localizeTraitForDisplay(
-											trait,
-											catalogByName
-										),
-										mode
-									) }
-								/>
+								<TapTarget
+									onTrait={ onTrait }
+									blockSlug={ blockSlug }
+									name={ trait.name }
+								>
+									<WithDots
+										text={ displayTrait(
+											localizeTraitForDisplay(
+												trait,
+												catalogByName
+											),
+											mode
+										) }
+									/>
+								</TapTarget>
 							</li>
 						) ) }
 					</ul>

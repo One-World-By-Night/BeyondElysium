@@ -19,7 +19,7 @@ Minha Crônica → aba Personagens.
   | Coluna | Mostra |
   | --- | --- |
   | (retrato) | Uma miniatura, quando o personagem tem uma |
-  | Nome | Leva à aba Ficha; traz um selo "Também ativo em outro lugar" enquanto o personagem tem uma visita aberta a outra crônica - "Não é possível contatar uma visita" se uma ficou em silêncio |
+  | Nome | Leva à visualização Ficha; traz um selo "Também ativo em outro lugar" enquanto o personagem tem uma visita aberta a outra crônica - "Não é possível contatar uma visita" se uma ficou em silêncio |
   | Tipo | Tipo de criatura |
   | Status | ativo, inativo, aposentado, morto ou pendente |
   | XP Ganho | Total de experiência ganha |

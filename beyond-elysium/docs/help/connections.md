@@ -10,7 +10,7 @@ Storytellers (HST and AST) add, edit, and remove connections wherever this tool 
 
 - Storyteller Toolkit → Plots & Rumors → open a plot → **Connect character** in its action bar.
 - Beyond Elysium → Items & Locations (wp-admin) → open an item or location → its **Connections** section.
-- My Chronicle → Sheet tab → a character's own **Connections** section - it only appears there for a Storyteller.
+- My Chronicle → Sheet view → a character's own **Connections** section - it only appears there for a Storyteller.
 
 ## The screen
 

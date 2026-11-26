@@ -348,6 +348,18 @@ class CatalogValidatorTest extends TestCase {
 		$this->assertSame( [], Catalog_Validator::validate_block( $data, 'test-block' ) );
 	}
 
+	public function test_a_pool_may_be_marked_for_permanent_spends(): void {
+		$data = $this->block( 'resource_pool', [ 'pools' => [ $this->pool( [ 'permanent_spend' => true ] ) ] ] );
+		$this->assertSame( [], Catalog_Validator::validate_block( $data, 'test-block' ) );
+	}
+
+	public function test_a_permanent_spend_marker_is_true_or_absent(): void {
+		foreach ( [ false, 'yes', 1 ] as $bad ) {
+			$data = $this->block( 'resource_pool', [ 'pools' => [ $this->pool( [ 'permanent_spend' => $bad ] ) ] ] );
+			$this->assertRejects( $data, '`permanent_spend` must be true' );
+		}
+	}
+
 	public function test_a_pool_with_a_book_maximum_inside_its_maximum_passes(): void {
 		$data = $this->block( 'resource_pool', [ 'pools' => [ $this->pool( [ 'max' => 10, 'book_max' => 5 ] ) ] ] );
 		$this->assertSame( [], Catalog_Validator::validate_block( $data, 'test-block' ) );
@@ -618,6 +630,45 @@ class CatalogValidatorTest extends TestCase {
 		$def = $this->stack_definition();
 		unset( $def['sections'][0]['display_order'] );
 		$this->assertStringContainsString( 'integer `display_order`', implode( ' | ', Catalog_Validator::validate_file( $this->file( 'stack', 'werewolf', $def ), 'werewolf' ) ) );
+	}
+
+	public function test_a_stack_may_mark_one_section_as_its_health_track(): void {
+		$def = $this->stack_definition();
+		$def['sections'][1]['health_track'] = true;
+		$this->assertSame( [], Catalog_Validator::validate_file( $this->file( 'stack', 'werewolf', $def ), 'werewolf' ) );
+	}
+
+	public function test_a_health_track_marker_is_true_or_absent(): void {
+		$def = $this->stack_definition();
+		$def['sections'][1]['health_track'] = 'yes';
+		$this->assertStringContainsString( '`health_track` must be true', implode( ' | ', Catalog_Validator::validate_file( $this->file( 'stack', 'werewolf', $def ), 'werewolf' ) ) );
+		$def['sections'][1]['health_track'] = false;
+		$this->assertStringContainsString( '`health_track` must be true', implode( ' | ', Catalog_Validator::validate_file( $this->file( 'stack', 'werewolf', $def ), 'werewolf' ) ) );
+	}
+
+	public function test_a_stack_marks_only_one_section_as_its_health_track(): void {
+		$def = $this->stack_definition();
+		$def['sections'][0]['health_track'] = true;
+		$def['sections'][1]['health_track'] = true;
+		$this->assertStringContainsString( 'only one section', implode( ' | ', Catalog_Validator::validate_file( $this->file( 'stack', 'werewolf', $def ), 'werewolf' ) ) );
+	}
+
+	public function test_a_health_track_names_a_trait_list_block(): void {
+		$def = $this->stack_definition();
+		$def['sections'][0]['health_track'] = true;
+		$slug  = (string) $def['sections'][0]['block_slug'];
+		$stack = $this->file( 'stack', 'werewolf', $def );
+
+		$list = $this->file( 'block', $slug, [ 'items' => [] ], [ 'section_type' => 'trait_list' ] );
+		$this->assertSame( [], Catalog_Validator::validate_health_track_refs( $stack, [ $slug => $list ] ) );
+
+		$pool = $this->file( 'block', $slug, [ 'pools' => [] ], [ 'section_type' => 'resource_pool' ] );
+		$this->assertStringContainsString( 'not a trait list', implode( ' | ', Catalog_Validator::validate_health_track_refs( $stack, [ $slug => $pool ] ) ) );
+		$this->assertStringContainsString( 'not a trait list', implode( ' | ', Catalog_Validator::validate_health_track_refs( $stack, [] ) ) );
+	}
+
+	public function test_a_stack_with_no_health_track_needs_no_block_check(): void {
+		$this->assertSame( [], Catalog_Validator::validate_health_track_refs( $this->file( 'stack', 'werewolf', $this->stack_definition() ), [] ) );
 	}
 
 	public function test_the_retired_in_type_join_is_rejected(): void {

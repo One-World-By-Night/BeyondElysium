@@ -22,6 +22,7 @@
       },
       {
         "name": "Gnosis",
+        "permanent_spend": true,
         "value_type": "integer",
         "default_start": 1,
         "max": 10,
@@ -30,6 +31,7 @@
       },
       {
         "name": "Willpower",
+        "permanent_spend": true,
         "value_type": "integer",
         "default_start": 3,
         "max": 20,

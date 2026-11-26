@@ -190,6 +190,7 @@ const CHANGE_TYPES: ChangeType[] = [
 	'import_note',
 	'log_knowledge',
 	'pass_secret',
+	'pool_permanent_spent',
 ];
 
 /**

@@ -10,9 +10,9 @@ Você só pode abrir esta tela para um personagem seu, a menos que seja Narrador
 
 ## Como chegar lá
 
-Minha Crônica → aba Editar.
+Minha Crônica → aba **Personagem** → visualização **Editar**.
 
-- Com um personagem já escolhido - pela aba Personagens, ou pelo link "Editar este personagem" na Ficha dele - isto abre direto na edição dele.
+- Com um personagem já escolhido - pela aba Personagens, ou pela visualização **Editar** da seção Personagem - isto abre direto na edição dele.
 - Sem personagem escolhido, abre um formulário em branco para começar um novo.
 
 Um Narrador que cria um personagem pela página Personagens do wp-admin cai nesta mesma tela.
@@ -33,35 +33,16 @@ Se você já é membro desta crônica, o personagem existe na hora (ou começa *
 
 ### Cabeçalho (editando um personagem existente)
 
-- Retrato, com um botão **Adicionar um retrato…** / **Trocar retrato…**.
+- O retrato do personagem, se ele tem um. Adicione ou troque na visualização **História**.
 - O nome do personagem.
 - **Este é um NPC** - uma caixa de seleção, mostrada só a um Narrador que olha um personagem que pode gerenciar. Alterná-la recarrega a ficha com o outro layout na hora.
 - **Atribuído a** - qual Narrador é dono deste NPC, mostrado depois que ele é marcado como NPC. Veja [Minha Fila](my-queue.md).
 - **Tornar NPC Completo** - mostrado só num NPC Rápido. Passa-o para o layout completo de vez; daqui não há como voltar ao Rápido.
 - Um aviso "Você pode visualizar esta ficha, mas não editá-la." no lugar de todo controle de edição, se você pode ver este personagem mas não pode mudá-lo.
 
-### Perfil do Quem é Quem (só NPCs)
+### Antecedentes, Notas e o perfil do Quem é Quem
 
-Mostrado só a um Narrador que edita um NPC, separado da ficha acima - o que um jogador vê sobre este NPC no diretório [Quem é Quem](whos-who.md) da crônica, não a ficha em si:
-
-- **Nome de Exibição** - mostrado no lugar do nome real do personagem no Quem é Quem, se definido.
-- **Descrição** - o texto que um jogador lê. Uma passagem marcada com `[ST]...[/ST]` continua sendo retirada para quem não é Narrador, igual a todo lugar.
-- Um retrato, separado do retrato da própria ficha.
-- Quem pode ver este perfil, afinal - o mesmo seletor de público que uma trama ou item usa. Um NPC sem perfil configurado simplesmente não aparece no Quem é Quem para ninguém além de um Narrador.
-- **Salvar Perfil**.
-
-### Perfil do Quem é Quem (o personagem não-NPC de um jogador)
-
-Mostrado só a um jogador que edita um personagem seu que não é NPC - uma versão mais estreita da seção acima, sem escolha de público além de mostrar ou esconder o personagem:
-
-- **Nome de Exibição** - mostrado no lugar do nome real do personagem no Quem é Quem, se definido.
-- **Descrição** - o texto que os outros jogadores leem. Uma passagem marcada com `[ST]...[/ST]` é retirada para quem não é Narrador, igual a todo lugar.
-- **Exibir este personagem no Quem é Quem** - uma caixa de seleção. Desmarcada, o padrão, o personagem não aparece no [Quem é Quem](whos-who.md) para ninguém além de um Narrador.
-- **Indicar meu nome como o jogador deste personagem** - uma caixa de seleção. Marcada, o nome de exibição da sua própria conta aparece junto do personagem no Quem é Quem.
-- Um retrato, enviado direto desta tela - separado do retrato principal da ficha do personagem e da imagem do Quem é Quem de um NPC.
-- **Salvar Perfil**.
-
-Um jogador não pode escolher um público restrito aqui - um público baseado em regras continua sendo uma ferramenta do Narrador, definida pela seção de NPC acima, num personagem que um Narrador gerencia.
+Antecedentes, Notas e o perfil do [Quem é Quem](whos-who.md) foram para a visualização **História** da seção Personagem, onde são salvos enquanto você digita e ficam as anotações de RP de um Narrador. Veja [Minha Crônica](my-chronicle.md).
 
 ### Segredos (só NPCs)
 
@@ -71,13 +52,9 @@ Mostrado só a um Narrador que edita um NPC, depois que ele já existe - um text
 
 Mostrado só a um Narrador que edita um NPC que já existe - um painel recolhido que lista toda trama a que este NPC está ligado, dividida em **Abertas** e **Resolvidas**, cada uma com a data da última entrada. Clique no nome de uma trama para abri-la no Kit de Ferramentas do Narrador. Um NPC ainda ligado a nada mostra "Nenhuma." sob os dois títulos.
 
-### Antecedente e Notas
-
-Dois campos de texto rico, salvos independentemente de todo o resto desta tela - digitar aqui e clicar em **Salvar Antecedentes e Notas** vale na hora, sem custo de XP e sem revisão de Narrador, seja o que for que esteja na fila abaixo. Um botão **Assistência de IA** aparece ao lado de cada campo só para um Narrador, mesmo no personagem de um jogador; o jogador digita o próprio texto direto.
-
 ### Solicitar XP
 
-Mostrado só a um jogador, no próprio personagem - não a um Narrador que o edita. Recolhido por padrão. Para experiência ganha em algum lugar que esta crônica não enxerga por conta própria, na maioria das vezes um jogo ou evento feito totalmente fora do Beyond Elysium:
+Mostrado só a um jogador, no próprio personagem, na visualização **História** - não a um Narrador. Recolhido por padrão. Para experiência ganha em algum lugar que esta crônica não consegue ver por conta própria, na maioria das vezes um jogo ou evento realizado totalmente fora do Beyond Elysium:
 
 - **Quantidade** - um número inteiro de 1 a 10.000.
 - **Onde você ganhou** - obrigatório, até 200 caracteres.
@@ -140,20 +117,20 @@ Se você sair com algo na fila sem enviar, o navegador avisa antes de você nave
 
 ### Editar um personagem existente
 
-1. Abra a Ficha do personagem e clique em **Editar este personagem** (ou abra a aba **Editar** com esse personagem já escolhido).
+1. Abra o personagem e clique em **Editar** na fileira de visualizações.
 2. Use o controle de cada seção para adicionar, mudar ou remover um traço, poder, valor de reserva ou campo de identidade.
 3. Clique em **Revisar** na barra no pé da tela e confira cada alteração, o **Total** e o **Não gasto após** corridos.
 4. Clique em **Enviar Alterações**.
 
 ### Atualizar o Antecedente ou as Notas
 
-1. Abra o personagem na aba **Editar**.
+1. Abra o personagem e clique em **História**.
 2. Digite em **Antecedentes** ou **Notas**.
-3. Clique em **Salvar Antecedentes e Notas**. Isso salva na hora, independente do que está na fila em Alterações Pendentes.
+3. Não há nada para clicar: salva um instante depois que você para de digitar, e a linha sob os campos diz **Salvo**. Isso é independente do que está na fila em Alterações Pendentes.
 
 ### Restaurar um rascunho de uma sessão anterior
 
-1. Abra o personagem na aba **Editar**. Se você deixou alterações não salvas aqui antes, um aviso diz isso e informa quando foram salvas.
+1. Abra a visualização **Editar** do personagem. Se você deixou alterações não salvas aqui antes, um aviso diz isso e informa quando foram salvas.
 2. Clique em **Restaurar** para trazê-las de volta, ou em **Descartar** para largá-las de vez.
 
 ### Descartar alterações antes de enviar
@@ -179,7 +156,7 @@ Se você sair com algo na fila sem enviar, o navegador avisa antes de você nave
 
 ## Solução de problemas
 
-- **As minhas mudanças sumiram depois que enviei.** Provavelmente estão pendentes da revisão do Narrador, não perdidas - confira o "Ver histórico" da Ficha ou as mudanças pendentes do seu Painel.
+- **As minhas mudanças sumiram depois que enviei.** Provavelmente estão pendentes da revisão do Narrador, não perdidas - confira a visualização **Histórico** ou as mudanças pendentes do seu Painel.
 - **Não vejo a barra.** Ela só aparece enquanto houver algo na fila. Mude alguma coisa e ela aparece no pé da tela.
 - **Enviar Alterações não clica.** Como jogador, enviar deixaria você com XP negativo - reduza o que está comprando, ou peça mais a um Narrador.
 - **Um nome que digitei diz que não está no catálogo.** Confira a grafia primeiro. Se é mesmo novo, esta seção pode não aceitar entradas personalizadas - pergunte a um Narrador.

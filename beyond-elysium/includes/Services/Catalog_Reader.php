@@ -111,6 +111,7 @@ class Catalog_Reader {
 				Catalog_Validator::validate_variant( $data, $blocks_by_slug[ (string) ( $data['variant']['of'] ?? '' ) ] ?? null ),
 				Catalog_Validator::validate_derived( $data, $blocks_by_slug[ (string) ( $data['definition']['_meta']['untiered']['derived_from'] ?? '' ) ] ?? null ),
 				Catalog_Validator::validate_in_type_refs( $data, $blocks_by_slug ),
+				Catalog_Validator::validate_health_track_refs( $data, $blocks_by_slug ),
 				Catalog_Validator::validate_identity_field_refs( $data, $blocks_by_slug ),
 				Catalog_Validator::validate_creation_rules_refs( $data, $blocks_by_slug )
 			);

@@ -99,6 +99,7 @@
       },
       {
         "block_slug": "mage-health",
+        "health_track": true,
         "label": "Health",
         "display_order": 82,
         "required": false

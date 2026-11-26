@@ -25,7 +25,7 @@
       { "block_slug": "met-social-traits", "label": "Social Traits", "display_order": 51, "required": true, "negative_block_slug": "met-social-traits-neg" },
       { "block_slug": "met-mental-traits", "label": "Mental Traits", "display_order": 52, "required": true, "negative_block_slug": "met-mental-traits-neg" },
       { "block_slug": "various-tempers", "label": "Tempers", "display_order": 70, "required": false },
-      { "block_slug": "various-health", "label": "Health", "display_order": 72, "required": false },
+      { "block_slug": "various-health", "health_track": true, "label": "Health", "display_order": 72, "required": false },
       { "block_slug": "various-powers", "label": "Other Powers", "display_order": 80, "required": false },
       { "block_slug": "vampire-disciplines", "label": "Disciplines (Vampire)", "display_order": 100, "required": false },
       { "block_slug": "vampire-blood-magic", "label": "Blood Magic (Vampire)", "display_order": 101, "required": false },

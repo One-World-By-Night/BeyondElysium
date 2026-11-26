@@ -57,6 +57,10 @@ interface ChangeDataLike {
 	secret_title?: string;
 	from_name?: string;
 	to_name?: string;
+	// `pool_permanent_spent`: the pool, and its permanent rating before and after.
+	pool_name?: string;
+	from?: number;
+	to?: number;
 	// `visit_note`: the host chronicle's own note about a visiting character.
 	note?: string | null;
 	// `visit_pairing`: the host chronicle asking to pair with this character, and its site's address.
@@ -366,6 +370,15 @@ export function describeChange(
 				changeData.to_name ??
 					__( 'another character', 'beyond-elysium' ),
 				changeData.secret_title ?? __( 'a secret', 'beyond-elysium' )
+			);
+
+		case 'pool_permanent_spent':
+			return sprintf(
+				/* translators: 1: a pool's name, such as Willpower, 2: its permanent rating before the spend, 3: after it */
+				__( 'Spent 1 permanent %1$s (%2$d → %3$d)', 'beyond-elysium' ),
+				changeData.pool_name ?? __( 'Unknown', 'beyond-elysium' ),
+				changeData.from ?? 0,
+				changeData.to ?? 0
 			);
 
 		case 'visit_note':

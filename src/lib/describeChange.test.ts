@@ -9,6 +9,16 @@ import changeDescriptionInput from '../../tests/fixtures/change-description-inpu
 import changeDescriptionExpected from '../../tests/fixtures/change-description-expected.json';
 
 describe( 'describeChange', () => {
+	it( 'says a permanent spend with the rating before and after', () => {
+		expect(
+			describeChange( 'pool_permanent_spent', {
+				pool_name: 'Willpower',
+				from: 6,
+				to: 5,
+			} )
+		).toBe( 'Spent 1 permanent Willpower (6 → 5)' );
+	} );
+
 	it( 'shows a true before/after for a tiered_power level change', () => {
 		expect(
 			describeChange( 'modify_trait', {

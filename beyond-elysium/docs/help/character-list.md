@@ -19,7 +19,7 @@ My Chronicle → Characters tab.
   | Column | Shows |
   | --- | --- |
   | (portrait) | A thumbnail, when the character has one |
-  | Name | Links to the Sheet tab; carries an "Also active elsewhere" badge while the character has an open visit to another chronicle - "Can't reach a visit" instead if one has gone quiet |
+  | Name | Links to the Sheet view; carries an "Also active elsewhere" badge while the character has an open visit to another chronicle - "Can't reach a visit" instead if one has gone quiet |
   | Type | Creature type |
   | Status | active, inactive, retired, dead, or pending |
   | XP Earned | Total experience earned |

@@ -8,7 +8,7 @@ Qualquer pessoa que pode abrir a ficha do personagem - um jogador no próprio pe
 
 ## Como chegar lá
 
-Ficha do Personagem → escolha **Ver histórico** na lista de ações e clique em **Ir**. O mesmo conteúdo também aparece na própria ficha sempre que **Histórico de XP** está marcado no painel **Imprimir / Exportar** - veja [Imprimir / Exportar](sheet-print-export.md).
+Personagem → visualização **Histórico**. O mesmo conteúdo também aparece na própria ficha sempre que **Histórico de XP** está marcado no painel **Imprimir / Exportar** - veja [Imprimir / Exportar](sheet-print-export.md).
 
 ## A tela
 
@@ -28,12 +28,12 @@ Ficha do Personagem → escolha **Ver histórico** na lista de ações e clique 
 ### Conferir se uma mudança ainda está pendente
 
 1. Abra a Ficha do personagem.
-2. Escolha **Ver histórico** e clique em **Ir**.
+2. Clique em **Histórico** na fileira de visualizações.
 3. Ache a mudança - **Pendente** quer dizer que ainda espera um Narrador; **Aprovado** ou **Rejeitado** quer dizer que foi decidida.
 
 ### Ler a nota de um Narrador numa mudança
 
-1. Abra **Ver histórico**.
+1. Abra a visualização **Histórico**.
 2. Procure sob a mudança uma linha que comece com "Narrador:".
 
 ### Ler o histórico junto de uma ficha impressa ou na tela

@@ -1,6 +1,6 @@
 # Minha Crônica
 
-A página única que você usa para tudo em uma crônica a que pertence: escolha a crônica e depois passe entre o Painel, os Personagens, a Ficha, a edição, as Tramas e Rumores e os Relatórios dela.
+A página única que você usa para tudo em uma crônica a que pertence: escolha a crônica e depois passe entre o Painel, os Personagens, o Personagem, as Tramas e Rumores e os Relatórios dela.
 
 ## Quem pode usar
 
@@ -17,8 +17,7 @@ Procure um link "Minha Crônica" na navegação do seu site - este plugin cria a
 - **Abas**, depois que uma crônica é escolhida:
   - **Painel** - os seus personagens, as suas mudanças - em todas as crônicas a que você pertence, não só nesta - e as suas tramas de relance. Veja [Painel](player-dashboard.md).
   - **Personagens** - os seus personagens aqui (todos os personagens, para um Narrador desta crônica), com **+ Novo Personagem** para começar outro. Veja [Personagens](character-list.md).
-  - **Ficha** - a ficha do personagem escolhido, ou um pedido para escolher um em Personagens se nenhum está escolhido ainda. Veja [Ficha de Personagem](character-sheet.md).
-  - **Editar** - a edição do personagem escolhido, ou um formulário em branco para começar um novo se nenhum está escolhido. Veja [Editor de Personagem](character-editor.md).
+  - **Personagem** - o personagem escolhido, ou um pedido para escolher um em Personagens se nenhum está escolhido ainda, com uma fileira de visualizações: **Jogar** (reservas, saúde e o que foi perdido hoje à noite), **Ficha**, **História** (Antecedentes, Notas, o perfil do Quem é Quem e, para um Narrador, as anotações de RP), **Histórico** e **Editar**. Abre na visualização que você usou por último neste aparelho, ou na Ficha na primeira vez. Veja [Ficha de Personagem](character-sheet.md) e [Editor de Personagem](character-editor.md).
 
 Cada aba mostra o que você pode fazer na crônica escolhida - um Narrador aqui vê o painel e os controles do Narrador; a mesma pessoa em uma crônica onde só joga vê os do jogador.
   - **Minhas Tramas e Rumores** - os fios de trama a que você está ligado e qualquer rumor que chegou até você.
@@ -35,7 +34,7 @@ A menos que um administrador do site o tenha desligado em [Identidade Visual](br
 
 - **O cabeçalho** nomeia o site primeiro, com o logotipo dele, como um link para a página inicial do site, depois **Minha Crônica**, o seletor de crônica e um seletor dos seus próprios personagens nessa crônica. Escolher um personagem abre a Ficha dele, ou mantém você na aba Editar quando ela está aberta. Um Narrador também vê um link **Kit de Ferramentas do Narrador**. **Ajuda** e o seu nome com **Sair** (ou **Entrar**) vêm por último.
 - **Em um computador** toda aba aparece numa linha abaixo do cabeçalho, passando para uma segunda linha quando não cabem.
-- **Em um celular** uma barra na parte de baixo da tela tem **Início** (o Painel), **Personagem** (a Ficha do personagem escolhido, ou Personagens quando nenhum está escolhido) e **Tramas** (Minhas Tramas e Rumores). **Mais** lista toda outra aba, o link do Kit de Ferramentas do Narrador, a Ajuda e a saída.
+- **Em um celular** uma barra na parte de baixo da tela tem **Início** (o Painel), **Personagem** (o personagem escolhido, ou Personagens quando nenhum está escolhido) e **Tramas** (Minhas Tramas e Rumores). **Mais** lista toda outra aba, o link do Kit de Ferramentas do Narrador, a Ajuda e a saída.
 - **O rodapé** traz o Desenvolvido por Beyond Elysium, o logotipo da Dark Pack e o aviso da Paradox.
 
 Para manter a página na tela inicial do celular, use **Adicionar à tela inicial** no seu navegador. Ela abre no navegador, com o nome do site.
@@ -49,7 +48,7 @@ Para manter a página na tela inicial do celular, use **Adicionar à tela inicia
 
 ### Ir direto a uma aba
 
-1. Clique em **Painel**, **Personagens**, **Ficha**, **Editar**, **Minhas Tramas e Rumores** ou **Relatórios**.
+1. Clique em **Painel**, **Personagens**, **Personagem**, **Minhas Tramas e Rumores** ou **Relatórios**.
 
 ### Consultar a descrição de um local ou ritual
 
@@ -65,7 +64,7 @@ Para manter a página na tela inicial do celular, use **Adicionar à tela inicia
 ## O que saber
 
 - A lista suspensa **Crônica** só mostra as crônicas a que você já pertence - não é um diretório de todas as crônicas do site. **Crônicas que você pode pedir para entrar** é esse diretório, reduzido às que ainda aceitam pedidos.
-- Trocar a lista suspensa **Crônica** enquanto a aba Ficha ou Editar tem um personagem aberto não limpa essa escolha - o personagem escolhido antes pertencia à crônica que você acabou de deixar. Veja Solução de problemas.
+- Trocar a lista suspensa **Crônica** enquanto a aba Personagem tem um personagem aberto não limpa essa escolha - o personagem escolhido antes pertencia à crônica que você acabou de deixar. Veja Solução de problemas.
 
 ## Solução de problemas
 
@@ -73,7 +72,7 @@ Para manter a página na tela inicial do celular, use **Adicionar à tela inicia
 - **"Você ainda não pertence a nenhuma crônica."** Peça para entrar em uma pela lista abaixo, ou [envie um arquivo do Grapevine](send-grapevine-file.md) se você já tem um - veja [Entrar em uma Crônica](joining.md).
 - **"Não foi possível carregar as suas crônicas."** O pedido falhou - clique em **Tentar novamente**.
 - **Uma crônica em que acabei de entrar não está na lista suspensa.** O seu pedido de entrada, ou o personagem que você começou para ela, provavelmente ainda espera um Narrador - ela aparece quando ele aprovar.
-- **Troquei de crônica e a minha aba Ficha ou Editar parou de mostrar o personagem que eu tinha aberto.** Esse personagem pertence à crônica em que você estava. Vá a **Personagens** e escolha um da nova crônica.
+- **Troquei de crônica e a minha aba Personagem parou de mostrar o personagem que eu tinha aberto.** Esse personagem pertence à crônica em que você estava. Vá a **Personagens** e escolha um da nova crônica.
 - **Nada carrega.** Confira se você está autenticado e atualize a página.
 
 ## Relacionados

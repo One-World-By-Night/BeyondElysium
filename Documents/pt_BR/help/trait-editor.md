@@ -4,11 +4,11 @@ O editor de uma seção de lista de traços da ficha de um personagem - catálog
 
 ## Quem pode usar
 
-Qualquer pessoa que edita um personagem vê isto dentro da aba Editar - um jogador editando o próprio personagem, ou um Narrador editando qualquer personagem da crônica. Se você só pode visualizar o personagem, cada traço aqui aparece como uma lista simples somente leitura, sem controle de Adicionar nem de edição. Veja o [Editor de Personagem](character-editor.md) para saber quem pode abrir a aba Editar.
+Qualquer pessoa que edita um personagem vê isto dentro da visualização Editar - um jogador editando o próprio personagem, ou um Narrador editando qualquer personagem da crônica. Se você só pode visualizar o personagem, cada traço aqui aparece como uma lista simples somente leitura, sem controle de Adicionar nem de edição. Veja o [Editor de Personagem](character-editor.md) para saber quem pode abrir a visualização Editar.
 
 ## Como chegar lá
 
-Minha Crônica → aba Editar, dentro de qualquer seção montada como lista de traços (Habilidades, Antecedentes, Qualidades, Defeitos e afins, conforme o modelo da própria crônica).
+Minha Crônica → visualização Editar, dentro de qualquer seção montada como lista de traços (Habilidades, Antecedentes, Qualidades, Defeitos e afins, conforme o modelo da própria crônica).
 
 ## A tela
 
@@ -55,9 +55,9 @@ Minha Crônica → aba Editar, dentro de qualquer seção montada como lista de 
 - **Algumas entradas realmente podem ser mantidas mais de uma vez**, e são aquelas em que o rótulo faz parte do que você tem - dois Serviçais diferentes, ou dois campos de estudo sob uma Habilidade. Para elas, o modal pergunta **Quem ou o quê?** em vez de Especialização, mesmo numa seção (como Antecedentes) que de outro modo não mostra este campo. O catálogo da sua própria crônica diz quais entradas funcionam assim; para elas, uma resposta nova é uma linha nova com os seus próprios pontos e o seu próprio custo, e repetir uma resposta que você já usou aumenta essa linha. Algumas seções - Qualidades e Defeitos, por exemplo - sempre mantêm cada escolha como a sua própria linha, não importa como seja nomeada.
 - **Renomear para um rótulo que você já tem junta as duas** - onde um nome pode ser mantido mais de uma vez, editar o rótulo de uma linha para igualar o de outra as combina na que você já tinha, em vez de deixar duas linhas que nada distingue.
 - **Um nome personalizado sempre precisa de revisão.** Digitar um nome que não está no catálogo só salva onde esta seção aceita entradas personalizadas, e mesmo assim sempre vai a um Narrador para aprovação, não importa como a sua crônica configurou a aprovação automática.
-- **Remover marca, não apaga** - nada sai de fato da ficha até você enviar as alterações pela aba Editar, então você pode desfazer uma remoção até esse momento.
+- **Remover marca, não apaga** - nada sai de fato da ficha até você enviar as alterações pela visualização Editar, então você pode desfazer uma remoção até esse momento.
 - **Todos os pontos têm o mesmo tamanho** - a exibição da contagem aqui combina exatamente com a ficha e com um PDF assinado.
-- **O preço ao lado de um nome é uma prévia, e nada aqui é salvo por si só.** Toda adição, mudança ou remoção vai para a fila de Alterações Pendentes da aba Editar até você enviá-la, e essa barra precifica o conjunto inteiro junto. O preço na lista é calculado sobre a ficha como está salva, então uma alteração na fila que o mude (um Clã novo, por exemplo) não entra ali; o total da barra sempre a conta.
+- **O preço ao lado de um nome é uma prévia, e nada aqui é salvo por si só.** Toda adição, mudança ou remoção vai para a fila de Alterações Pendentes da visualização Editar até você enviá-la, e essa barra precifica o conjunto inteiro junto. O preço na lista é calculado sobre a ficha como está salva, então uma alteração na fila que o mude (um Clã novo, por exemplo) não entra ali; o total da barra sempre a conta.
 
 ## Solução de problemas
 

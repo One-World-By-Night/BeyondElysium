@@ -8,7 +8,7 @@ Anyone who can open the character's sheet - a player for their own character, St
 
 ## How to get there
 
-Character Sheet → pick **View history** in the actions list and click **Go**. The same content also appears inline on the sheet whenever **XP History** is checked in the **Print / Export** panel - see [Print / Export](sheet-print-export.md).
+Character → **History** view. The same content also appears inline on the sheet whenever **XP History** is checked in the **Print / Export** panel - see [Print / Export](sheet-print-export.md).
 
 ## The screen
 
@@ -30,12 +30,12 @@ Character Sheet → pick **View history** in the actions list and click **Go**. 
 ### Check whether a change is still pending
 
 1. Open the character's Sheet.
-2. Pick **View history** and click **Go**.
+2. Click **History** in the row of views.
 3. Find the change - **Pending** means it's still waiting on a Storyteller; **Approved** or **Rejected** means it's been decided.
 
 ### Read a Storyteller's note on a change
 
-1. Open **View history**.
+1. Open the **History** view.
 2. Look under the change for a line starting "Storyteller:".
 
 ### Read history alongside a printed or on-screen sheet

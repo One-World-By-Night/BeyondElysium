@@ -18,7 +18,7 @@ Your new character's **Health** section comes pre-filled - this isn't something 
 
 ## 2. Editing Your Sheet
 
-Open your character from **Characters** (or go straight to the **Edit** tab). Every section of the sheet - traits, powers, resource pools, identity fields - is editable from the same page. Changes aren't written to your sheet the instant you make them locally; they're queued until you click **Submit Changes**.
+Open your character from **Characters** (or go straight to the **Edit** view of the Character tab). Every section of the sheet - traits, powers, resource pools, identity fields - is editable from the same page. Changes aren't written to your sheet the instant you make them locally; they're queued until you click **Submit Changes**.
 
 If this character is visiting another chronicle and both sides have agreed to keep it current there, editing is turned off here until the visit ends - "Kept current from [chronicle]. Make changes there." Edit it at home instead; the update reaches the host on its own.
 
@@ -36,7 +36,7 @@ Don't resubmit the same change while it's still pending - it queues a second, se
 
 Your unspent and total experience show on the editor. Spending it on a trait, power, or pool increase reduces what's left to spend, following your chronicle's own point costs. Powers are bought level by level: raising a Discipline (or an Art, Arcanos, Hekau path, or Numina) from 1 to 3 costs level 2 plus level 3, and a brand-new power at level 3 costs all three levels. A Storyteller can award you experience directly (session attendance, plot participation) - awards like this usually apply immediately, without needing your own submission.
 
-Earned experience somewhere this chronicle wouldn't otherwise know about - a game or event that doesn't run Beyond Elysium - open **Request XP** on your character's Edit tab, tell your Storytellers where and when, and send it. It always waits for a Storyteller to approve, however your chronicle handles other changes, and you'll get the usual email once they do. See [Character Editor](help/character-editor.md#request-xp).
+Earned experience somewhere this chronicle wouldn't otherwise know about - a game or event that doesn't run Beyond Elysium - open **Request XP** on your character's Story view, tell your Storytellers where and when, and send it. It always waits for a Storyteller to approve, however your chronicle handles other changes, and you'll get the usual email once they do. See [Character Editor](help/character-editor.md#request-xp).
 
 ## 3. Notifications
 
@@ -96,7 +96,7 @@ Editing on a phone works, but it isn't the polished experience reading is - a ra
 
 ## 11. Who's Who and Your Public Profile
 
-**Who's Who** lists the chronicle's NPCs and the player characters whose players chose to be listed, each with a name, a write-up and a portrait. Nothing from a sheet ever shows there. To list your own character, open its **Edit** tab and find **Who's Who Profile**: write a display name and a description if you like, tick **Show this character in Who's Who**, and click **Save Profile**. Tick **Name me as the player behind this character** to show your own name with it. Leave the first box unticked and the character stays out of the list for everyone but Storytellers. See [Who's Who](help/whos-who.md) and [Character Editor](help/character-editor.md).
+**Who's Who** lists the chronicle's NPCs and the player characters whose players chose to be listed, each with a name, a write-up and a portrait. Nothing from a sheet ever shows there. To list your own character, open its **Story** view and find **Who's Who Profile**: write a display name and a description if you like, tick **Show this character in Who's Who**, and click **Save Profile**. Tick **Name me as the player behind this character** to show your own name with it. Leave the first box unticked and the character stays out of the list for everyone but Storytellers. See [Who's Who](help/whos-who.md) and [Character Editor](help/character-editor.md).
 
 ## 12. What I Know: Secrets
 
@@ -116,4 +116,4 @@ Besides an item, you can propose a coterie, pack, cabal or motley for your chara
 
 ## 16. Your Own Order
 
-Rituals and Blood Magic paths have a **Reorder** button on the Edit tab, and so does any other section your Storytellers switch on. Move a row with the up and down arrows, or drag it on a computer, then click **Save order**. It takes effect at once, costs no experience and needs no approval. See [Your Own Order](help/player-order.md).
+Rituals and Blood Magic paths have a **Reorder** button on the Edit view, and so does any other section your Storytellers switch on. Move a row with the up and down arrows, or drag it on a computer, then click **Save order**. It takes effect at once, costs no experience and needs no approval. See [Your Own Order](help/player-order.md).

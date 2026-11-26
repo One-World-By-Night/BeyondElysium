@@ -126,6 +126,7 @@ class Catalog_Validator {
 		$errors        = [];
 		$own_slugs     = [];
 		$replaced_here = [];
+		$health_marked = [];
 		foreach ( $sections as $section ) {
 			if ( is_array( $section ) && is_string( $section['block_slug'] ?? null ) ) {
 				$own_slugs[] = $section['block_slug'];
@@ -176,6 +177,40 @@ class Catalog_Validator {
 						}
 					}
 				}
+				if ( array_key_exists( 'health_track', $section ) ) {
+					if ( $section['health_track'] !== true ) {
+						$errors[] = sprintf( '%s ("%s") `health_track` must be true - or left out, since a section that is not the health track carries nothing', $where, $section['block_slug'] );
+					} else {
+						$health_marked[] = $section['block_slug'];
+					}
+				}
+			}
+		}
+		if ( count( $health_marked ) > 1 ) {
+			$errors[] = sprintf( '%s marks only one section as its `health_track`, not %s', $at, implode( ' and ', $health_marked ) );
+		}
+		return $errors;
+	}
+
+	/**
+	 * A stack's `health_track` section holds a trait list, the character's Health Levels.
+	 *
+	 * @param array<string,mixed>               $data           The stack's decoded file.
+	 * @param array<string,array<string,mixed>> $blocks_by_slug Every block file, by slug.
+	 * @return string[]
+	 */
+	public static function validate_health_track_refs( array $data, array $blocks_by_slug ): array {
+		if ( ( $data['kind'] ?? '' ) !== 'stack' ) {
+			return [];
+		}
+		$errors = [];
+		foreach ( (array) ( $data['definition']['sections'] ?? [] ) as $section ) {
+			if ( ! is_array( $section ) || ( $section['health_track'] ?? null ) !== true ) {
+				continue;
+			}
+			$slug = (string) ( $section['block_slug'] ?? '?' );
+			if ( ( $blocks_by_slug[ $slug ]['section_type'] ?? '' ) !== 'trait_list' ) {
+				$errors[] = sprintf( 'section "%s" is marked `health_track`, but its block is not a trait list', $slug );
 			}
 		}
 		return $errors;
@@ -618,6 +653,10 @@ class Catalog_Validator {
 				continue;
 			}
 			$name = (string) ( $pool['name'] ?? $i );
+
+			if ( array_key_exists( 'permanent_spend', $pool ) && $pool['permanent_spend'] !== true ) {
+				$errors[] = sprintf( 'pool "%s" `permanent_spend` must be true - or left out, since a pool the books do not spend permanently carries nothing', $name );
+			}
 
 			if ( array_key_exists( 'book_max', $pool ) ) {
 				$book_max = $pool['book_max'];

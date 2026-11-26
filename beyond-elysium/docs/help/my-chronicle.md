@@ -1,6 +1,6 @@
 # My Chronicle
 
-The one page you use for everything in a chronicle you belong to: pick which chronicle, then move between its Dashboard, Characters, Sheet, Edit, My Plots & Rumors, and Reports.
+The one page you use for everything in a chronicle you belong to: pick which chronicle, then move between its Dashboard, Characters, Character, My Plots & Rumors, and Reports.
 
 ## Who can use this
 
@@ -19,10 +19,12 @@ Look for a "My Chronicle" link in your site's navigation - this plugin creates t
     not just this one - and your plots at a glance. See [Dashboard](player-dashboard.md).
   - **Characters** - your characters here (every character, for a Storyteller of this
     chronicle), with **+ New Character** to start another. See [Characters](character-list.md).
-  - **Sheet** - the selected character's sheet, or a prompt to pick one from Characters if
-    none is selected yet. See [Character Sheet](character-sheet.md).
-  - **Edit** - editing the selected character, or a blank form to start a new one if none is
-    selected. See [Character Editor](character-editor.md).
+  - **Character** - the selected character, or a prompt to pick one from Characters if
+    none is selected yet, with a row of views: **Play** (pools, health and what was lost
+    tonight), **Sheet**, **Story** (Background, Notes, the Who's Who profile and, for a
+    Storyteller, RP notes), **History**, and **Edit**. It opens on the view you last used on
+    this device, or Sheet the first time. See [Character Sheet](character-sheet.md) and
+    [Character Editor](character-editor.md).
 
 Each tab shows what you can do in the chronicle selected - a Storyteller here sees the Storyteller dashboard and controls; the same person in a chronicle where they only play sees the player's.
   - **My Plots & Rumors** - plot threads you're connected to and any rumor that's reached
@@ -50,7 +52,7 @@ Unless a site administrator has turned it off on [Branding](branding.md), this p
 
 - **The header** names the site first, with its logo, as a link to the site's home page, then **My Chronicle**, the chronicle picker and a picker of your own characters in that chronicle. Choosing a character opens its Sheet, or keeps you on Edit when Edit is open. A Storyteller also sees a **Storyteller Toolkit** link. **Help** and your name with **Sign out** (or **Sign in**) come last.
 - **On a computer** every tab shows in one row under the header, wrapping onto a second row when they don't fit.
-- **On a phone** a bar at the bottom of the screen holds **Home** (the Dashboard), **Character** (the chosen character's Sheet, or Characters when none is chosen) and **Plots** (My Plots & Rumors). **More** lists every other tab, the Storyteller Toolkit link, Help and signing out.
+- **On a phone** a bar at the bottom of the screen holds **Home** (the Dashboard), **Character** (the chosen character, or Characters when none is chosen) and **Plots** (My Plots & Rumors). **More** lists every other tab, the Storyteller Toolkit link, Help and signing out.
 - **The footer** carries Powered by Beyond Elysium, the Dark Pack logo and Paradox's notice.
 
 To keep the page on your phone's home screen, use your browser's **Add to Home Screen**. It opens in the browser, named after the site.
@@ -64,7 +66,7 @@ To keep the page on your phone's home screen, use your browser's **Add to Home S
 
 ### Jump straight to a tab
 
-1. Click **Dashboard**, **Characters**, **Sheet**, **Edit**, **My Plots & Rumors**, or **Reports**.
+1. Click **Dashboard**, **Characters**, **Character**, **My Plots & Rumors**, or **Reports**.
 
 ### Look up a location's or rote's write-up
 
@@ -80,7 +82,7 @@ To keep the page on your phone's home screen, use your browser's **Add to Home S
 ## Things to know
 
 - The **Chronicle** dropdown only lists chronicles you already belong to - it isn't a directory of every chronicle on the site. **Chronicles you can ask to join** is that directory, narrowed to the ones still taking requests.
-- Switching the **Chronicle** dropdown while the Sheet or Edit tab has a character open doesn't clear that selection - the previously selected character belonged to the chronicle you just left. See Troubleshooting.
+- Switching the **Chronicle** dropdown while the Character tab has a character open doesn't clear that selection - the previously selected character belonged to the chronicle you just left. See Troubleshooting.
 
 ## Troubleshooting
 
@@ -88,7 +90,7 @@ To keep the page on your phone's home screen, use your browser's **Add to Home S
 - **"You don't belong to any chronicle yet."** Ask to join one from the list below it, or [send a Grapevine file](send-grapevine-file.md) if you already have one - see [Joining a Chronicle](joining.md).
 - **"Your chronicles couldn't be loaded."** The request failed - click **Try again**.
 - **A chronicle I just joined isn't in the dropdown.** Your join request, or the character you started for it, is likely still waiting on a Storyteller - it appears once they approve it.
-- **I switched chronicles and my Sheet or Edit tab stopped showing the character I had open.** That character belongs to the chronicle you were just on. Go to **Characters** and pick one in the new chronicle instead.
+- **I switched chronicles and my Character tab stopped showing the character I had open.** That character belongs to the chronicle you were just on. Go to **Characters** and pick one in the new chronicle instead.
 - **Nothing loads at all.** Make sure you're logged in, then refresh the page.
 
 ## Related

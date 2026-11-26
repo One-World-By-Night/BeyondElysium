@@ -20,6 +20,7 @@
       },
       {
         "name": "Willpower",
+        "permanent_spend": true,
         "value_type": "integer",
         "default_start": 3,
         "max": 20,

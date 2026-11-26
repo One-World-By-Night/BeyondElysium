@@ -13,8 +13,7 @@ import { DiscordLinkPanel } from '../game/DiscordLinkPanel';
 import DemoBanner, { DemoBannerShownContext } from '../shared/DemoBanner';
 import { TabStrip } from '../shared/TabStrip';
 import { CharacterList } from '../character/CharacterList';
-import { CharacterSheet } from '../character/CharacterSheet';
-import { CharacterEditor } from '../character/CharacterEditor';
+import { CharacterSection } from '../character/CharacterSection';
 import { MyPlotsFeed } from '../apr/MyPlotsFeed';
 import { GameDashboard } from '../game/GameDashboard';
 import { GameCalendar } from '../game/GameCalendar';
@@ -28,11 +27,15 @@ import ProposeFaction from '../faction/ProposeFaction';
 import {
 	newCharacterUrl,
 	playerTabUrl,
-	readNewNpcFromUrl,
 	readTabFromUrl,
 	writeTabToUrl,
 	PLAYER_TABS,
 } from '../../lib/pluginPages';
+import {
+	CHARACTER_SECTION,
+	isCharacterTab,
+	navKey,
+} from '../../lib/characterViews';
 import HelpButton from '../shared/HelpButton';
 import { AppFrame } from '../app/AppFrame';
 import { AppCharacterPicker } from '../app/AppCharacterPicker';
@@ -130,8 +133,7 @@ export function MyChroniclePage() {
 			key: PLAYER_TABS.characters,
 			label: __( 'Characters', 'beyond-elysium' ),
 		},
-		{ key: PLAYER_TABS.sheet, label: __( 'Sheet', 'beyond-elysium' ) },
-		{ key: PLAYER_TABS.edit, label: __( 'Edit', 'beyond-elysium' ) },
+		{ key: CHARACTER_SECTION, label: __( 'Character', 'beyond-elysium' ) },
 		{
 			key: PLAYER_TABS.plots,
 			label: __( 'My Plots & Rumors', 'beyond-elysium' ),
@@ -234,7 +236,7 @@ export function MyChroniclePage() {
 					{ ! appLayout && (
 						<TabStrip
 							tabs={ tabs }
-							active={ tab }
+							active={ navKey( tab ) }
 							onChange={ setTab }
 						/>
 					) }
@@ -317,30 +319,16 @@ export function MyChroniclePage() {
 						</>
 					) }
 
-					{ tab === PLAYER_TABS.sheet &&
-						( characterId ? (
-							<CharacterSheet
-								key={ `${ gameSlug }-${ characterId }` }
-								characterId={ characterId }
-								gameSlug={ gameSlug }
-								capabilities={ capabilities }
-							/>
-						) : (
-							<p>
-								{ __(
-									'Pick a character from the Characters tab to view its sheet.',
-									'beyond-elysium'
-								) }
-							</p>
-						) ) }
-
-					{ tab === PLAYER_TABS.edit && (
-						<CharacterEditor
-							key={ `${ gameSlug }-${ characterId ?? 'new' }` }
-							characterId={ characterId }
+					{ isCharacterTab( tab ) && (
+						<CharacterSection
 							gameSlug={ gameSlug }
+							characterId={ characterId }
+							tab={ tab }
 							capabilities={ capabilities }
-							startAsNpc={ readNewNpcFromUrl() }
+							onView={ setTab }
+							onPickCharacter={ () =>
+								setTab( PLAYER_TABS.characters )
+							}
 						/>
 					) }
 
@@ -436,7 +424,7 @@ export function MyChroniclePage() {
 					pageTitle={ __( 'My Chronicle', 'beyond-elysium' ) }
 					helpKey="my-chronicle"
 					sections={ ready ? tabs : [] }
-					active={ tab }
+					active={ navKey( tab ) }
 					onSelect={ setTab }
 					places={ [
 						{
@@ -445,7 +433,7 @@ export function MyChroniclePage() {
 						},
 						{
 							key: characterId
-								? PLAYER_TABS.sheet
+								? CHARACTER_SECTION
 								: PLAYER_TABS.characters,
 							label: __( 'Character', 'beyond-elysium' ),
 						},

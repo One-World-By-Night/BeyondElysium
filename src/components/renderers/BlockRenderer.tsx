@@ -17,6 +17,7 @@ import TraitListRenderer, { resolveTraitListMode } from './TraitListRenderer';
 import TieredPowerRenderer, { type HeldPower } from './TieredPowerRenderer';
 import ResourcePoolRenderer from './ResourcePoolRenderer';
 import IdentityFieldRenderer from './IdentityFieldRenderer';
+import type { TraitTap } from './TapTarget';
 
 export interface BlockRendererProps {
 	blockSlug: string;
@@ -40,6 +41,10 @@ export interface BlockRendererProps {
 	 * value.
 	 */
 	sheetData?: Record< string, unknown >;
+	/**
+	 * Opens the trait panel for a held trait or power, trait_list and tiered_power only; rows are plain text without it.
+	 */
+	onTrait?: TraitTap;
 }
 
 /**
@@ -55,6 +60,7 @@ export function BlockRenderer( {
 	displayMode,
 	showCost,
 	sheetData,
+	onTrait,
 }: BlockRendererProps ) {
 	switch ( sectionType ) {
 		case 'trait_list':
@@ -76,6 +82,7 @@ export function BlockRenderer( {
 					definition={ definition as TraitListDefinition }
 					display={ display ?? null }
 					showCost={ showCost }
+					onTrait={ onTrait }
 				/>
 			);
 
@@ -86,6 +93,7 @@ export function BlockRenderer( {
 					data={ ( data as HeldPower[] | undefined ) ?? [] }
 					definition={ definition as TieredPowerDefinition }
 					displayMode={ displayMode }
+					onTrait={ onTrait }
 				/>
 			);
 

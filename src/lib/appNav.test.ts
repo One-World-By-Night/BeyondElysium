@@ -79,12 +79,22 @@ describe( 'the addresses', () => {
 		expect( url.searchParams.get( 'character_id' ) ).toBe( '4' );
 	} );
 
-	it( 'opens another character on its Sheet, or on Edit when Edit is open', () => {
+	it( 'opens another character on the same view, or on its Sheet from any other tab', () => {
 		const sheet = new URL( characterHref( here, 9, 'dashboard' ) );
 		expect( sheet.searchParams.get( 'character_id' ) ).toBe( '9' );
 		expect( sheet.searchParams.get( 'tab' ) ).toBe( 'sheet' );
-		const edit = new URL( characterHref( here, 9, 'edit' ) );
-		expect( edit.searchParams.get( 'tab' ) ).toBe( 'edit' );
+		for ( const view of [ 'play', 'sheet', 'story', 'history', 'edit' ] ) {
+			expect(
+				new URL( characterHref( here, 9, view ) ).searchParams.get(
+					'tab'
+				)
+			).toBe( view );
+		}
+		expect(
+			new URL( characterHref( here, 9, 'character' ) ).searchParams.get(
+				'tab'
+			)
+		).toBe( 'sheet' );
 	} );
 
 	it( 'comes back to this page after signing in or out', () => {

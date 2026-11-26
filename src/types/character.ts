@@ -313,7 +313,9 @@ export type ChangeType =
 	// A host chronicle's own note about a visiting character, with no sheet effect.
 	| 'visit_note'
 	// A host chronicle's own request to pair a player-submitted character with its real home.
-	| 'visit_pairing';
+	| 'visit_pairing'
+	// One permanent point of a pool the books spend permanently, which lowers its rating and costs no XP.
+	| 'pool_permanent_spent';
 
 /**
  * The data carried by a single character change.

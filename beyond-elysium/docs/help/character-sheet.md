@@ -8,21 +8,19 @@ Any member of the chronicle can open their own character's sheet. Storytellers (
 
 ## How to get there
 
-My Chronicle → Characters tab, then click a character's name. If a character is already selected, the Sheet tab goes straight to it.
+My Chronicle → Characters tab, then click a character's name, or open the **Character** tab if one is already chosen. The Character section has a row of views - **Play**, **Sheet**, **Story**, **History**, and **Edit** - and this page is the Sheet view. Play, Story, and Edit are offered only to the character's own player and to Storytellers.
 
 ## The screen
 
 ### Actions
 
-One list above the sheet holds everything you can do with it. Pick an action, click **Go**, and what it opens appears right below the list, in place of anything already open - **Close** puts it away. The `?` beside **Go** opens this help. On a phone, the list and what it opens sit at the top of the page, above the sheet itself.
+A row of buttons above the sheet holds everything you can do with it. Click one and what it opens appears right below the row, in place of anything already open - click it again, or **Close**, to put it away. The `?` at the end of the row opens this help. On a phone the row wraps and sits at the top of the page, above the sheet itself.
 
-The list only offers what you can use:
+The row only offers what you can use:
 
 - **Print / Export** - opens the print panel: five checkboxes, **Background**, **Notes**, **XP History**, **Full power names**, and **Show XP costs**, then **Open PDF**, which opens a PDF of this sheet in a new tab. It's signed with the site's certificate when one is set up; otherwise the panel says prints are marked UNSIGNED.
 - **Print My Items** - opens a PDF of just the items connected to this character, straight away. Every viewer has it, not only a Storyteller.
-- **Edit this character** - opens the Edit tab for this character. Only if you can edit it.
 - **Customize appearance** - font, colors, background, and per-section graphics. Only if you've been granted sheet customization for a character you can already edit. See [Customize Appearance](sheet-customize.md).
-- **View history** - every change ever submitted for this character, approved and rejected alike, each with its status, a plain description, its XP cost, and any Storyteller note. See [Change History](sheet-history.md).
 - **Background uses** - a game-date picker, then the ledger of what each budgeted background was spent on that date. See [Background Uses](background-uses.md).
 - **Send Sheet** - Storyteller-only. Sends this character to another chronicle, or shows the controls for one currently visiting. See [Send Sheet](transfer.md).
 - **Point audit** - Storyteller-only. Every held trait, power, and pool priced line by line. See [Point Audit](point-audit.md).
@@ -34,6 +32,20 @@ A travelling or visiting notice appears above the header whenever this character
 
 Portrait, then **Name**, **Type**, **Status**, **Player**, **XP Earned**, and **XP Unspent**.
 
+### Tapping a trait
+
+Tap any trait or power on the sheet and a panel opens, from the bottom of the screen on a phone and from the right on a computer. It shows what the next dot or level would cost and whether a Storyteller has to approve it, the chronicle's own description and source for it, what it needs, and this character's history with it. **See all in History** and **Change it in Edit** are in it. Nothing is bought in the panel: a raise is made in Edit. **Escape**, **Close**, or a tap outside puts it away.
+
+### The Play view
+
+The Play view is for the table. It shows:
+
+- **Pools** - every pool the character holds, with **Spend** and **Regain** for its temporary points. Where the creature type's books spend a pool permanently (Willpower, Gnosis, Glamour, and a few others), **Spend permanent** asks first and lowers the rating by one.
+- **Health** - boxes drawn from the character's own health levels, filled with aggravated, then lethal, then bashing damage, and the level the character stands at. **Take** and **Heal** move one level of a type.
+- **Tonight** - what the character lost or expended tonight. It clears when the Storyteller closes the night.
+- **Find a trait** - a search of the character's own traits and powers; each result opens the trait panel.
+
+Each of these takes effect at once and is logged, with no Storyteller review. The one exception is a permanent spend on a chronicle that approves changes that lower a rating (Chronicle Setup's approval on removal): it waits in the Approval Queue, and the pool reads "1 permanent spend waiting" until it is decided. A permanent spend never costs XP and never refunds any; raising the rating again is a purchase in Edit.
 ### Connections
 
 Storyteller-only. Links this character to plots or to other characters. See [Connections](connections.md).
@@ -48,7 +60,7 @@ Your Background and Notes prose, at the bottom of the sheet whenever there is an
 
 ### XP History (when ticked for printing)
 
-The same change-history list **View history** shows appears inline here once its checkbox in the **Print / Export** panel is on - whether or not **View history** is also open.
+The same change-history list the **History** view shows appears inline here once its checkbox in the **Print / Export** panel is on.
 
 ## Common tasks
 
@@ -60,28 +72,28 @@ The same change-history list **View history** shows appears inline here once its
 ### Print or export a signed PDF
 
 1. Open the character's sheet.
-2. Pick **Print / Export** and click **Go**.
+2. Click **Print / Export**.
 3. Check whichever of **Background**, **Notes**, **XP History**, or **Full power names** you want included. **Show XP costs** starts ticked - untick it to leave Combo Discipline prices off the sheet entirely.
 4. Click **Open PDF**. The PDF opens in a new tab.
 
 ### Print an item card
 
 1. Open the character's sheet.
-2. Pick **Print My Items** and click **Go**.
+2. Click **Print My Items**.
 
 ### Read your XP History without printing
 
-1. Open the character's sheet, pick **Print / Export**, and click **Go**.
+1. Open the character's sheet and click **Print / Export**.
 2. Check **XP History**. The history appears on the page - nothing is sent to a printer.
 
 ### Check the change history
 
 1. Open the character's sheet.
-2. Pick **View history** and click **Go**.
+2. Click **History** in the row of views.
 
 ### Look up background uses for a date
 
-1. Open the character's sheet, pick **Background uses**, and click **Go**.
+1. Open the character's sheet and click **Background uses**.
 2. Pick the **Game date** at the top of the panel.
 
 ## Things to know
@@ -102,12 +114,11 @@ The same change-history list **View history** shows appears inline here once its
 
 ## Troubleshooting
 
-- **The list doesn't offer Edit, Send Sheet, Point audit, or Customize appearance.** Edit needs ownership or a Storyteller role. Send Sheet and Point audit are Storyteller-only. Customize appearance needs a grant from a Storyteller, even on your own character.
-- **Go does nothing.** Pick an action first - **Go** stays greyed out until you do.
+- **The row doesn't offer Send Sheet, Point audit, or Customize appearance.** Send Sheet and Point audit are Storyteller-only. Customize appearance needs a grant from a Storyteller, even on your own character. Play, Story, and Edit are views, offered to the character's own player and to Storytellers.
 - **Print My Items has nothing on it.** No items are connected to this character yet - ask a Storyteller to connect one.
 - **My PDF says UNSIGNED.** This site has no signing certificate configured yet - that's a hosting setup step, not a problem with the character.
 - **I ticked XP History and it appeared on the page.** That's expected - XP History, Full power names, and Show XP costs all change this page too, not only the printed file.
-- **I don't see my Background or Notes.** They only show when they have text - add some from the Edit tab.
+- **I don't see my Background or Notes.** They only show when they have text - add some from the **Story** view.
 - **I can't find a character I know is in this chronicle.** If it isn't yours and you're not a Storyteller, it won't appear at all - and an NPC never appears for a player.
 
 ## Related

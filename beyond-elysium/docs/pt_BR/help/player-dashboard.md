@@ -37,7 +37,7 @@ Minha Crônica → aba Painel. É a primeira aba e onde a página abre por padr�
 
 - Tudo aqui é restrito a você - os seus personagens, as suas mudanças, as suas tramas. Nunca mostra os dados de outro jogador.
 - **Minhas Alterações** olha todas as crônicas em que você tem um personagem, não só a escolhida no topo da página - é o único lugar que faz isso. Nada mais nesta página atravessa crônicas.
-- Uma mudança decidida fica listada aqui por cerca de um mês e depois sai - não é um registro corrido. Para o histórico completo de um personagem, abra a ficha dele e clique em **Ver histórico**.
+- Uma mudança decidida fica listada aqui por cerca de um mês e depois sai - não é um registro corrido. Para o histórico completo de um personagem, abra-o e clique em **Histórico**.
 - **Aprovado automaticamente** quer dizer que as regras da própria crônica liberaram a mudança sem um Narrador olhá-la individualmente - não que ninguém possa revisá-la depois.
 - Esta visão não diz por que uma mudança precisou da revisão de um Narrador - só o status atual dela.
 

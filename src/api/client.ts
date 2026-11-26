@@ -216,6 +216,7 @@ import type {
 	GameImportCommitResult,
 } from '../types/import';
 import type { VerifyResponse } from '../types/verify';
+import type { WoundType, Wounds } from '../lib/play';
 import type {
 	MailLogEntry,
 	MailLogOptions,
@@ -2285,6 +2286,72 @@ export const sheetStyle = ( gameSlug: string ) => ( {
 			method: 'DELETE',
 		} ),
 } );
+
+/**
+ * REST client factory for a character's tonight's state: its pools' temporary ratings and its wounds. The same routes
+ * Revenant calls, which let in the character's own player and a Storyteller and always log what they do.
+ */
+export const temporaryState = ( gameSlug: string, characterId: number ) => {
+	const base = `${ BASE }/${ gameSlug }/characters/${ characterId }`;
+	return {
+		/**
+		 * Moves one pool's temporary rating by `delta` (negative spends), answering the ratings now held.
+		 */
+		adjustPool: (
+			blockSlug: string,
+			poolName: string,
+			delta: number
+		): Promise< { permanent: number; temporary: number } > =>
+			apiFetch( {
+				path: `${ base }/temporary/pool`,
+				method: 'POST',
+				data: { block_slug: blockSlug, pool_name: poolName, delta },
+			} ),
+
+		/**
+		 * Spends one permanent point of a pool the books spend permanently: answers the ratings now held, or that the
+		 * spend waits for a Storyteller.
+		 */
+		spendPermanent: (
+			blockSlug: string,
+			poolName: string,
+			reason: string
+		): Promise<
+			| {
+					applied: true;
+					waiting: false;
+					permanent: number;
+					temporary: number;
+			  }
+			| { applied: false; waiting: true; change_id: number }
+		> =>
+			apiFetch( {
+				path: `${ base }/permanent/pool`,
+				method: 'POST',
+				data: { block_slug: blockSlug, pool_name: poolName, reason },
+			} ),
+
+		/**
+		 * Takes one level of damage of a type, answering the wounds now held.
+		 */
+		wound: ( type: WoundType ): Promise< { wounds: Wounds } > =>
+			apiFetch( {
+				path: `${ base }/wound`,
+				method: 'POST',
+				data: { type, amount: 1 },
+			} ),
+
+		/**
+		 * Heals one level of damage of a type, answering the wounds now held.
+		 */
+		heal: ( type: WoundType ): Promise< { wounds: Wounds } > =>
+			apiFetch( {
+				path: `${ base }/heal`,
+				method: 'POST',
+				data: { type, amount: 1 },
+			} ),
+	};
+};
 
 /**
  * REST client factory for a chronicle's signed-PDF character sheets.
@@ -4631,6 +4698,7 @@ const api = {
 	snapshots,
 	sheetStyle,
 	sheets,
+	temporaryState,
 	reports,
 	experience,
 	resourcePools,

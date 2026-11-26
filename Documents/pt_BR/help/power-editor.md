@@ -4,11 +4,11 @@ O editor de uma seção de poderes em níveis da ficha de um personagem - catál
 
 ## Quem pode usar
 
-Qualquer pessoa que edita um personagem vê isto dentro da aba Editar - um jogador editando o próprio personagem, ou um Narrador editando qualquer personagem da crônica. Se você só pode visualizar o personagem, cada poder aqui aparece como uma lista simples somente leitura, sem controle de Adicionar, contador nem Remover. Veja o [Editor de Personagem](character-editor.md) para saber quem pode abrir a aba Editar.
+Qualquer pessoa que edita um personagem vê isto dentro da visualização Editar - um jogador editando o próprio personagem, ou um Narrador editando qualquer personagem da crônica. Se você só pode visualizar o personagem, cada poder aqui aparece como uma lista simples somente leitura, sem controle de Adicionar, contador nem Remover. Veja o [Editor de Personagem](character-editor.md) para saber quem pode abrir a visualização Editar.
 
 ## Como chegar lá
 
-Minha Crônica → aba Editar, dentro de qualquer seção montada como lista de poderes em níveis (Disciplinas, Dons, Artes e afins, conforme o modelo da própria crônica).
+Minha Crônica → visualização Editar, dentro de qualquer seção montada como lista de poderes em níveis (Disciplinas, Dons, Artes e afins, conforme o modelo da própria crônica).
 
 ## A tela
 
@@ -59,7 +59,7 @@ Numa tela estreita, Tradição e Remover/Desfazer passam para trás de um botão
 
 ## O que saber
 
-- **Poderes numerados se somam.** Comprar um poder novo no nível 3 custa os níveis 1, 2 e 3 juntos, não só o nível 3 - refletido em qualquer custo que as Alterações Pendentes da aba Editar mostrarem, não aqui.
+- **Poderes numerados se somam.** Comprar um poder novo no nível 3 custa os níveis 1, 2 e 3 juntos, não só o nível 3 - refletido em qualquer custo que as Alterações Pendentes da visualização Editar mostrarem, não aqui.
 - **Listar cada nível / Usar contador é uma escolha para a ficha inteira**, lembrada neste dispositivo - trocar em qualquer poder troca todos os poderes, em toda ficha que você abrir aqui, e continua assim da próxima vez.
 - **Um nome personalizado sempre precisa de revisão.** Digitar um nome que não está no catálogo só salva onde esta seção permite, e mesmo assim sempre vai a um Narrador para aprovação, não importa como a sua crônica configurou a aprovação automática. As escolhas de Ancião ou superior nunca são personalizadas - só entradas reais do catálogo.
 - **Uma escolha de Ancião ou superior é aditiva**, não uma substituição - você mantém o nível numerado da sua família e pode ter várias escolhas distintas de Ancião ou superior nela ao mesmo tempo.
@@ -67,7 +67,7 @@ Numa tela estreita, Tradição e Remover/Desfazer passam para trás de um botão
 - **Um Narrador é avisado quando uma ficha tem um caminho duas vezes.** Um caminho mantido com duas grafias de uma tradição mostra um aviso no topo da ficha e do editor; o editor pode remover a linha extra.
 - **Um paradigma é exigido para adicionar um poder novo de Magia de Sangue, mas nunca para mantê-lo.** Um poder adicionado antes de esta seção pedir um paradigma logo de início só mostra "Escolher paradigma" na sua linha - um empurrão, não uma trava. Um Narrador revisando a mudança é a conferência de verdade, de um jeito ou de outro.
 - **Qualquer paradigma que esta seção oferece vale para qualquer poder nela.** Os professores listados no catálogo para um caminho só vêm primeiro por conveniência - escolher outro paradigma real da lista é permitido e corretamente revisado.
-- **Remover marca, não apaga** - nada sai da ficha até você enviar as alterações pela aba Editar.
+- **Remover marca, não apaga** - nada sai da ficha até você enviar as alterações pela visualização Editar.
 - **Toda exibição de nível combina exatamente com a ficha e com um PDF assinado.**
 
 ## Solução de problemas

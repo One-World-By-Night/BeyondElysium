@@ -8,21 +8,19 @@ Qualquer membro da crônica pode abrir a ficha do seu próprio personagem. Os Na
 
 ## Como chegar lá
 
-Minha Crônica → aba Personagens, depois clique no nome de um personagem. Se um personagem já está escolhido, a aba Ficha vai direto a ele.
+Minha Crônica → aba Personagens, depois clique no nome de um personagem, ou abra a aba **Personagem** se um já está escolhido. A seção Personagem tem uma fileira de visualizações - **Jogar**, **Ficha**, **História**, **Histórico** e **Editar** - e esta página é a visualização Ficha. Jogar, História e Editar são oferecidas só ao jogador do próprio personagem e aos Narradores.
 
 ## A tela
 
 ### Ações
 
-Uma lista acima da ficha reúne tudo o que você pode fazer com ela. Escolha uma ação, clique em **Ir**, e o que ela abre aparece logo abaixo da lista, no lugar de qualquer coisa já aberta - **Fechar** guarda de volta. O `?` ao lado de **Ir** abre esta ajuda. No celular, a lista e o que ela abre ficam no topo da página, acima da própria ficha.
+Uma fileira de botões acima da ficha reúne tudo o que você pode fazer com ela. Clique em um e o que ele abre aparece logo abaixo da fileira, no lugar de qualquer coisa já aberta - clique de novo, ou em **Fechar**, para guardar de volta. O `?` no fim da fileira abre esta ajuda. No celular, a fileira quebra em linhas e fica no topo da página, acima da própria ficha.
 
-A lista só oferece o que você pode usar:
+A fileira só oferece o que você pode usar:
 
 - **Imprimir / Exportar** - abre o painel de impressão: cinco caixas de seleção, **Antecedentes**, **Notas**, **Histórico de XP**, **Nomes completos dos poderes** e **Mostrar custos de XP**, depois **Abrir PDF**, que abre um PDF desta ficha em uma nova aba. Ele é assinado com o certificado do site quando há um configurado; senão o painel avisa que as impressões saem marcadas como NÃO ASSINADO.
 - **Imprimir Meus Itens** - abre na hora um PDF só com os itens ligados a este personagem. Todo visitante tem esta ação, não só o Narrador.
-- **Editar este personagem** - abre a aba Editar para este personagem. Só se você pode editá-lo.
 - **Personalizar aparência** - fonte, cores, fundo e gráficos por seção. Só se você recebeu a personalização da ficha para um personagem que já pode editar. Veja [Personalizar Aparência](sheet-customize.md).
-- **Ver histórico** - toda mudança já enviada para este personagem, aprovada ou rejeitada, cada uma com o seu status, uma descrição simples, o custo em XP e qualquer nota do Narrador. Veja [Histórico de Alterações](sheet-history.md).
 - **Usos de antecedente** - um seletor de data do jogo, depois o registro do que cada antecedente com orçamento gastou naquela data. Veja [Usos de Antecedente](background-uses.md).
 - **Enviar Ficha** - só para Narradores. Envia este personagem a outra crônica, ou mostra os controles de um que está visitando. Veja [Enviar Ficha](transfer.md).
 - **Auditoria de pontos** - só para Narradores. Cada traço, poder e reserva mantido, com o preço linha a linha. Veja [Auditoria de Pontos](point-audit.md).
@@ -34,6 +32,20 @@ Um aviso de viagem ou visita aparece acima do cabeçalho sempre que este persona
 
 Retrato, depois **Nome**, **Tipo**, **Status**, **Jogador**, **XP Ganho** e **XP Não Gasto**.
 
+### Tocando em um traço
+
+Toque em qualquer traço ou poder da ficha e um painel se abre, por baixo da tela no celular e pela direita no computador. Ele mostra quanto custaria o próximo ponto ou nível e se um Narrador precisa aprovar, a descrição e a fonte que a própria crônica deu a ele, o que ele exige, e o histórico deste personagem com ele. **Ver tudo no Histórico** e **Alterar em Editar** estão nele. Nada é comprado no painel: um aumento é feito em Editar. **Esc**, **Fechar** ou um toque fora o guarda.
+
+### A visualização Jogar
+
+A visualização Jogar é para a mesa. Ela mostra:
+
+- **Reservas** - toda reserva que o personagem tem, com **Gastar** e **Recuperar** para os pontos temporários. Onde os livros do tipo de criatura gastam uma reserva de forma permanente (Força de Vontade, Gnosis, Glamour e mais algumas), **Gastar permanente** pergunta antes e reduz a classificação em um.
+- **Saúde** - caixas desenhadas a partir dos próprios níveis de saúde do personagem, preenchidas com dano agravado, depois letal, depois contundente, e o nível em que o personagem está. **Sofrer** e **Curar** movem um nível de um tipo.
+- **Hoje à noite** - o que o personagem perdeu ou gastou hoje à noite. Zera quando o Narrador encerra a noite.
+- **Buscar um traço** - uma busca nos traços e poderes do próprio personagem; cada resultado abre o painel do traço.
+
+Cada uma dessas ações vale na hora e fica registrada, sem revisão de um Narrador. A única exceção é um gasto permanente numa crônica que aprova mudanças que reduzem uma classificação (a aprovação na remoção, em Configuração da Crônica): ele espera na Fila de Aprovação, e a reserva mostra "1 gasto permanente aguardando" até ser decidido. Um gasto permanente nunca custa XP e nunca devolve nenhum; aumentar a classificação de novo é uma compra em Editar.
 ### Conexões
 
 Só para Narradores. Liga este personagem a tramas ou a outros personagens. Veja [Conexões](connections.md).
@@ -48,7 +60,7 @@ O seu texto de Antecedente e Notas, no fim da ficha sempre que houver algum. As 
 
 ### Histórico de XP (quando marcado para impressão)
 
-A mesma lista de histórico de alterações que **Ver histórico** mostra aparece aqui, na página, quando a sua caixa no painel **Imprimir / Exportar** está marcada - esteja **Ver histórico** aberto também ou não.
+A mesma lista de histórico de alterações que a visualização **Histórico** mostra aparece aqui, na página, quando a sua caixa no painel **Imprimir / Exportar** está marcada.
 
 ## Tarefas comuns
 
@@ -60,28 +72,28 @@ A mesma lista de histórico de alterações que **Ver histórico** mostra aparec
 ### Imprimir ou exportar um PDF assinado
 
 1. Abra a ficha do personagem.
-2. Escolha **Imprimir / Exportar** e clique em **Ir**.
+2. Clique em **Imprimir / Exportar**.
 3. Marque o que você quiser incluir entre **Antecedentes**, **Notas**, **Histórico de XP** ou **Nomes completos dos poderes**. **Mostrar custos de XP** já vem marcada - desmarque para deixar os preços das Disciplinas Combo fora da ficha por completo.
 4. Clique em **Abrir PDF**. O PDF abre em uma nova aba.
 
 ### Imprimir um cartão de item
 
 1. Abra a ficha do personagem.
-2. Escolha **Imprimir Meus Itens** e clique em **Ir**.
+2. Clique em **Imprimir Meus Itens**.
 
 ### Ler o seu Histórico de XP sem imprimir
 
-1. Abra a ficha do personagem, escolha **Imprimir / Exportar** e clique em **Ir**.
+1. Abra a ficha do personagem e clique em **Imprimir / Exportar**.
 2. Marque **Histórico de XP**. O histórico aparece na página - nada é enviado a uma impressora.
 
 ### Conferir o histórico de alterações
 
 1. Abra a ficha do personagem.
-2. Escolha **Ver histórico** e clique em **Ir**.
+2. Clique em **Histórico** na fileira de visualizações.
 
 ### Consultar os usos de antecedente de uma data
 
-1. Abra a ficha do personagem, escolha **Usos de antecedente** e clique em **Ir**.
+1. Abra a ficha do personagem e clique em **Usos de antecedente**.
 2. Escolha a **Data do jogo** no topo do painel.
 
 ## O que saber
@@ -102,12 +114,11 @@ A mesma lista de histórico de alterações que **Ver histórico** mostra aparec
 
 ## Solução de problemas
 
-- **A lista não oferece Editar, Enviar Ficha, Auditoria de pontos nem Personalizar aparência.** Editar exige ser o dono ou ter um papel de Narrador. Enviar Ficha e Auditoria de pontos são só para Narradores. Personalizar aparência exige uma concessão de um Narrador, mesmo no seu próprio personagem.
-- **Ir não faz nada.** Escolha uma ação primeiro - **Ir** fica cinza até você escolher.
+- **A fileira não oferece Enviar Ficha, Auditoria de pontos nem Personalizar aparência.** Enviar Ficha e Auditoria de pontos são só para Narradores. Personalizar aparência exige uma concessão de um Narrador, mesmo no seu próprio personagem. Jogar, História e Editar são visualizações, oferecidas ao jogador do próprio personagem e aos Narradores.
 - **Imprimir Meus Itens não tem nada.** Nenhum item está ligado a este personagem ainda - peça a um Narrador que ligue um.
 - **Meu PDF diz NÃO ASSINADO.** Este site ainda não tem um certificado de assinatura configurado - isso é um passo da hospedagem, não um problema com o personagem.
 - **Marquei Histórico de XP e ele apareceu na página.** Isso é esperado - Histórico de XP, Nomes completos dos poderes e Mostrar custos de XP mudam esta página também, não só o arquivo impresso.
-- **Não vejo o meu Antecedente ou as minhas Notas.** Eles só aparecem quando têm texto - adicione algum pela aba Editar.
+- **Não vejo o meu Antecedente ou as minhas Notas.** Eles só aparecem quando têm texto - adicione algum pela visualização **História**.
 - **Não acho um personagem que sei que está nesta crônica.** Se ele não é seu e você não é Narrador, não aparece de jeito nenhum - e um NPC nunca aparece para um jogador.
 
 ## Relacionados

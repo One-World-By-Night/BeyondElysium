@@ -8,7 +8,7 @@ Anyone editing a character sees this - a player editing their own character, or 
 
 ## How to get there
 
-My Chronicle → Edit tab → Rituals or Blood Magic → **Reorder**.
+My Chronicle → Edit view → Rituals or Blood Magic → **Reorder**.
 
 ## The screen
 

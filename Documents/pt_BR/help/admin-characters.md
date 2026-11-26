@@ -37,7 +37,7 @@ Barra lateral do wp-admin → Beyond Elysium → Personagens.
 
 ### Marcar um personagem existente como NPC, ou desmarcar um
 
-1. Clique no nome dele para abrir a Ficha e depois em **Editar este personagem**.
+1. Clique no nome dele para abrir a Ficha e depois em **Editar** na fileira de visualizações.
 2. Alterne **Este é um NPC** ali. Veja o [Editor de Personagem](character-editor.md).
 
 ### Atribuir, trocar ou excluir um personagem

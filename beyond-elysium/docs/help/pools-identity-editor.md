@@ -4,13 +4,13 @@ Two of the building blocks inside the character editor: the dot-and-stepper trac
 
 ## Who can use this
 
-Anyone editing a character sees this inside the Edit tab - a player editing their own character, or a Storyteller editing any character in the chronicle. If you can only view the character, every pool and field here shows as a plain read-only value with no stepper or input. See [Character Editor](character-editor.md) for who can open the Edit tab at all.
+Anyone editing a character sees this inside the Edit view - a player editing their own character, or a Storyteller editing any character in the chronicle. If you can only view the character, every pool and field here shows as a plain read-only value with no stepper or input. See [Character Editor](character-editor.md) for who can open the Edit view at all.
 
 A few pool and field values are Storyteller-only no matter who's editing - see Things to know.
 
 ## How to get there
 
-My Chronicle → Edit tab, inside any section built as a resource pool (Willpower, Blood Pool, Rage, and similar) or an identity field (Clan, Nature, Generation, and similar), depending on the chronicle's own template.
+My Chronicle → Edit view, inside any section built as a resource pool (Willpower, Blood Pool, Rage, and similar) or an identity field (Clan, Nature, Generation, and similar), depending on the chronicle's own template.
 
 ## The screen
 
@@ -35,14 +35,14 @@ Each field renders as one of these, depending on how the chronicle's template bu
 
 ### Raise a resource pool
 
-1. Open the character in the **Edit** tab.
+1. Open the character in the **Edit** view.
 2. Find the pool's row.
 3. Click **+** next to **P** to raise its permanent rating, or next to **T** to spend or regain points in play.
 4. Click **Review** in the bar at the bottom to check its cost, then click **Submit Changes**.
 
 ### Change an identity field
 
-1. Open the character in the **Edit** tab.
+1. Open the character in the **Edit** view.
 2. Find the field.
 3. Pick a new value, or type one where the field allows it.
 4. Click **Review** in the bar at the bottom, then click **Submit Changes**.

@@ -4,13 +4,13 @@ Dois dos blocos de construção do editor de personagem: os marcadores de pontos
 
 ## Quem pode usar
 
-Qualquer pessoa que edita um personagem vê isto dentro da aba Editar - um jogador editando o próprio personagem, ou um Narrador editando qualquer personagem da crônica. Se você só pode visualizar o personagem, cada reserva e campo aqui aparece como um valor simples somente leitura, sem contador nem entrada. Veja o [Editor de Personagem](character-editor.md) para saber quem pode abrir a aba Editar.
+Qualquer pessoa que edita um personagem vê isto dentro da visualização Editar - um jogador editando o próprio personagem, ou um Narrador editando qualquer personagem da crônica. Se você só pode visualizar o personagem, cada reserva e campo aqui aparece como um valor simples somente leitura, sem contador nem entrada. Veja o [Editor de Personagem](character-editor.md) para saber quem pode abrir a visualização Editar.
 
 Alguns valores de reservas e campos são só do Narrador, não importa quem edita - veja O que saber.
 
 ## Como chegar lá
 
-Minha Crônica → aba Editar, dentro de qualquer seção montada como reserva de recurso (Força de Vontade, Reserva de Sangue, Fúria e afins) ou campo de identidade (Clã, Natureza, Geração e afins), conforme o modelo da própria crônica.
+Minha Crônica → visualização Editar, dentro de qualquer seção montada como reserva de recurso (Força de Vontade, Reserva de Sangue, Fúria e afins) ou campo de identidade (Clã, Natureza, Geração e afins), conforme o modelo da própria crônica.
 
 ## A tela
 
@@ -35,14 +35,14 @@ Cada campo aparece como um destes, conforme como o modelo da crônica o montou:
 
 ### Subir uma reserva de recurso
 
-1. Abra o personagem na aba **Editar**.
+1. Abra o personagem na visualização **Editar**.
 2. Ache a linha da reserva.
 3. Clique em **+** ao lado de **P** para subir a classificação permanente, ou ao lado de **T** para gastar ou recuperar pontos em jogo.
 4. Clique em **Revisar** na barra no pé da tela para conferir o custo e depois em **Enviar Alterações**.
 
 ### Mudar um campo de identidade
 
-1. Abra o personagem na aba **Editar**.
+1. Abra o personagem na visualização **Editar**.
 2. Ache o campo.
 3. Escolha um valor novo, ou digite um onde o campo permitir.
 4. Clique em **Revisar** na barra no pé da tela e depois em **Enviar Alterações**.

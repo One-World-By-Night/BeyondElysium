@@ -142,6 +142,7 @@
       },
       {
         "block_slug": "vampire-health",
+        "health_track": true,
         "label": "Health",
         "display_order": 82,
         "required": false

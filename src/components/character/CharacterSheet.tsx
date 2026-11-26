@@ -1,27 +1,24 @@
 /**
  * CharacterSheet renders a character's read-only trait sheet.
  */
-import { useEffect, useRef, useState } from '@wordpress/element';
-import { __, sprintf } from '@wordpress/i18n';
-import api from '../../api/client';
+import { useEffect, useState } from '@wordpress/element';
+import { __ } from '@wordpress/i18n';
 import BlockRenderer, { toTraits } from '../renderers/BlockRenderer';
-import SheetStyleEditor from './SheetStyleEditor';
 import ChangeHistory from '../changes/ChangeHistory';
-import PointAudit from './PointAudit';
-import CreationTallyPanel from './CreationTallyPanel';
 import { ConnectionManager } from '../apr/ConnectionManager';
-import { BackgroundLedger } from '../apr/BackgroundLedger';
-import { TransferPanel } from './TransferPanel';
 import HelpButton from '../shared/HelpButton';
 import DemoBanner from '../shared/DemoBanner';
 import SheetWarnings from './SheetWarnings';
+import SheetActions from './SheetActions';
+import SheetHeader from './SheetHeader';
+import TraitPanel from './TraitPanel';
 import {
 	spanFor,
 	sortedForFlow,
 	isSectionCollapsed,
 } from '../../lib/templateLayout';
 import { resolveSectionTitle } from '../../lib/resolveCrossBlockRef';
-import { characterEditorUrl, isPrintCanvasPath } from '../../lib/pluginPages';
+import { isPrintCanvasPath } from '../../lib/pluginPages';
 import { sectionHasContent } from '../../lib/sectionHasContent';
 import { withHeldBlockSections } from '../../lib/heldBlockSections';
 import { sheetStyleVars } from '../../lib/sheetStyleVars';
@@ -29,24 +26,20 @@ import { showsProseSection } from '../../lib/sheetProse';
 import { highlightStMarkers } from '../../lib/highlightStMarkers';
 import { stackableProseTables } from '../../lib/stackableProseTables';
 import { canIn } from '../../lib/chronicleCapabilities';
-import { sheetActions, type SheetAction } from '../../lib/sheetActions';
 import { sectionCount } from '../../lib/sectionTotal';
 import { readCollapsed, setCollapsed } from '../../lib/panelCollapse';
 import { alsoActiveAt, visitingFromSummary } from '../../lib/visitStatus';
+import { heldTraits } from '../../lib/heldTraits';
+import { traitLabel } from '../../lib/traitPanel';
+import { useCharacterSheet } from '../../lib/useCharacterSheet';
+import { useSheetPrintOptions } from '../../lib/useSheetPrintOptions';
+import type { MyCapabilities, TraitListDefinition } from '../../types';
+import './CharacterSheet.css';
 
 /**
  * Sheet sections share the panel-collapse store with every other foldable panel.
  */
 const SECTION_COLLAPSE_PREFIX = 'sheet-section:';
-import type {
-	MyCapabilities,
-	ResolvedStack,
-	TemplateResolveResponse,
-	TraitListDefinition,
-} from '../../types';
-import type { Character, SheetStyle } from '../../types/character';
-import { characterStatusLabel } from '../../lib/characterLabels';
-import './CharacterSheet.css';
 
 export interface CharacterSheetProps {
 	characterId: number;
@@ -56,31 +49,10 @@ export interface CharacterSheetProps {
 	 * What the person can do in this chronicle, when the page resolved it.
 	 */
 	capabilities?: MyCapabilities;
-}
-
-interface RestError {
-	code?: string;
-	message?: string;
-	data?: { status?: number };
-}
-
-type SheetState =
-	| { status: 'loading' }
-	| { status: 'error'; httpStatus: number | null; message: string }
-	| {
-			status: 'ready';
-			character: Character;
-			stack: ResolvedStack;
-			resolved: TemplateResolveResponse;
-	  };
-
-/**
- * A style-load failure never blocks the sheet itself.
- */
-const NO_STYLE: SheetStyle = {};
-
-function isRestError( error: unknown ): error is RestError {
-	return typeof error === 'object' && error !== null;
+	/**
+	 * Opens another view of the Character section in place, from the trait panel.
+	 */
+	onView?: ( view: 'history' | 'edit' ) => void;
 }
 
 /**
@@ -91,58 +63,31 @@ export function CharacterSheet( {
 	gameSlug,
 	templateType = 'sheet_full',
 	capabilities,
+	onView,
 }: CharacterSheetProps ) {
-	const [ state, setState ] = useState< SheetState >( { status: 'loading' } );
-	const [ style, setStyle ] = useState< SheetStyle >( NO_STYLE );
-	const [ pdfAvailability, setPdfAvailability ] = useState< {
-		ok: boolean;
-		code: string;
-	} | null >( null );
-	// One picker for everything the sheet can do: what's picked, and which action's panel is open below it.
-	const [ chosenAction, setChosenAction ] = useState< SheetAction | '' >(
-		''
+	const { state, style, setStyle, pdfAvailability } = useCharacterSheet(
+		characterId,
+		gameSlug,
+		templateType
 	);
-	const [ openPanel, setOpenPanel ] = useState< SheetAction | '' >( '' );
-	const panelRef = useRef< HTMLDivElement >( null );
-	const [ exportNotice, setExportNotice ] = useState< string | null >( null );
-	const [ exporting, setExporting ] = useState( false );
-	// Off by default - mints a fresh, real attestation row on every export.
-	const [ includeVerification, setIncludeVerification ] = useState( false );
-	const [ ledgerDate, setLedgerDate ] = useState( () =>
-		new Date().toISOString().slice( 0, 10 )
-	);
-
-	// A keyboard user lands on the panel they asked for.
-	useEffect( () => {
-		if ( openPanel ) {
-			panelRef.current?.focus();
-		}
-	}, [ openPanel ] );
 
 	// This same component also renders the dedicated print-canvas page, using these URL params.
 	const urlParams = new URLSearchParams( window.location.search );
 	const isPrintCanvas = isPrintCanvasPath( window.location.pathname );
 
-	// What to include when printing/exporting, off by default.
-	const [ printBackground, setPrintBackground ] = useState(
-		() => urlParams.get( 'print_background' ) === '1'
-	);
-	const [ printNotes, setPrintNotes ] = useState(
-		() => urlParams.get( 'print_notes' ) === '1'
-	);
-	const [ printXpHistory, setPrintXpHistory ] = useState(
-		() => urlParams.get( 'print_xp_history' ) === '1'
-	);
-	const [ printFullPowerNames, setPrintFullPowerNames ] = useState(
-		() => urlParams.get( 'print_full_power_names' ) === '1'
-	);
-	// A count_is_cost block's held entries (Combo Disciplines) always name their XP price.
-	const [ printShowCost, setPrintShowCost ] = useState(
-		() => urlParams.get( 'print_hide_cost' ) !== '1'
-	);
-	const [ printPaper, setPrintPaper ] = useState< 'letter' | 'a4' >(
-		() => window.beyondElysium?.paperSize ?? 'letter'
-	);
+	const print = useSheetPrintOptions( urlParams );
+	const [ openTrait, setOpenTrait ] = useState< {
+		blockSlug: string;
+		name: string;
+		powerName?: string;
+	} | null >( null );
+	const {
+		printBackground,
+		printNotes,
+		printXpHistory,
+		printFullPowerNames,
+		printShowCost,
+	} = print;
 
 	// The viewer's own expand/collapse clicks, keyed by block_slug.
 	const [ collapseOverrides, setCollapseOverrides ] = useState<
@@ -156,89 +101,6 @@ export function CharacterSheet( {
 		}
 		return out;
 	} );
-
-	useEffect( () => {
-		let cancelled = false;
-		setState( { status: 'loading' } );
-
-		( async () => {
-			try {
-				// Stack and template both depend on character.stack_slug, so those two calls run in parallel after it loads.
-				const character = await api
-					.characters( gameSlug )
-					.get( characterId );
-				// An NPC gets the NPC sheet.
-				const resolvedType = character.is_npc
-					? character.npc_detail === 'quick'
-						? 'npc_quick'
-						: 'npc_full'
-					: templateType;
-				const [ stack, resolved ] = await Promise.all( [
-					api.creatureStacks.resolve(
-						character.stack_slug,
-						gameSlug,
-						undefined,
-						characterId
-					),
-					api
-						.templates( gameSlug )
-						.resolve( character.stack_slug, resolvedType ),
-				] );
-
-				// Best-effort: a style-load failure never blocks the sheet, it just renders unstyled.
-				api.sheetStyle( gameSlug )
-					.get( characterId )
-					.then( ( loaded ) => {
-						if ( ! cancelled ) {
-							setStyle( loaded );
-						}
-					} )
-					.catch( () => undefined );
-
-				// Best-effort preflight: an availability-check failure leaves pdfAvailability null.
-				api.sheets( gameSlug )
-					.availability()
-					.then( ( loaded ) => {
-						if ( ! cancelled ) {
-							setPdfAvailability( loaded );
-						}
-					} )
-					.catch( () => undefined );
-
-				if ( ! cancelled ) {
-					setState( { status: 'ready', character, stack, resolved } );
-				}
-			} catch ( error ) {
-				if ( cancelled ) {
-					return;
-				}
-
-				const httpStatus = isRestError( error )
-					? ( error.data?.status ?? null )
-					: null;
-				const message =
-					httpStatus === 403
-						? __(
-								'You do not have permission to view this character.',
-								'beyond-elysium'
-							)
-						: httpStatus === 404
-							? __( 'No such character.', 'beyond-elysium' )
-							: isRestError( error ) && error.message
-								? error.message
-								: __(
-										'Failed to load the character sheet.',
-										'beyond-elysium'
-									);
-
-				setState( { status: 'error', httpStatus, message } );
-			}
-		} )();
-
-		return () => {
-			cancelled = true;
-		};
-	}, [ characterId, gameSlug, templateType ] );
 
 	useEffect( () => {
 		if (
@@ -270,58 +132,6 @@ export function CharacterSheet( {
 	}
 
 	const { character, stack, resolved } = state;
-
-	/**
-	 * Exports this character to a Grapevine `.gex` file and offers it as a browser download.
-	 */
-	const handleExport = async () => {
-		setExporting( true );
-		setExportNotice( null );
-		try {
-			const result = await api
-				.characters( gameSlug )
-				.export( characterId, {
-					hide_st: ! character.can_manage,
-					verify: includeVerification,
-				} );
-			const blob = new Blob( [ result.xml ], {
-				type: 'application/xml',
-			} );
-			const url = URL.createObjectURL( blob );
-			const link = document.createElement( 'a' );
-			link.href = url;
-			link.download = `${ character.name.replace(
-				/[^a-z0-9]+/gi,
-				'_'
-			) }.gex`;
-			document.body.appendChild( link );
-			link.click();
-			document.body.removeChild( link );
-			URL.revokeObjectURL( url );
-
-			const notes = [ ...result.warnings, ...result.transliterations ];
-			setExportNotice(
-				notes.length > 0
-					? sprintf(
-							/* translators: %d: number of warnings or transliteration notes from the export */
-							__(
-								'Exported with %d note(s) - see below.',
-								'beyond-elysium'
-							),
-							notes.length
-						) +
-							' ' +
-							notes.join( ' | ' )
-					: __( 'Exported.', 'beyond-elysium' )
-			);
-		} catch {
-			setExportNotice(
-				__( 'Export failed. Please try again.', 'beyond-elysium' )
-			);
-		} finally {
-			setExporting( false );
-		}
-	};
 
 	const sections = sortedForFlow(
 		withHeldBlockSections(
@@ -443,6 +253,16 @@ export function CharacterSheet( {
 								: undefined
 						}
 						sheetData={ character.sheet_data }
+						onTrait={
+							isPrintCanvas
+								? undefined
+								: ( blockSlug, name, powerName ) =>
+										setOpenTrait( {
+											blockSlug,
+											name,
+											powerName,
+										} )
+						}
 					/>
 				</div>
 			</div>
@@ -453,380 +273,22 @@ export function CharacterSheet( {
 		sections.find( ( s ) => s.block_slug === slug );
 	let attributeGroupRendered = false;
 
-	const actionLabels: Record< SheetAction, string > = {
-		print: __( 'Print / Export', 'beyond-elysium' ),
-		items: __( 'Print My Items', 'beyond-elysium' ),
-		edit: __( 'Edit this character', 'beyond-elysium' ),
-		appearance: __( 'Customize appearance', 'beyond-elysium' ),
-		history: __( 'View history', 'beyond-elysium' ),
-		ledger: __( 'Background uses', 'beyond-elysium' ),
-		send: __( 'Send Sheet', 'beyond-elysium' ),
-		audit: __( 'Point audit', 'beyond-elysium' ),
-		tally: __( 'Build tally', 'beyond-elysium' ),
-		gex: __( 'Export to Grapevine (.gex)', 'beyond-elysium' ),
-	};
-
-	/**
-	 * Runs the picked action: Print My Items opens its PDF and Edit this character opens the editor.
-	 */
-	function runAction() {
-		if ( chosenAction === 'items' ) {
-			window.open(
-				api.reports( gameSlug ).pdfUrl( 'item-cards', { characterId } ),
-				'_blank'
-			);
-			return;
-		}
-		if ( chosenAction === 'edit' ) {
-			window.location.href = characterEditorUrl( characterId, gameSlug );
-			return;
-		}
-		setOpenPanel( chosenAction );
-	}
-
 	return (
 		<div className="be-character-sheet" style={ sheetStyleVars( style ) }>
 			{ /* This chrome never renders on the print-canvas page, which exists only to be printed automatically. */ }
 			{ ! isPrintCanvas && (
 				<>
 					<DemoBanner gameSlug={ gameSlug } />
-					<div className="be-character-sheet__chrome be-character-sheet__toolbar">
-						<select
-							className="be-character-sheet__action-select"
-							aria-label={ __(
-								'Sheet actions',
-								'beyond-elysium'
-							) }
-							value={ chosenAction }
-							onChange={ ( e ) =>
-								setChosenAction(
-									e.target.value as SheetAction | ''
-								)
-							}
-						>
-							<option value="">
-								{ __( 'Choose an action…', 'beyond-elysium' ) }
-							</option>
-							{ sheetActions( character ).map( ( action ) => (
-								<option key={ action } value={ action }>
-									{ actionLabels[ action ] }
-								</option>
-							) ) }
-						</select>
-						<button
-							type="button"
-							className="be-character-sheet__action-go"
-							disabled={ ! chosenAction }
-							onClick={ runAction }
-						>
-							{ __( 'Go', 'beyond-elysium' ) }
-						</button>
-						<HelpButton helpKey="character-sheet" />
-					</div>
-					{ exportNotice && (
-						<div
-							className="be-character-sheet__chrome be-character-sheet__export-notice"
-							role="status"
-						>
-							{ exportNotice }
-						</div>
-					) }
-
-					{ openPanel && (
-						<div
-							className="be-character-sheet__chrome be-character-sheet__action-panel"
-							ref={ panelRef }
-							tabIndex={ -1 }
-							aria-label={ actionLabels[ openPanel ] }
-						>
-							<div className="be-character-sheet__action-panel-header">
-								<h4 className="be-character-sheet__section-title">
-									{ actionLabels[ openPanel ] }
-								</h4>
-								{ ( openPanel === 'print' ||
-									openPanel === 'gex' ) && (
-									<HelpButton helpKey="sheet-print-export" />
-								) }
-								{ openPanel === 'history' && (
-									<HelpButton helpKey="sheet-history" />
-								) }
-								{ openPanel === 'audit' && (
-									<HelpButton helpKey="point-audit" />
-								) }
-								{ openPanel === 'ledger' && (
-									<HelpButton helpKey="background-uses" />
-								) }
-								{ openPanel === 'send' && (
-									<HelpButton helpKey="transfer" />
-								) }
-								<button
-									type="button"
-									className="be-character-sheet__action-close"
-									onClick={ () => setOpenPanel( '' ) }
-								>
-									{ __( 'Close', 'beyond-elysium' ) }
-								</button>
-							</div>
-
-							{ /* What prints is chosen here. XP History and Full power names also change this page. */ }
-							{ openPanel === 'print' && (
-								<>
-									<div className="be-character-sheet__print-options">
-										<span>
-											{ __(
-												'Include when printing:',
-												'beyond-elysium'
-											) }
-										</span>
-										<label>
-											<input
-												type="checkbox"
-												checked={ printBackground }
-												onChange={ ( e ) =>
-													setPrintBackground(
-														e.target.checked
-													)
-												}
-											/>
-											{ __(
-												'Background',
-												'beyond-elysium'
-											) }
-										</label>
-										<label>
-											<input
-												type="checkbox"
-												checked={ printNotes }
-												onChange={ ( e ) =>
-													setPrintNotes(
-														e.target.checked
-													)
-												}
-											/>
-											{ __( 'Notes', 'beyond-elysium' ) }
-										</label>
-										<label>
-											<input
-												type="checkbox"
-												checked={ printXpHistory }
-												onChange={ ( e ) =>
-													setPrintXpHistory(
-														e.target.checked
-													)
-												}
-											/>
-											{ __(
-												'XP History',
-												'beyond-elysium'
-											) }
-										</label>
-										<label>
-											<input
-												type="checkbox"
-												checked={ printFullPowerNames }
-												onChange={ ( e ) =>
-													setPrintFullPowerNames(
-														e.target.checked
-													)
-												}
-											/>
-											{ __(
-												'Full power names',
-												'beyond-elysium'
-											) }
-										</label>
-										<label>
-											<input
-												type="checkbox"
-												checked={ printShowCost }
-												onChange={ ( e ) =>
-													setPrintShowCost(
-														e.target.checked
-													)
-												}
-											/>
-											{ __(
-												'Show XP costs',
-												'beyond-elysium'
-											) }
-										</label>
-										<label>
-											{ __( 'Paper', 'beyond-elysium' ) }
-											<select
-												className="be-character-sheet__print-paper"
-												value={ printPaper }
-												onChange={ ( e ) =>
-													setPrintPaper(
-														e.target.value === 'a4'
-															? 'a4'
-															: 'letter'
-													)
-												}
-											>
-												<option value="letter">
-													{ __(
-														'Letter',
-														'beyond-elysium'
-													) }
-												</option>
-												<option value="a4">
-													{ __(
-														'A4',
-														'beyond-elysium'
-													) }
-												</option>
-											</select>
-										</label>
-									</div>
-									{ pdfAvailability !== null &&
-										! pdfAvailability.ok && (
-											<p
-												className="be-character-sheet__print-unsigned"
-												role="status"
-											>
-												{ pdfAvailability.code ===
-												'secure_printing_off'
-													? __(
-															'Secure printing is switched off for this site, so prints are marked UNSIGNED.',
-															'beyond-elysium'
-														)
-													: __(
-															'This site has no signing certificate yet, so prints are marked UNSIGNED.',
-															'beyond-elysium'
-														) }
-											</p>
-										) }
-									<button
-										type="button"
-										className="be-character-sheet__print"
-										onClick={ () =>
-											window.open(
-												api
-													.sheets( gameSlug )
-													.pdfUrl( [ characterId ], {
-														background:
-															printBackground,
-														notes: printNotes,
-														xpHistory:
-															printXpHistory,
-														fullPowerNames:
-															printFullPowerNames,
-														showCost: printShowCost,
-														pageSize: printPaper,
-													} ),
-												'_blank'
-											)
-										}
-									>
-										{ __( 'Open PDF', 'beyond-elysium' ) }
-									</button>
-								</>
-							) }
-
-							{ openPanel === 'gex' && (
-								<div className="be-character-sheet__gex-options">
-									<label className="be-character-sheet__verify-toggle">
-										<input
-											type="checkbox"
-											checked={ includeVerification }
-											onChange={ ( e ) =>
-												setIncludeVerification(
-													e.target.checked
-												)
-											}
-										/>
-										{ __(
-											'Include verification code',
-											'beyond-elysium'
-										) }
-									</label>
-									<button
-										type="button"
-										className="be-character-sheet__gex-export"
-										disabled={ exporting }
-										onClick={ handleExport }
-									>
-										{ exporting
-											? __(
-													'Exporting…',
-													'beyond-elysium'
-												)
-											: __(
-													'Download .gex file',
-													'beyond-elysium'
-												) }
-									</button>
-								</div>
-							) }
-
-							{ openPanel === 'appearance' &&
-								character.can_customize_sheet && (
-									<SheetStyleEditor
-										characterId={ characterId }
-										gameSlug={ gameSlug }
-										blockSlugs={ blockSlugs }
-										onChange={ setStyle }
-									/>
-								) }
-
-							{ openPanel === 'history' && (
-								<ChangeHistory
-									characterId={ characterId }
-									gameSlug={ gameSlug }
-								/>
-							) }
-
-							{ openPanel === 'audit' && character.can_manage && (
-								<PointAudit
-									characterId={ characterId }
-									gameSlug={ gameSlug }
-								/>
-							) }
-
-							{ openPanel === 'tally' && character.can_manage && (
-								<CreationTallyPanel
-									characterId={ characterId }
-									gameSlug={ gameSlug }
-								/>
-							) }
-
-							{ openPanel === 'ledger' && (
-								<>
-									<label className="be-character-sheet__ledger-date">
-										{ __( 'Game date', 'beyond-elysium' ) }
-										<input
-											type="date"
-											value={ ledgerDate }
-											onChange={ ( e ) =>
-												setLedgerDate( e.target.value )
-											}
-										/>
-									</label>
-									<BackgroundLedger
-										gameSlug={ gameSlug }
-										characterId={ characterId }
-										gameDate={ ledgerDate }
-										canManage={ canIn(
-											'be_manage_characters',
-											capabilities
-										) }
-									/>
-								</>
-							) }
-
-							{ openPanel === 'send' && character.can_manage && (
-								<TransferPanel
-									gameSlug={ gameSlug }
-									characterId={ characterId }
-									characterUuid={ character.uuid }
-									visits={ character.visits ?? [] }
-									visitingFrom={
-										character.visiting_from ?? null
-									}
-								/>
-							) }
-						</div>
-					) }
+					<SheetActions
+						character={ character }
+						characterId={ characterId }
+						gameSlug={ gameSlug }
+						capabilities={ capabilities }
+						blockSlugs={ blockSlugs }
+						onStyleChange={ setStyle }
+						print={ print }
+						pdfAvailability={ pdfAvailability }
+					/>
 				</>
 			) }
 
@@ -857,47 +319,10 @@ export function CharacterSheet( {
 			) }
 
 			{ /* Content, not chrome - a portrait always prints/exports, with no separate include-when-printing toggle. */ }
-			<div className="be-character-sheet__header-row">
-				{ character.image_url && (
-					<img
-						className="be-character-sheet__portrait"
-						src={ character.image_url }
-						alt={ sprintf(
-							/* translators: %s: the character's own name */
-							__( '%s portrait', 'beyond-elysium' ),
-							character.name
-						) }
-					/>
-				) }
-				<dl className="be-character-sheet__header">
-					<div>
-						<dt>{ __( 'Name', 'beyond-elysium' ) }</dt>
-						<dd>{ character.name }</dd>
-					</div>
-					<div>
-						<dt>{ __( 'Type', 'beyond-elysium' ) }</dt>
-						<dd>{ stack.stack.name }</dd>
-					</div>
-					<div>
-						<dt>{ __( 'Status', 'beyond-elysium' ) }</dt>
-						<dd>{ characterStatusLabel( character.status ) }</dd>
-					</div>
-					{ character.player_name && (
-						<div>
-							<dt>{ __( 'Player', 'beyond-elysium' ) }</dt>
-							<dd>{ character.player_name }</dd>
-						</div>
-					) }
-					<div>
-						<dt>{ __( 'XP Earned', 'beyond-elysium' ) }</dt>
-						<dd>{ character.xp_earned }</dd>
-					</div>
-					<div>
-						<dt>{ __( 'XP Unspent', 'beyond-elysium' ) }</dt>
-						<dd>{ character.xp_unspent }</dd>
-					</div>
-				</dl>
-			</div>
+			<SheetHeader
+				character={ character }
+				typeName={ stack.stack.name }
+			/>
 
 			<div className="be-character-sheet__grid">
 				{ sections.map( ( section ) => {
@@ -1002,6 +427,54 @@ export function CharacterSheet( {
 					/>
 				</div>
 			) }
+
+			{ ! isPrintCanvas &&
+				openTrait &&
+				( () => {
+					const held = heldTraits(
+						sections.map( ( section ) => ( {
+							blockSlug: section.block_slug,
+							title: resolveSectionTitle(
+								section,
+								character.sheet_data
+							),
+							sectionType:
+								stack.blocks[ section.block_slug ]
+									?.section_type ?? '',
+						} ) ),
+						character.sheet_data
+					).find(
+						( trait ) =>
+							trait.blockSlug === openTrait.blockSlug &&
+							trait.name === openTrait.name &&
+							( trait.powerName ?? undefined ) ===
+								( openTrait.powerName ?? undefined )
+					);
+					return held ? (
+						<TraitPanel
+							gameSlug={ gameSlug }
+							characterId={ characterId }
+							trait={ held }
+							block={ stack.blocks[ held.blockSlug ] }
+							sheetData={ character.sheet_data }
+							label={ traitLabel(
+								stack.blocks[ held.blockSlug ],
+								held.name
+							) }
+							canEdit={ !! character.can_edit }
+							canManage={ !! character.can_manage }
+							onClose={ () => setOpenTrait( null ) }
+							onView={
+								onView
+									? ( view ) => {
+											setOpenTrait( null );
+											onView( view );
+										}
+									: undefined
+							}
+						/>
+					) : null;
+				} )() }
 		</div>
 	);
 }

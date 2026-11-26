@@ -449,6 +449,20 @@ class Change_Engine {
 			return true;
 		}
 
+		// A permanent spend lowers one pool's permanent rating by one, the change itself costing nothing.
+		if ( $change->change_type === 'pool_permanent_spent' ) {
+			if ( ! self::apply_permanent_spend( $character, $change ) ) {
+				Transaction::rollback( $savepoint );
+				return false;
+			}
+			if ( ! Change::update_status( $change_id, 'approved', $reviewed_by, $notes ) ) {
+				Transaction::rollback( $savepoint );
+				return false;
+			}
+			Transaction::commit( $savepoint );
+			return true;
+		}
+
 		// A note shared from a visiting copy's own host has no sheet effect - approved, it lands on the character's
 		// own plot as a Storytellers-only entry; refused, nothing is recorded.
 		if ( $change->change_type === 'visit_note' ) {
@@ -1632,6 +1646,125 @@ class Change_Engine {
 			'permanent' => $permanent,
 			'temporary' => $new_value,
 		];
+	}
+
+	/**
+	 * Spends one permanent point of a pool the character's books spend permanently. The change costs no XP and never
+	 * refunds any. It lowers the permanent rating, and the temporary rating with it when that was higher, either now
+	 * (logged as already approved) or, when `$wait` is set, once a Storyteller approves a pending change.
+	 *
+	 * @param int    $character_id
+	 * @param string $block_slug
+	 * @param string $pool_name
+	 * @param string $reason
+	 * @param int    $by
+	 * @param bool   $wait True to leave a pending change for a Storyteller and touch no rating yet.
+	 * @return array{applied:bool,waiting?:bool,change_id?:int,permanent?:int,temporary?:int,code?:string,message?:string}
+	 */
+	public static function spend_pool_permanent( int $character_id, string $block_slug, string $pool_name, string $reason, int $by, bool $wait ): array {
+		$savepoint = Transaction::begin( 'be_spend_pool_permanent' );
+
+		Character::lock( $character_id );
+		$character = Character::find( $character_id );
+		if ( ! $character ) {
+			Transaction::rollback( $savepoint );
+			return [
+				'applied' => false,
+				'code'    => 'not_found',
+				'message' => __( 'That character no longer exists.', 'beyond-elysium' ),
+			];
+		}
+
+		if ( ! Permanent_Spend::marked( $character, $block_slug, $pool_name ) ) {
+			Transaction::rollback( $savepoint );
+			return [
+				'applied' => false,
+				'code'    => 'not_spendable',
+				'message' => __( "The books don't spend that pool permanently.", 'beyond-elysium' ),
+			];
+		}
+
+		$pool = $character->sheet_data[ $block_slug ][ $pool_name ] ?? null;
+		if ( ! is_array( $pool ) || ! array_key_exists( 'permanent', $pool ) ) {
+			Transaction::rollback( $savepoint );
+			return [
+				'applied' => false,
+				'code'    => 'pool_not_found',
+				'message' => __( "That character doesn't hold that pool.", 'beyond-elysium' ),
+			];
+		}
+
+		$permanent = (int) $pool['permanent'];
+		if ( $permanent < 1 ) {
+			Transaction::rollback( $savepoint );
+			return [
+				'applied' => false,
+				'code'    => 'nothing_to_spend',
+				'message' => __( 'That pool has no permanent rating left to spend.', 'beyond-elysium' ),
+			];
+		}
+
+		$change_id = Change::create( [
+			'character_id' => $character_id,
+			'change_type'  => 'pool_permanent_spent',
+			'category'     => $block_slug,
+			'change_data'  => [
+				'block_slug' => $block_slug,
+				'pool_name'  => $pool_name,
+				'from'       => $permanent,
+				'to'         => $permanent - 1,
+			],
+			'xp_cost'      => 0,
+			'status'       => $wait ? 'pending' : 'approved',
+			'submitted_by' => $by,
+			'notes'        => $reason,
+			'reason'       => $wait ? __( 'A permanent spend lowers a rating, and this chronicle approves those.', 'beyond-elysium' ) : null,
+		] );
+		if ( ! $change_id ) {
+			Transaction::rollback( $savepoint );
+			return [
+				'applied' => false,
+				'code'    => 'write_failed',
+				'message' => __( 'The change could not be saved.', 'beyond-elysium' ),
+			];
+		}
+
+		if ( $wait ) {
+			Transaction::commit( $savepoint );
+			return [ 'applied' => false, 'waiting' => true, 'change_id' => (int) $change_id ];
+		}
+
+		$temporary = min( (int) ( $pool['temporary'] ?? $permanent ), $permanent - 1 );
+		if ( ! Character::set_pool_ratings( $character_id, $block_slug, $pool_name, $permanent - 1, $temporary ) ) {
+			Transaction::rollback( $savepoint );
+			return [
+				'applied' => false,
+				'code'    => 'write_failed',
+				'message' => __( 'The change could not be saved.', 'beyond-elysium' ),
+			];
+		}
+
+		Transaction::commit( $savepoint );
+		return [ 'applied' => true, 'waiting' => false, 'permanent' => $permanent - 1, 'temporary' => $temporary ];
+	}
+
+	/**
+	 * Carries out an approved permanent spend on the sheet as it now stands, refusing one whose pool has no rating
+	 * left.
+	 *
+	 * @param object $character A character row with decoded sheet_data.
+	 * @param object $change    A pending `pool_permanent_spent` change.
+	 */
+	private static function apply_permanent_spend( $character, $change ): bool {
+		$data       = is_array( $change->change_data ) ? $change->change_data : [];
+		$block_slug = (string) ( $data['block_slug'] ?? '' );
+		$pool_name  = (string) ( $data['pool_name'] ?? '' );
+		$pool       = $character->sheet_data[ $block_slug ][ $pool_name ] ?? null;
+		if ( ! is_array( $pool ) || ! array_key_exists( 'permanent', $pool ) || (int) $pool['permanent'] < 1 ) {
+			return false;
+		}
+		$permanent = (int) $pool['permanent'] - 1;
+		return Character::set_pool_ratings( (int) $character->id, $block_slug, $pool_name, $permanent, min( (int) ( $pool['temporary'] ?? $permanent ), $permanent ) );
 	}
 
 	/**

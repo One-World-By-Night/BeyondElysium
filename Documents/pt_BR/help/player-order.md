@@ -8,7 +8,7 @@ Qualquer pessoa que edita um personagem vê isto - um jogador editando o própri
 
 ## Como chegar lá
 
-Minha Crônica → aba Editar → Rituais ou Magia de Sangue → **Reordenar**.
+Minha Crônica → visualização Editar → Rituais ou Magia de Sangue → **Reordenar**.
 
 ## A tela
 

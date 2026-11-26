@@ -1,22 +1,19 @@
 /**
  * CharacterEditor is the character creation and editing screen.
  */
-import { useEffect, useMemo, useRef, useState } from '@wordpress/element';
+import { useEffect, useMemo, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
 import useCharacterEditorStore from '../../store/characterEditorStore';
 import BlockEditor from '../editors/BlockEditor';
 import CreationTallyPanel from './CreationTallyPanel';
 import ConfirmDialog from '../shared/ConfirmDialog';
-import HtmlEditor from '../shared/HtmlEditor';
 import HelpButton from '../shared/HelpButton';
 import AssigneePicker from '../shared/AssigneePicker';
-import AudiencePicker from '../shared/AudiencePicker';
 import DemoBanner from '../shared/DemoBanner';
 import SecretsPanel from '../shared/SecretsPanel';
 import NpcHooksPanel from './NpcHooksPanel';
 import NpcRoleplayingDraftButton from './NpcRoleplayingDraftButton';
-import RequestXpPanel from './RequestXpPanel';
 import CollapsiblePanel from '../shared/CollapsiblePanel';
 import { previewPriceLabel } from '../../lib/queuePrice';
 import { describeChange } from '../../lib/describeChange';
@@ -28,9 +25,7 @@ import {
 import AddSectionPicker from './AddSectionPicker';
 import SheetWarnings from './SheetWarnings';
 import { resolveSectionTitle } from '../../lib/resolveCrossBlockRef';
-import { pickMediaImage } from '../../lib/pickMediaImage';
 import { characterSheetUrl } from '../../lib/pluginPages';
-import { changedFields } from '../../lib/changedFields';
 import { canIn } from '../../lib/chronicleCapabilities';
 import type {
 	CreatureStack,
@@ -43,7 +38,6 @@ import type {
 	TraitListDefinition,
 	TieredPowerDefinition,
 } from '../../types';
-import type { AudienceRules, AudienceValue } from '../../types/plot';
 import type { SubmitResult } from '../../store/characterEditorStore';
 import './CharacterEditor.css';
 
@@ -164,58 +158,9 @@ export function CharacterEditor( {
 		}
 	}, [ pendingCount ] );
 
-	// Background/Notes are header fields that save directly, independent of the pending-changes flow below.
-	const biographyDraft = useRef< string >( '' );
-	const notesDraft = useRef< string >( '' );
-	// What was loaded or last saved: a save sends only the fields that differ from it.
-	const headerSaved = useRef< { biography: string; notes: string } >( {
-		biography: '',
-		notes: '',
-	} );
-	const headerDraftsSeeded = useRef< number | null >( null );
-	const [ savingHeader, setSavingHeader ] = useState( false );
 	const [ headerSaveError, setHeaderSaveError ] = useState< string | null >(
 		null
 	);
-	const [ headerSaveMessage, setHeaderSaveMessage ] = useState<
-		string | null
-	>( null );
-
-	async function saveBackgroundAndNotes() {
-		if ( ! effectiveCharacterId ) {
-			return;
-		}
-		setSavingHeader( true );
-		setHeaderSaveError( null );
-		setHeaderSaveMessage( null );
-		const edited = changedFields(
-			{ biography: biographyDraft.current, notes: notesDraft.current },
-			headerSaved.current
-		);
-		try {
-			if ( Object.keys( edited ).length > 0 ) {
-				await api
-					.characters( gameSlug )
-					.update( effectiveCharacterId, edited );
-				headerSaved.current = { ...headerSaved.current, ...edited };
-			}
-			setHeaderSaveMessage( __( 'Saved.', 'beyond-elysium' ) );
-		} catch ( err: unknown ) {
-			setHeaderSaveError(
-				errorMessage(
-					err,
-					__( 'Something went wrong.', 'beyond-elysium' )
-				)
-			);
-		} finally {
-			setSavingHeader( false );
-		}
-	}
-
-	// A WP attachment ID/URL, same picker pattern as SheetStyleEditor.
-	const [ portraitUrl, setPortraitUrl ] = useState< string | null >( null );
-	const [ savingPortrait, setSavingPortrait ] = useState( false );
-
 	const [ savingNpc, setSavingNpc ] = useState( false );
 
 	async function toggleNpc( nextIsNpc: boolean ) {
@@ -286,151 +231,6 @@ export function CharacterEditor( {
 			);
 		} finally {
 			setSavingNpcDetail( false );
-		}
-	}
-
-	// Who's Who public profile: a Storyteller-only panel, separate from the sheet itself.
-	const publicNameDraft = useRef( '' );
-	const publicDescriptionDraft = useRef( '' );
-	const [ publicImageUrl, setPublicImageUrl ] = useState< string | null >(
-		null
-	);
-	const [ publicImageId, setPublicImageId ] = useState< number | null >(
-		null
-	);
-	const [ profileAudience, setProfileAudience ] =
-		useState< AudienceValue >( 'storytellers' );
-	const [ profileAudienceRules, setProfileAudienceRules ] =
-		useState< AudienceRules | null >( null );
-	const [ profileShowPlayer, setProfileShowPlayer ] = useState( false );
-	const [ savingProfile, setSavingProfile ] = useState( false );
-	const [ profileSaveMessage, setProfileSaveMessage ] = useState<
-		string | null
-	>( null );
-	const [ profileSaveError, setProfileSaveError ] = useState< string | null >(
-		null
-	);
-	const [ portraitAttachment, setPortraitAttachment ] = useState< {
-		id: number;
-		original_name: string;
-	} | null >( null );
-	const [ uploadingPortraitAttachment, setUploadingPortraitAttachment ] =
-		useState( false );
-
-	async function uploadOwnPortrait( file: File ) {
-		if ( ! effectiveCharacterId ) {
-			return;
-		}
-		setUploadingPortraitAttachment( true );
-		setProfileSaveError( null );
-		try {
-			const attachment = await api
-				.attachments( gameSlug )
-				.upload( 'character', effectiveCharacterId, file );
-			setPortraitAttachment( attachment );
-		} catch ( err: unknown ) {
-			setProfileSaveError(
-				errorMessage(
-					err,
-					__( 'Something went wrong.', 'beyond-elysium' )
-				)
-			);
-		} finally {
-			setUploadingPortraitAttachment( false );
-		}
-	}
-
-	async function savePlayerProfile() {
-		if ( ! effectiveCharacterId ) {
-			return;
-		}
-		setSavingProfile( true );
-		setProfileSaveError( null );
-		setProfileSaveMessage( null );
-		try {
-			await api.npcs( gameSlug ).updateProfile( effectiveCharacterId, {
-				public_name: publicNameDraft.current,
-				public_description: publicDescriptionDraft.current,
-				profile_audience: profileAudience,
-				profile_show_player: profileShowPlayer,
-			} );
-			setProfileSaveMessage( __( 'Saved.', 'beyond-elysium' ) );
-		} catch ( err: unknown ) {
-			setProfileSaveError(
-				errorMessage(
-					err,
-					__( 'Something went wrong.', 'beyond-elysium' )
-				)
-			);
-		} finally {
-			setSavingProfile( false );
-		}
-	}
-
-	async function pickPublicImage() {
-		const attachment = await pickMediaImage(
-			__( "Choose a Who's Who portrait", 'beyond-elysium' )
-		);
-		if ( ! attachment ) {
-			return;
-		}
-		setPublicImageId( attachment.id );
-		setPublicImageUrl( attachment.url );
-	}
-
-	async function saveProfile() {
-		if ( ! effectiveCharacterId ) {
-			return;
-		}
-		setSavingProfile( true );
-		setProfileSaveError( null );
-		setProfileSaveMessage( null );
-		try {
-			await api.npcs( gameSlug ).updateProfile( effectiveCharacterId, {
-				public_name: publicNameDraft.current,
-				public_description: publicDescriptionDraft.current,
-				public_image_id: publicImageId,
-				profile_audience: profileAudience,
-				profile_audience_rules: profileAudienceRules,
-			} );
-			setProfileSaveMessage( __( 'Saved.', 'beyond-elysium' ) );
-		} catch ( err: unknown ) {
-			setProfileSaveError(
-				errorMessage(
-					err,
-					__( 'Something went wrong.', 'beyond-elysium' )
-				)
-			);
-		} finally {
-			setSavingProfile( false );
-		}
-	}
-
-	async function pickPortrait() {
-		if ( ! effectiveCharacterId ) {
-			return;
-		}
-		const attachment = await pickMediaImage(
-			__( 'Choose a character portrait', 'beyond-elysium' )
-		);
-		if ( ! attachment ) {
-			return;
-		}
-		setSavingPortrait( true );
-		try {
-			await api
-				.characters( gameSlug )
-				.update( effectiveCharacterId, { image_id: attachment.id } );
-			setPortraitUrl( attachment.url );
-		} catch ( err: unknown ) {
-			setHeaderSaveError(
-				errorMessage(
-					err,
-					__( 'Something went wrong.', 'beyond-elysium' )
-				)
-			);
-		} finally {
-			setSavingPortrait( false );
 		}
 	}
 
@@ -939,42 +739,6 @@ export function CharacterEditor( {
 			</>
 		) : null;
 
-	// Seeds the drafts from the loaded character once per character, not on every re-render.
-	if ( headerDraftsSeeded.current !== effectiveCharacterId ) {
-		biographyDraft.current = store.character.biography ?? '';
-		notesDraft.current = store.character.notes ?? '';
-		headerSaved.current = {
-			biography: biographyDraft.current,
-			notes: notesDraft.current,
-		};
-		setPortraitUrl( store.character.image_url ?? null );
-		publicNameDraft.current = store.character.public_name ?? '';
-		publicDescriptionDraft.current =
-			store.character.public_description ?? '';
-		// No dedicated URL field for public_image_id comes back from the sheet-header response.
-		setPublicImageId( store.character.public_image_id ?? null );
-		setPublicImageUrl( null );
-		setProfileAudience(
-			store.character.profile_audience ?? 'storytellers'
-		);
-		setProfileAudienceRules(
-			store.character.profile_audience_rules ?? null
-		);
-		setProfileShowPlayer( !! store.character.profile_show_player );
-		setPortraitAttachment(
-			store.character.attachments?.[ 0 ]
-				? {
-						id: store.character.attachments[ 0 ].id,
-						original_name:
-							store.character.attachments[ 0 ].original_name,
-					}
-				: null
-		);
-		setProfileSaveMessage( null );
-		setProfileSaveError( null );
-		headerDraftsSeeded.current = effectiveCharacterId;
-	}
-
 	return (
 		<div className="be-character-editor">
 			<DemoBanner gameSlug={ gameSlug } />
@@ -1014,10 +778,10 @@ export function CharacterEditor( {
 			) }
 
 			<div className="be-character-editor__header">
-				{ portraitUrl && (
+				{ store.character.image_url && (
 					<img
 						className="be-character-editor__portrait"
-						src={ portraitUrl }
+						src={ store.character.image_url }
 						alt={ sprintf(
 							/* translators: %s: the character's own name */
 							__( '%s portrait', 'beyond-elysium' ),
@@ -1037,23 +801,6 @@ export function CharacterEditor( {
 								'beyond-elysium'
 							) }
 						</p>
-					) }
-					{ ! readOnly && (
-						<button
-							type="button"
-							className="be-character-editor__portrait-button"
-							disabled={ savingPortrait }
-							onClick={ pickPortrait }
-						>
-							{ savingPortrait
-								? __( 'Saving…', 'beyond-elysium' )
-								: portraitUrl
-									? __( 'Change portrait…', 'beyond-elysium' )
-									: __(
-											'Add a portrait…',
-											'beyond-elysium'
-										) }
-						</button>
 					) }
 					{ canFlagNpc && canManage && (
 						<label className="be-character-editor__npc-toggle">
@@ -1096,307 +843,9 @@ export function CharacterEditor( {
 				</div>
 			</div>
 
-			{ ( store.error || templateError ) && (
+			{ ( store.error || templateError || headerSaveError ) && (
 				<div className="be-character-editor__error" role="alert">
-					{ store.error ?? templateError }
-				</div>
-			) }
-
-			<div
-				className="be-character-editor__section be-character-editor__header-text"
-				key={ `header-text-${ effectiveCharacterId }` }
-			>
-				<h4>{ __( 'Background', 'beyond-elysium' ) }</h4>
-				<HtmlEditor
-					id={ `be-biography-${ effectiveCharacterId }` }
-					defaultValue={ biographyDraft.current }
-					onChange={ ( html ) => ( biographyDraft.current = html ) }
-					readOnly={ readOnly }
-					aiAssist={ {
-						capability: 'be_manage_characters',
-						fieldContext: 'character_biography',
-						gameSlug,
-					} }
-				/>
-
-				<h4>{ __( 'Notes', 'beyond-elysium' ) }</h4>
-				<HtmlEditor
-					id={ `be-notes-${ effectiveCharacterId }` }
-					defaultValue={ notesDraft.current }
-					onChange={ ( html ) => ( notesDraft.current = html ) }
-					readOnly={ readOnly }
-					aiAssist={ {
-						capability: 'be_manage_characters',
-						fieldContext: 'character_notes',
-						gameSlug,
-					} }
-				/>
-
-				{ ! readOnly && (
-					<div className="be-character-editor__header-text-actions">
-						<button
-							type="button"
-							disabled={ savingHeader }
-							onClick={ saveBackgroundAndNotes }
-						>
-							{ savingHeader
-								? __( 'Saving…', 'beyond-elysium' )
-								: __(
-										'Save Background & Notes',
-										'beyond-elysium'
-									) }
-						</button>
-						{ headerSaveMessage && (
-							<span className="be-character-editor__header-text-status">
-								{ headerSaveMessage }
-							</span>
-						) }
-						{ headerSaveError && (
-							<span
-								className="be-character-editor__error"
-								role="alert"
-							>
-								{ headerSaveError }
-							</span>
-						) }
-					</div>
-				) }
-			</div>
-
-			{ canFlagNpc && canManage && isNpc && (
-				<div
-					className="be-character-editor__section be-character-editor__profile"
-					key={ `profile-${ effectiveCharacterId }` }
-				>
-					<div className="be-help-heading">
-						<h4>{ __( "Who's Who Profile", 'beyond-elysium' ) }</h4>
-						<HelpButton helpKey="whos-who" />
-					</div>
-					<p className="be-character-editor__profile-hint">
-						{ __(
-							"What a player sees about this NPC in the chronicle's Who's Who directory - separate from the sheet above.",
-							'beyond-elysium'
-						) }
-					</p>
-
-					<div className="be-character-editor__field">
-						<label
-							htmlFor={ `be-public-name-${ effectiveCharacterId }` }
-						>
-							{ __( 'Display Name', 'beyond-elysium' ) }
-						</label>
-						<input
-							id={ `be-public-name-${ effectiveCharacterId }` }
-							type="text"
-							placeholder={ store.character.name }
-							defaultValue={ publicNameDraft.current }
-							onChange={ ( e ) =>
-								( publicNameDraft.current = e.target.value )
-							}
-						/>
-					</div>
-
-					<h4>{ __( 'Description', 'beyond-elysium' ) }</h4>
-					<HtmlEditor
-						id={ `be-public-description-${ effectiveCharacterId }` }
-						defaultValue={ publicDescriptionDraft.current }
-						onChange={ ( html ) =>
-							( publicDescriptionDraft.current = html )
-						}
-						aiAssist={ {
-							capability: 'be_manage_characters',
-							fieldContext: 'npc_public_description',
-							gameSlug,
-						} }
-					/>
-
-					<div className="be-character-editor__field">
-						{ publicImageUrl && (
-							<img
-								className="be-character-editor__portrait"
-								src={ publicImageUrl }
-								alt=""
-							/>
-						) }
-						<button type="button" onClick={ pickPublicImage }>
-							{ publicImageId
-								? __( 'Change portrait…', 'beyond-elysium' )
-								: __(
-										"Choose a Who's Who portrait…",
-										'beyond-elysium'
-									) }
-						</button>
-					</div>
-
-					<h4>
-						{ __( 'Who Can See This Profile', 'beyond-elysium' ) }
-					</h4>
-					<AudiencePicker
-						gameSlug={ gameSlug }
-						audience={ profileAudience }
-						audienceRules={ profileAudienceRules }
-						onChange={ ( audience, rules ) => {
-							setProfileAudience( audience );
-							setProfileAudienceRules( rules );
-						} }
-					/>
-
-					<div className="be-character-editor__header-text-actions">
-						<button
-							type="button"
-							disabled={ savingProfile }
-							onClick={ saveProfile }
-						>
-							{ savingProfile
-								? __( 'Saving…', 'beyond-elysium' )
-								: __( 'Save Profile', 'beyond-elysium' ) }
-						</button>
-						{ profileSaveMessage && (
-							<span className="be-character-editor__header-text-status">
-								{ profileSaveMessage }
-							</span>
-						) }
-						{ profileSaveError && (
-							<span
-								className="be-character-editor__error"
-								role="alert"
-							>
-								{ profileSaveError }
-							</span>
-						) }
-					</div>
-				</div>
-			) }
-
-			{ ! canManage && canEdit && ! isNpc && effectiveCharacterId && (
-				<div
-					className="be-character-editor__section be-character-editor__profile"
-					key={ `player-profile-${ effectiveCharacterId }` }
-				>
-					<div className="be-help-heading">
-						<h4>{ __( "Who's Who Profile", 'beyond-elysium' ) }</h4>
-						<HelpButton helpKey="whos-who" />
-					</div>
-					<p className="be-character-editor__profile-hint">
-						{ __(
-							"What other players see about your character in the chronicle's Who's Who directory, whether it appears there at all, and whether your own name shows alongside it.",
-							'beyond-elysium'
-						) }
-					</p>
-
-					<div className="be-character-editor__field">
-						<label
-							htmlFor={ `be-public-name-player-${ effectiveCharacterId }` }
-						>
-							{ __( 'Display Name', 'beyond-elysium' ) }
-						</label>
-						<input
-							id={ `be-public-name-player-${ effectiveCharacterId }` }
-							type="text"
-							placeholder={ store.character.name }
-							defaultValue={ publicNameDraft.current }
-							onChange={ ( e ) =>
-								( publicNameDraft.current = e.target.value )
-							}
-						/>
-					</div>
-
-					<h4>{ __( 'Description', 'beyond-elysium' ) }</h4>
-					<HtmlEditor
-						id={ `be-public-description-player-${ effectiveCharacterId }` }
-						defaultValue={ publicDescriptionDraft.current }
-						onChange={ ( html ) =>
-							( publicDescriptionDraft.current = html )
-						}
-					/>
-
-					<label className="be-character-editor__checkbox-field">
-						<input
-							type="checkbox"
-							checked={ profileAudience === 'everyone' }
-							onChange={ ( e ) =>
-								setProfileAudience(
-									e.target.checked
-										? 'everyone'
-										: 'storytellers'
-								)
-							}
-						/>
-						{ __(
-							"Show this character in Who's Who",
-							'beyond-elysium'
-						) }
-					</label>
-
-					<label className="be-character-editor__checkbox-field">
-						<input
-							type="checkbox"
-							checked={ profileShowPlayer }
-							onChange={ ( e ) =>
-								setProfileShowPlayer( e.target.checked )
-							}
-						/>
-						{ __(
-							'Name me as the player behind this character',
-							'beyond-elysium'
-						) }
-					</label>
-
-					<div className="be-character-editor__field">
-						{ portraitAttachment && (
-							<span>{ portraitAttachment.original_name }</span>
-						) }
-						<input
-							type="file"
-							accept="image/*"
-							disabled={ uploadingPortraitAttachment }
-							onChange={ ( e ) => {
-								const file = e.target.files?.[ 0 ];
-								if ( file ) {
-									uploadOwnPortrait( file );
-								}
-							} }
-						/>
-						{ uploadingPortraitAttachment && (
-							<span>
-								{ __( 'Uploading…', 'beyond-elysium' ) }
-							</span>
-						) }
-					</div>
-
-					<div className="be-character-editor__header-text-actions">
-						<button
-							type="button"
-							disabled={ savingProfile }
-							onClick={ savePlayerProfile }
-						>
-							{ savingProfile
-								? __( 'Saving…', 'beyond-elysium' )
-								: __( 'Save Profile', 'beyond-elysium' ) }
-						</button>
-						{ profileSaveMessage && (
-							<span className="be-character-editor__header-text-status">
-								{ profileSaveMessage }
-							</span>
-						) }
-						{ profileSaveError && (
-							<span
-								className="be-character-editor__error"
-								role="alert"
-							>
-								{ profileSaveError }
-							</span>
-						) }
-					</div>
-				</div>
-			) }
-
-			{ canEdit && ! canManage && effectiveCharacterId && (
-				<div className="be-character-editor__section">
-					<RequestXpPanel
-						gameSlug={ gameSlug }
-						characterId={ effectiveCharacterId }
-					/>
+					{ store.error ?? templateError ?? headerSaveError }
 				</div>
 			) }
 

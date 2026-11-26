@@ -37,7 +37,7 @@ wp-admin sidebar → Beyond Elysium → Characters.
 
 ### Flag an existing character as an NPC, or un-flag one
 
-1. Click its name to open its Sheet, then **Edit this character**.
+1. Click its name to open its Sheet, then **Edit** in the row of views.
 2. Toggle **This is an NPC** there. See [Character Editor](character-editor.md).
 
 ### Assign, change, or delete a character

@@ -684,6 +684,10 @@ export interface TraitListMeta {
 export interface TraitListDefinition {
 	items: TraitListItem[];
 	/**
+	 * What a new character holds from the start: each entry a name and, for a list that counts, how many.
+	 */
+	default_held?: Array< { name: string; count?: number } >;
+	/**
 	 * Declared mechanics, when this list's own rating derives from another block's.
 	 */
 	_meta?: TraitListMeta;
@@ -943,6 +947,10 @@ export interface ResourcePool {
 	 */
 	book_max?: number;
 	/**
+	 * The creature type's books spend this pool permanently, so the Play view offers Spend permanent for it.
+	 */
+	permanent_spend?: boolean;
+	/**
 	 * A cost that scales with the dot being bought.
 	 */
 	sliding_cost?: {
@@ -1114,6 +1122,10 @@ export interface StackSection {
 	 * Nothing new can be bought in a hidden section; every read still shows it.
 	 */
 	hidden?: boolean;
+	/**
+	 * This section holds the creature type's Health Levels, which the Play view draws as a track.
+	 */
+	health_track?: boolean;
 }
 
 /**

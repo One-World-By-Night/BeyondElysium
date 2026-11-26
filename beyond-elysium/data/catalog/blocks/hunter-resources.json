@@ -14,6 +14,7 @@
     "pools": [
       {
         "name": "Willpower",
+        "permanent_spend": true,
         "value_type": "integer",
         "default_start": 2,
         "max": 10,

@@ -4,6 +4,7 @@
  */
 
 import { __ } from '@wordpress/i18n';
+import { isCharacterView } from './characterViews';
 import {
 	playerTabUrl,
 	storytellerTabUrl,
@@ -82,7 +83,8 @@ export function sectionHref( here: string, key: string ): string {
 }
 
 /**
- * The address that opens another of the player's characters: its Sheet, or its Edit when Edit is open.
+ * The address that opens another of the player's characters: on the same view when a character view is open (Play,
+ * Sheet, Story, History or Edit), otherwise on its Sheet.
  */
 export function characterHref(
 	here: string,
@@ -91,7 +93,10 @@ export function characterHref(
 ): string {
 	const url = new URL( here );
 	url.searchParams.set( 'character_id', String( characterId ) );
-	url.searchParams.set( 'tab', 'edit' === openTab ? 'edit' : 'sheet' );
+	url.searchParams.set(
+		'tab',
+		isCharacterView( openTab ) ? openTab : 'sheet'
+	);
 	return url.toString();
 }
 

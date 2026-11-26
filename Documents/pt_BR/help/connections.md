@@ -10,7 +10,7 @@ Os Narradores (HST e AST) adicionam, editam e removem conexões onde quer que es
 
 - Kit de Ferramentas do Narrador → Tramas e Rumores → abra uma trama → **Conectar personagem** na barra de ações dela.
 - Beyond Elysium → Itens e Locais (wp-admin) → abra um item ou local → a seção **Conexões** dele.
-- Minha Crônica → aba Ficha → a seção **Conexões** de um personagem - só aparece ali para um Narrador.
+- Minha Crônica → visualização Ficha → a seção **Conexões** de um personagem - só aparece ali para um Narrador.
 
 ## A tela
 

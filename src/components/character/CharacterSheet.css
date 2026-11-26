@@ -62,13 +62,14 @@
 .be-character-sheet__toolbar {
 	display: flex;
 	flex-wrap: wrap;
-	justify-content: flex-end;
-	gap: 0.75rem;
+	align-items: center;
+	justify-content: flex-start;
+	gap: 0.5rem;
 	margin-bottom: 0.75rem;
 }
 
 .be-character-sheet__print.be-character-sheet__print,
-.be-character-sheet__action-go.be-character-sheet__action-go,
+.be-character-sheet__action-button.be-character-sheet__action-button,
 .be-character-sheet__action-close.be-character-sheet__action-close,
 .be-character-sheet .be-character-sheet__gex-export {
 	display: inline-block;
@@ -83,7 +84,8 @@
 }
 
 .be-character-sheet__print.be-character-sheet__print:hover:not(:disabled),
-.be-character-sheet__action-go.be-character-sheet__action-go:hover:not(:disabled),
+.be-character-sheet__action-button.be-character-sheet__action-button:hover:not(:disabled),
+.be-character-sheet__action-button.be-character-sheet__action-button[aria-pressed="true"],
 .be-character-sheet__action-close.be-character-sheet__action-close:hover,
 .be-character-sheet .be-character-sheet__gex-export:hover:not(:disabled) {
 	background: var(--be-sheet-accent);
@@ -91,7 +93,7 @@
 }
 
 .be-character-sheet__print.be-character-sheet__print:disabled,
-.be-character-sheet__action-go.be-character-sheet__action-go:disabled,
+.be-character-sheet__action-button.be-character-sheet__action-button:disabled,
 .be-character-sheet .be-character-sheet__gex-export:disabled {
 	opacity: 0.6;
 	cursor: default;
@@ -126,19 +128,6 @@
 	font-size: 0.9rem;
 }
 
-/* The action picker: one list and Go in place of a row of buttons. */
-
-.be-character-sheet__action-select {
-	width: auto;
-	min-width: 14rem;
-	max-width: 100%;
-	padding: 0.35rem 0.5rem;
-	border: 1px solid var(--be-sheet-accent);
-	border-radius: 3px;
-	background: var(--be-sheet-surface);
-	color: inherit;
-	font-size: 0.85rem;
-}
 
 .be-character-sheet__action-panel {
 	margin-bottom: 0.75rem;
@@ -306,10 +295,6 @@ html.wp-dark-mode-active [data-be-widget] .be-character-sheet {
 		flex-direction: column;
 	}
 
-	.be-character-sheet__action-select {
-		flex: 1 1 10rem;
-		min-width: 0;
-	}
 }
 
 /* Print output: dense and chrome-free. */

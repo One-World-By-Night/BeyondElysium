@@ -15,6 +15,7 @@
     "pools": [
       {
         "name": "Faith",
+        "permanent_spend": true,
         "value_type": "integer",
         "default_start": 3,
         "max": 10,
@@ -28,6 +29,7 @@
       },
       {
         "name": "Willpower",
+        "permanent_spend": true,
         "value_type": "integer",
         "default_start": 3,
         "max": 15,

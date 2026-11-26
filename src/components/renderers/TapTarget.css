@@ -1,0 +1,26 @@
+.be-tap-target.be-tap-target {
+	display: inline;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	text-align: left;
+	text-decoration: underline dotted;
+	text-underline-offset: 3px;
+	cursor: pointer;
+}
+
+.be-tap-target.be-tap-target:hover,
+.be-tap-target.be-tap-target:focus,
+.be-tap-target.be-tap-target:active {
+	background: transparent;
+	color: var(--be-st-accent, var(--be-blue-4));
+}
+
+@media print {
+
+	.be-tap-target.be-tap-target {
+		text-decoration: none;
+	}
+}
