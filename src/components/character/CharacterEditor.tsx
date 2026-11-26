@@ -8,6 +8,7 @@ import useCharacterEditorStore from '../../store/characterEditorStore';
 import BlockEditor from '../editors/BlockEditor';
 import CartMeter from './CartMeter';
 import TraitPanel from './TraitPanel';
+import { compendiumHref } from '../../lib/compendiumLinks';
 import CreationTallyPanel from './CreationTallyPanel';
 import HelpButton from '../shared/HelpButton';
 import AssigneePicker from '../shared/AssigneePicker';
@@ -961,6 +962,17 @@ export function CharacterEditor( {
 					gameSlug={ gameSlug }
 					characterId={ effectiveCharacterId }
 					trait={ aboutTrait }
+					compendiumHref={
+						activeStackSlug
+							? compendiumHref(
+									gameSlug,
+									activeStackSlug,
+									aboutTrait.blockSlug,
+									aboutTrait.name,
+									effectiveCharacterId
+								)
+							: null
+					}
 					block={ aboutBlock }
 					sheetData={ store.originalSheetData }
 					label={ traitLabel( aboutBlock, aboutTrait.name ) }

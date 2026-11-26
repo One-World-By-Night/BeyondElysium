@@ -88,6 +88,19 @@ class Authorization {
 	}
 
 	/**
+	 * Whether the current user holds `$capability` in a named chronicle, for a route that names the chronicle in its
+	 * query string instead of its path. An empty slug asks about the site.
+	 */
+	public static function can_in_chronicle( string $capability, string $game_slug ): bool {
+		if ( $game_slug === '' ) {
+			return current_user_can( $capability );
+		}
+		$request = new \WP_REST_Request( 'GET' );
+		$request->set_url_params( [ 'game_slug' => $game_slug ] );
+		return self::check_request( $capability, $request );
+	}
+
+	/**
 	 * Reports whether accessSchema-based authorization is enabled for this site.
 	 */
 	/**

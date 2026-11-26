@@ -8,7 +8,7 @@ Qualquer pessoa com acesso a Tramas e Rumores ou acesso ao gerenciamento de Pers
 
 ## Como chegar lá
 
-Kit de Ferramentas do Narrador → aba Minha Fila, logo depois de Painel.
+Kit de Ferramentas do Narrador → aba Minha Fila, logo depois de Início.
 
 ## A tela
 

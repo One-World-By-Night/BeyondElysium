@@ -87,7 +87,7 @@ For a page that isn't built with Elementor. `[be_house_rules game="chronicle-slu
 - [Items & Locations](world-objects.md)
 - [Boon Ledger](boon-ledger.md)
 - [Import](import.md)
-- [Game Dashboard](game-dashboard.md)
+- [Storyteller Home](game-dashboard.md)
 - [House Rules](house-rules.md)
 - [Games](games.md)
 - [Front-End Pages](provisioned-pages.md)

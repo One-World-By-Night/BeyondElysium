@@ -10,7 +10,7 @@ import { useChronicleSwitcher } from '../../lib/useChronicleSwitcher';
 import { ChronicleSwitcher } from '../shared/ChronicleSwitcher';
 import DemoBanner, { DemoBannerShownContext } from '../shared/DemoBanner';
 import { TabStrip } from '../shared/TabStrip';
-import { GameDashboard } from '../game/GameDashboard';
+import { StorytellerHome } from '../game/StorytellerHome';
 import { CharacterList } from '../character/CharacterList';
 import { SecretsList } from '../shared/SecretsList';
 import { ApprovalQueue } from '../changes/ApprovalQueue';
@@ -26,6 +26,7 @@ import { ChroniclePlayers } from '../game/ChroniclePlayers';
 import { CatalogTab } from '../catalog/CatalogTab';
 import { RelationshipChart } from '../apr/RelationshipChart';
 import { EmailLog } from '../game/EmailLog';
+import { ToolkitReports } from '../reports/ToolkitReports';
 import {
 	newCharacterUrl,
 	playerTabUrl,
@@ -76,9 +77,12 @@ export function StorytellerToolkitPage() {
 	}, [ tab ] );
 
 	const tabs: Tab[] = [
-		capabilities.be_manage_characters && {
+		( capabilities.be_manage_characters ||
+			capabilities.be_manage_plots ||
+			capabilities.be_manage_sessions ||
+			capabilities.be_manage_boons ) && {
 			key: STORYTELLER_TABS.dashboard,
-			label: __( 'Dashboard', 'beyond-elysium' ),
+			label: __( 'Home', 'beyond-elysium' ),
 		},
 		( capabilities.be_manage_plots ||
 			capabilities.be_manage_characters ) && {
@@ -137,6 +141,10 @@ export function StorytellerToolkitPage() {
 			key: STORYTELLER_TABS.relationships,
 			label: __( 'Relationships', 'beyond-elysium' ),
 		},
+		capabilities.be_view_reports && {
+			key: STORYTELLER_TABS.reports,
+			label: __( 'Reports', 'beyond-elysium' ),
+		},
 		capabilities.be_manage_characters && {
 			key: STORYTELLER_TABS.emailLog,
 			label: __( 'Email Log', 'beyond-elysium' ),
@@ -189,12 +197,9 @@ export function StorytellerToolkitPage() {
 						) }
 
 						{ tab === STORYTELLER_TABS.dashboard && (
-							<GameDashboard
+							<StorytellerHome
 								key={ gameSlug }
 								gameSlug={ gameSlug }
-								sheetPageUrl={ playerTabUrl(
-									PLAYER_TABS.sheet
-								) }
 								capabilities={ capabilities }
 							/>
 						) }
@@ -342,6 +347,13 @@ export function StorytellerToolkitPage() {
 
 						{ tab === STORYTELLER_TABS.relationships && (
 							<RelationshipChart
+								key={ gameSlug }
+								gameSlug={ gameSlug }
+							/>
+						) }
+
+						{ tab === STORYTELLER_TABS.reports && (
+							<ToolkitReports
 								key={ gameSlug }
 								gameSlug={ gameSlug }
 							/>

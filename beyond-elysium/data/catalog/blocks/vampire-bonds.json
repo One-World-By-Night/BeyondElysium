@@ -17,6 +17,7 @@
     "allow_multiples": false,
     "print_rings": false,
     "unpriced": true,
+    "bond_list": true,
     "items": [],
     "display": "multiplier"
   }

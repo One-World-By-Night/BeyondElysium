@@ -4,7 +4,7 @@ A live, read-only page listing every catalog item, power level, or power family 
 
 ## Who can use this
 
-Any member of the chronicle - players and Storytellers alike see exactly the same page. You need to be signed in and belong to the chronicle; there's nothing here that's hidden from a player.
+Any member of the chronicle. You need to be signed in and belong to the chronicle. A player reads every note written for players; a passage a Storyteller marked `[ST]...[/ST]` is left out for a player, and so is every note on a section a Storyteller flagged Storyteller only. A Storyteller sees all of it. See [Storyteller-Only Content](storyteller-only.md).
 
 ## How to get there
 
@@ -31,7 +31,7 @@ This isn't one of the fixed My Chronicle or Storyteller Toolkit tabs - a Storyte
 
 - **This page is read-only.** Nothing here can be changed from this screen - a Storyteller or admin writes these notes by editing the catalog item directly, elsewhere. See [Schema Blocks](schema-blocks.md).
 - **Only items with something written show up.** An item with no Reference, Description, or Source set doesn't appear here at all, even if it exists in the catalog.
-- **The same page can also print as a signed report.** A Storyteller running this from the Reports screen gets the identical content as a PDF; this page is the live, on-the-web version of the same list.
+- **The same page can also print as a signed report.** A Storyteller running this from the Reports screen gets the same list as a PDF, and a player's copy leaves out the Storyteller-only text just as this page does; this page is the live, on-the-web version of the same list.
 - **It updates as the catalog changes.** There's nothing to refresh by hand beyond reloading the page - whatever is currently written on the catalog is what shows here.
 
 ## Troubleshooting

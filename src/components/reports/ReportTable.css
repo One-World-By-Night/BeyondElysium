@@ -1,0 +1,28 @@
+.be-report-table__head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+}
+
+.be-report-table__table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+.be-report-table__table th,
+.be-report-table__table td {
+	padding: 0.4rem 0.5rem;
+	border-bottom: 1px solid var(--be-gray-21);
+	text-align: left;
+	overflow-wrap: anywhere;
+}
+
+.be-report-table__error {
+	padding: 0.75rem;
+	border: 1px solid var(--be-red-6);
+	background: var(--be-red-11);
+	color: var(--be-red-2);
+	border-radius: 3px;
+}

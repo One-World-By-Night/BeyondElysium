@@ -27,6 +27,7 @@ export const PLAYER_TABS = {
 	whatIKnow: 'what-i-know',
 	myGroups: 'my-groups',
 	afterGameReport: 'after-game-report',
+	compendium: 'compendium',
 } as const;
 
 /**
@@ -49,6 +50,7 @@ export const STORYTELLER_TABS = {
 	relationships: 'relationships',
 	emailLog: 'email-log',
 	catalog: 'catalog',
+	reports: 'reports',
 } as const;
 
 /**

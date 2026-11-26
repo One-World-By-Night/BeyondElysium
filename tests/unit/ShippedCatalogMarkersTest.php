@@ -6,7 +6,7 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * The shipped catalog marks the pools the books spend permanently, the pools whose temporary points do not exist or
- * build up past the rating, and each creature type's health track, and nothing else.
+ * build up past the rating, the lists that hold bonds, and each creature type's health track, and nothing else.
  */
 class ShippedCatalogMarkersTest extends TestCase {
 
@@ -133,6 +133,21 @@ class ShippedCatalogMarkersTest extends TestCase {
 		foreach ( self::RATING_ONLY as $block => $names ) {
 			$this->assertSame( [], array_intersect( $names, self::ACCUMULATES[ $block ] ?? [] ), $block );
 		}
+	}
+
+	public function test_only_the_lists_that_hold_bonds_are_marked_as_bond_lists(): void {
+		$marked = [];
+		foreach ( glob( BE_PLUGIN_PATH . '/data/catalog/blocks/*.json' ) ?: [] as $file ) {
+			$data = $this->read( $file );
+			if ( array_key_exists( 'bond_list', (array) $data['definition'] ) ) {
+				$this->assertTrue( $data['definition']['bond_list'], $data['slug'] );
+				$this->assertSame( 'trait_list', $data['section_type'], $data['slug'] );
+				$marked[] = (string) $data['slug'];
+			}
+		}
+		sort( $marked );
+
+		$this->assertSame( [ 'kueijin-guanxi', 'vampire-bonds' ], $marked );
 	}
 
 	public function test_each_creature_type_marks_its_health_levels_and_wraith_has_none(): void {

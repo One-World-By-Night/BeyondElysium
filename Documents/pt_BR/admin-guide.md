@@ -72,6 +72,10 @@ Cada seção mantém formatação, listas e tabelas; imagens e todo o resto são
 
 O mesmo vale para toda outra configuração que só um administrador faz num bloco compartilhado do sistema: níveis e motivos de aprovação, cronogramas de aprovação por valor e por opção, a substituição de aprovação de uma família de poder, as regras de aprovação do próprio bloco e qualquer item, poder, nível, reserva ou campo que um administrador adicionou. Uma seção adicionada a uma pilha de criatura do sistema também é mantida. O que uma atualização renova é o que vem com o plugin - nomes, custos, notas, traduções, o nome e as seções de uma pilha - então mudar um desses num bloco do sistema dura só até a próxima atualização; bifurque o bloco para a sua crônica para mudá-lo de vez.
 
+**Texto só para Narradores.** Envolva qualquer parte de uma Referência, Descrição ou Fonte em `[ST]` e `[/ST]` e um jogador nunca a recebe: as listas do editor de personagem, o Compêndio e as Regras da Casa deixam de fora a passagem marcada, e o mesmo vale para a mudança registrada do bloco sobre o livro. Um bloco sinalizado como **Só para Narradores** não dá nenhuma descrição a um jogador. Um Narrador, ou quem tem a permissão de Catálogo, vê o texto por inteiro. Veja [Conteúdo Só para Narradores](help/storyteller-only.md).
+
+**Uma lista que guarda vínculos.** Uma lista de traços cujas entradas são nomes com classificações, como Vínculos de Vampiro ou o Guanxi dos Kuei-Jin, leva `"bond_list": true` na definição, e o relatório de Vínculos imprime uma linha para cada entrada dela. Só uma lista de traços pode levar a sinalização, e o valor tem de ser `true`. A cópia própria de uma crônica do bloco a mantém. Veja [Relatórios](help/reports.md).
+
 ### Aprovação por Valor e Aprovação por Opção
 
 A configuração fixa de aprovação de um item ("este item inteiro precisa da aprovação de um Narrador") pode ser afinada para depender do que um jogador de fato está elevando:
@@ -211,7 +215,7 @@ Um HST pode alcançar **Blocos de Esquema** e **Modelos** da **Configuração do
 
 ## Páginas do Front-End
 
-Quatro páginas do WordPress, criadas automaticamente na primeira vez que o plugin roda (ou atualiza), levam todo widget do front-end: **Minha Crônica** (`be-player`), **Kit de Ferramentas do Narrador** (`be-storyteller`), **Ficha de Personagem (Impressão)** (`character-sheet-print`) e **Verificar Personagem** (`be-verify`). Fixas em quatro seja quantas forem as crônicas que este site hospeda - Minha Crônica e o Kit de Ferramentas do Narrador trazem cada um um seletor de crônica em vez de ficarem presos a uma crônica na criação; veja o [Guia do Narrador](st-guide.md#7-o-painel-do-jogo) para o que vive em cada uma.
+Quatro páginas do WordPress, criadas automaticamente na primeira vez que o plugin roda (ou atualiza), levam todo widget do front-end: **Minha Crônica** (`be-player`), **Kit de Ferramentas do Narrador** (`be-storyteller`), **Ficha de Personagem (Impressão)** (`character-sheet-print`) e **Verificar Personagem** (`be-verify`). Fixas em quatro seja quantas forem as crônicas que este site hospeda - Minha Crônica e o Kit de Ferramentas do Narrador trazem cada um um seletor de crônica em vez de ficarem presos a uma crônica na criação; veja o [Guia do Narrador](st-guide.md#7-o-início-do-narrador) para o que vive em cada uma.
 
 Se uma destas páginas for excluída por engano, ela **não** é recriada sozinha automaticamente - uma página, depois de criada num dado slug, nunca é sobrescrita nem substituída. Recupere-a em **Beyond Elysium → Configuração da Crônica**: a linha **Páginas do front-end** da lista de conferência fica vermelha quando qualquer uma das quatro falta, com um link **Corrigir** que refaz o mesmo passo de provisionamento (`?provision_pages=1`, protegido por `be_manage_games`) que o plugin já rodou uma vez automaticamente.
 

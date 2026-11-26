@@ -348,6 +348,23 @@ class CatalogValidatorTest extends TestCase {
 		$this->assertSame( [], Catalog_Validator::validate_block( $data, 'test-block' ) );
 	}
 
+	public function test_a_trait_list_may_be_marked_as_holding_bonds(): void {
+		$data = $this->block( 'trait_list', [ 'items' => [], 'bond_list' => true ] );
+		$this->assertSame( [], Catalog_Validator::validate_block( $data, 'test-block' ) );
+	}
+
+	public function test_a_bond_list_marker_is_true_or_absent(): void {
+		foreach ( [ false, 'yes', 1 ] as $bad ) {
+			$data = $this->block( 'trait_list', [ 'items' => [], 'bond_list' => $bad ] );
+			$this->assertRejects( $data, '`bond_list` must be true' );
+		}
+	}
+
+	public function test_a_bond_list_marker_belongs_on_a_trait_list_only(): void {
+		$this->assertRejects( $this->block( 'resource_pool', [ 'pools' => [ $this->pool() ], 'bond_list' => true ] ), '`bond_list` belongs only on a trait_list block' );
+		$this->assertRejects( $this->block( 'tiered_power', [ 'powers' => [], 'bond_list' => true ] ), '`bond_list` belongs only on a trait_list block' );
+	}
+
 	public function test_a_pool_may_be_marked_for_permanent_spends(): void {
 		$data = $this->block( 'resource_pool', [ 'pools' => [ $this->pool( [ 'permanent_spend' => true ] ) ] ] );
 		$this->assertSame( [], Catalog_Validator::validate_block( $data, 'test-block' ) );

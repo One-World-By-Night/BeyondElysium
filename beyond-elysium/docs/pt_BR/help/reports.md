@@ -1,10 +1,10 @@
 # Relatórios
 
-Vinte relatórios prontos - listas, histórico, cartões, registros de tramas e ações, estatísticas e mais - cada um gerado como PDF assinado sob demanda.
+Vinte e um relatórios prontos - listas, histórico, cartões, vínculos, registros de tramas e ações, estatísticas e mais - cada um gerado como PDF assinado sob demanda, e os Vínculos também legíveis na tela.
 
 ## Quem pode usar
 
-Chegar a **Beyond Elysium → Ferramenta de Consulta → Relatórios** no wp-admin exige a mesma capacidade de todo o site que abre a Ferramenta de Consulta: uma conta de HST, AST ou administrador. Com a página aberta, ela lista só os relatórios que o seu papel na crônica escolhida pode de fato executar - um Narrador vê os 20. Um Condutor de Trama vê os relatórios de trama, ação e rumor mais tudo o que é aberto a qualquer membro. Regras da Casa, o Calendário do Jogo e os cartões de item, local e ritual são abertos a todo membro da crônica por regra, jogadores inclusive - mas um jogador normalmente nunca abre esta tela do wp-admin, já que ela exige uma conta de nível Narrador ou administrador. Na prática um jogador chega às Regras da Casa por uma página do front-end que um Narrador configurou (veja [Regras da Casa](house-rules.md)), aos Cartões de Item pelo botão "Imprimir Meus Itens" da própria Ficha do Personagem (veja [Ficha de Personagem](character-sheet.md)), e ao Calendário do Jogo, aos Cartões de Local e aos Cartões de Ritual pela própria aba **Relatórios** de Minha Crônica (veja [Minha Crônica](my-chronicle.md)) - esta tela do wp-admin é onde um Narrador gera qualquer um dos 20 como PDF assinado, não o único lugar onde um jogador pode ler os três que já são abertos a ele.
+Chegar a **Beyond Elysium → Ferramenta de Consulta → Relatórios** no wp-admin exige a mesma capacidade de todo o site que abre a Ferramenta de Consulta: uma conta de HST, AST ou administrador. Com a página aberta, ela lista só os relatórios que o seu papel na crônica escolhida pode de fato executar - um Narrador vê os 21. Um Condutor de Trama vê os relatórios de trama, ação e rumor mais tudo o que é aberto a qualquer membro. Regras da Casa, o Calendário do Jogo, os Vínculos e os cartões de item, local e ritual são abertos a todo membro da crônica por regra, jogadores inclusive - mas um jogador normalmente nunca abre esta tela do wp-admin, já que ela exige uma conta de nível Narrador ou administrador. Na prática um jogador chega às Regras da Casa por uma página do front-end que um Narrador configurou (veja [Regras da Casa](house-rules.md)), aos Cartões de Item pelo botão "Imprimir Meus Itens" da própria Ficha do Personagem (veja [Ficha de Personagem](character-sheet.md)), e ao Calendário do Jogo, aos Cartões de Local, aos Cartões de Ritual e aos Vínculos pela própria aba **Relatórios** de Minha Crônica (veja [Minha Crônica](my-chronicle.md)) - esta tela do wp-admin é onde um Narrador gera qualquer um dos 21 como PDF assinado, não o único lugar onde um jogador pode ler os que já são abertos a ele. Um Narrador ou Condutor de Trama também abre a mesma lista sem o wp-admin, pela aba **Relatórios** do [Kit de Ferramentas do Narrador](storyteller-toolkit.md).
 
 ## Como chegar lá
 
@@ -13,33 +13,36 @@ Barra lateral do wp-admin → Beyond Elysium → Ferramenta de Consulta → aba 
 ## A tela
 
 - **Jogo** - uma lista suspensa com toda crônica da instalação.
-- Uma tabela que lista cada um que você pode executar: o título (em inglês na tela, como na tabela abaixo), a forma (`table`, `card`, `statistics`, `narrative` ou `calendar`) e um link **Gerar PDF**.
+- Uma tabela que lista cada um que você pode executar: o título, a forma (`table`, `card`, `statistics`, `narrative` ou `calendar`) e um link **Gerar PDF**.
 - A linha do **Statistics Report** mostra ainda uma lista suspensa - **Qualidades**, **Defeitos**, **Influências** - escolhida antes de você clicar em **Gerar PDF**, já que é o único relatório em que o campo a resumir não é fixo.
 - **Gerar PDF** baixa o relatório como PDF para a crônica escolhida no momento.
+- **No Kit de Ferramentas do Narrador**, a aba **Relatórios** lista o que está aberto ao seu papel na crônica escolhida: o título de cada relatório, a forma em palavras (Tabela, Cartões, Estatísticas, Narrativa, Calendário ou Regras da casa), um resumo de uma linha e um link **Imprimir** que baixa o PDF. O Relatório de Estatísticas ganha uma lista suspensa **Contagem**. Os Vínculos ganham uma lista suspensa **Ordenar por** (Personagem ou Vinculado a) e um botão **Ver** que mostra a tabela na tela.
+- Títulos, cabeçalhos de coluna e notas saem no idioma do site, na tela e no PDF.
 
-### Os 20 relatórios
+### Os 21 relatórios
 
 | Relatório | Quem pode executar |
 | --- | --- |
-| Character Roster (lista de personagens) | Narradores |
-| Sign-In Sheet (folha de presença) | Narradores |
-| Experience History (histórico de experiência) | Narradores |
-| Search Report (relatório de busca) | Narradores |
-| Statistics Report (estatísticas) | Narradores |
-| Merits and Flaws Report (qualidades e defeitos) | Narradores |
-| Influence Report (influências) | Narradores |
-| Vampire Status Report (status de vampiros) | Narradores |
-| Player Roster (lista de jogadores) | Narradores |
-| Player Point History (histórico de pontos do jogador) | Narradores |
-| Character Equipment (equipamento dos personagens) | Narradores |
-| Item Cards (cartões de item) | Todo membro |
-| Location Cards (cartões de local) | Todo membro |
-| Rote Cards (cartões de ritual) | Todo membro |
-| Plot Report (relatório de tramas) | Narradores e Condutores de Trama |
-| Master Action Report (relatório mestre de ações) | Narradores e Condutores de Trama |
-| Master Rumor Report (relatório mestre de rumores) | Narradores e Condutores de Trama |
-| Action and Rumor Report (ações e rumores) | Narradores e Condutores de Trama |
-| Game Calendar (calendário do jogo) | Todo membro |
+| Lista de Personagens | Narradores |
+| Folha de Presença | Narradores |
+| Histórico de Experiência | Narradores |
+| Relatório de Busca | Narradores |
+| Relatório de Estatísticas | Narradores |
+| Relatório de Qualidades e Defeitos | Narradores |
+| Relatório de Influências | Narradores |
+| Relatório de Status dos Vampiros | Narradores |
+| Vínculos | Todo membro - um Narrador vê todos os vínculos, os demais só os dos próprios personagens |
+| Lista de Jogadores | Narradores |
+| Histórico de Pontos dos Jogadores | Narradores |
+| Equipamento dos Personagens | Narradores |
+| Cartões de Itens | Todo membro |
+| Cartões de Local | Todo membro |
+| Cartões de Ritual | Todo membro |
+| Relatório de Tramas | Narradores e Condutores de Trama |
+| Relatório Geral de Ações | Narradores e Condutores de Trama |
+| Relatório Geral de Rumores | Narradores e Condutores de Trama |
+| Relatório de Ações e Rumores | Narradores e Condutores de Trama |
+| Calendário do Jogo | Todo membro |
 | Regras da Casa | Todo membro |
 
 ## Tarefas comuns
@@ -49,6 +52,12 @@ Barra lateral do wp-admin → Beyond Elysium → Ferramenta de Consulta → aba 
 1. Abra Beyond Elysium → Ferramenta de Consulta → Relatórios e escolha a crônica.
 2. Ache o que você quer na tabela.
 3. Clique em **Gerar PDF**.
+
+### Imprimir os vínculos
+
+1. Abra o Kit de Ferramentas do Narrador → **Relatórios**, ou Minha Crônica → **Relatórios** → **Vínculos**.
+2. Como Narrador, escolha **Ordenar por → Vinculado a** para agrupar as linhas por quem os personagens têm como vínculo e clique em **Ver** para ler aqui.
+3. Clique em **Imprimir**.
 
 ### Executar o Statistics Report num campo específico
 
@@ -63,6 +72,7 @@ Barra lateral do wp-admin → Beyond Elysium → Ferramenta de Consulta → aba 
 - **Os Cartões de Item podem ser restritos a um personagem.** Esse é o botão "Imprimir Meus Itens" da própria ficha do personagem, não um controle desta tela - veja [Ficha de Personagem](character-sheet.md).
 - **Os Cartões de Ritual funcionam diferente para um mago e para um Narrador.** Um Narrador que os executa aqui vê todo ritual do catálogo da própria crônica. Um jogador que escolhe um personagem na própria aba Relatórios de Minha Crônica vê só os rituais que esse personagem realmente tem, casados pelo nome contra o catálogo - um ritual mantido sem entrada própria no catálogo ainda imprime, montado direto a partir do nome/nota/fonte do catálogo. Só um personagem cuja pilha tem de fato um bloco que guarda rituais (magos, hoje) pode usá-lo; Minha Crônica esconde a aba para o personagem de qualquer outra pessoa.
 - **O Calendário do Jogo lista as noites de jogo da crônica.** Toda noite no calendário de Noites de Jogo aparece, a mais próxima primeiro, com data, hora de início, lugar e notas, no PDF e na aba Relatórios de Minha Crônica. Uma crônica sem nenhuma recebe uma nota curta dizendo isso. O texto `[ST]` de um Narrador nas notas é removido para os jogadores. Veja [Noites de Jogo](game-nights.md).
+- **Os Vínculos são uma linha por vínculo.** Todo Vínculo de Vampiro e todo Guanxi de um personagem ativo é uma linha, com Personagem, Jogador (só para Narradores), Vinculado a, Classificação e Tipo (o nome da lista, como Vínculos ou Guanxi). Um Narrador vê os de todo personagem ativo, NPCs inclusive. Os demais veem só os vínculos dos próprios personagens, na ordem do personagem, e sem a coluna Jogador. Uma crônica que tornou uma lista de vínculos só para Narradores a esconde dos jogadores aqui também. O PDF traz as mesmas linhas.
 - **As Regras da Casa não têm equivalente no Grapevine**, e são as únicas que também podem viver numa página do front-end em vez de serem geradas sob demanda - veja [Regras da Casa](house-rules.md).
 - **Os de ação leem o registro da trama como realmente aconteceu.** O Total, o Crescimento e o que sobra Sem Uso de uma linha de orçamento depois de cada uso aparecem em linhas próprias; quando vários jogadores postaram na mesma trama e um Narrador respondeu a um, nem sempre dá para saber para a postagem de quem era a resposta, e ele diz isso ("A resposta veio depois de várias ações") em vez de adivinhar.
 - **O texto só para Narradores é retirado do mesmo jeito que em todo lugar** - uma passagem `[ST]...[/ST]` num item ou local nunca chega a um relatório que um não-Narrador possa executar.
@@ -77,6 +87,7 @@ Barra lateral do wp-admin → Beyond Elysium → Ferramenta de Consulta → aba 
 ## Relacionados
 
 - [Ferramenta de Consulta](query-tool.md)
+- [Kit de Ferramentas do Narrador](storyteller-toolkit.md)
 - [Minha Crônica](my-chronicle.md)
 - [Regras da Casa](house-rules.md)
 - [Itens e Locais](world-objects.md)

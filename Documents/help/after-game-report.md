@@ -1,7 +1,6 @@
 # After-Game Report
 
-Tell your Storytellers what your character did at a game, what you want next, and anything
-private just for staff - one report per character per session.
+Tell your Storytellers what your character did at a game, what you want next, and anything private just for staff - one report per character per session.
 
 ## Who can use this
 
@@ -19,11 +18,9 @@ My Chronicle → After-Game Report tab.
   - **What did your character do?**
   - **What do you want next?**
   - **Anything for staff?** - read only by Storytellers, never shared with anyone else.
-- **Submit Report** (or **Save Changes**, once one already exists for this character and
-  session).
+- **Submit Report** (or **Save Changes**, once one already exists for this character and session).
 
-If a report for that character and session already exists, its own words load into the form
-instead of a blank one, so you're editing, not starting over.
+If a report for that character and session already exists, its own words load into the form instead of a blank one, so you're editing, not starting over.
 
 ## Common tasks
 
@@ -42,25 +39,17 @@ instead of a blank one, so you're editing, not starting over.
 
 ## Things to know
 
-- **One report per character per session.** Filing a second one for the same pair edits the
-  first instead of creating another.
-- **A report closes once its session's own reports-due time passes.** After that, the form
-  shows "Reports for this session are no longer open" and stops accepting changes - ask a
-  Storyteller if you genuinely need an exception.
+- **One report per character per session.** Filing a second one for the same pair edits the first instead of creating another.
+- **A report closes once its session's own reports-due time passes.** After that, the form shows "Reports for this session are no longer open" and stops accepting changes - ask a Storyteller if you genuinely need an exception.
 - **A future session never shows up to report against** - only sessions on or before today.
-- **Storytellers read and mark reports read - they never edit your words.** What you wrote is
-  exactly what stays on record.
-- **Filing a report can earn XP**, the same way signing in can - a Storyteller awards it once
-  for everyone who filed, separate from attendance XP.
+- **Storytellers read and mark reports read - they never edit your words.** What you wrote is exactly what stays on record.
+- **Filing a report can earn XP**, the same way signing in can - a Storyteller awards it once for everyone who filed, separate from attendance XP.
 
 ## Troubleshooting
 
-- **"Failed to save this report."** Check that a session and character are both picked, then
-  try again.
-- **"Reports for this session are no longer open."** The session's own reports-due time has
-  passed - ask a Storyteller if this needs an exception.
-- **I don't see a recent session in the list.** Only sessions on or before today are offered -
-  ask a Storyteller to confirm the session's date.
+- **"Failed to save this report."** Check that a session and character are both picked, then try again.
+- **"Reports for this session are no longer open."** The session's own reports-due time has passed - ask a Storyteller if this needs an exception.
+- **I don't see a recent session in the list.** Only sessions on or before today are offered - ask a Storyteller to confirm the session's date.
 
 ## Related
 

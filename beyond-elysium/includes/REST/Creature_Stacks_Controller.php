@@ -5,6 +5,7 @@ namespace BeyondElysium\REST;
 use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Creature_Stack;
 use BeyondElysium\Models\Schema_Block;
+use BeyondElysium\Services\St_Visibility;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -153,6 +154,7 @@ class Creature_Stacks_Controller extends Base_Controller {
 			if ( $request->get_param( 'for_creation' ) ) {
 				$resolved = Creature_Stack::narrow_for_creation( $resolved, $slug, $game_slug );
 			}
+			St_Visibility::filter_catalog_blocks_for_viewer( $resolved['blocks'], $game_slug );
 			return $this->success( $resolved );
 		}
 

@@ -7,6 +7,7 @@ use BeyondElysium\Models\Game;
 use BeyondElysium\Database\Manager;
 use BeyondElysium\Models\Game_Member;
 use BeyondElysium\Models\Player_Invite;
+use BeyondElysium\Models\Player_Note;
 use BeyondElysium\Services\Chronicle_Players;
 use BeyondElysium\Services\Player_Invites;
 
@@ -128,6 +129,7 @@ class Chronicle_Players_Controller extends Base_Controller {
 		}
 
 		$players = [];
+		$noted   = Player_Note::user_ids_for_game( (int) $game->id );
 		foreach ( Game_Member::for_game( (int) $game->id ) as $member ) {
 			if ( $member->role !== 'player' ) {
 				continue;
@@ -138,6 +140,7 @@ class Chronicle_Players_Controller extends Base_Controller {
 				'display_name' => $user ? $user->display_name : null,
 				'since'        => (string) $member->created_at,
 				'characters'   => self::characters_of( $game, (int) $member->wp_user_id ),
+				'has_notes'    => in_array( (int) $member->wp_user_id, $noted, true ),
 			];
 		}
 		usort( $players, static fn( $a, $b ) => strcasecmp( (string) $a['display_name'], (string) $b['display_name'] ) );

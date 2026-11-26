@@ -13,15 +13,21 @@ import { formatStoredTime } from '../../lib/storedTime';
 
 export interface MyPlotsFeedProps {
 	gameSlug: string;
+	/**
+	 * A plot to open straight away.
+	 */
+	initialPlotId?: number | null;
 }
 
 /**
  * Renders the current player's personal plot feed: a list of plots they are connected to or have been reached by,
  * each opening into the full PlotThread view when clicked.
  */
-export function MyPlotsFeed( { gameSlug }: MyPlotsFeedProps ) {
+export function MyPlotsFeed( { gameSlug, initialPlotId }: MyPlotsFeedProps ) {
 	const [ data, setData ] = useState< MyPlotsResponse | null >( null );
-	const [ selected, setSelected ] = useState< number | null >( null );
+	const [ selected, setSelected ] = useState< number | null >(
+		initialPlotId ?? null
+	);
 	const [ loading, setLoading ] = useState( true );
 	const [ error, setError ] = useState< string | null >( null );
 

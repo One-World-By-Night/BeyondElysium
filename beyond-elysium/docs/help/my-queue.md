@@ -8,7 +8,7 @@ Anyone holding Plots & Rumors access or Character management access (HST, AST, N
 
 ## How to get there
 
-Storyteller Toolkit → My Queue tab, right after Dashboard.
+Storyteller Toolkit → My Queue tab, right after Home.
 
 ## The screen
 

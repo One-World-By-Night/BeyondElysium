@@ -46,11 +46,17 @@ Quando um Narrador aprova ou rejeita uma mudança que você enviou, você també
 
 Separadamente, o seu perfil também tem **Postagens de tramas e novidades que seus personagens podem ver** - três opções (Imediatamente, Resumo diário ou Desligado) para uma nova postagem em uma trama que você já pode ver, e para uma trama, item ou local que passa a ser visível para um dos seus personagens (um Narrador liga o seu personagem a ele, ou amplia quem pode vê-lo). Imediatamente envia um e-mail por pedido, assim que acontece; Resumo diário reúne tudo em um e-mail por dia, com as postagens e as novidades listadas em separado; Desligado não envia nada. O e-mail nunca traz o conteúdo em si - só o que mudou e um link para a sua própria visão dele.
 
-## 4. Seu Painel
+**Lembrete de tempo livre.** Nos últimos dois dias antes de o tempo livre fechar, um personagem seu que não enviou nenhuma ação recebe um aviso no sino e um e-mail, uma vez por noite de jogo. Um personagem com prorrogação é lembrado pelo próprio prazo. Se você desligou os e-mails, ainda recebe o aviso.
 
-A aba **Painel** de **Minha Crônica** (a primeira, e onde você cai por padrão) mostra um resumo voltado ao jogador: os seus próprios personagens, as suas próprias tramas e **Minhas Alterações** - nunca os dados de mais ninguém.
+## 4. Seu Início
 
-**Minhas Alterações** olha todas as crônicas a que você pertence, não só a que você está vendo: o que ainda está pendente, mais o que foi decidido nos últimos trinta dias mais ou menos, cada um marcado como **Pendente**, **Aprovado**, **Aprovado automaticamente**, **Recusado**, **Retirado** ou **Desfeito**. Uma mudança em uma crônica diferente da atual fica agrupada sob o nome dessa crônica; a lista suspensa **Crônica** no topo da página também mostra quantas das suas mudanças estão pendentes em qualquer crônica que você não está vendo no momento.
+A aba **Início** de **Minha Crônica** (a primeira, e onde você cai por padrão) é sobre você e mais ninguém: um cartão para cada personagem seu com o que ele tem para gastar ("9 XP para gastar · 1 XP retido · 3 mudanças aguardando"), **Precisa de você**, a **Próxima noite de jogo**, **Novidades nas suas tramas** e os seus grupos. Veja [Início](help/player-dashboard.md).
+
+**Precisa de você** põe primeiro o que tem prazo: tempo livre aberto enquanto um personagem seu não enviou nenhuma ação, e um Relatório Pós-Jogo que você não escreveu de uma noite a que o seu personagem foi. Abaixo vêm os seus avisos não lidos mais recentes, os mesmos que o sino guarda; abrir um o marca como lido. Sem nada disso, diz "Nada precisa de você agora."
+
+As mudanças de um personagem, pendentes, aprovadas, recusadas, retiradas ou desfeitas, ficam na visão **Histórico** dele. **Outras crônicas** mostra uma linha para cada outra crônica em que há mudanças aguardando você ("Boston: 2 mudanças aguardando"); toque nela para trocar para lá.
+
+A aba **Compêndio** lê o catálogo da crônica como um livro: escolha um tipo de criatura e uma seção, busque nela e abra uma entrada para ver a descrição, o que ela custa ao seu personagem e o livro de onde vem. Uma entrada comprável tem **Adicionar ao carrinho**. Veja [Compêndio](help/compendium.md).
 
 ## 5. Tramas e Rumores
 
@@ -110,7 +116,7 @@ A aba **Relatório Pós-Jogo** é onde você conta aos seus Narradores o que o s
 
 ## 14. Relatórios
 
-A aba **Relatórios** tem três visões abertas a todo membro da crônica: **Calendário do Jogo**, que lista as noites de jogo da crônica, e **Cartões de Local** e **Cartões de Ritual**, que mostram um cartão para cada entrada. Um mago só vê os rituais que o seu próprio personagem tem. Veja [Relatórios](help/reports.md).
+A aba **Relatórios** tem quatro visões abertas a todo membro da crônica: **Calendário do Jogo**, que lista as noites de jogo da crônica, **Cartões de Local** e **Cartões de Ritual**, que mostram um cartão para cada entrada, e **Vínculos**, que lista os vínculos e o Guanxi dos seus próprios personagens, uma linha cada, com um link **Imprimir**. Um mago só vê os rituais que o seu próprio personagem tem. Veja [Relatórios](help/reports.md).
 
 ## 15. Propondo um Grupo
 

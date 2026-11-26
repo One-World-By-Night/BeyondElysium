@@ -6,6 +6,7 @@ use BeyondElysium\Models\Change;
 use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Game;
 use BeyondElysium\Models\Game_Member;
+use BeyondElysium\Models\Notice;
 use BeyondElysium\Models\Plot;
 use BeyondElysium\Models\Release_Batch;
 use BeyondElysium\Models\Secret;
@@ -480,6 +481,24 @@ class SecretPassingThreadTest extends WP_UnitTestCase {
 		$recipients = array_column( $this->captured, 'to' );
 		$this->assertContains( get_userdata( $to_player_id )->user_email, $recipients, 'the recipient is told their character now knows it' );
 		$this->assertContains( get_userdata( $this->storyteller_id )->user_email, $recipients, 'staff are told so they can review it' );
+	}
+
+	public function test_immediate_mode_tells_the_staff_in_their_header_and_not_the_teller(): void {
+		$this->set_secret_passing( 'immediate' );
+		[ $player_id, $from_id, $to_id, $secret_id ] = $this->make_passable_pair();
+
+		wp_set_current_user( $player_id );
+		$this->send( 'POST', "/secrets/{$secret_id}/pass", [ 'from_character_id' => $from_id, 'to_character_id' => $to_id ] );
+
+		$told = array_values( array_filter(
+			Notice::for_person( $this->game_id, $this->storyteller_id, 30 ),
+			static fn( $notice ) => $notice->kind === 'secret_told'
+		) );
+		$this->assertCount( 1, $told );
+		$this->assertSame( 'A Secret', $told[0]->payload['secret_title'] );
+		$this->assertSame( 'Teller', $told[0]->payload['teller_name'] );
+		$this->assertSame( 'Recipient', $told[0]->payload['recipient_name'] );
+		$this->assertCount( 0, Notice::for_person( $this->game_id, $player_id, 30 ) );
 	}
 
 	public function test_a_needs_a_storyteller_pass_emails_nobody_about_visibility(): void {

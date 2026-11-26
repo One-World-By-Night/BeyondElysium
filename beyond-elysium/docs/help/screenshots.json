@@ -307,6 +307,17 @@
 				}
 			}
 		],
+		"compendium": [
+			{
+				"heading": "The screen",
+				"path": "/be-player/?game_slug=be-demo&tab=compendium",
+				"account": "player",
+				"alt": {
+					"en": "The Compendium tab: a creature type and character to price for, a search box, the sections of the type and a list of entries with their costs and books.",
+					"pt_BR": "A aba Compêndio: um tipo de criatura e um personagem para os preços, uma caixa de busca, as seções do tipo e uma lista de entradas com seus custos e livros."
+				}
+			}
+		],
 		"connections": [
 			{
 				"heading": "Connections",
@@ -458,12 +469,12 @@
 		],
 		"game-dashboard": [
 			{
-				"heading": "Game Dashboard",
+				"heading": "Storyteller Home",
 				"path": "/be-storyteller/?game_slug=be-demo&tab=dashboard",
 				"account": "storyteller",
 				"alt": {
-					"en": "The Storyteller Dashboard: cards counting characters, pending changes, waiting items, active plots and characters needing attention, with the character count by creature type.",
-					"pt_BR": "O Painel do Narrador: cartões com o número de personagens, mudanças pendentes, itens aguardando, tramas ativas e personagens precisando de atenção, e a contagem de personagens por tipo de criatura."
+					"en": "The Storyteller Home: the lines of what waits on the Storyteller, the next game night with how far downtime has come, the Spotlight, and the At a glance cards of the chronicle's numbers.",
+					"pt_BR": "O Início do Narrador: as linhas do que aguarda o Narrador, a próxima noite de jogo com até onde o tempo livre chegou, o Destaque e os cartões do Resumo com os números da crônica."
 				}
 			}
 		],
@@ -608,12 +619,12 @@
 		],
 		"player-dashboard": [
 			{
-				"heading": "Dashboard",
+				"heading": "Home",
 				"path": "/be-player/?game_slug=be-demo&tab=dashboard",
 				"account": "player",
 				"alt": {
-					"en": "A player's Dashboard in My Chronicle: the player's own characters listed with their types, their pending changes, and their groups.",
-					"pt_BR": "O Painel de um jogador em Minha Crônica: os personagens do próprio jogador com seus tipos, as mudanças pendentes e os grupos."
+					"en": "A player's Home in My Chronicle: a card for each of the player's characters with what it has to spend, what needs the player, the next game night and the latest in their plots.",
+					"pt_BR": "O Início de um jogador em Minha Crônica: um cartão para cada personagem do jogador com o que ele tem para gastar, o que precisa do jogador, a próxima noite de jogo e as novidades nas tramas dele."
 				}
 			}
 		],

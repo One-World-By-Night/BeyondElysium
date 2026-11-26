@@ -4,6 +4,14 @@
 	gap: 1.25rem;
 }
 
+/* A touch screen and a narrow one take the full touch floor in place of the desktop minimum. */
+@media ( max-width: 768px ), ( pointer: coarse ) {
+
+	.be-chronicle-players {
+		--be-tap-min: var(--be-tap);
+	}
+}
+
 .be-chronicle-players__error {
 	color: var(--be-red-7);
 }

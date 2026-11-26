@@ -70,7 +70,16 @@ class ReportAudienceThreadTest extends WP_UnitTestCase {
 
 		$listed = array_column( $this->get( $this->player, "/be/v1/{$this->slug}/reports" )->get_data(), 'key' );
 		sort( $listed );
-		$this->assertSame( [ 'game-calendar', 'house-rules', 'item-cards', 'location-cards', 'rote-cards' ], $listed );
+		$this->assertSame( [ 'bonds', 'game-calendar', 'house-rules', 'item-cards', 'location-cards', 'rote-cards' ], $listed );
+	}
+
+	public function test_the_capabilities_route_says_who_may_view_reports(): void {
+		$outsider = self::factory()->user->create( [ 'role' => 'subscriber' ] );
+
+		foreach ( [ $this->player, $this->narrator, $this->hst ] as $person ) {
+			$this->assertTrue( $this->get( $person, "/be/v1/{$this->slug}/my/capabilities" )->get_data()['capabilities']['be_view_reports'] );
+		}
+		$this->assertFalse( $this->get( $outsider, "/be/v1/{$this->slug}/my/capabilities" )->get_data()['capabilities']['be_view_reports'] );
 	}
 
 	public function test_a_narrator_runs_plot_reports_but_not_character_reports(): void {
@@ -82,6 +91,6 @@ class ReportAudienceThreadTest extends WP_UnitTestCase {
 		$roster = $this->get( $this->hst, "/be/v1/{$this->slug}/reports/character-roster" );
 		$this->assertSame( 200, $roster->get_status() );
 		$this->assertStringContainsString( 'Someone Else Secret Sheet', wp_json_encode( $roster->get_data() ) );
-		$this->assertCount( 20, $this->get( $this->hst, "/be/v1/{$this->slug}/reports" )->get_data() );
+		$this->assertCount( 21, $this->get( $this->hst, "/be/v1/{$this->slug}/reports" )->get_data() );
 	}
 }

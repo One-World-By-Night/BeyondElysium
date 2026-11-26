@@ -87,7 +87,7 @@ Para uma página que não é montada com o Elementor. `[be_house_rules game="chr
 - [Itens e Locais](world-objects.md)
 - [Registro de Favores](boon-ledger.md)
 - [Importar](import.md)
-- [Painel do Jogo](game-dashboard.md)
+- [Início do Narrador](game-dashboard.md)
 - [Regras da Casa](house-rules.md)
 - [Jogos](games.md)
 - [Páginas do Front-End](provisioned-pages.md)

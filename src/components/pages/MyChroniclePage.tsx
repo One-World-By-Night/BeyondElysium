@@ -15,9 +15,11 @@ import { TabStrip } from '../shared/TabStrip';
 import { CharacterList } from '../character/CharacterList';
 import { CharacterSection } from '../character/CharacterSection';
 import { MyPlotsFeed } from '../apr/MyPlotsFeed';
-import { GameDashboard } from '../game/GameDashboard';
+import { PlayerHome } from '../game/PlayerHome';
+import { Compendium } from '../compendium/Compendium';
 import { GameCalendar } from '../game/GameCalendar';
 import { ReportCards } from '../game/ReportCards';
+import { ReportTable } from '../reports/ReportTable';
 import { WhosWho } from '../game/WhosWho';
 import { WhatIKnow } from '../game/WhatIKnow';
 import { AfterGameReport } from '../game/AfterGameReport';
@@ -79,6 +81,19 @@ export function MyChroniclePage() {
 		readCharacterIdFromUrl
 	);
 	const [ reportKey, setReportKey ] = useState( 'game-calendar' );
+	const [ openSessionId ] = useState< number | null >( () => {
+		const raw = new URLSearchParams( window.location.search ).get(
+			'session_id'
+		);
+		const parsed = raw ? Number( raw ) : NaN;
+		return Number.isFinite( parsed ) && parsed > 0 ? parsed : null;
+	} );
+	const [ openPlotId ] = useState< number | null >( () => {
+		const query = new URLSearchParams( window.location.search );
+		const raw = query.get( 'open_plot' ) ?? query.get( 'plot_id' );
+		const parsed = raw ? Number( raw ) : NaN;
+		return Number.isFinite( parsed ) && parsed > 0 ? parsed : null;
+	} );
 	const [ appLayout ] = useState( isAppLayout );
 	const creatureTypes = useCreatureTypeNames( appLayout ? gameSlug : '' );
 
@@ -128,13 +143,17 @@ export function MyChroniclePage() {
 	const tabs = [
 		{
 			key: PLAYER_TABS.dashboard,
-			label: __( 'Dashboard', 'beyond-elysium' ),
+			label: __( 'Home', 'beyond-elysium' ),
 		},
 		{
 			key: PLAYER_TABS.characters,
 			label: __( 'Characters', 'beyond-elysium' ),
 		},
 		{ key: CHARACTER_SECTION, label: __( 'Character', 'beyond-elysium' ) },
+		{
+			key: PLAYER_TABS.compendium,
+			label: __( 'Compendium', 'beyond-elysium' ),
+		},
 		{
 			key: PLAYER_TABS.plots,
 			label: __( 'My Plots & Rumors', 'beyond-elysium' ),
@@ -175,6 +194,7 @@ export function MyChroniclePage() {
 			label: __( 'Location Cards', 'beyond-elysium' ),
 		},
 		{ key: 'rote-cards', label: __( 'Rote Cards', 'beyond-elysium' ) },
+		{ key: 'bonds', label: __( 'Bonds', 'beyond-elysium' ) },
 	].filter(
 		( r ) =>
 			r.key !== 'rote-cards' ||
@@ -277,12 +297,7 @@ export function MyChroniclePage() {
 						) ) }
 
 					{ tab === PLAYER_TABS.dashboard && (
-						<GameDashboard
-							key={ gameSlug }
-							gameSlug={ gameSlug }
-							sheetPageUrl={ playerTabUrl( PLAYER_TABS.sheet ) }
-							capabilities={ capabilities }
-						/>
+						<PlayerHome key={ gameSlug } gameSlug={ gameSlug } />
 					) }
 
 					{ tab === PLAYER_TABS.characters && (
@@ -333,8 +348,20 @@ export function MyChroniclePage() {
 						/>
 					) }
 
+					{ tab === PLAYER_TABS.compendium && (
+						<Compendium
+							key={ gameSlug }
+							gameSlug={ gameSlug }
+							capabilities={ capabilities }
+						/>
+					) }
+
 					{ tab === PLAYER_TABS.plots && (
-						<MyPlotsFeed key={ gameSlug } gameSlug={ gameSlug } />
+						<MyPlotsFeed
+							key={ gameSlug }
+							gameSlug={ gameSlug }
+							initialPlotId={ openPlotId }
+						/>
 					) }
 
 					{ tab === PLAYER_TABS.whosWho && (
@@ -349,6 +376,8 @@ export function MyChroniclePage() {
 						<AfterGameReport
 							key={ gameSlug }
 							gameSlug={ gameSlug }
+							initialSessionId={ openSessionId }
+							initialCharacterId={ characterId ?? null }
 						/>
 					) }
 
@@ -390,6 +419,13 @@ export function MyChroniclePage() {
 								<GameCalendar
 									key={ gameSlug }
 									gameSlug={ gameSlug }
+								/>
+							) }
+							{ reportKey === 'bonds' && (
+								<ReportTable
+									key={ gameSlug }
+									gameSlug={ gameSlug }
+									reportKey="bonds"
 								/>
 							) }
 							{ ( reportKey === 'location-cards' ||

@@ -33,6 +33,8 @@ import type {
 	GameMemberRole,
 	ChroniclePlayerList,
 	ChroniclePlayerResult,
+	FormerNote,
+	PlayerNote,
 	CharacterLinkResult,
 	PlayerInvite,
 	PlayerInviteResult,
@@ -130,6 +132,13 @@ import type {
 } from '../types/releaseBatch';
 import type { DowntimeQueueRow } from '../types/downtime';
 import type { NoticeList, NoticeSettings } from '../lib/notices';
+import type { PlayerHomeData, StorytellerHomeData } from '../types/home';
+import type {
+	CompendiumEntries,
+	CompendiumHit,
+	CompendiumSections,
+	CompendiumType,
+} from '../types/compendium';
 import type {
 	StaffQueue,
 	StaffMember,
@@ -1442,6 +1451,35 @@ export const chroniclePlayers = ( gameSlug: string ) => ( {
 			data: { wp_user_id: wpUserId },
 		} ),
 
+	/**
+	 * The chronicle's private note about one player.
+	 */
+	note: ( wpUserId: number ): Promise< PlayerNote > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/players/${ wpUserId }/notes`,
+		} ),
+
+	saveNote: ( wpUserId: number, notes: string ): Promise< PlayerNote > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/players/${ wpUserId }/notes`,
+			method: 'PUT',
+			data: { notes },
+		} ),
+
+	deleteNote: ( wpUserId: number ): Promise< PlayerNote > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/players/${ wpUserId }/notes`,
+			method: 'DELETE',
+		} ),
+
+	/**
+	 * The notes the chronicle holds about people who are no longer in it.
+	 */
+	formerNotes: (): Promise< FormerNote[] > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/players/former-notes`,
+		} ),
+
 	remove: ( wpUserId: number ): Promise< ChroniclePlayerResult > =>
 		apiFetch( {
 			path: `${ BASE }/${ gameSlug }/players/${ wpUserId }`,
@@ -2277,6 +2315,59 @@ export const notices = ( gameSlug: string ) => ( {
 } );
 
 /**
+ * REST client for what a member's home in one chronicle shows.
+ */
+export const home = ( gameSlug: string ) => ( {
+	/**
+	 * The signed-in member's own characters, what is due, what is new and what is next.
+	 */
+	player: (): Promise< PlayerHomeData > =>
+		apiFetch( { path: `${ BASE }/${ gameSlug }/home/player` } ),
+
+	/**
+	 * A Storyteller's home: what waits on them, the next game night and who has had no attention.
+	 */
+	storyteller: (): Promise< StorytellerHomeData > =>
+		apiFetch( { path: `${ BASE }/${ gameSlug }/home/storyteller` } ),
+} );
+
+/**
+ * REST client for the chronicle's catalog as a member may read it.
+ */
+export const compendium = ( gameSlug: string ) => ( {
+	/**
+	 * The creature types the chronicle has on that the person may see.
+	 */
+	types: (): Promise< CompendiumType[] > =>
+		apiFetch( { path: `${ BASE }/${ gameSlug }/compendium` } ),
+
+	/**
+	 * One creature type's sections that hold entries, each with how many.
+	 */
+	sections: ( stack: string ): Promise< CompendiumSections > =>
+		apiFetch( { path: `${ BASE }/${ gameSlug }/compendium/${ stack }` } ),
+
+	/**
+	 * One section's entries.
+	 */
+	entries: ( stack: string, block: string ): Promise< CompendiumEntries > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/compendium/${ stack }/${ block }`,
+		} ),
+
+	/**
+	 * Names across a creature type's sections that hold the words searched for.
+	 */
+	search: ( stack: string, query: string ): Promise< CompendiumHit[] > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/compendium/search${ toQuery( {
+				stack,
+				q: query,
+			} ) }`,
+		} ),
+} );
+
+/**
  * REST client for the current player's own changes across every chronicle on this site where they have a character.
  */
 export const myChangesAcrossGames = () => ( {
@@ -2498,30 +2589,38 @@ export const sheets = ( gameSlug: string ) => ( {
 /**
  * REST client factory for the 19 GV301 reports.
  */
+export interface ReportRow {
+	key: string;
+	title: string;
+	/**
+	 * One line on what the report holds.
+	 */
+	summary: string;
+	shape: string;
+	entity: string | null;
+}
+
 export const reports = ( gameSlug: string ) => ( {
 	/**
 	 * The report registry: key, title, shape, entity.
 	 */
-	list: (): Promise<
-		Array< {
-			key: string;
-			title: string;
-			shape: string;
-			entity: string | null;
-		} >
-	> => apiFetch( { path: `${ BASE }/${ gameSlug }/reports` } ),
+	list: (): Promise< ReportRow[] > =>
+		apiFetch( { path: `${ BASE }/${ gameSlug }/reports` } ),
 
 	/**
 	 * The plain JSON form of one resolved report.
 	 */
 	document: (
 		reportKey: string,
-		options: { characterId?: number } = {}
+		options: { characterId?: number; order?: string } = {}
 	): Promise< Record< string, unknown > > =>
 		apiFetch( {
-			path: `${ BASE }/${ gameSlug }/reports/${ reportKey }${ toQuery(
-				options.characterId ? { character_id: options.characterId } : {}
-			) }`,
+			path: `${ BASE }/${ gameSlug }/reports/${ reportKey }${ toQuery( {
+				...( options.characterId
+					? { character_id: options.characterId }
+					: {} ),
+				...( options.order ? { order: options.order } : {} ),
+			} ) }`,
 		} ),
 
 	/**
@@ -2546,6 +2645,7 @@ export const reports = ( gameSlug: string ) => ( {
 			statType?: string;
 			characterId?: number;
 			objectId?: number;
+			order?: string;
 			conditions?: Array< {
 				field: string;
 				operator: string;
@@ -2565,6 +2665,9 @@ export const reports = ( gameSlug: string ) => ( {
 		}
 		if ( options.objectId ) {
 			params.set( 'object_id', String( options.objectId ) );
+		}
+		if ( options.order ) {
+			params.set( 'order', options.order );
 		}
 		if ( options.conditions && options.conditions.length > 0 ) {
 			params.set( 'conditions', JSON.stringify( options.conditions ) );
@@ -4776,6 +4879,8 @@ const api = {
 	characters,
 	changes,
 	notices,
+	home,
+	compendium,
 	myChangesAcrossGames,
 	snapshots,
 	sheetStyle,

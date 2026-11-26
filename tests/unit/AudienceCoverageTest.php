@@ -16,7 +16,7 @@ class AudienceCoverageTest extends TestCase {
 	private const KNOWN = [
 		'REST/Plots_Controller.php::get_items'                    => 'plot',
 		'REST/Plots_Controller.php::get_item'                     => 'plot',
-		'REST/Plots_Controller.php::get_my_plots'                 => 'plot',
+		'Services/My_Plots.php::for_user'                         => 'plot',
 		'REST/Plots_Controller.php::get_visible_characters'       => 'plot',
 		'REST/Plots_Controller.php::resolve_plot_for_membership'  => 'plot',
 		'REST/Entries_Controller.php::get_items'                  => 'plot_entry',

@@ -72,6 +72,10 @@ Each section keeps formatting, lists, and tables; images and anything else are s
 
 The same holds for every other setting only an admin makes on a shared system block: approval levels and reasons, approval-by-value and approval-by-option schedules, a power family's approval override, the block's own approval rules, and any item, power, level, pool, or field an admin added. A section added to a system creature stack is kept too. What an update does refresh is what ships with the plugin - names, costs, notes, translations, a stack's own name and sections - so changing one of those on a system block lasts only until the next update; fork the block for your chronicle to change it for good.
 
+**Storyteller-only text.** Wrap any part of a Reference, Description or Source in `[ST]` and `[/ST]` and a player never receives it: the character editor's lists, the Compendium and House Rules all leave the marked passage out, and so does the block's recorded change over the book. A block flagged **Storyteller only** gives a player no descriptions at all. A Storyteller, or anyone holding the Catalog permission, sees the text whole. See [Storyteller-Only Content](help/storyteller-only.md).
+
+**A list that holds bonds.** A trait list whose entries are names with ratings, such as Vampire Bonds or Kuei-Jin Guanxi, carries `"bond_list": true` in its definition, and the Bonds report prints one row for each entry in it. Only a trait list may carry the flag, and its value must be `true`. A chronicle's own copy of the block keeps it. See [Reports](help/reports.md).
+
 ### Approval by Value and Approval by Option
 
 An item's flat approval setting ("this whole item needs Storyteller approval") can be sharpened to depend on what a player is actually raising it to:
@@ -211,7 +215,7 @@ An HST can reach **System Config**'s **Schema Blocks** and **Templates** for the
 
 ## Front-End Pages
 
-Four WordPress pages, created automatically the first time the plugin runs (or updates), carry every front-end widget: **My Chronicle** (`be-player`), **Storyteller Toolkit** (`be-storyteller`), **Character Sheet (Print)** (`character-sheet-print`), and **Verify Character** (`be-verify`). Fixed at four regardless of how many chronicles this site hosts - My Chronicle and Storyteller Toolkit each carry a chronicle switcher rather than being tied to one chronicle at creation time; see the [Storyteller Guide](st-guide.md#7-the-game-dashboard) for what lives on each.
+Four WordPress pages, created automatically the first time the plugin runs (or updates), carry every front-end widget: **My Chronicle** (`be-player`), **Storyteller Toolkit** (`be-storyteller`), **Character Sheet (Print)** (`character-sheet-print`), and **Verify Character** (`be-verify`). Fixed at four regardless of how many chronicles this site hosts - My Chronicle and Storyteller Toolkit each carry a chronicle switcher rather than being tied to one chronicle at creation time; see the [Storyteller Guide](st-guide.md#7-the-storyteller-home) for what lives on each.
 
 If one of these pages is ever deleted by mistake, it is **not** recreated automatically on its own - a page, once created at a given slug, is never overwritten or replaced. Recover it from **Beyond Elysium → Chronicle Setup**: the **Front-end pages** checklist row turns red when any of the four is missing, with a **Fix** link that re-runs the same provisioning step (`?provision_pages=1`, `be_manage_games`-gated) the plugin already ran once automatically.
 

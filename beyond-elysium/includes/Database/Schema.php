@@ -12,7 +12,7 @@ class Schema {
 	/**
 	 * The plugin's current database schema version, matching the plugin release version.
 	 */
-	const DB_VERSION = '1.7.5';
+	const DB_VERSION = '1.7.6';
 
 	/**
 	 * Option key holding the installed schema version.
@@ -86,6 +86,7 @@ class Schema {
 		'bot_notices',
 		'staff_grants',
 		'notices',
+		'player_notes',
 	];
 
 	/**
@@ -985,6 +986,18 @@ class Schema {
 			PRIMARY KEY  (id),
 			KEY idx_person (wp_user_id, game_id, read_at),
 			KEY idx_created (created_at)
+		) $charset_collate;" );
+
+		// be_player_notes: a chronicle's private note about one person, for its Storytellers alone.
+		dbDelta( "CREATE TABLE {$prefix}player_notes (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			game_id bigint(20) unsigned NOT NULL,
+			wp_user_id bigint(20) unsigned NOT NULL,
+			notes longtext NOT NULL,
+			updated_by bigint(20) unsigned NOT NULL DEFAULT 0,
+			updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY  (id),
+			UNIQUE KEY game_person (game_id, wp_user_id)
 		) $charset_collate;" );
 
 		// be_staff_grants: one row per area an HST gave one person in one chronicle; taking it away stamps the row.

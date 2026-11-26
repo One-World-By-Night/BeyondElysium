@@ -46,11 +46,17 @@ When a Storyteller approves or rejects a change you submitted, you also get one 
 
 Separately, your profile also has **Plot posts and new things your characters can see** - three choices (Immediately, Daily digest, or Off) covering a new post on a plot you can already see, and a plot, item, or location becoming newly visible to one of your characters (a Storyteller connects your character to it, or widens who can see it). Immediately sends one email per request, as soon as it happens; Daily digest rolls everything up into one email a day, posts and new things listed apart; Off sends nothing. The email never carries the content itself - only what changed, and a link to your own view of it.
 
-## 4. Your Dashboard
+**Downtime reminder.** In the last two days before downtime closes, a character of yours that has sent no actions gets a notice in the bell and one email, once for that game night. A character with an extension is reminded against its own deadline. If you've opted out of email you still get the notice.
 
-**My Chronicle**'s **Dashboard** tab (the first one, and where you land by default) shows a player-facing summary: your own characters, your own plots, and **My Changes** - never anyone else's data.
+## 4. Your Home
 
-**My Changes** looks across every chronicle you belong to, not just the one you're currently viewing: anything still pending, plus anything decided in roughly the last month, each marked **Pending**, **Approved**, **Auto-approved**, **Refused**, **Withdrawn** or **Undone**. A change in a chronicle other than the one you're on is grouped under that chronicle's own name; the **Chronicle** dropdown at the top of the page also shows how many of your changes are pending in any chronicle you aren't currently looking at.
+**My Chronicle**'s **Home** tab (the first one, and where you land by default) is about you and nobody else: a card for each of your characters with what it has to spend ("9 XP to spend · 1 XP held · 3 changes waiting"), **Needs you**, the **Next game night**, **Latest in your plots** and your groups. See [Home](help/player-dashboard.md).
+
+**Needs you** puts what has a deadline first: downtime that is open while a character of yours has sent no actions, and an After-Game Report you haven't written for a night your character attended. Under those come your newest unread notices, the same ones the bell holds; opening one marks it read. With none of that it says "Nothing needs you right now."
+
+A character's changes, whether pending, approved, refused, withdrawn or undone, are on its **History** view. **Other chronicles** shows a line for each other chronicle where changes are waiting for you ("Boston: 2 changes waiting"); tap it to switch there.
+
+The **Compendium** tab reads the chronicle's catalog like a book: pick a creature type and a section, search it, and open an entry to see its description, what it costs your character and the book it comes from. A buyable entry has **Add to cart**. See [Compendium](help/compendium.md).
 
 ## 5. Plots and Rumors
 
@@ -110,7 +116,7 @@ The **After-Game Report** tab is where you tell your Storytellers what your char
 
 ## 14. Reports
 
-The **Reports** tab has three views open to every member of the chronicle: **Game Calendar**, which lists the chronicle's game nights, and **Location Cards** and **Rote Cards**, which show one card for each entry. A mage sees only the rotes their own character holds. See [Reports](help/reports.md).
+The **Reports** tab has four views open to every member of the chronicle: **Game Calendar**, which lists the chronicle's game nights, **Location Cards** and **Rote Cards**, which show one card for each entry, and **Bonds**, which lists the bonds and Guanxi on your own characters, one row each, with a **Print** link. A mage sees only the rotes their own character holds. See [Reports](help/reports.md).
 
 ## 15. Proposing a Group
 

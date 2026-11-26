@@ -16,7 +16,9 @@ Open the [Storyteller Toolkit](storyteller-toolkit.md), pick the chronicle, then
 - **Invite a player** - a box for their email address, a list of the chronicle's player characters to tick, and a box, ticked by default, to email them an invitation. Typing three letters of a name instead of an address looks up existing accounts; **Use this email** fills in theirs.
 - **The character list** - free characters first, then those waiting for someone's email, then those already linked to a player (you can't tick those). Type in its filter box to narrow it by name.
 - **Waiting to sign in** - every invite nobody has signed in for yet: the email, the characters waiting for it, who sent it and when, with a **Cancel** button.
-- **Players** - everyone who is a player in this chronicle, each with their characters. Each character has **Unlink**; each player has **Add characters** and **Remove**.
+- **Players** - everyone who is a player in this chronicle, each with their characters. Each character has **Unlink**; each player has **Add characters**, **Notes** and **Remove**.
+- **Notes** - the chronicle's private note about that player. It opens a box that saves as you type, with who changed it last and when; a player who has one shows **Notes (has one)**. Plain text, up to 10,000 characters.
+- **Notes on people who left** - under the player list, and only when there are any: a note about someone who is no longer a player here, with **Open note** and **Delete**.
 - **Discord** - Discord accounts asking to act as a chronicle member: **Waiting for a decision**, with **Approve**/**Decline**, and **Linked**, with **Revoke**. Each row names the Discord account, the website account it's confirmed to, and the characters it carries. See [Discord](discord.md).
 - **Staff permissions** - only the HST sees this. Each person the HST has given more than their role holds, with their role here, five boxes (**Catalog**, **Approval Rules**, **Templates**, **Chronicle Setup**, **Delete characters**) and **Save**; **Give someone more**, to find another account and tick boxes for it; and **Recent changes**, one line for each grant and removal with who made it and when. Catalog and Delete characters say "In the Storyteller Toolkit". The other three say "Opens in wp-admin. Needs an Editor account on this site."
 - A line under **Players** names the OWbN role that goes with being a player here, such as `chronicle/kony/player`.
@@ -55,6 +57,17 @@ Open the [Storyteller Toolkit](storyteller-toolkit.md), pick the chronicle, then
 1. Click **Remove** beside them and confirm.
 2. They are no longer a player here. Their characters stay exactly as they are.
 
+### Keep a note about a player
+
+1. Click **Notes** beside them.
+2. Type. It saves by itself; the line under the box shows who last changed it and when.
+3. Close the box. An emptied note is removed.
+
+### Read or delete a note about someone who left
+
+1. Under **Notes on people who left**, click **Open note** to read or change it.
+2. Or click **Delete** and confirm. The note is gone for good.
+
 ### Approve a Discord link
 
 1. Find the account under **Discord**, **Waiting for a decision**.
@@ -85,7 +98,10 @@ Open the [Storyteller Toolkit](storyteller-toolkit.md), pick the chronicle, then
 - **OWbN roles follow.** Becoming a player here also grants the chronicle's player role in OWbN, and removing them takes it away. If OWbN refuses, the message says why; the player is still added here, and an OWbN admin can grant the role.
 - **A pending email set on a character** from the Characters list is an invite too. It shows under **Waiting to sign in** and links the same way.
 - **Linking is recorded.** Each character's history shows who it was linked to or unlinked from.
-- **Removing is not deleting.** Their account, their characters and their place in any other chronicle are untouched.
+- **Removing is not deleting.** Their account, their characters, their note and their place in any other chronicle are untouched.
+- **Notes are for the HST and AST only.** The player, a Narrator and everyone else are refused, and no character sheet, print, export, report or Discord reply carries a note.
+- **A note stays when a player leaves**, and comes back with them if they return; it moves from the player list to **Notes on people who left** in between.
+- **A note goes with the account or the chronicle.** Deleting the person's account deletes their notes in every chronicle, and deleting the chronicle deletes its notes. Each chronicle keeps its own note about the same person.
 - **A Discord account is approved for this chronicle, not for an account site-wide.** Approving a new link for the same website account revokes whichever link was approved before it; only one is active at a time.
 - **Acting from Discord follows the same rules as the website.** Nothing a linked account does through the bot skips a permission, an approval, or a limit it would hit here.
 

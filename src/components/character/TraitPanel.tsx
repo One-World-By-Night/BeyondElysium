@@ -10,6 +10,7 @@ import useCharacterEditorStore from '../../store/characterEditorStore';
 import { highlightStMarkers } from '../../lib/highlightStMarkers';
 import type { HeldTrait } from '../../lib/heldTraits';
 import { formatStoredTime } from '../../lib/storedTime';
+import { localizedPowerName } from '../../lib/localizeName';
 import { stripStSections } from '../../lib/stripStSections';
 import {
 	cartButtonLabel,
@@ -26,8 +27,19 @@ import './TraitPanel.css';
 
 export interface TraitPanelProps {
 	gameSlug: string;
-	characterId: number;
+	/**
+	 * The character the panel prices and adds for; null reads the catalog entry alone.
+	 */
+	characterId: number | null;
 	trait: HeldTrait;
+	/**
+	 * True when the entry is the catalog's and the character does not hold it.
+	 */
+	notHeld?: boolean;
+	/**
+	 * Where the compendium shows this entry, when the panel was not opened from there.
+	 */
+	compendiumHref?: string | null;
 	/**
 	 * The trait's section's block, as the character's creature type has it.
 	 */
@@ -73,6 +85,8 @@ export function TraitPanel( {
 	gameSlug,
 	characterId,
 	trait,
+	notHeld = false,
+	compendiumHref = null,
 	block,
 	sheetData,
 	label,
@@ -104,7 +118,7 @@ export function TraitPanel( {
 
 	const step = useMemo(
 		() =>
-			block && ( canEdit || canManage )
+			characterId !== null && block && ( canEdit || canManage )
 				? cartStep(
 						trait,
 						block,
@@ -112,7 +126,16 @@ export function TraitPanel( {
 						( draftSheet ?? sheetData )[ trait.blockSlug ]
 					)
 				: null,
-		[ trait, block, sheetData, savedSheet, draftSheet, canEdit, canManage ]
+		[
+			characterId,
+			trait,
+			block,
+			sheetData,
+			savedSheet,
+			draftSheet,
+			canEdit,
+			canManage,
+		]
 	);
 	const entry = useMemo(
 		() => catalogEntry( block, trait ),
@@ -136,7 +159,7 @@ export function TraitPanel( {
 	}, [ onClose ] );
 
 	useEffect( () => {
-		if ( ! step ) {
+		if ( ! step || characterId === null ) {
 			setQuote( { state: 'none' } );
 			return undefined;
 		}
@@ -174,6 +197,10 @@ export function TraitPanel( {
 	}, [ gameSlug, characterId, step ] );
 
 	useEffect( () => {
+		if ( characterId === null ) {
+			setHistory( [] );
+			return undefined;
+		}
 		let live = true;
 		api.changes( gameSlug )
 			.list( characterId, { per_page: 100, order: 'DESC' } )
@@ -216,7 +243,9 @@ export function TraitPanel( {
 					<div>
 						<h3 className="be-trait-panel__name">{ label }</h3>
 						<p className="be-trait-panel__meta">
-							{ trait.section } · { ratingText( trait ) }
+							{ notHeld
+								? trait.section
+								: `${ trait.section } · ${ ratingText( trait ) }` }
 						</p>
 					</div>
 					<button
@@ -307,6 +336,8 @@ export function TraitPanel( {
 
 				{ ( !! description ||
 					!! citation ||
+					!! entry?.book ||
+					( entry?.ladder?.length ?? 0 ) > 0 ||
 					( entry?.prerequisites?.length ?? 0 ) > 0 ) && (
 					<section className="be-trait-panel__section">
 						<h4>{ __( 'About', 'beyond-elysium' ) }</h4>
@@ -318,6 +349,15 @@ export function TraitPanel( {
 								} }
 							/>
 						) }
+						{ entry?.book && (
+							<p>
+								{ sprintf(
+									/* translators: %s: the title of the book a trait comes from */
+									__( 'Book: %s', 'beyond-elysium' ),
+									entry.book
+								) }
+							</p>
+						) }
 						{ citation && (
 							<p>
 								{ sprintf(
@@ -326,6 +366,33 @@ export function TraitPanel( {
 									citation
 								) }
 							</p>
+						) }
+						{ ( entry?.ladder?.length ?? 0 ) > 0 && (
+							<>
+								<h5>{ __( 'Levels', 'beyond-elysium' ) }</h5>
+								<ul className="be-trait-panel__ladder">
+									{ entry?.ladder?.map( ( level ) => (
+										<li key={ level.power_name }>
+											<span>
+												{ localizedPowerName( level ) }
+											</span>
+											{ level.cost && (
+												<span className="be-trait-panel__when">
+													{ sprintf(
+														/* translators: 1: the tier of a power level, 2: what it costs in XP */
+														__(
+															'%1$s · %2$s XP',
+															'beyond-elysium'
+														),
+														level.tier,
+														level.cost
+													) }
+												</span>
+											) }
+										</li>
+									) ) }
+								</ul>
+							</>
 						) }
 						{ entry?.prerequisites?.map( ( need ) => (
 							<p key={ `${ need.block_slug }.${ need.power }` }>
@@ -340,43 +407,54 @@ export function TraitPanel( {
 					</section>
 				) }
 
-				<section className="be-trait-panel__section">
-					<h4>{ __( 'History', 'beyond-elysium' ) }</h4>
-					{ history === null && (
-						<p>{ __( 'Loading…', 'beyond-elysium' ) }</p>
-					) }
-					{ history !== null && history.length === 0 && (
-						<p>
-							{ __(
-								'Nothing recorded for this yet.',
-								'beyond-elysium'
-							) }
-						</p>
-					) }
-					{ history !== null && history.length > 0 && (
-						<ul className="be-trait-panel__history">
-							{ history.map( ( line ) => (
-								<li key={ line.id }>
-									<span>{ line.description }</span>{ ' ' }
-									<span className="be-trait-panel__when">
-										{ formatStoredTime( line.createdAt, {
-											time: false,
-										} ) }
-									</span>
-								</li>
-							) ) }
-						</ul>
-					) }
-					{ onView && (
-						<button
-							type="button"
-							className="be-trait-panel__link"
-							onClick={ () => onView( 'history' ) }
-						>
-							{ __( 'See all in History', 'beyond-elysium' ) }
-						</button>
-					) }
-				</section>
+				{ characterId !== null && (
+					<section className="be-trait-panel__section">
+						<h4>{ __( 'History', 'beyond-elysium' ) }</h4>
+						{ history === null && (
+							<p>{ __( 'Loading…', 'beyond-elysium' ) }</p>
+						) }
+						{ history !== null && history.length === 0 && (
+							<p>
+								{ __(
+									'Nothing recorded for this yet.',
+									'beyond-elysium'
+								) }
+							</p>
+						) }
+						{ history !== null && history.length > 0 && (
+							<ul className="be-trait-panel__history">
+								{ history.map( ( line ) => (
+									<li key={ line.id }>
+										<span>{ line.description }</span>{ ' ' }
+										<span className="be-trait-panel__when">
+											{ formatStoredTime(
+												line.createdAt,
+												{
+													time: false,
+												}
+											) }
+										</span>
+									</li>
+								) ) }
+							</ul>
+						) }
+						{ onView && (
+							<button
+								type="button"
+								className="be-trait-panel__link"
+								onClick={ () => onView( 'history' ) }
+							>
+								{ __( 'See all in History', 'beyond-elysium' ) }
+							</button>
+						) }
+					</section>
+				) }
+
+				{ compendiumHref && (
+					<a className="be-trait-panel__link" href={ compendiumHref }>
+						{ __( 'See in the compendium', 'beyond-elysium' ) }
+					</a>
+				) }
 
 				{ canEdit && onView && (
 					<button

@@ -596,6 +596,10 @@ class Catalog_Validator {
 			}
 		}
 
+		if ( $section_type !== 'trait_list' && array_key_exists( 'bond_list', $definition ) ) {
+			$errors[] = '`bond_list` belongs only on a trait_list block';
+		}
+
 		if ( $section_type === 'trait_list' ) {
 			$errors = array_merge( $errors, self::validate_trait_list( $definition ) );
 		} elseif ( $section_type === 'tiered_power' ) {
@@ -743,6 +747,9 @@ class Catalog_Validator {
 		}
 		if ( array_key_exists( 'unpriced', $definition ) && ! is_bool( $definition['unpriced'] ) ) {
 			$errors[] = '`unpriced` must be true or false';
+		}
+		if ( array_key_exists( 'bond_list', $definition ) && $definition['bond_list'] !== true ) {
+			$errors[] = '`bond_list` must be true - or left out, since a list that holds no bonds carries nothing';
 		}
 		if ( array_key_exists( 'paid_from', $definition['_meta'] ?? [] ) ) {
 			$paid_from = $definition['_meta']['paid_from'];

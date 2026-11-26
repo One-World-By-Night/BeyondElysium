@@ -47,6 +47,32 @@ class Downtime_Window {
 	}
 
 	/**
+	 * Whether a session's downtime is open for a character and the character has sent no actions for that night, and
+	 * if so the deadline that applies to them and their action plot for the night, when it exists yet.
+	 *
+	 * @param object $session   A decoded game session.
+	 * @param object $character A character that has a player.
+	 * @param string $now       `Y-m-d H:i:s`.
+	 * @return array{deadline:?string,plot_id:?int}|null
+	 */
+	public static function awaiting_actions( object $session, object $character, string $now ): ?array {
+		$extensions = is_array( $session->downtime_extensions ) ? $session->downtime_extensions : [];
+		$extension  = $extensions[ (string) $character->id ] ?? null;
+		$extension  = is_string( $extension ) && $extension !== '' ? $extension : null;
+
+		if ( self::state_for( $session->downtime_opens_at, $session->downtime_deadline_at, $extension, $now ) !== self::OPEN ) {
+			return null;
+		}
+
+		$plot_id = Action_Allocator::find_own_plot_id( (int) $character->id, (string) $session->game_date );
+		if ( $plot_id !== null && Plot_Entry::for_plot( $plot_id, [ 'entry_type' => 'action' ] ) !== [] ) {
+			return null;
+		}
+
+		return [ 'deadline' => $extension ?? $session->downtime_deadline_at, 'plot_id' => $plot_id ];
+	}
+
+	/**
 	 * The pure rule behind state(): an extension, when present, replaces the deadline for that character only; neither
 	 * field set means there is no window to enforce.
 	 *

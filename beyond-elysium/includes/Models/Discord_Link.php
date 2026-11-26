@@ -129,6 +129,14 @@ class Discord_Link {
 			\BeyondElysium\Models\Bot_Notice::add( (int) $link->game_id, null, 'link_request', [
 				'discord_username' => (string) ( $link->discord_username ?? '' ),
 			] );
+			$names = [];
+			foreach ( $character_ids as $character_id ) {
+				$character = Character::find( (int) $character_id );
+				if ( $character ) {
+					$names[] = (string) $character->name;
+				}
+			}
+			\BeyondElysium\Services\Notices::link_requested( Game::find( (int) $link->game_id ), (string) ( $link->discord_username ?? '' ), $names );
 		}
 
 		Transaction::commit( $savepoint );

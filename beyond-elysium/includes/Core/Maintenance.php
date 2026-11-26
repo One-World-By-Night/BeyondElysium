@@ -15,6 +15,7 @@ use BeyondElysium\Models\Release_Batch;
 use BeyondElysium\Models\Submission;
 use BeyondElysium\Models\Transfer;
 use BeyondElysium\Services\Demo_Chronicle;
+use BeyondElysium\Services\Downtime_Reminders;
 use BeyondElysium\Services\Keep_Current;
 use BeyondElysium\Services\Release_Engine;
 use BeyondElysium\Services\Release_Scheduler;
@@ -108,6 +109,7 @@ class Maintenance {
 		Submission::expire_stale();
 		Change::expire_stale_visit_pairings( Transfer::OFFER_TTL_DAYS );
 		Notifications::send_daily_digests();
+		Downtime_Reminders::run();
 		Mail_Log::prune();
 		Bot_Nonce::prune();
 		Bot_Connect_Code::prune();

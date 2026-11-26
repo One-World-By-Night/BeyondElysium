@@ -45,6 +45,9 @@ class Report_Document {
 
 		switch ( $report['shape'] ) {
 			case 'table':
+				if ( ( $report['rows_from'] ?? null ) === 'bonds' ) {
+					return self::build_bonds( $report, $game, (string) ( $options['order'] ?? '' ), $can_manage );
+				}
 				return self::build_table( $report, $game, $filters, $options, $can_manage );
 			case 'card':
 				return self::build_card( $report, $game, $filters, $can_manage );
@@ -55,7 +58,7 @@ class Report_Document {
 			case 'calendar':
 				return self::build_calendar( $report, $game, $can_manage );
 			case 'house_rules':
-				return self::build_house_rules( $report, $game );
+				return self::build_house_rules( $report, $game, $can_manage );
 			default:
 				return null;
 		}
@@ -79,6 +82,89 @@ class Report_Document {
 			$registry = include BE_PLUGIN_DIR . 'includes/Database/report-registry.php';
 		}
 		return $registry;
+	}
+
+	/**
+	 * Bonds: one row per bond on a list the catalog marks as holding bonds (Bonds, Guanxi). A Storyteller reads every
+	 * active character's, with their players; anyone else reads only their own active player characters' and none from
+	 * a list the chronicle made Storyteller-only.
+	 *
+	 * @param array<string,mixed> $report
+	 * @param string              $order      `bonded_to` puts the person bonded to first; anything else orders by character.
+	 * @param bool                $can_manage
+	 * @return array<string,mixed>
+	 */
+	private static function build_bonds( array $report, object $game, string $order, bool $can_manage ): array {
+		$slug   = (string) $game->slug;
+		$hidden = $can_manage ? [] : Schema_Block::storyteller_only_slugs( $slug );
+		$lists  = [];
+		foreach ( Schema_Block::all_for_game_by_types( [ 'trait_list' ], $slug ) as $block ) {
+			$definition = $block->definition;
+			if ( ! empty( $definition->bond_list ) && ! in_array( $block->slug, $hidden, true ) ) {
+				$lists[ (string) $block->slug ] = (string) $block->name;
+			}
+		}
+
+		$characters = $can_manage
+			? Character::all_for_game( $slug, [ 'status' => 'active' ] )
+			: array_filter(
+				Character::find_for_user( get_current_user_id(), $slug ),
+				static fn( $character ) => $character->status === 'active' && empty( $character->is_npc )
+			);
+
+		$bonds = [];
+		foreach ( $characters as $character ) {
+			$sheet  = is_array( $character->sheet_data ) ? $character->sheet_data : [];
+			$player = '';
+			if ( $can_manage && (int) $character->wp_user_id > 0 ) {
+				$user   = get_userdata( (int) $character->wp_user_id );
+				$player = $user ? (string) $user->display_name : (string) ( $character->player_name ?? '' );
+			}
+			foreach ( $lists as $block_slug => $kind ) {
+				foreach ( is_array( $sheet[ $block_slug ] ?? null ) ? $sheet[ $block_slug ] : [] as $row ) {
+					$row = (array) $row;
+					if ( ( $row['name'] ?? '' ) === '' ) {
+						continue;
+					}
+					$bonds[] = [
+						'character' => (string) $character->name,
+						'player'    => $player,
+						'bonded_to' => (string) $row['name'],
+						'rating'    => (string) (int) ( $row['count'] ?? 0 ),
+						'kind'      => $kind,
+					];
+				}
+			}
+		}
+
+		$by = $order === 'bonded_to' && $can_manage ? [ 'bonded_to', 'character' ] : [ 'character', 'bonded_to' ];
+		usort( $bonds, static fn( $a, $b ) => strnatcasecmp( $a[ $by[0] ], $b[ $by[0] ] ) ?: strnatcasecmp( $a[ $by[1] ], $b[ $by[1] ] ) );
+
+		$columns = array_values( array_filter(
+			$report['columns'],
+			static fn( $column ) => $can_manage || $column[1] !== 'player'
+		) );
+
+		return [
+			'title'   => self::words( (string) $report['title'] ),
+			'shape'   => 'table',
+			'columns' => array_map( static fn( $column ) => self::words( (string) $column[0] ), $columns ),
+			'rows'    => array_map(
+				static fn( $bond ) => array_map( static fn( $column ) => $bond[ $column[1] ], $columns ),
+				$bonds
+			),
+			'note'    => $bonds === [] ? self::words( (string) $report['empty_note'] ) : '',
+			'game'    => $game->name,
+		];
+	}
+
+	/**
+	 * A word a report prints, in the site's language; an English word the strings file does not hold comes back as it
+	 * was given.
+	 */
+	public static function words( string $english ): string {
+		$words = include BE_PLUGIN_DIR . 'includes/Database/report-strings.php';
+		return $words[ $english ] ?? $english;
 	}
 
 	/**
@@ -118,9 +204,9 @@ class Report_Document {
 		}
 
 		return [
-			'title'   => $report['title'],
+			'title'   => self::words( (string) $report['title'] ),
 			'shape'   => 'table',
-			'columns' => array_map( static fn( $c ) => $c[0], $report['columns'] ),
+			'columns' => array_map( static fn( $c ) => self::words( (string) $c[0] ), $report['columns'] ),
 			'rows'    => $table_rows,
 			'game'    => $game->name,
 		];
@@ -252,7 +338,7 @@ class Report_Document {
 		}
 
 		return [
-			'title' => $report['title'],
+			'title' => self::words( (string) $report['title'] ),
 			'shape' => 'card',
 			'cards' => $cards,
 			'game'  => $game->name,
@@ -296,7 +382,7 @@ class Report_Document {
 			}
 
 			$fields[] = [
-				'label' => $label,
+				'label' => self::words( (string) $label ),
 				'value' => $value,
 				'html'  => $source === 'field' && ( $schema[ $key ] ?? '' ) === 'text',
 			];
@@ -372,8 +458,8 @@ class Report_Document {
 				'name'      => $name,
 				'picture'   => null,
 				'fields'    => [
-					[ 'label' => 'Note', 'value' => (string) ( $catalog_item->note ?? '' ), 'html' => false ],
-					[ 'label' => 'Source', 'value' => (string) ( $catalog_item->source ?? '' ), 'html' => false ],
+					[ 'label' => self::words( 'Note' ), 'value' => (string) ( $catalog_item->note ?? '' ), 'html' => false ],
+					[ 'label' => self::words( 'Source' ), 'value' => (string) ( $catalog_item->source ?? '' ), 'html' => false ],
 				],
 				'uses_max'  => null,
 				'uses_used' => 0,
@@ -382,7 +468,7 @@ class Report_Document {
 		}
 
 		return [
-			'title' => $report['title'],
+			'title' => self::words( (string) $report['title'] ),
 			'shape' => 'card',
 			'cards' => $cards,
 			'game'  => $game->name,
@@ -449,7 +535,7 @@ class Report_Document {
 		}
 
 		return [
-			'title'  => $report['title'],
+			'title'  => self::words( (string) $report['title'] ),
 			'shape'  => 'statistics',
 			'blocks' => $blocks,
 			'game'   => $game->name,
@@ -475,9 +561,9 @@ class Report_Document {
 
 			$blocks[] = [
 				'title'  => Character::plot_display_title( (string) $plot->title ),
-				'status' => $plot->status,
+				'status' => self::words( ucfirst( (string) $plot->status ) ),
 				'lines'  => [
-					'Initiated by: ' . ( $plot->initiated_by ?? '—' ),
+					self::words( 'Initiated by' ) . ': ' . ( $plot->initiated_by ?? '—' ),
 					(string) ( $plot->description ?? '' ),
 				],
 				'entries' => $lines,
@@ -485,7 +571,7 @@ class Report_Document {
 		}
 
 		return [
-			'title'  => $report['title'],
+			'title'  => self::words( (string) $report['title'] ),
 			'shape'  => 'narrative',
 			'blocks' => $blocks,
 			'game'   => $game->name,
@@ -511,10 +597,10 @@ class Report_Document {
 		}, $sessions );
 
 		return [
-			'title' => $report['title'],
+			'title' => self::words( (string) $report['title'] ),
 			'shape' => 'calendar',
 			'rows'  => $rows,
-			'note'  => empty( $rows ) ? ( $report['empty_note'] ?? '' ) : '',
+			'note'  => empty( $rows ) ? self::words( (string) ( $report['empty_note'] ?? '' ) ) : '',
 			'game'  => $game->name,
 		];
 	}
@@ -526,8 +612,11 @@ class Report_Document {
 	 * @param array<string,mixed> $report
 	 * @return array<string,mixed>
 	 */
-	private static function build_house_rules( array $report, object $game ): array {
+	private static function build_house_rules( array $report, object $game, bool $can_manage ): array {
 		$blocks = Schema_Block::all_for_game_by_types( [ 'trait_list', 'tiered_power' ], (string) $game->slug );
+		foreach ( $blocks as $block ) {
+			St_Visibility::filter_catalog_block( $block, $game, $can_manage );
+		}
 		$groups = [];
 
 		foreach ( $blocks as $block ) {
@@ -563,7 +652,7 @@ class Report_Document {
 		}
 
 		return [
-			'title'  => $report['title'],
+			'title'  => self::words( (string) $report['title'] ),
 			'shape'  => 'house_rules',
 			'groups' => $groups,
 			'game'   => $game->name,

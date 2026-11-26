@@ -26,6 +26,7 @@ describe( 'canIn', () => {
 		be_manage_chronicle_setup: false,
 		be_delete_characters: false,
 		be_grant_staff_access: false,
+		be_view_reports: false,
 	};
 
 	beforeEach( () => {
@@ -85,6 +86,7 @@ describe( 'canAny', () => {
 		be_manage_chronicle_setup: false,
 		be_delete_characters: false,
 		be_grant_staff_access: false,
+		be_view_reports: false,
 	};
 
 	it( 'answers yes when any one capability is held', () => {

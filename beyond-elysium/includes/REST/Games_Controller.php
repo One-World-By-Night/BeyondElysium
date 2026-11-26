@@ -263,6 +263,8 @@ class Games_Controller extends Base_Controller {
 			'be_delete_characters',
 			// Gates the Players tab's Staff permissions section.
 			'be_grant_staff_access',
+			// Gates the Storyteller Toolkit's Reports tab.
+			'be_view_reports',
 		];
 
 		$game = Game::find_by_slug( $request['game_slug'] );

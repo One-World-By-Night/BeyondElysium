@@ -75,11 +75,11 @@ class ReportsControllerThreadTest extends WP_UnitTestCase {
 		return rest_get_server()->dispatch( $request );
 	}
 
-	public function test_get_items_lists_all_twenty_reports(): void {
+	public function test_get_items_lists_all_twenty_one_reports(): void {
 		$response = $this->dispatch( '/be/v1/' . $this->game_slug . '/reports' );
 
 		$this->assertSame( 200, $response->get_status() );
-		$this->assertCount( 20, $response->get_data() );
+		$this->assertCount( 21, $response->get_data() );
 	}
 
 	/**

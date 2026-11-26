@@ -40,6 +40,48 @@ for po in beyond-elysium/languages/*.po; do
     locale="$(basename "$po" .po | sed 's/^beyond-elysium-//')"
     scratch_po="$SCRATCH/$(basename "$po")"
     cp "$po" "$scratch_po"
+    # A message the built scripts use reaches the browser only through the build reference on its committed entry.
+    missing="$(python3 -I - "$po" "$SCRATCH/beyond-elysium.pot" <<'PY'
+import re
+import sys
+
+
+def read(path):
+    refs = {}
+    for block in open(path, encoding="utf-8").read().split("\n\n"):
+        found = []
+        msgid = None
+        current = None
+        for line in block.split("\n"):
+            if line.startswith("#:"):
+                found += line[2:].split()
+            elif line.startswith("msgid "):
+                msgid = line[6:].strip()[1:-1]
+                current = "id"
+            elif line.startswith("msgstr") or line.startswith("msgid_plural"):
+                current = None
+            elif line.startswith('"') and current == "id":
+                msgid += line.strip()[1:-1]
+        if msgid:
+            refs[msgid] = found
+    return refs
+
+
+committed = read(sys.argv[1])
+fresh = read(sys.argv[2])
+lacking = [
+    m for m, found in fresh.items()
+    if m and any(r.startswith("build/") for r in found)
+    and m in committed and not any(r.startswith("build/") for r in committed[m])
+]
+print("\n".join(lacking[:5]))
+PY
+)"
+    if [ -n "$missing" ]; then
+        echo "    $locale: messages the built scripts use have no build reference in the committed .po:" >&2
+        echo "$missing" | sed 's/^/        /' >&2
+        FAILED=1
+    fi
     msgmerge --update --backup=none --quiet "$scratch_po" "$SCRATCH/beyond-elysium.pot"
 
     stats="$(msgfmt --statistics -o /dev/null "$scratch_po" 2>&1)"
@@ -52,7 +94,7 @@ for po in beyond-elysium/languages/*.po; do
 done
 
 if [ "$FAILED" != "0" ]; then
-    echo "check-translations FAILED - fuzzy or untranslated messages against current source" >&2
+    echo "check-translations FAILED - a fuzzy or untranslated message, or one missing its build reference" >&2
     exit 1
 fi
 

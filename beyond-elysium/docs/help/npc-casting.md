@@ -9,7 +9,7 @@ The member who was cast, from the moment they're cast until the end of the day a
 ## How to get there
 
 - [My Queue](my-queue.md)'s Castings section, if you're a Storyteller who's also been cast.
-- Your Dashboard's **My Castings** card, on [My Chronicle](my-chronicle.md), if you're a plain player.
+- Your Home's **Next game night**, on [My Chronicle](my-chronicle.md), which says "You're playing ..." for each casting that night, if you're a plain player.
 
 Either way, click the casting to open its brief.
 

@@ -74,6 +74,25 @@ class Plot_Entry {
 	}
 
 	/**
+	 * Which of the given plots hold at least one action entry.
+	 *
+	 * @param int[] $plot_ids
+	 * @return int[]
+	 */
+	public static function plot_ids_with_actions( array $plot_ids ): array {
+		$plot_ids = array_values( array_unique( array_map( 'intval', $plot_ids ) ) );
+		if ( $plot_ids === [] ) {
+			return [];
+		}
+		$marks = implode( ', ', array_fill( 0, count( $plot_ids ), '%d' ) );
+		$rows  = Manager::get_results(
+			'SELECT DISTINCT plot_id FROM ' . Manager::table( 'plot_entries' ) . " WHERE entry_type = 'action' AND plot_id IN ({$marks})",
+			...$plot_ids
+		);
+		return array_map( 'intval', array_column( $rows, 'plot_id' ) );
+	}
+
+	/**
 	 * Every entry across every one of a chronicle's plots whose own `event_date` is the given date - a game
 	 * night's own real plot activity, for a recap draft to read.
 	 *

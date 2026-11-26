@@ -5,6 +5,7 @@ namespace BeyondElysium\REST;
 use BeyondElysium\Database\Transaction;
 use BeyondElysium\Models\Schema_Block;
 use BeyondElysium\Services\Rich_Text_Sanitizer;
+use BeyondElysium\Services\St_Visibility;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -100,6 +101,7 @@ class Schema_Blocks_Controller extends Base_Controller {
 		$game_slug = (string) ( $request->get_param( 'game_slug' ) ?? '' );
 		$items     = Schema_Block::all_for_game( $args, $game_slug );
 		$total     = Schema_Block::count( $args );
+		St_Visibility::filter_catalog_blocks_for_viewer( $items, $game_slug );
 
 		$response = $this->success( $items );
 		return $this->paginate( $response, $total, $pagination['per_page'], $pagination['page'] );
@@ -119,6 +121,7 @@ class Schema_Blocks_Controller extends Base_Controller {
 		if ( ! $block ) {
 			return $this->error( 'not_found', __( 'Schema block not found.', 'beyond-elysium' ), 404 );
 		}
+		St_Visibility::filter_catalog_blocks_for_viewer( [ $block ], $game_slug );
 		return $this->success( $block );
 	}
 

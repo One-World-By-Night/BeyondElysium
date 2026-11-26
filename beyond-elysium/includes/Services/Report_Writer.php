@@ -122,7 +122,8 @@ class Report_Writer {
 
 		if ( empty( $rows ) ) {
 			$pdf->setFont( self::FONT, 'I', self::BODY_SIZE );
-			$pdf->Cell( 0, 6, __( 'No results.', 'beyond-elysium' ), 0, 1 );
+			$note = (string) ( $document['note'] ?? '' );
+			$pdf->Cell( 0, 6, $note !== '' ? $note : __( 'No results.', 'beyond-elysium' ), 0, 1 );
 		}
 	}
 

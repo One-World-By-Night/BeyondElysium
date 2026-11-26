@@ -9,7 +9,7 @@ O membro que foi escalado, desde o momento em que é escalado até o fim do dia 
 ## Como chegar lá
 
 - A seção Escalações de [Minha Fila](my-queue.md), se você é um Narrador que também foi escalado.
-- O cartão **Minhas Escalações** do seu Painel, em [Minha Crônica](my-chronicle.md), se você é um jogador comum.
+- A **Próxima noite de jogo** do seu Início, em [Minha Crônica](my-chronicle.md), que diz "Você está interpretando ..." para cada escalação dessa noite, se você é um jogador comum.
 
 De qualquer modo, clique na escalação para abrir a ficha dela.
 

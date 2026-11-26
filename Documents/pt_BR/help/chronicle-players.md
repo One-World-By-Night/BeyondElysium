@@ -16,7 +16,9 @@ Abra o [Kit de Ferramentas do Narrador](storyteller-toolkit.md), escolha a crôn
 - **Convidar um jogador** - uma caixa para o endereço de e-mail, uma lista dos personagens de jogador da crônica para marcar e uma caixa, marcada por padrão, para enviar a ele um convite por e-mail. Digitar três letras de um nome em vez de um endereço procura contas existentes; **Usar este e-mail** preenche o da pessoa.
 - **A lista de personagens** - os livres primeiro, depois os que esperam o e-mail de alguém, depois os já ligados a um jogador (esses você não pode marcar). Digite na caixa de filtro dela para restringir por nome.
 - **Aguardando o primeiro acesso** - todo convite para o qual ninguém entrou ainda: o e-mail, os personagens que o esperam, quem o enviou e quando, com um botão **Cancelar**.
-- **Jogadores** - todos que são jogadores nesta crônica, cada um com seus personagens. Cada personagem tem **Desvincular**; cada jogador tem **Adicionar personagens** e **Remover**.
+- **Jogadores** - todos que são jogadores nesta crônica, cada um com seus personagens. Cada personagem tem **Desvincular**; cada jogador tem **Adicionar personagens**, **Notas** e **Remover**.
+- **Notas** - a nota privada da crônica sobre esse jogador. Abre uma caixa que salva enquanto você digita, com quem a mudou por último e quando; um jogador que tem uma mostra **Notas (tem uma)**. Texto simples, até 10.000 caracteres.
+- **Notas sobre quem saiu** - sob a lista de jogadores, e só quando há alguma: uma nota sobre alguém que não é mais jogador aqui, com **Abrir nota** e **Excluir**.
 - **Discord** - contas do Discord pedindo para agir como membro da crônica: **Aguardando decisão**, com **Aprovar**/**Recusar**, e **Vinculada**, com **Revogar**. Cada linha nomeia a conta do Discord, a conta do site a que ela foi confirmada e os personagens que carrega. Veja [Discord](discord.md).
 - **Permissões da equipe** - só o HST vê isto. Cada pessoa a quem o HST deu mais do que o papel dela inclui, com o papel dela aqui, cinco caixas (**Catálogo**, **Regras de Aprovação**, **Modelos**, **Configuração da Crônica**, **Excluir personagens**) e **Salvar**; **Dar mais a alguém**, para achar outra conta e marcar caixas para ela; e **Alterações recentes**, uma linha para cada concessão e retirada com quem fez e quando. Catálogo e Excluir personagens dizem "No Kit de Ferramentas do Narrador". As outras três dizem "Abre no wp-admin. Exige uma conta de Editor neste site."
 - Uma linha sob **Jogadores** nomeia o papel do OWbN que acompanha ser jogador aqui, como `chronicle/kony/player`.
@@ -55,6 +57,17 @@ Abra o [Kit de Ferramentas do Narrador](storyteller-toolkit.md), escolha a crôn
 1. Clique em **Remover** ao lado dele e confirme.
 2. Ele deixa de ser jogador aqui. Os personagens dele ficam exatamente como estão.
 
+### Guardar uma nota sobre um jogador
+
+1. Clique em **Notas** ao lado dele.
+2. Digite. Ela salva sozinha; a linha sob a caixa mostra quem a mudou por último e quando.
+3. Feche a caixa. Uma nota esvaziada é removida.
+
+### Ler ou excluir uma nota sobre quem saiu
+
+1. Em **Notas sobre quem saiu**, clique em **Abrir nota** para ler ou mudar.
+2. Ou clique em **Excluir** e confirme. A nota é apagada para sempre.
+
 ### Aprovar um vínculo do Discord
 
 1. Ache a conta em **Discord**, **Aguardando decisão**.
@@ -85,7 +98,10 @@ Abra o [Kit de Ferramentas do Narrador](storyteller-toolkit.md), escolha a crôn
 - **Os papéis do OWbN acompanham.** Virar jogador aqui também concede o papel de jogador da crônica no OWbN, e removê-lo o tira. Se o OWbN recusa, a mensagem diz por quê; o jogador ainda é adicionado aqui, e um administrador do OWbN pode conceder o papel.
 - **Um e-mail pendente definido num personagem** pela lista de Personagens também é um convite. Aparece em **Aguardando o primeiro acesso** e vincula do mesmo jeito.
 - **A vinculação é registrada.** O histórico de cada personagem mostra a quem ele foi vinculado ou de quem foi desvinculado.
-- **Remover não é excluir.** A conta, os personagens e o lugar da pessoa em qualquer outra crônica ficam intocados.
+- **Remover não é excluir.** A conta, os personagens, a nota e o lugar da pessoa em qualquer outra crônica ficam intocados.
+- **As notas são só para o HST e o AST.** O jogador, um Condutor de Trama e qualquer outra pessoa são recusados, e nenhuma ficha, impressão, exportação, relatório nem resposta do Discord carrega uma nota.
+- **Uma nota fica quando um jogador sai**, e volta com ele se ele voltar; nesse meio-tempo ela passa da lista de jogadores para **Notas sobre quem saiu**.
+- **Uma nota vai embora com a conta ou com a crônica.** Excluir a conta da pessoa exclui as notas dela em toda crônica, e excluir a crônica exclui as suas notas. Cada crônica guarda a sua própria nota sobre a mesma pessoa.
 - **Uma conta do Discord é aprovada para esta crônica, não para uma conta em todo o site.** Aprovar um vínculo novo para a mesma conta do site revoga qualquer vínculo aprovado antes dele; só um fica ativo por vez.
 - **Agir a partir do Discord segue as mesmas regras do site.** Nada que uma conta vinculada faz pelo bot pula uma permissão, uma aprovação ou um limite que encontraria aqui.
 

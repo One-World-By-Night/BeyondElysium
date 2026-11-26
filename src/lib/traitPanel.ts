@@ -6,10 +6,13 @@ import { describeChange } from './describeChange';
 import { localizedItemName } from './localizeName';
 import { __, sprintf } from '@wordpress/i18n';
 import type { HeldTrait } from './heldTraits';
+import { bookOf } from './catalogBook';
 import { addedRowChange } from './optionPrice';
+import { allLevels } from './powerLevels';
 import { computeChanges } from './computeChanges';
 import type {
 	CatalogDescription,
+	PowerLevel,
 	Prerequisite,
 	SchemaBlock,
 	TieredPower,
@@ -265,6 +268,14 @@ export interface CatalogEntry {
 	 */
 	citation?: string;
 	prerequisites?: Prerequisite[];
+	/**
+	 * The book the shipped catalog says the entry comes from, when it names one.
+	 */
+	book?: string | null;
+	/**
+	 * A power family's levels, ladder then picks.
+	 */
+	ladder?: PowerLevel[];
 }
 
 function citationOf( description: CatalogDescription | undefined ): string {
@@ -292,6 +303,7 @@ export function catalogEntry(
 					description: item.description,
 					citation: citationOf( item.description ),
 					prerequisites: item.prerequisites,
+					book: bookOf( item.source ),
 				}
 			: null;
 	}
@@ -303,6 +315,8 @@ export function catalogEntry(
 			? {
 					description: family.description,
 					citation: citationOf( family.description ),
+					book: bookOf( family.source ),
+					ladder: allLevels( family ),
 				}
 			: null;
 	}

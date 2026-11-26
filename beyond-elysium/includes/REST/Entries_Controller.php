@@ -17,6 +17,7 @@ use BeyondElysium\Services\Audience;
 use BeyondElysium\Services\Background_Ledger;
 use BeyondElysium\Services\Downtime_Window;
 use BeyondElysium\Services\Keep_Current;
+use BeyondElysium\Services\Notices;
 use BeyondElysium\Services\St_Visibility;
 
 defined( 'ABSPATH' ) || exit;
@@ -290,6 +291,7 @@ class Entries_Controller extends Base_Controller {
 				'plot_title' => $plot_title,
 				'posted_by'  => $label,
 			] );
+			Notices::post_waiting( $game, $plot, $label, $author_id );
 
 			if ( ! empty( $plot->assigned_to ) ) {
 				$recipient_id = (int) $plot->assigned_to;
@@ -311,6 +313,8 @@ class Entries_Controller extends Base_Controller {
 
 		$label = __( 'A Storyteller', 'beyond-elysium' );
 		$link  = Notifications::player_plot_url( $plot_id, $game_slug );
+
+		$noticed = [];
 		foreach ( Audience::connected_character_ids( $plot, 'plot' ) as $character_id ) {
 			$character = Character::find( $character_id );
 			$wp_user_id = $character ? (int) ( $character->wp_user_id ?? 0 ) : 0;
@@ -324,6 +328,10 @@ class Entries_Controller extends Base_Controller {
 				'plot_title' => $plot_title,
 				'posted_by'  => $label,
 			] );
+			if ( ! isset( $noticed[ $wp_user_id ] ) ) {
+				$noticed[ $wp_user_id ] = true;
+				Notices::plot_post( $game, $wp_user_id, $plot_id, $plot_title, (string) ( $character->name ?? '' ) );
+			}
 			Notifications::notify_post( $wp_user_id, $game, $plot_id, $plot_title, $label, $link );
 		}
 	}

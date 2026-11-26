@@ -173,6 +173,9 @@ class Notifications {
 	 * @return void
 	 */
 	public static function enqueue_release( int $wp_user_id, $game, int $batch_id, array $character_names, string $kind ): void {
+		if ( $wp_user_id ) {
+			Notices::released( $game, $wp_user_id, $batch_id, $character_names, $kind );
+		}
 		if ( ! $wp_user_id || ! self::allowed( $wp_user_id, $game, [ 'kind' => 'release', 'entity_type' => 'release_batch', 'entity_id' => $batch_id ] ) ) {
 			return;
 		}
@@ -213,6 +216,7 @@ class Notifications {
 	 * @return void
 	 */
 	public static function flush_release(): void {
+		Notices::flush_released();
 		foreach ( self::$pending_release as $wp_user_id => $by_batch ) {
 			$user = get_userdata( (int) $wp_user_id );
 			foreach ( $by_batch as $batch_id => $entry ) {
@@ -385,6 +389,9 @@ class Notifications {
 			'link'      => $link,
 		];
 		$about = [ 'kind' => 'visible', 'subject' => self::visible_subject( [ $entry ] ) ];
+		if ( $wp_user_id ) {
+			Notices::now_visible( $game, $wp_user_id, $kind, $title, $link );
+		}
 		if ( ! $wp_user_id || ! self::allowed( $wp_user_id, $game, $about ) ) {
 			return;
 		}
@@ -960,6 +967,7 @@ class Notifications {
 	 * @return void
 	 */
 	public static function join_requested( object $game, \WP_User $applicant, string $message ): void {
+		Notices::join_requested( $game, $applicant, $message );
 		$about = [ 'kind' => 'join_requested' ];
 		foreach ( self::storytellers( $game, $about ) as $user ) {
 			$lines = [
@@ -991,6 +999,59 @@ class Notifications {
 	}
 
 	/**
+	 * Emails a player that downtime for a game night closes soon and a character of theirs has sent nothing.
+	 *
+	 * @param object   $game
+	 * @param object   $character
+	 * @param object   $session
+	 * @param string   $deadline `Y-m-d H:i:s`, when it closes for this character.
+	 * @param int|null $plot_id  The character's plot for the night, once it exists.
+	 * @return void
+	 */
+	public static function downtime_reminder( object $game, object $character, object $session, string $deadline, ?int $plot_id ): void {
+		$wp_user_id = (int) $character->wp_user_id;
+		$about      = [ 'kind' => 'downtime_due', 'entity_type' => 'character', 'entity_id' => (int) $character->id ];
+		if ( ! self::allowed( $wp_user_id, $game, $about ) ) {
+			return;
+		}
+		$player = get_userdata( $wp_user_id );
+		if ( ! $player || ! $player->user_email ) {
+			Mailer::skipped( self::meta( $game, $wp_user_id, $about ), Mail_Log::REASON_NO_EMAIL );
+			return;
+		}
+
+		$night  = mysql2date( 'D j M', (string) $session->game_date );
+		$closes = mysql2date( 'D j M, H:i', $deadline );
+		$link   = $plot_id !== null ? self::player_plot_url( $plot_id, (string) $game->slug ) : self::player_page_url( 'plots', (string) $game->slug );
+
+		$subject = sprintf(
+			/* translators: 1: chronicle, 2: the game night's date, 3: when downtime closes */
+			__( '[Beyond Elysium] %1$s: downtime for %2$s closes %3$s', 'beyond-elysium' ),
+			(string) $game->name,
+			$night,
+			$closes
+		);
+		$lines = [
+			sprintf(
+				/* translators: %s: display name */
+				__( 'Hi %s,', 'beyond-elysium' ),
+				$player->display_name
+			),
+			'',
+			sprintf(
+				/* translators: 1: a character's name, 2: the game night's date, 3: when downtime closes */
+				__( "%1\$s hasn't sent any actions for %2\$s. Downtime closes %3\$s.", 'beyond-elysium' ),
+				(string) $character->name,
+				$night,
+				$closes
+			),
+			$link,
+		];
+
+		Mailer::send( $player->user_email, $subject, implode( "\n", $lines ), self::meta( $game, $wp_user_id, $about + [ 'subject' => $subject ] ) );
+	}
+
+	/**
 	 * Emails the applicant that their join request was approved or refused.
 	 *
 	 * @param object      $game
@@ -1002,6 +1063,9 @@ class Notifications {
 	public static function join_answered( object $game, object $join_request, bool $approved, ?string $note ): void {
 		$wp_user_id = (int) $join_request->wp_user_id;
 		$about      = [ 'kind' => 'join_answered', 'entity_type' => 'join_request', 'entity_id' => (int) ( $join_request->id ?? 0 ) ];
+		if ( $approved ) {
+			Notices::join_approved( $game, $wp_user_id );
+		}
 		if ( ! self::allowed( $wp_user_id, $game, $about ) ) {
 			return;
 		}
@@ -1056,6 +1120,7 @@ class Notifications {
 	 * @return void
 	 */
 	public static function secret_told_staff( object $game, object $secret, string $teller_name, string $recipient_name ): void {
+		Notices::secret_told( $game, $secret, $teller_name, $recipient_name, get_current_user_id() );
 		$link  = self::staff_page_url( 'approval-queue', (string) ( $game->slug ?? '' ) );
 		$about = [ 'kind' => 'secret_told', 'entity_type' => 'secret', 'entity_id' => (int) ( $secret->id ?? 0 ) ];
 
@@ -1342,6 +1407,7 @@ class Notifications {
 	public static function submission_received( object $game, object $submission, \WP_User $sender ): void {
 		$character = (string) ( $submission->character_name ?? '' ) !== '' ? (string) $submission->character_name : __( 'A character', 'beyond-elysium' );
 		$arriving  = self::arrival_phrase( $submission );
+		Notices::file_received( $game, $submission, $sender );
 		$about     = [ 'kind' => 'submission_received', 'entity_type' => 'submission', 'entity_id' => (int) ( $submission->id ?? 0 ) ];
 
 		foreach ( self::storytellers( $game, $about ) as $user ) {
@@ -1383,6 +1449,7 @@ class Notifications {
 	public static function submission_answered( object $game, object $submission ): void {
 		$sender_id = (int) $submission->submitted_by;
 		$about     = [ 'kind' => 'submission_answered', 'entity_type' => 'submission', 'entity_id' => (int) ( $submission->id ?? 0 ) ];
+		Notices::file_answered( $game, $submission );
 		if ( ! self::allowed( $sender_id, $game, $about ) ) {
 			return;
 		}

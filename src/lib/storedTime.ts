@@ -54,3 +54,36 @@ export function formatStoredTime(
 		timeZone: 'UTC',
 	} ).format( when );
 }
+
+/**
+ * A stored date as a short weekday and day ("Sat 28 Nov"), with its time when asked and stored ("Fri 27 Nov, 23:59").
+ * Text that is not a stored date comes back unchanged.
+ */
+export function formatStoredDay(
+	value: string,
+	{ time = false, locale }: StoredTimeOptions = {}
+): string {
+	const parts = STORED.exec( value );
+	if ( ! parts ) {
+		return value;
+	}
+	const [ year, month, day ] = [ parts[ 1 ], parts[ 2 ], parts[ 3 ] ].map(
+		Number
+	);
+	const hour = parts[ 4 ] === undefined ? 0 : Number( parts[ 4 ] );
+	const minute = parts[ 5 ] === undefined ? 0 : Number( parts[ 5 ] );
+	const when = new Date( Date.UTC( year, month - 1, day, hour, minute ) );
+	if ( when.getUTCMonth() !== month - 1 || when.getUTCDate() !== day ) {
+		return value;
+	}
+	const showTime = time && parts[ 4 ] !== undefined;
+	return new Intl.DateTimeFormat( locale ?? siteLocale(), {
+		weekday: 'short',
+		day: 'numeric',
+		month: 'short',
+		...( showTime
+			? { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }
+			: {} ),
+		timeZone: 'UTC',
+	} ).format( when );
+}

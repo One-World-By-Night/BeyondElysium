@@ -4,7 +4,7 @@ Uma página ao vivo, somente leitura, que lista todo item do catálogo, nível d
 
 ## Quem pode usar
 
-Qualquer membro da crônica - jogadores e Narradores veem exatamente a mesma página. Você precisa estar autenticado e pertencer à crônica; nada aqui é escondido de um jogador.
+Qualquer membro da crônica. Você precisa estar autenticado e pertencer à crônica. Um jogador lê toda nota escrita para jogadores; uma passagem que um Narrador marcou com `[ST]...[/ST]` fica de fora para um jogador, e também toda nota de uma seção que um Narrador sinalizou como só para Narradores. Um Narrador vê tudo. Veja [Conteúdo Só para Narradores](storyteller-only.md).
 
 ## Como chegar lá
 
@@ -31,7 +31,7 @@ Esta não é uma das abas fixas de Minha Crônica ou do Kit de Ferramentas do Na
 
 - **Esta página é somente leitura.** Nada aqui pode ser mudado por esta tela - um Narrador ou administrador escreve estas notas editando o item do catálogo diretamente, em outro lugar. Veja [Blocos de Esquema](schema-blocks.md).
 - **Só aparecem os itens com algo escrito.** Um item sem Referência, Descrição nem Fonte definidas não aparece aqui de jeito nenhum, mesmo que exista no catálogo.
-- **A mesma página também pode ser impressa como um relatório assinado.** Um Narrador que a executa pela tela Relatórios recebe o mesmo conteúdo como PDF; esta página é a versão ao vivo, na web, da mesma lista.
+- **A mesma página também pode ser impressa como um relatório assinado.** Um Narrador que a executa pela tela Relatórios recebe a mesma lista como PDF, e a cópia de um jogador deixa de fora o texto só para Narradores, como esta página; esta página é a versão ao vivo, na web, da mesma lista.
 - **Ela se atualiza conforme o catálogo muda.** Não há nada a atualizar à mão além de recarregar a página - o que estiver escrito no catálogo no momento é o que aparece aqui.
 
 ## Solução de problemas

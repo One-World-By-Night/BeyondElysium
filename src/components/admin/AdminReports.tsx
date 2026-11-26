@@ -4,17 +4,12 @@
 import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import api from '../../api/client';
+import type { ReportRow } from '../../api/client';
 import { useAdminGameSelector } from '../../lib/useAdminGameSelector';
+import { reportShapeLabel } from '../../lib/reportShape';
 import { GameFilterBar } from './GameFilterBar';
 import HelpButton from '../shared/HelpButton';
 import './Admin.css';
-
-interface ReportRow {
-	key: string;
-	title: string;
-	shape: string;
-	entity: string | null;
-}
 
 /**
  * Renders the Reports admin page.
@@ -59,7 +54,7 @@ export function AdminReports() {
 						{ reportList.map( ( report ) => (
 							<tr key={ report.key }>
 								<td>{ report.title }</td>
-								<td>{ report.shape }</td>
+								<td>{ reportShapeLabel( report.shape ) }</td>
 								<td>
 									{ report.key === 'statistics-report' && (
 										<select

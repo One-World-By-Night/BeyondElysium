@@ -299,6 +299,32 @@ describe( "a trait's catalog entry", () => {
 		).toMatchObject( { description: { description: 'Beasts.' } } );
 	} );
 
+	it( 'names the book a shipped source names, and the ladder of a power family', () => {
+		const book = {
+			slug: 'vampire-merits',
+			section_type: 'trait_list',
+			definition: {
+				items: [
+					{
+						name: 'Iron Will',
+						source: 'GVM: Merits; met-mechanics.csv: Laws of the Night Revised',
+					},
+					{ name: 'Brawl', source: 'GVM: Abilities' },
+				],
+			},
+		} as unknown as SchemaBlock;
+
+		expect( catalogEntry( book, { name: 'Iron Will' } )?.book ).toBe(
+			'Laws of the Night Revised'
+		);
+		expect( catalogEntry( book, { name: 'Brawl' } )?.book ).toBeNull();
+		expect(
+			catalogEntry( disciplines, { name: 'Animalism' } )?.ladder?.map(
+				( level ) => level.power_name
+			)
+		).toEqual( [ 'Feral Whispers', 'Beckoning' ] );
+	} );
+
 	it( 'cites only what the chronicle entered, never the catalog list it came from', () => {
 		expect(
 			catalogEntry( disciplines, { name: 'Animalism' } )?.citation

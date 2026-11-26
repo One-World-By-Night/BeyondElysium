@@ -1,6 +1,6 @@
 # My Chronicle
 
-The one page you use for everything in a chronicle you belong to: pick which chronicle, then move between its Dashboard, Characters, Character, My Plots & Rumors, and Reports.
+The one page you use for everything in a chronicle you belong to: pick which chronicle, then move between its Home, Characters, Character, Compendium, My Plots & Rumors, and Reports.
 
 ## Who can use this
 
@@ -15,8 +15,8 @@ Look for a "My Chronicle" link in your site's navigation - this plugin creates t
 - **Chronicle** - a dropdown listing every chronicle you belong to, each one labeled with your role there. Choosing a different one switches everything below it to that chronicle. Any chronicle other than the one currently selected also shows how many of your own changes are still pending there, e.g. "- 2 pending" - a quick way to notice there's something waiting in a chronicle you aren't currently looking at. If you don't belong to any chronicle, this says so instead of showing a dropdown, with a link to [send a Grapevine file to one](send-grapevine-file.md).
 - **Chronicles you can ask to join** - folded once you belong to a chronicle, open by default when you don't. Every chronicle on the site taking join requests that you aren't already a member of, each with an **Ask to join** button that opens the Join panel. See [Joining a Chronicle](joining.md).
 - **Tabs**, once a chronicle is selected:
-  - **Dashboard** - your characters, your changes - across every chronicle you belong to,
-    not just this one - and your plots at a glance. See [Dashboard](player-dashboard.md).
+  - **Home** - your characters with what each has to spend, what needs you, the next
+    game night and your latest plots. See [Home](player-dashboard.md).
   - **Characters** - your characters here (every character, for a Storyteller of this
     chronicle), with **+ New Character** to start another. See [Characters](character-list.md).
   - **Character** - the selected character, or a prompt to pick one from Characters if
@@ -25,8 +25,10 @@ Look for a "My Chronicle" link in your site's navigation - this plugin creates t
     Storyteller, RP notes), **History**, and **Edit**. It opens on the view you last used on
     this device, or Sheet the first time. See [Character Sheet](character-sheet.md) and
     [Character Editor](character-editor.md).
+  - **Compendium** - the chronicle's catalog a creature type and a section at a time,
+    with what each entry costs a character you pick. See [Compendium](compendium.md).
 
-Each tab shows what you can do in the chronicle selected - a Storyteller here sees the Storyteller dashboard and controls; the same person in a chronicle where they only play sees the player's.
+Each tab shows what you can do in the chronicle selected - a Storyteller here sees every character on **Characters**, and keeps the Storyteller controls in the [Storyteller Toolkit](storyteller-toolkit.md).
   - **My Plots & Rumors** - plot threads you're connected to and any rumor that's reached
     you.
   - **Who's Who** - the chronicle's public-profile directory, NPCs and player characters
@@ -35,8 +37,8 @@ Each tab shows what you can do in the chronicle selected - a Storyteller here se
     [What I Know](what-i-know.md).
   - **After-Game Report** - what your character did, what you want next, and anything for
     staff, one per character per session. See [After-Game Report](after-game-report.md).
-  - **Reports** - a small picker among **Game Calendar**, **Location Cards**, and **Rote
-    Cards**, open to every member, Storyteller or not. Game Calendar lists this chronicle's game nights, or says it has none.
+  - **Reports** - a small picker among **Game Calendar**, **Location Cards**, **Rote
+    Cards** and **Bonds**, open to every member, Storyteller or not. Bonds lists the bonds and Guanxi on your own characters, with a **Print** link. Game Calendar lists this chronicle's game nights, or says it has none.
     Location Cards and Rote Cards each show one card per entry, with every field - including
     a Storyteller's own formatted Description or Appearance text - rendered the way it was
     written; a `[ST]...[/ST]` marked passage is still stripped out for you the same as
@@ -53,7 +55,7 @@ Unless a site administrator has turned it off on [Branding](branding.md), this p
 - **The header** names the site first, with its logo, as a link to the site's home page, then **My Chronicle**, the chronicle picker and a picker of your own characters in that chronicle. Choosing a character opens its Sheet, or keeps you on Edit when Edit is open. A Storyteller also sees a **Storyteller Toolkit** link. **Help** and your name with **Sign out** (or **Sign in**) come last.
 - **The notice bell** sits in the header before **Help**, with a count of what you have not read. It opens a list: for a player, what a Storyteller did with their changes ("Alice: 2 approved, 1 refused", with each line and any note), a change a Storyteller edited, a change taken back with Undo, and XP awarded; for a Storyteller, "Alice sent 3 changes; 2 wait for you", linking to the [Approval Queue](approval-queue.md). Each notice links to where it belongs, **Mark all read** clears the count, and notices are kept for 90 days. A Storyteller also finds **Changes waiting for you** there, with the choices Each submission, Once a day and Never, the default being whatever the chronicle's staff email decides.
 - **On a computer** every tab shows in one row under the header, wrapping onto a second row when they don't fit.
-- **On a phone** a bar at the bottom of the screen holds **Home** (the Dashboard), **Character** (the chosen character, or Characters when none is chosen) and **Plots** (My Plots & Rumors). **More** lists every other tab, the Storyteller Toolkit link, Help and signing out.
+- **On a phone** a bar at the bottom of the screen holds **Home**, **Character** (the chosen character, or Characters when none is chosen) and **Plots** (My Plots & Rumors). **More** lists every other tab, the Storyteller Toolkit link, Help and signing out.
 - **The footer** carries Powered by Beyond Elysium, the Dark Pack logo and Paradox's notice.
 
 To keep the page on your phone's home screen, use your browser's **Add to Home Screen**. It opens in the browser, named after the site.
@@ -67,7 +69,7 @@ To keep the page on your phone's home screen, use your browser's **Add to Home S
 
 ### Jump straight to a tab
 
-1. Click **Dashboard**, **Characters**, **Character**, **My Plots & Rumors**, or **Reports**.
+1. Click **Home**, **Characters**, **Character**, **Compendium**, **My Plots & Rumors**, or **Reports**.
 
 ### Look up a location's or rote's write-up
 
@@ -97,7 +99,8 @@ To keep the page on your phone's home screen, use your browser's **Add to Home S
 ## Related
 
 - [Joining a Chronicle](joining.md)
-- [Dashboard](player-dashboard.md)
+- [Home](player-dashboard.md)
+- [Compendium](compendium.md)
 - [Characters](character-list.md)
 - [Send a Grapevine File](send-grapevine-file.md)
 - [Character Sheet](character-sheet.md)

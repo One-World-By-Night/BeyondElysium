@@ -1,52 +1,56 @@
-# Painel
+# Início
 
-A sua visão pessoal de entrada em uma crônica: os seus próprios personagens, as suas próprias mudanças e as suas próprias tramas - nunca as de mais ninguém.
+A sua visão de entrada em uma crônica: os seus personagens e o que cada um tem para gastar, o que precisa de você hoje, a próxima noite de jogo e as novidades das suas tramas. Nunca é sobre outra pessoa.
 
 ## Quem pode usar
 
-Qualquer jogador desta crônica. Um Narrador (HST ou AST) que abre esta mesma aba vê um painel diferente, da crônica inteira - veja [Painel do Jogo](game-dashboard.md).
+Qualquer pessoa na crônica. Um Narrador que abre Minha Crônica vê o seu próprio Início, sobre os seus próprios personagens. O Kit de Ferramentas do Narrador tem o seu próprio Início - veja [Início do Narrador](game-dashboard.md).
 
 ## Como chegar lá
 
-Minha Crônica → aba Painel. É a primeira aba e onde a página abre por padrão.
+Minha Crônica → aba **Início**. É a primeira aba e onde a página abre por padrão. Em um celular é **Início** na barra de baixo.
 
 ## A tela
 
-- **Meus Personagens** - todo personagem que você tem nesta crônica, cada nome com um link para a sua Ficha, com o tipo de criatura e o status. "Você ainda não tem personagens nesta crônica." quando não há nenhum.
-- **Minhas Alterações** - as suas próprias mudanças em todas as crônicas do site em que você tem um personagem, não só nesta: o que ainda está pendente, mais o que foi decidido no último mês mais ou menos. Cada linha nomeia o personagem, descreve a mudança em linguagem simples e traz um selo de status - **Pendente**, **Aprovado**, **Aprovado automaticamente**, **Recusado**, **Retirado** (você a tomou de volta) ou **Desfeito** (um Narrador tomou de volta uma mudança aprovada). Uma mudança de uma crônica diferente da que você está vendo fica agrupada sob o nome dessa crônica; as mudanças desta crônica vêm primeiro, sem título. "Nada pendente ou revisado recentemente." quando não há nada a mostrar.
-- **Minhas Escalações**, mostradas só quando um Narrador escalou você para interpretar um NPC em uma sessão futura - "Você está interpretando {NPC} em {data}." Clique para abrir a [ficha de escalação](npc-casting.md).
-- **Minhas Tramas** - o mesmo feed da aba Minhas Tramas e Rumores: todo fio de trama a que você está ligado e qualquer rumor que chegou até você.
+- **Seus personagens** - um cartão para cada personagem de jogador que você tem nesta crônica (NPCs não aparecem). Um cartão mostra um retrato ou as iniciais, o nome do personagem, o tipo de criatura dele e uma linha como "9 XP para gastar · 1 XP retido · 3 alterações aguardando". "No seu carrinho" aparece quando este aparelho guarda um carrinho que você não enviou para aquele personagem. O nome abre a seção Personagem na visão que você usou por último. **+ Novo personagem** e **Enviar um arquivo do Grapevine** ficam sob os cartões. "Você ainda não tem personagens nesta crônica." quando não há nenhum.
+- **Precisa de você** - o que tem prazo vem primeiro, o mais próximo antes, depois o que é novo:
+  - **Tempo livre** aberto enquanto um personagem seu não enviou ações, como "O tempo livre para sáb., 28 de nov. está aberto até sex., 27 de nov., 23:59." com o nome do personagem embaixo. Abre aquela trama.
+  - Um **Relatório Pós-Jogo** que você não escreveu para uma noite a que o seu personagem foi, até a data de entrega. Abre o relatório naquela noite e naquele personagem.
+  - Os seus **avisos** não lidos mais novos, os mesmos que o sino guarda. Abrir um o marca como lido. "mais 3 não lidos no sino" diz quantos sobraram.
+  - "Nada precisa de você agora." quando não há nada.
+- **Próxima noite de jogo** - a data, a hora e o lugar, quando o tempo livre fecha, e "Você está interpretando {NPC}" para cada escalação que você tem naquela noite.
+- **Novidades nas suas tramas** - as suas cinco tramas e rumores atualizados mais recentemente, cada um com há quanto tempo mudou, e **Ver tudo**.
+- **Seus grupos** - as facções e os cargos que os seus personagens têm, quando há algum.
+- **Outras crônicas** - uma linha para cada outra crônica em que você tem alterações aguardando, como "Boston: 2 alterações aguardando".
 
 ## Tarefas comuns
 
 ### Conferir se uma mudança ainda está esperando
 
-1. Abra **Minha Crônica** → **Painel**.
-2. Procure o selo **Pendente** em **Minhas Alterações**. Uma mudança continua aparecendo aqui por um tempo depois de decidida, então você não precisa sair atrás do resultado - procure **Aprovado**, **Aprovado automaticamente**, **Recusado**, **Retirado** ou **Desfeito**.
+1. Abra o **Início**. A linha de um cartão diz quantas alterações estão aguardando e quanto XP elas retêm.
+2. Para ver as próprias alterações, abra o personagem e clique em **Histórico**; veja [Histórico de Alterações](sheet-history.md).
 
-### Ver o que aconteceu com uma mudança em outra crônica
+### Ver o que precisa de você antes da noite de jogo
 
-1. Abra **Minha Crônica** → **Painel** de qualquer crônica a que você pertence.
-2. Em **Minhas Alterações**, olhe além da lista desta crônica - cada outra crônica em que você tem um personagem ganha o seu próprio grupo, com o nome dela. A lista suspensa **Crônica** em Minha Crônica e no Kit de Ferramentas do Narrador também mostra uma contagem de pendentes ao lado de qualquer crônica diferente da atual.
+1. Abra o **Início** e leia **Precisa de você** de cima para baixo.
 
-### Ir à ficha de um personagem
+### Ir a um personagem
 
-1. Em **Meus Personagens**, clique no nome do personagem.
+1. Clique no nome dele no cartão.
 
 ## O que saber
 
-- Tudo aqui é restrito a você - os seus personagens, as suas mudanças, as suas tramas. Nunca mostra os dados de outro jogador.
-- **Minhas Alterações** olha todas as crônicas em que você tem um personagem, não só a escolhida no topo da página - é o único lugar que faz isso. Nada mais nesta página atravessa crônicas.
-- Uma mudança decidida fica listada aqui por cerca de um mês e depois sai - não é um registro corrido. Para o histórico completo de um personagem, abra-o e clique em **Histórico**.
-- **Aprovado automaticamente** quer dizer que as regras da própria crônica liberaram a mudança sem um Narrador olhá-la individualmente - não que ninguém possa revisá-la depois.
-- **Retirado** e **Desfeito** continuam listados como qualquer mudança decidida. Para retirar uma mudança que ainda está pendente, abra o personagem e clique em **Histórico**; veja [Histórico de Alterações](sheet-history.md).
-- Esta visão não diz por que uma mudança precisou da revisão de um Narrador - só o status atual dela.
+- Tudo aqui é seu: os seus personagens, os seus prazos, as suas tramas. Nunca mostra os dados de outro jogador.
+- A linha de XP de um cartão diz o que você pode gastar agora. Uma alteração que espera um Narrador retém o XP dela até ser decidida; veja [Editor de Personagem](character-editor.md).
+- O tempo livre conta como pendente até um personagem ter enviado ao menos uma ação para aquela noite. O prazo é o da própria noite de jogo, ou o que um Narrador deu àquele personagem.
+- Um lembrete sai uma vez, no dia antes de o tempo livre fechar, como aviso e como e-mail (o e-mail só se você não desligou o e-mail da crônica).
+- A lista de todas as alterações que você fez em várias crônicas agora está no **Histórico** de cada personagem.
 
 ## Solução de problemas
 
-- **Uma mudança que enviei não aparece aqui.** Ela pode ter mais de um mês e já estar decidida - veja o [Histórico de Alterações](sheet-history.md) desse personagem.
-- **Um personagem que eu sei que é meu não está na lista.** Ele ainda não está ligado à sua conta - peça a um Narrador que o atribua a você.
-- **"Falha ao carregar seu painel."** Atualize a página. Se continuar acontecendo, avise um Narrador.
+- **Um personagem que sei ser meu não está em um cartão.** Ele ainda não está ligado à sua conta, ou é um NPC. Peça a um Narrador.
+- **O tempo livre está aberto mas Precisa de você não diz.** A janela pode ter fechado para o seu personagem, ou uma ação já foi enviada para aquela noite.
+- **"Falha ao carregar a sua página inicial."** Atualize a página. Se continuar, avise um Narrador.
 
 ## Relacionados
 
@@ -55,7 +59,8 @@ Minha Crônica → aba Painel. É a primeira aba e onde a página abre por padr�
 - [Ficha de Personagem](character-sheet.md)
 - [Histórico de Alterações](sheet-history.md)
 - [Como Funciona a Aprovação](approval-flow.md)
-- [Painel do Jogo](game-dashboard.md)
+- [Compêndio](compendium.md)
+- [Início do Narrador](game-dashboard.md)
 - [Ficha de Escalação de NPC](npc-casting.md)
 - [Papéis](roles.md)
-- [Guia do Jogador](../player-guide.md#4-seu-painel)
+- [Guia do Jogador](../player-guide.md#4-seu-início)

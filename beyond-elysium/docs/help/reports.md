@@ -1,10 +1,10 @@
 # Reports
 
-Twenty ready-made reports - rosters, history, cards, plot and action logs, statistics, and more - each generated as a signed PDF on demand.
+Twenty-one ready-made reports - rosters, history, cards, bonds, plot and action logs, statistics, and more - each generated as a signed PDF on demand, and Bonds also readable on screen.
 
 ## Who can use this
 
-Reaching **Beyond Elysium → Query Tool → Reports** in wp-admin needs the same site-wide capability that opens the Query Tool: an HST, AST, or administrator account. Once the page is open, it lists only the reports your role in the chosen chronicle can actually run - a Storyteller sees all 20. A Narrator sees the plot, action, and rumor reports plus everything open to any member. House Rules, the Game Calendar, and the item, location, and rote cards are open to every chronicle member by rule, players included - but a player normally never opens this wp-admin screen itself, since it needs a Storyteller- or admin-level account. In practice a player reaches House Rules through a front-end page a Storyteller has set up (see [House Rules](house-rules.md)), Item Cards through their own Character Sheet's "Print My Items" button (see [Character Sheet](character-sheet.md)), and the Game Calendar, Location Cards, and Rote Cards through My Chronicle's own **Reports** tab (see [My Chronicle](my-chronicle.md)) - this wp-admin screen is where a Storyteller generates any of the 20 as a signed PDF, not the only place a player can read the three that are already open to them.
+Reaching **Beyond Elysium → Query Tool → Reports** in wp-admin needs the same site-wide capability that opens the Query Tool: an HST, AST, or administrator account. Once the page is open, it lists only the reports your role in the chosen chronicle can actually run - a Storyteller sees all 21. A Narrator sees the plot, action, and rumor reports plus everything open to any member. House Rules, the Game Calendar, Bonds, and the item, location, and rote cards are open to every chronicle member by rule, players included - but a player normally never opens this wp-admin screen itself, since it needs a Storyteller- or admin-level account. In practice a player reaches House Rules through a front-end page a Storyteller has set up (see [House Rules](house-rules.md)), Item Cards through their own Character Sheet's "Print My Items" button (see [Character Sheet](character-sheet.md)), and the Game Calendar, Location Cards, Rote Cards, and Bonds through My Chronicle's own **Reports** tab (see [My Chronicle](my-chronicle.md)) - this wp-admin screen is where a Storyteller generates any of the 21 as a signed PDF, not the only place a player can read the ones already open to them. A Storyteller or Narrator can also open the same list without wp-admin, from the **Reports** tab of the [Storyteller Toolkit](storyteller-toolkit.md).
 
 ## How to get there
 
@@ -16,8 +16,10 @@ wp-admin sidebar → Beyond Elysium → Query Tool → **Reports** tab. The Quer
 - A table listing every one you're allowed to run: its title, its shape (`table`, `card`, `statistics`, `narrative`, or `calendar`), and a **Generate PDF** link.
 - The **Statistics Report** row additionally shows a dropdown - **Merits**, **Flaws**, **Influences** - picked before you click **Generate PDF**, since that's the one report where the field to summarize isn't fixed.
 - **Generate PDF** downloads the report as a PDF for the currently selected chronicle.
+- **In the Storyteller Toolkit**, the **Reports** tab lists what is open to your role in the chronicle you picked: each report's title, its shape in words (Table, Cards, Statistics, Narrative, Calendar or House rules), a one-line summary, and a **Print** link that downloads the PDF. Statistics Report adds a **Count** dropdown. Bonds adds an **Order by** dropdown (Character or Bonded to) and a **View** button that shows the table on screen.
+- Titles, column headings and notes come out in the site's language, on screen and in the PDF.
 
-### The 20 reports
+### The 21 reports
 
 | Report | Who can run it |
 | --- | --- |
@@ -29,6 +31,7 @@ wp-admin sidebar → Beyond Elysium → Query Tool → **Reports** tab. The Quer
 | Merits and Flaws Report | Storytellers |
 | Influence Report | Storytellers |
 | Vampire Status Report | Storytellers |
+| Bonds | Every member - a Storyteller sees every bond, anyone else only the bonds on their own characters |
 | Player Roster | Storytellers |
 | Player Point History | Storytellers |
 | Character Equipment | Storytellers |
@@ -50,6 +53,12 @@ wp-admin sidebar → Beyond Elysium → Query Tool → **Reports** tab. The Quer
 2. Find the one you want in the table.
 3. Click **Generate PDF**.
 
+### Print the bonds
+
+1. Open the Storyteller Toolkit → **Reports**, or My Chronicle → **Reports** → **Bonds**.
+2. As a Storyteller, pick **Order by → Bonded to** to group the rows by who the characters are bonded to, then click **View** to read it here.
+3. Click **Print**.
+
 ### Run the Statistics Report on a specific field
 
 1. Find **Statistics Report** in the table.
@@ -63,6 +72,7 @@ wp-admin sidebar → Beyond Elysium → Query Tool → **Reports** tab. The Quer
 - **Item Cards can be scoped to one character.** That's the character sheet's own "Print My Items" button, not a control on this screen - see [Character Sheet](character-sheet.md).
 - **Rote Cards works differently for a mage than for a Storyteller.** A Storyteller running it here sees every rote in the chronicle's own catalog. A player picking a character on My Chronicle's own Reports tab sees only the rotes that character actually holds, matched by name against the catalog - a held rote with no catalog entry of its own still prints, built straight from the catalog's name/note/source instead. Only a character whose stack actually has a rote-holding block (mages, today) can use it at all; My Chronicle hides the tab for anyone else's character.
 - **Game Calendar lists the chronicle's game nights.** Every night on the Game Nights calendar appears, soonest first, with its date, start time, place and notes, in the PDF and on My Chronicle's Reports tab. A chronicle with none gets a short note saying so. A Storyteller's `[ST]` text in the notes is removed for players. See [Game Nights](game-nights.md).
+- **Bonds is one row per bond.** Every Vampire Bond and every Guanxi on an active character is a row, with Character, Player (Storytellers only), Bonded to, Rating and Kind (the name of the list, such as Vampire Bonds or Guanxi). A Storyteller sees every active character's, NPCs included. Everyone else sees only the bonds on their own characters, in character order, and no Player column. A chronicle that made a bond list Storyteller-only hides it from players here too. The PDF carries the same rows.
 - **House Rules has no Grapevine counterpart**, and is the only one that can also live on a front-end page instead of being generated on demand - see [House Rules](house-rules.md).
 - **The action ones read the plot record as it actually happened.** A budget line's Total, Growth, and what's left Unused after every use appear on their own lines; when several players had posted to the same plot and a Storyteller answered one, it can't always tell whose post the reply was for, and says so ("Reply came after several actions") rather than guessing.
 - **Storyteller-only text is stripped the same way it is everywhere else** - a `[ST]...[/ST]` passage in an item or location never reaches one a non-Storyteller can run.
@@ -77,6 +87,7 @@ wp-admin sidebar → Beyond Elysium → Query Tool → **Reports** tab. The Quer
 ## Related
 
 - [Query Tool](query-tool.md)
+- [Storyteller Toolkit](storyteller-toolkit.md)
 - [My Chronicle](my-chronicle.md)
 - [House Rules](house-rules.md)
 - [Items & Locations](world-objects.md)

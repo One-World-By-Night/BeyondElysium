@@ -9,6 +9,7 @@ import api from '../../api/client';
 import HelpButton from '../shared/HelpButton';
 import Modal from '../shared/Modal';
 import TraitPanel from './TraitPanel';
+import { compendiumHref } from '../../lib/compendiumLinks';
 import WithDots from '../shared/Dots';
 import { displayTemper } from '../../lib/displayTemper';
 import { shownPoolValue } from '../../lib/poolKind';
@@ -753,6 +754,13 @@ export function PlayView( {
 					gameSlug={ gameSlug }
 					characterId={ characterId }
 					trait={ openTrait }
+					compendiumHref={ compendiumHref(
+						gameSlug,
+						state.stack.stack.slug,
+						openTrait.blockSlug,
+						openTrait.name,
+						characterId
+					) }
 					block={ state.stack.blocks[ openTrait.blockSlug ] }
 					sheetData={ sheetData }
 					label={ traitLabel(

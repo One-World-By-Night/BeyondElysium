@@ -11,11 +11,14 @@ import { pickerRows, type PickerRow } from '../../lib/characterPicker';
 import { inviteMessages, linkMessages } from '../../lib/playerInviteMessages';
 import { ChronicleDiscordLinks } from './ChronicleDiscordLinks';
 import { ChronicleStaffPermissions } from './ChronicleStaffPermissions';
+import { FormerNotes } from './FormerNotes';
+import { PlayerNoteDialog } from './PlayerNoteDialog';
 import type {
 	ChroniclePlayer,
 	ChroniclePlayerList,
 	ChroniclePlayerResult,
 	ChronicleJoinRequest,
+	FormerNote,
 	PlayerInvite,
 } from '../../types';
 import type { Character, WpUserSummary } from '../../types/character';
@@ -293,6 +296,8 @@ export function ChroniclePlayers( {
 	);
 	const [ addFilter, setAddFilter ] = useState( '' );
 	const [ linkCopied, setLinkCopied ] = useState( false );
+	const [ noteFor, setNoteFor ] = useState< ChroniclePlayer | null >( null );
+	const [ former, setFormer ] = useState< FormerNote[] >( [] );
 
 	function copyJoinLink( url: string, inputEl: HTMLInputElement | null ) {
 		const done = () => {
@@ -320,12 +325,14 @@ export function ChroniclePlayers( {
 					.listPaginated( { page, per_page: 100 } )
 			),
 			api.chroniclePlayers( gameSlug ).joinRequests(),
+			api.chroniclePlayers( gameSlug ).formerNotes(),
 		] )
-			.then( ( [ players, open, all, requests ] ) => {
+			.then( ( [ players, open, all, requests, gone ] ) => {
 				setList( players );
 				setInvites( open );
 				setCharacters( all );
 				setJoinRequests( requests );
+				setFormer( gone );
 				setError( null );
 			} )
 			.catch( ( err ) =>
@@ -962,6 +969,18 @@ export function ChroniclePlayers( {
 									</button>
 									<button
 										type="button"
+										className="be-chronicle-players__button"
+										onClick={ () => setNoteFor( player ) }
+									>
+										{ player.has_notes
+											? __(
+													'Notes (has one)',
+													'beyond-elysium'
+												)
+											: __( 'Notes', 'beyond-elysium' ) }
+									</button>
+									<button
+										type="button"
 										className="be-chronicle-players__button be-chronicle-players__button--remove"
 										disabled={ busy !== null }
 										onClick={ () => remove( player ) }
@@ -1064,8 +1083,40 @@ export function ChroniclePlayers( {
 				) }
 			</section>
 
+			<FormerNotes
+				gameSlug={ gameSlug }
+				notes={ former }
+				onChange={ load }
+			/>
+
 			{ canGrantStaffAccess && (
 				<ChronicleStaffPermissions gameSlug={ gameSlug } />
+			) }
+
+			{ noteFor && (
+				<PlayerNoteDialog
+					gameSlug={ gameSlug }
+					wpUserId={ noteFor.wp_user_id }
+					name={
+						noteFor.display_name ??
+						__( '(account removed)', 'beyond-elysium' )
+					}
+					onClose={ () => setNoteFor( null ) }
+					onSaved={ ( hasNote ) =>
+						setList( ( held ) =>
+							held
+								? {
+										...held,
+										players: held.players.map( ( p ) =>
+											p.wp_user_id === noteFor.wp_user_id
+												? { ...p, has_notes: hasNote }
+												: p
+										),
+									}
+								: held
+						)
+					}
+				/>
 			) }
 		</div>
 	);

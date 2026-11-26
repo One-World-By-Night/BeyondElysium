@@ -2,6 +2,9 @@
 
 namespace BeyondElysium\Services;
 
+use BeyondElysium\Core\Authorization;
+use BeyondElysium\Database\Fork_Merge;
+use BeyondElysium\Models\Game;
 use BeyondElysium\Models\Schema_Block;
 use BeyondElysium\Models\World_Object;
 
@@ -303,6 +306,84 @@ class St_Visibility {
 				$object->properties[ $key ] = St_Filter::strip_for_game( $value, $settings );
 			}
 		}
+	}
+
+	/**
+	 * Filters blocks for whoever is asking about a chronicle named in a query string: a Storyteller there, or whoever
+	 * holds the catalog capability there or on the site, gets them whole.
+	 *
+	 * @param iterable<object> $blocks
+	 * @param string           $game_slug The chronicle the blocks are read for, or an empty string for the site's own.
+	 */
+	public static function filter_catalog_blocks_for_viewer( iterable $blocks, string $game_slug ): void {
+		if ( Authorization::can_in_chronicle( 'be_manage_characters', $game_slug ) || Authorization::can_in_chronicle( 'be_manage_schemas', $game_slug ) ) {
+			return;
+		}
+
+		$game = $game_slug === '' ? null : Game::find_by_slug( $game_slug );
+		foreach ( $blocks as $block ) {
+			self::filter_catalog_block( $block, $game, false );
+		}
+	}
+
+	/**
+	 * Takes the Storyteller-only text out of one schema block in place: every marked passage in its definition and its
+	 * recorded changes, and, for a Storyteller-only block, every catalog description.
+	 *
+	 * @param object      $block
+	 * @param object|null $game       Provides `settings` for the per-game markers.
+	 * @param bool        $can_manage
+	 */
+	public static function filter_catalog_block( object $block, ?object $game, bool $can_manage ): void {
+		if ( $can_manage ) {
+			return;
+		}
+
+		$settings = $game->settings ?? null;
+		$start    = (string) ( $settings->st_comment_start ?? '' );
+		$end      = (string) ( $settings->st_comment_end ?? '' );
+		$markers  = [ $start !== '' ? $start : '[ST]', $end !== '' ? $end : '[/ST]' ];
+		$only     = ! empty( $block->storyteller_only );
+
+		if ( isset( $block->definition ) ) {
+			$block->definition = self::scrub_catalog_node( $block->definition, $markers, $only );
+		}
+		if ( ! isset( $block->fork_changes ) ) {
+			return;
+		}
+		$block->fork_changes = $only
+			? (object) Fork_Merge::NO_CHANGES
+			: self::scrub_catalog_node( $block->fork_changes, $markers, false );
+	}
+
+	/**
+	 * One value of a catalog block with its marked passages removed, walking arrays and objects.
+	 *
+	 * @param mixed                $node
+	 * @param array{0:string,1:string} $markers
+	 * @param bool                 $drop_descriptions Remove every description object, as a Storyteller-only block does.
+	 * @return mixed
+	 */
+	private static function scrub_catalog_node( $node, array $markers, bool $drop_descriptions ) {
+		if ( is_string( $node ) ) {
+			return str_contains( $node, $markers[0] ) ? St_Filter::strip( $node, $markers[0], $markers[1] ) : $node;
+		}
+		if ( is_array( $node ) ) {
+			foreach ( $node as $key => $value ) {
+				$node[ $key ] = self::scrub_catalog_node( $value, $markers, $drop_descriptions );
+			}
+			return $node;
+		}
+		if ( is_object( $node ) ) {
+			foreach ( get_object_vars( $node ) as $key => $value ) {
+				if ( $drop_descriptions && $key === 'description' && ( is_object( $value ) || is_array( $value ) ) ) {
+					unset( $node->$key );
+					continue;
+				}
+				$node->$key = self::scrub_catalog_node( $value, $markers, $drop_descriptions );
+			}
+		}
+		return $node;
 	}
 
 	/**

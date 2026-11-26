@@ -11,6 +11,7 @@ return [
 
 	'character-roster' => [
 		'title'   => 'Character Roster',
+		'summary' => 'Every character with its player and status.',
 		'shape'   => 'table',
 		'entity'  => 'char',
 		'columns' => [
@@ -25,6 +26,7 @@ return [
 
 	'sign-in-sheet' => [
 		'title'   => 'Sign-In Sheet',
+		'summary' => 'A sheet for players to sign as they arrive.',
 		'shape'   => 'table',
 		'entity'  => 'char',
 		'columns' => [
@@ -37,6 +39,7 @@ return [
 
 	'experience-history' => [
 		'title'     => 'Experience History',
+		'summary' => 'Every approved change and the XP it moved, by character.',
 		'shape'     => 'table',
 		'entity'    => 'char',
 		'rows_from' => 'ledger',
@@ -52,6 +55,7 @@ return [
 
 	'search-report' => [
 		'title'   => 'Search Report',
+		'summary' => 'The characters that match the conditions you set.',
 		'shape'   => 'table',
 		'entity'  => 'char',
 		'columns' => [
@@ -64,6 +68,7 @@ return [
 
 	'statistics-report' => [
 		'title'   => 'Statistics Report',
+		'summary' => 'How a stat is spread across the chronicle: pick Merits, Flaws or Influences.',
 		'shape'   => 'statistics',
 		'entity'  => 'char',
 		'statfields' => null,
@@ -72,6 +77,7 @@ return [
 
 	'merits-and-flaws-report' => [
 		'title'   => 'Merits and Flaws Report',
+		'summary' => 'Which Merits and Flaws the chronicle\'s characters hold, and how many of each.',
 		'shape'   => 'statistics',
 		'entity'  => 'char',
 		'statfields' => [ 'merits', 'flaws' ],
@@ -80,6 +86,7 @@ return [
 
 	'influence-report' => [
 		'title'   => 'Influence Report',
+		'summary' => 'The Influences the chronicle\'s characters hold, added up.',
 		'shape'   => 'statistics',
 		'entity'  => 'char',
 		'statfields' => [ 'influences' ],
@@ -88,6 +95,7 @@ return [
 
 	'vampire-status-report' => [
 		'title'   => 'Vampire Status Report',
+		'summary' => 'Each vampire\'s title, clan, Status and boons.',
 		'shape'   => 'table',
 		'entity'  => 'char',
 		// Grapevine's own columns (Templates/Text/Vampire Status Report.txt).
@@ -103,8 +111,28 @@ return [
 
 	// -- table / player -----------------------------------------------------------------
 
+	// -- table / bonds ------------------------------------------------------------------
+
+	'bonds' => [
+		'capability' => null,
+		'title'      => 'Bonds',
+		'summary' => 'Every bond and Guanxi, one row each.',
+		'shape'      => 'table',
+		'entity'     => 'bond',
+		'rows_from'  => 'bonds',
+		'empty_note' => 'No bonds are recorded.',
+		'columns'    => [
+			[ 'Character', 'character', 'bond' ],
+			[ 'Player', 'player', 'bond' ],
+			[ 'Bonded to', 'bonded_to', 'bond' ],
+			[ 'Rating', 'rating', 'bond' ],
+			[ 'Kind', 'kind', 'bond' ],
+		],
+	],
+
 	'player-roster' => [
 		'title'   => 'Player Roster',
+		'summary' => 'Every player with their position, title and email.',
 		'shape'   => 'table',
 		'entity'  => 'player',
 		'columns' => [
@@ -119,6 +147,7 @@ return [
 
 	'player-point-history' => [
 		'title'     => 'Player Point History',
+		'summary' => 'Every approved change and the XP it moved, by player.',
 		'shape'     => 'table',
 		'entity'    => 'player',
 		'rows_from' => 'ledger',
@@ -136,6 +165,7 @@ return [
 	'item-cards' => [
 		'capability' => null,
 		'title'   => 'Item Cards',
+		'summary' => 'A printable card for each item.',
 		'shape'   => 'card',
 		'entity'  => 'item',
 		'columns' => [
@@ -158,6 +188,7 @@ return [
 	'rote-cards' => [
 		'capability' => null,
 		'title'   => 'Rote Cards',
+		'summary' => 'A printable card for each rote a character holds.',
 		'shape'   => 'card',
 		'entity'  => 'rote',
 		'holder_block' => 'mage-rotes',
@@ -174,6 +205,7 @@ return [
 	'location-cards' => [
 		'capability' => null,
 		'title'   => 'Location Cards',
+		'summary' => 'A printable card for each location.',
 		'shape'   => 'card',
 		'entity'  => 'loc',
 		'columns' => [
@@ -198,6 +230,7 @@ return [
 
 	'character-equipment' => [
 		'title'   => 'Character Equipment',
+		'summary' => 'What each character carries.',
 		'shape'   => 'table',
 		'entity'  => 'char',
 		'columns' => [
@@ -211,6 +244,7 @@ return [
 	'plot-report' => [
 		'capability' => 'be_manage_plots',
 		'title'   => 'Plot Report',
+		'summary' => 'Every plot with its entries in date order.',
 		'shape'   => 'narrative',
 		'entity'  => 'plot',
 		'entry_type' => null,
@@ -219,6 +253,7 @@ return [
 	'master-action-report' => [
 		'capability' => 'be_manage_plots',
 		'title'   => 'Master Action Report',
+		'summary' => 'Every downtime action, by plot and character.',
 		'shape'   => 'table',
 		'entity'  => 'plot',
 		'entry_type' => 'action',
@@ -237,6 +272,7 @@ return [
 	'master-rumor-report' => [
 		'capability' => 'be_manage_plots',
 		'title'   => 'Master Rumor Report',
+		'summary' => 'Every rumor, with its date and level.',
 		'shape'   => 'table',
 		'entity'  => 'plot',
 		'entry_type' => 'rumor',
@@ -250,6 +286,7 @@ return [
 	'action-and-rumor-report' => [
 		'capability' => 'be_manage_plots',
 		'title'   => 'Action and Rumor Report',
+		'summary' => 'Downtime actions and rumors together.',
 		'shape'   => 'table',
 		'entity'  => 'plot',
 		'entry_type' => [ 'action', 'rumor' ],
@@ -269,6 +306,7 @@ return [
 	'game-calendar' => [
 		'capability' => null,
 		'title'      => 'Game Calendar',
+		'summary' => 'The game nights on the chronicle\'s calendar.',
 		'shape'      => 'calendar',
 		'entity'     => 'none',
 		'empty_note' => 'No game nights are on this chronicle\'s calendar.',
@@ -279,6 +317,7 @@ return [
 	'house-rules' => [
 		'capability' => null,
 		'title'  => 'House Rules',
+		'summary' => 'Every note the chronicle has written on the catalog.',
 		'shape'  => 'house_rules',
 		'entity' => 'none',
 	],

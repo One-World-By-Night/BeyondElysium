@@ -50,6 +50,7 @@ class Reports_Controller extends Base_Controller {
 					'stat_type'    => [ 'type' => 'string', 'required' => false ],
 					'character_id' => [ 'type' => 'integer', 'required' => false ],
 					'object_id'    => [ 'type' => 'integer', 'required' => false ],
+					'order'        => [ 'type' => 'string', 'required' => false ],
 				],
 			],
 		] );
@@ -66,6 +67,7 @@ class Reports_Controller extends Base_Controller {
 					'stat_type'    => [ 'type' => 'string', 'required' => false ],
 					'character_id' => [ 'type' => 'integer', 'required' => false ],
 					'object_id'    => [ 'type' => 'integer', 'required' => false ],
+					'order'        => [ 'type' => 'string', 'required' => false ],
 				],
 			],
 		] );
@@ -90,7 +92,8 @@ class Reports_Controller extends Base_Controller {
 			}
 			$rows[] = [
 				'key'    => $key,
-				'title'  => $report['title'],
+				'title'  => Report_Document::words( (string) $report['title'] ),
+				'summary' => Report_Document::words( (string) ( $report['summary'] ?? '' ) ),
 				'shape'  => $report['shape'],
 				'entity' => $report['entity'] ?? null,
 			];
@@ -209,6 +212,7 @@ class Reports_Controller extends Base_Controller {
 				'can_manage' => $can_manage,
 				'stat_field' => (string) $request->get_param( 'stat_field' ),
 				'stat_type'  => (string) $request->get_param( 'stat_type' ),
+				'order'      => (string) $request->get_param( 'order' ),
 			]
 		);
 

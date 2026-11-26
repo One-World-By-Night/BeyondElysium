@@ -30,8 +30,8 @@ This isn't a screen of its own. You submit a change from the [Character Editor](
 
 ### Check whether your change is still waiting
 
-1. Open [My Chronicle](my-chronicle.md) → **Dashboard** → **My Changes**.
-2. Still listed there means still waiting. Not listed, but not on the sheet either? Check that character's [Change History](sheet-history.md) for whether it was approved or rejected.
+1. Open [My Chronicle](my-chronicle.md) → **Home**. A character's card says how many changes are waiting, and **Other chronicles** says the same for your other chronicles.
+2. Open the character → **History** to read each change and whether it is still waiting, approved or rejected. See [Change History](sheet-history.md).
 
 ### See why a specific change needs review (Storyteller)
 
@@ -61,7 +61,7 @@ This isn't a screen of its own. You submit a change from the [Character Editor](
 
 ## Troubleshooting
 
-- **My change didn't show up on my sheet.** It's most likely pending Storyteller review - check [My Chronicle](my-chronicle.md) → Dashboard → My Changes, or the character's [Change History](sheet-history.md).
+- **My change didn't show up on my sheet.** It's most likely pending Storyteller review - check the "changes waiting" line on your character's card at [My Chronicle](my-chronicle.md) → Home, or the character's [Change History](sheet-history.md).
 - **Submit won't click.** As a player, the cart costs more than you have free to spend (XP held for changes still waiting is not free) - reduce what you're buying, withdraw a waiting change to release its XP, or ask a Storyteller for more.
 - **A Storyteller says nothing happened when they clicked Approve.** Someone else already reviewed it, or you changed it after the queue loaded - the queue reloads with whatever's actually there now.
 - **A rule doesn't seem to be applying.** Check it addresses the value actually being reached (never a change from before), and that nothing more specific overrides it.
@@ -72,7 +72,7 @@ This isn't a screen of its own. You submit a change from the [Character Editor](
 - [Approval Rules](approval-rules.md)
 - [Character Editor](character-editor.md)
 - [Change History](sheet-history.md)
-- [Dashboard](player-dashboard.md)
+- [Home](player-dashboard.md)
 - [Schema Blocks](schema-blocks.md)
 - [Roles](roles.md)
 - [Storyteller Guide: Running the Approval Queue](../st-guide.md#4-running-the-approval-queue)

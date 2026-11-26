@@ -12,6 +12,7 @@ import SheetWarnings from './SheetWarnings';
 import SheetActions from './SheetActions';
 import SheetHeader from './SheetHeader';
 import TraitPanel from './TraitPanel';
+import { compendiumHref } from '../../lib/compendiumLinks';
 import {
 	spanFor,
 	sortedForFlow,
@@ -455,6 +456,13 @@ export function CharacterSheet( {
 							gameSlug={ gameSlug }
 							characterId={ characterId }
 							trait={ held }
+							compendiumHref={ compendiumHref(
+								gameSlug,
+								stack.stack.slug,
+								held.blockSlug,
+								held.name,
+								characterId
+							) }
 							block={ stack.blocks[ held.blockSlug ] }
 							sheetData={ character.sheet_data }
 							label={ traitLabel(

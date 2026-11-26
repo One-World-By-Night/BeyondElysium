@@ -16,6 +16,7 @@ use BeyondElysium\Models\Release_Batch;
 use BeyondElysium\Services\St_Visibility;
 use BeyondElysium\Services\Action_Allocator;
 use BeyondElysium\Services\Audience;
+use BeyondElysium\Services\My_Plots;
 use BeyondElysium\Services\Query_Engine;
 use BeyondElysium\Services\Rumor_Generator;
 
@@ -325,34 +326,7 @@ class Plots_Controller extends Base_Controller {
 		}
 
 		$can_manage = Authorization::can( 'be_manage_plots' );
-		$wp_user_id = get_current_user_id();
-
-		$by_id = [];
-		foreach ( Plot::for_user( (int) $game->id, $wp_user_id ) as $plot ) {
-			$by_id[ $plot->id ] = $plot;
-		}
-
-		// Resolves target_query candidates against the user's own characters only.
-		$character_ids = array_map(
-			static fn( $c ) => (int) $c->id,
-			Character::find_for_user( $wp_user_id, $request['game_slug'] )
-		);
-		if ( ! empty( $character_ids ) ) {
-			foreach ( Plot::for_target_query_candidates( (int) $game->id ) as $plot ) {
-				if ( isset( $by_id[ $plot->id ] ) ) {
-					continue;
-				}
-				$recipients = Query_Engine::resolve_target_query( $request['game_slug'], $plot->target_query );
-				if ( array_intersect( $character_ids, $recipients ) ) {
-					$by_id[ $plot->id ] = $plot;
-				}
-			}
-		}
-
-		$plots = array_values( $by_id );
-		// A plot reachable through a connection or a target_query match is not automatically visible.
-		$plots = Audience::filter( $plots, 'plot', $wp_user_id, $request['game_slug'], $can_manage );
-		usort( $plots, static fn( $a, $b ) => strcmp( $b->updated_at, $a->updated_at ) );
+		$plots      = My_Plots::for_user( $game, get_current_user_id(), $can_manage );
 		foreach ( $plots as $plot ) {
 			$this->prepare_plot( $plot, $can_manage, "medium", $game );
 		}

@@ -30,8 +30,8 @@ Esta não é uma tela própria. Você envia uma mudança pelo [Editor de Persona
 
 ### Conferir se a sua mudança ainda está esperando
 
-1. Abra [Minha Crônica](my-chronicle.md) → **Painel** → **Minhas Alterações**.
-2. Ainda listada ali quer dizer que ainda espera. Não listada, mas também não na ficha? Confira o [Histórico de Alterações](sheet-history.md) desse personagem para ver se foi aprovada ou rejeitada.
+1. Abra [Minha Crônica](my-chronicle.md) → **Início**. O cartão de um personagem diz quantas mudanças aguardam, e **Outras crônicas** diz o mesmo para as suas outras crônicas.
+2. Abra o personagem → **Histórico** para ler cada mudança e ver se ainda aguarda, foi aprovada ou rejeitada. Veja [Histórico de Alterações](sheet-history.md).
 
 ### Ver por que uma mudança específica precisa de revisão (Narrador)
 
@@ -61,7 +61,7 @@ Esta não é uma tela própria. Você envia uma mudança pelo [Editor de Persona
 
 ## Solução de problemas
 
-- **A minha mudança não apareceu na ficha.** Provavelmente está pendente da revisão do Narrador - confira [Minha Crônica](my-chronicle.md) → Painel → Minhas Alterações, ou o [Histórico de Alterações](sheet-history.md) do personagem.
+- **A minha mudança não apareceu na ficha.** Provavelmente está pendente da revisão do Narrador - confira a linha de mudanças aguardando no cartão do seu personagem em [Minha Crônica](my-chronicle.md) → Início, ou o [Histórico de Alterações](sheet-history.md) do personagem.
 - **Enviar não clica.** Como jogador, o carrinho custa mais do que você tem livre para gastar (o XP retido para mudanças ainda aguardando não está livre) - reduza o que está comprando, retire uma mudança que aguarda para liberar o XP dela, ou peça mais a um Narrador.
 - **Um Narrador diz que nada aconteceu quando clicou em Aprovar.** Outra pessoa já a revisou, ou você a mudou depois que a fila carregou - a fila recarrega com o que realmente está lá agora.
 - **Uma regra parece não estar se aplicando.** Confira se ela trata o valor que de fato está sendo alcançado (nunca uma mudança de antes) e se nada mais específico a sobrepõe.
@@ -72,7 +72,7 @@ Esta não é uma tela própria. Você envia uma mudança pelo [Editor de Persona
 - [Regras de Aprovação](approval-rules.md)
 - [Editor de Personagem](character-editor.md)
 - [Histórico de Alterações](sheet-history.md)
-- [Painel](player-dashboard.md)
+- [Início](player-dashboard.md)
 - [Blocos de Esquema](schema-blocks.md)
 - [Papéis](roles.md)
 - [Guia do Narrador: Conduzindo a Fila de Aprovação](../st-guide.md#4-conduzindo-a-fila-de-aprovação)

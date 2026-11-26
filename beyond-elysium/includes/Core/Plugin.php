@@ -39,6 +39,7 @@ class Plugin {
 		// Cleans up be_game_members rows when a user is deleted, single-site or multisite.
 		add_action( 'deleted_user', [ '\BeyondElysium\Models\Game_Member', 'remove_user_everywhere' ] );
 		add_action( 'deleted_user', [ '\BeyondElysium\Services\Staff_Grants', 'remove_user_everywhere' ] );
+		add_action( 'deleted_user', [ '\BeyondElysium\Models\Player_Note', 'remove_user_everywhere' ] );
 
 		// Drops this plugin's tables with a deleted subsite.
 		Multisite::register();
@@ -214,6 +215,9 @@ class Plugin {
 			new \BeyondElysium\REST\Sheet_Document_Controller(),
 			new \BeyondElysium\REST\Temporary_State_Controller(),
 			new \BeyondElysium\REST\Notices_Controller(),
+			new \BeyondElysium\REST\Home_Controller(),
+			new \BeyondElysium\REST\Compendium_Controller(),
+			new \BeyondElysium\REST\Player_Notes_Controller(),
 		];
 		foreach ( $controllers as $controller ) {
 			$controller->register_routes();

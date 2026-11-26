@@ -19,11 +19,11 @@ class ReportRegistryTest extends TestCase {
 		self::$registry = include BE_PLUGIN_DIR . 'includes/Database/report-registry.php';
 	}
 
-	public function test_registry_has_exactly_twenty_reports(): void {
+	public function test_registry_has_exactly_twenty_one_reports(): void {
 		$this->assertCount(
-			20,
+			21,
 			self::$registry,
-			'Grapevine has 19 reports besides the 12 character sheets; House Rules is the one report with no Grapevine counterpart.'
+			'Grapevine has 19 reports besides the 12 character sheets; House Rules and Bonds are the two with no Grapevine counterpart.'
 		);
 	}
 
@@ -75,7 +75,7 @@ class ReportRegistryTest extends TestCase {
 	}
 
 	public function test_column_sources_are_recognized(): void {
-		$known = [ 'field', 'special', 'ledger', 'player', 'plot', 'boons', 'equipment', 'unmapped' ];
+		$known = [ 'field', 'special', 'ledger', 'player', 'plot', 'boons', 'equipment', 'bond', 'unmapped' ];
 		foreach ( self::$registry as $key => $report ) {
 			foreach ( ( $report['columns'] ?? [] ) as [ $label, $field_key, $source ] ) {
 				$this->assertContains( $source, $known, "Report \"{$key}\" column \"{$label}\" has unrecognized source \"{$source}\"." );
@@ -91,6 +91,7 @@ class ReportRegistryTest extends TestCase {
 				'char'   => [ 'field', 'special', 'boons', 'equipment', 'unmapped' ],
 				'player' => [ 'player', 'special', 'unmapped' ],
 				'plot'   => [ 'plot', 'unmapped' ],
+				'bond'   => [ 'bond', 'unmapped' ],
 			][ $rows ] ?? [ 'field', 'special', 'unmapped' ];
 
 			foreach ( ( $report['columns'] ?? [] ) as [ $label, $field_key, $source ] ) {
@@ -130,7 +131,7 @@ class ReportRegistryTest extends TestCase {
 			'game-calendar', 'plot-report', 'master-action-report', 'master-rumor-report',
 			'action-and-rumor-report', 'search-report', 'statistics-report',
 			'vampire-status-report', 'merits-and-flaws-report', 'influence-report',
-			'character-equipment', 'house-rules',
+			'character-equipment', 'house-rules', 'bonds',
 		];
 		foreach ( $expected as $key ) {
 			$this->assertArrayHasKey( $key, self::$registry, "Expected report \"{$key}\" is missing from the registry." );

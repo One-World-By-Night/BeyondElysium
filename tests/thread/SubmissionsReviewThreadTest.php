@@ -4,6 +4,7 @@ namespace BeyondElysium\Tests\Thread;
 
 use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Game_Member;
+use BeyondElysium\Models\Notice;
 use BeyondElysium\Models\Submission;
 use BeyondElysium\Models\Transfer;
 use BeyondElysium\Services\Character_Exporter;
@@ -159,6 +160,49 @@ class SubmissionsReviewThreadTest extends WP_UnitTestCase {
 
 		$mailed_sender = array_filter( $this->mail, fn( $m ) => $m['to'] === 'review-sender@example.test' );
 		$this->assertNotEmpty( $mailed_sender );
+	}
+
+	/**
+	 * @return object[]
+	 */
+	private function notices_of( int $user, string $kind ): array {
+		return array_values( array_filter(
+			Notice::for_person( $this->game_id, $user, 30 ),
+			static fn( $notice ) => $notice->kind === $kind
+		) );
+	}
+
+	public function test_a_sent_file_tells_the_hst_in_their_header_and_not_the_sender(): void {
+		$this->real_waiting_submission( [ 'name' => 'Header Vampire' ] );
+
+		$told = $this->notices_of( $this->hst, 'file_received' );
+		$this->assertCount( 1, $told );
+		$this->assertSame( 'Header Vampire', $told[0]->payload['character_name'] );
+		$this->assertCount( 0, $this->notices_of( $this->sender, 'file_received' ) );
+	}
+
+	public function test_an_accepted_file_tells_the_sender(): void {
+		$id = $this->real_waiting_submission();
+		wp_set_current_user( $this->hst );
+
+		$this->dispatch( $this->post( "/be/v1/{$this->game_slug}/submissions/{$id}/accept" ) );
+
+		$told = $this->notices_of( $this->sender, 'file_answered' );
+		$this->assertCount( 1, $told );
+		$this->assertTrue( $told[0]->payload['accepted'] );
+		$this->assertSame( '', $told[0]->payload['note'] );
+	}
+
+	public function test_a_refused_file_tells_the_sender_with_the_note(): void {
+		$id = $this->real_waiting_submission();
+		wp_set_current_user( $this->hst );
+
+		$this->dispatch( $this->post( "/be/v1/{$this->game_slug}/submissions/{$id}/refuse", [ 'note' => 'Wrong chronicle.' ] ) );
+
+		$told = $this->notices_of( $this->sender, 'file_answered' );
+		$this->assertCount( 1, $told );
+		$this->assertFalse( $told[0]->payload['accepted'] );
+		$this->assertSame( 'Wrong chronicle.', $told[0]->payload['note'] );
 	}
 
 	public function test_accept_records_the_sender_in_the_import_note(): void {

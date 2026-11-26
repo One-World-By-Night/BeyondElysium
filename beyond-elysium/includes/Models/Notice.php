@@ -61,6 +61,30 @@ class Notice {
 	}
 
 	/**
+	 * A person's own notices of one kind in one chronicle, newest first, each with its payload decoded.
+	 *
+	 * @param int    $game_id
+	 * @param int    $wp_user_id
+	 * @param string $kind
+	 * @param int    $limit
+	 * @return object[]
+	 */
+	public static function of_kind( int $game_id, int $wp_user_id, string $kind, int $limit = 200 ): array {
+		$rows = Manager::get_results(
+			'SELECT * FROM ' . Manager::table( 'notices' ) . ' WHERE game_id = %d AND wp_user_id = %d AND kind = %s ORDER BY id DESC LIMIT %d',
+			$game_id,
+			$wp_user_id,
+			$kind,
+			$limit
+		);
+		foreach ( $rows as $row ) {
+			$row->id      = (int) $row->id;
+			$row->payload = $row->payload ? json_decode( (string) $row->payload, true ) : [];
+		}
+		return $rows;
+	}
+
+	/**
 	 * How many of a person's notices in one chronicle they have not read.
 	 *
 	 * @param int $game_id

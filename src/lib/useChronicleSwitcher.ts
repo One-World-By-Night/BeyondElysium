@@ -18,6 +18,7 @@ const EMPTY_CAPABILITIES: MyCapabilities = {
 	be_manage_chronicle_setup: false,
 	be_delete_characters: false,
 	be_grant_staff_access: false,
+	be_view_reports: false,
 };
 
 /**

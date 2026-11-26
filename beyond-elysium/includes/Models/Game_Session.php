@@ -68,6 +68,41 @@ class Game_Session {
 	}
 
 	/**
+	 * The sessions that can still ask something of a player: those on or after today, and those whose reports are not
+	 * yet due, soonest first.
+	 *
+	 * @param int    $game_id
+	 * @param string $today Y-m-d.
+	 * @param string $now   Y-m-d H:i:s, in the same clock as the stored deadlines.
+	 * @return object[]
+	 */
+	public static function with_open_dates( int $game_id, string $today, string $now ): array {
+		return array_map( [ self::class, 'decode_row' ], Manager::get_results(
+			'SELECT * FROM ' . Manager::table( 'game_sessions' )
+				. ' WHERE game_id = %d AND (game_date >= %s OR reports_due_at >= %s) ORDER BY game_date ASC',
+			$game_id,
+			$today,
+			$now
+		) );
+	}
+
+	/**
+	 * The first session on or after a date.
+	 *
+	 * @param int    $game_id
+	 * @param string $today Y-m-d.
+	 * @return object|null
+	 */
+	public static function next_on_or_after( int $game_id, string $today ): ?object {
+		$row = Manager::get_row(
+			'SELECT * FROM ' . Manager::table( 'game_sessions' ) . ' WHERE game_id = %d AND game_date >= %s ORDER BY game_date ASC LIMIT 1',
+			$game_id,
+			$today
+		);
+		return $row ? self::decode_row( $row ) : null;
+	}
+
+	/**
 	 * Creates a new session. game_id and game_date are required.
 	 *
 	 * @param array<string,mixed> $data

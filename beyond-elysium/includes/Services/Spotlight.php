@@ -23,6 +23,11 @@ class Spotlight {
 	const DEFAULT_SPOTLIGHT_DAYS = 42;
 
 	/**
+	 * How many flagged names a summary carries.
+	 */
+	private const SUMMARY_NAMES = 5;
+
+	/**
 	 * @param int                 $game_id
 	 * @param string              $game_slug
 	 * @param array<string,mixed> $settings The game's own `settings` array (for `sessions.spotlight_days`).
@@ -70,7 +75,52 @@ class Spotlight {
 	 * @return int
 	 */
 	public static function flagged_count( int $game_id, string $game_slug, array $settings ): int {
-		return count( array_filter( self::for_game( $game_id, $game_slug, $settings ), static fn( $row ) => $row['flagged'] ) );
+		return self::summary( $game_id, $game_slug, $settings )['flagged'];
+	}
+
+	/**
+	 * How many characters are flagged, the spotlight window in days, and the first few flagged names; read once for the
+	 * chronicle and kept for a minute, since every character costs several queries.
+	 *
+	 * @param int                 $game_id
+	 * @param string              $game_slug
+	 * @param array<string,mixed> $settings
+	 * @return array{flagged:int,days:int,names:string[]}
+	 */
+	public static function summary( int $game_id, string $game_slug, array $settings ): array {
+		$key    = self::summary_key( $game_slug );
+		$cached = get_transient( $key );
+		if ( is_array( $cached ) ) {
+			return $cached;
+		}
+
+		$flagged  = array_values( array_filter( self::for_game( $game_id, $game_slug, $settings ), static fn( $row ) => $row['flagged'] ) );
+		$sessions = (array) ( $settings['sessions'] ?? [] );
+		$summary  = [
+			'flagged' => count( $flagged ),
+			'days'    => (int) ( $sessions['spotlight_days'] ?? self::DEFAULT_SPOTLIGHT_DAYS ),
+			'names'   => array_map( static fn( $row ) => (string) $row['name'], array_slice( $flagged, 0, self::SUMMARY_NAMES ) ),
+		];
+		set_transient( $key, $summary, MINUTE_IN_SECONDS );
+		return $summary;
+	}
+
+	/**
+	 * Drops the kept summary so the next read counts again.
+	 *
+	 * @param string $game_slug
+	 * @return void
+	 */
+	public static function forget( string $game_slug ): void {
+		delete_transient( self::summary_key( $game_slug ) );
+	}
+
+	/**
+	 * @param string $game_slug
+	 * @return string
+	 */
+	private static function summary_key( string $game_slug ): string {
+		return 'be_spotlight_' . $game_slug;
 	}
 
 	/**

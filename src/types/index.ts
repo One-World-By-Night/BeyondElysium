@@ -141,6 +141,7 @@ export interface MyCapabilities {
 	be_manage_chronicle_setup: boolean;
 	be_delete_characters: boolean;
 	be_grant_staff_access: boolean;
+	be_view_reports: boolean;
 }
 
 /**
@@ -243,6 +244,27 @@ export interface ChroniclePlayer {
 	display_name: string | null;
 	since: string;
 	characters: NamedCharacter[];
+	/**
+	 * Whether the chronicle's Storytellers hold a private note about this player.
+	 */
+	has_notes: boolean;
+}
+
+/**
+ * A chronicle's private note about one player.
+ */
+export interface PlayerNote {
+	notes: string;
+	updated_by: string | null;
+	updated_at: string | null;
+}
+
+/**
+ * Someone the chronicle holds a note about who is no longer in it.
+ */
+export interface FormerNote {
+	wp_user_id: number;
+	display_name: string | null;
 }
 
 /**

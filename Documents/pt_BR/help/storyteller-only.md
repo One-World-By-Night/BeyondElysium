@@ -4,7 +4,7 @@ Duas formas de uma crônica manter algo longe dos jogadores por completo: texto 
 
 ## Quem pode usar
 
-Todos esbarram nisto sem necessariamente notar - a ficha, as impressões e as exportações de um jogador simplesmente nunca carregam nada disso. Os Narradores (HST e AST) sempre o veem por inteiro, em todo personagem da própria crônica; a Harpia da crônica o vê dentro dos termos de um favor. Marcar texto assim, ou sinalizar uma seção inteira, é feito por um Narrador ou administrador do site na tela que já guarda esse conteúdo.
+Todos esbarram nisto sem necessariamente notar - a ficha, as impressões e as exportações de um jogador simplesmente nunca carregam nada disso. Os Narradores (HST e AST), e quem recebeu a permissão de Catálogo, sempre o veem por inteiro, em todo personagem da própria crônica; a Harpia da crônica o vê dentro dos termos de um favor. Marcar texto assim, ou sinalizar uma seção inteira, é feito por um Narrador ou administrador do site na tela que já guarda esse conteúdo.
 
 ## Como chegar lá
 
@@ -17,10 +17,11 @@ Esta não é uma tela única - é uma regra que vale em todo lugar onde pode exi
 - A Biografia e as Notas de um personagem.
 - A descrição ou outras propriedades de texto livre de um item, local ou ritual.
 - Os Termos de um favor.
+- A Referência, a Descrição ou a Fonte de um item, poder ou nível do catálogo, escritas em [Blocos de Esquema](schema-blocks.md). Um jogador que lê o catálogo - nas listas do editor de personagem, no Compêndio ou nas Regras da Casa - recebe o mesmo texto sem as passagens marcadas.
 
 Um Narrador vê o texto marcado por inteiro, onde quer que normalmente visse o campo - a mesma visão que um jogador recebe, só que sem nada retirado - e destacado no lugar, para a parte que um jogador nunca recebe ser fácil de notar. Isso vale no Antecedente e nas Notas de um personagem, em descrições e entradas de trama, no texto de um segredo e num cartão de item ou local. A busca no catálogo e as condições de relatório rodam todas no mesmo texto retirado que um jogador vê, então o texto marcado também não pode ser achado por elas, por ninguém que não seja Narrador.
 
-**Blocos só para Narradores.** Uma seção inteira da ficha - a seção de Notas de Interpretação de NPC na ficha de um NPC, por exemplo - pode ser sinalizada como só para Narradores em [Blocos de Esquema](schema-blocks.md). Sinalizar um bloco assim o remove por completo para todos, menos um Narrador: a própria seção nunca aparece no layout da ficha, e nada que um personagem tenha nela é enviado ao navegador, à impressão ou à exportação de um jogador.
+**Blocos só para Narradores.** Uma seção inteira da ficha - a seção de Notas de Interpretação de NPC na ficha de um NPC, por exemplo - pode ser sinalizada como só para Narradores em [Blocos de Esquema](schema-blocks.md). Sinalizar um bloco assim o remove por completo para todos, menos um Narrador: a própria seção nunca aparece no layout da ficha, e nada que um personagem tenha nela é enviado ao navegador, à impressão ou à exportação de um jogador. Um bloco sinalizado também tira toda descrição do catálogo da cópia de um jogador, marcada ou não.
 
 ## Tarefas comuns
 
@@ -46,6 +47,7 @@ Um Narrador vê o texto marcado por inteiro, onde quer que normalmente visse o c
 - **O personagem de um jogador pode carregar texto só para Narradores sobre ele, e ele nunca o vê** - nem na própria ficha, nem na própria exportação, nem na própria impressão. Isso é de propósito: ali pode caber a sua nota privada sobre o personagem de um jogador.
 - **O texto marcado não pode ser buscado nem filtrado ao redor.** A Ferramenta de Consulta, a busca no catálogo e as condições de relatório avaliam todas o mesmo texto retirado que um não-Narrador vê, então o texto escondido não pode ser achado nem confirmar uma cláusula.
 - **Um bloco só para Narradores é sinalizado por crônica.** Se a cópia própria de um bloco da sua crônica é sinalizada como só para Narradores, isso vale só para a sua crônica - a cópia de outra crônica do mesmo bloco compartilhado mantém a configuração dela.
+- **O texto do catálogo é limpo onde é lido.** O texto fica guardado por inteiro; o que o navegador de um jogador recebe tem as passagens marcadas retiradas, tanto no bloco em si quanto nas mudanças que a crônica fez nele.
 - **O marcador é `[ST]` e `[/ST]` para toda crônica hoje** - não há tela para mudá-lo.
 - **Um `[ST]` sem o `[/ST]` de fechamento esconde tudo depois dele até o fim do campo** - feche todo marcador que abrir.
 - **Isto é separado da visibilidade do próprio NPC.** A ficha de um NPC nunca aparece para um jogador, com marcadores `[ST]` ou sem - veja [Ficha de Personagem](character-sheet.md).

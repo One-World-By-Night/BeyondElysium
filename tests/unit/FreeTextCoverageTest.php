@@ -36,6 +36,7 @@ class FreeTextCoverageTest extends TestCase {
 		'characters.biography'                      => 'filter_character',
 		'characters.notes'                          => 'filter_character',
 		'characters.rp_notes'                       => self::MANAGER_ONLY,
+		'player_notes.notes'                        => self::MANAGER_ONLY,
 		'character_changes.notes'                   => 'filter_change',
 		'character_changes.review_notes'            => 'filter_change',
 		'character_changes.reason'                  => 'filter_change',

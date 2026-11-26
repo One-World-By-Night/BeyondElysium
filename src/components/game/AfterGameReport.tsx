@@ -17,13 +17,26 @@ import { formatStoredTime } from '../../lib/storedTime';
 
 export interface AfterGameReportProps {
 	gameSlug: string;
+	/**
+	 * A session and character to open the report on.
+	 */
+	initialSessionId?: number | null;
+	initialCharacterId?: number | null;
 }
 
-export function AfterGameReport( { gameSlug }: AfterGameReportProps ) {
+export function AfterGameReport( {
+	gameSlug,
+	initialSessionId,
+	initialCharacterId,
+}: AfterGameReportProps ) {
 	const [ sessions, setSessions ] = useState< GameSession[] >( [] );
 	const [ characters, setCharacters ] = useState< Character[] >( [] );
-	const [ sessionId, setSessionId ] = useState( '' );
-	const [ characterId, setCharacterId ] = useState( '' );
+	const [ sessionId, setSessionId ] = useState(
+		initialSessionId ? String( initialSessionId ) : ''
+	);
+	const [ characterId, setCharacterId ] = useState(
+		initialCharacterId ? String( initialCharacterId ) : ''
+	);
 	const [ existing, setExisting ] = useState< Report | null >( null );
 	const didDraft = useRef( '' );
 	const wantsDraft = useRef( '' );

@@ -132,6 +132,7 @@ class Game_Stats_Controller extends Base_Controller {
 	 */
 	public static function invalidate( string $game_slug ): void {
 		delete_transient( 'be_game_stats_' . $game_slug );
+		Spotlight::forget( $game_slug );
 	}
 
 	/**

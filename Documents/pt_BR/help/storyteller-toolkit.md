@@ -1,10 +1,10 @@
 # Kit de Ferramentas do Narrador
 
-O centro voltado ao Narrador de uma crônica: escolha a crônica e passe entre as abas Painel, Minha Fila, Fila de Aprovação, Personagens, Jogadores, Tramas e Rumores, Segredos, Registro de Favores, Itens e Locais, Catálogo, Noites de Jogo, Lançamentos, Tempo Livre, Facções, Relacionamentos e Registro de E-mails dela.
+O centro voltado ao Narrador de uma crônica: escolha a crônica e passe entre as abas Início, Minha Fila, Fila de Aprovação, Personagens, Jogadores, Tramas e Rumores, Segredos, Registro de Favores, Itens e Locais, Catálogo, Noites de Jogo, Lançamentos, Tempo Livre, Facções, Relacionamentos, Relatórios e Registro de E-mails dela.
 
 ## Quem pode usar
 
-O HST vê todas as abas, inclusive Jogadores em toda crônica. Um AST vê as mesmas abas, menos Catálogo, que o HST pode dar a ele na aba Jogadores. Um Condutor de Trama vê Minha Fila, Tramas e Rumores, Segredos, Noites de Jogo, Lançamentos e Tempo Livre - as ferramentas ligadas a conduzir tramas e sessões, não à aprovação de fichas nem ao catálogo. A Harpia da crônica vê só o Registro de Favores. Um jogador comum não vê nenhuma dessas abas - a visão própria dele de uma crônica é [Minha Crônica](my-chronicle.md), não esta página.
+O HST vê todas as abas, inclusive Jogadores em toda crônica. Um AST vê as mesmas abas, menos Catálogo, que o HST pode dar a ele na aba Jogadores. Um Condutor de Trama vê Início, Minha Fila, Tramas e Rumores, Segredos, Noites de Jogo, Lançamentos, Tempo Livre e Relatórios - as ferramentas ligadas a conduzir tramas e sessões, não à aprovação de fichas nem ao catálogo. A Harpia da crônica vê Início, Registro de Favores e Relatórios. Um jogador comum não vê nenhuma dessas abas - a visão própria dele de uma crônica é [Minha Crônica](my-chronicle.md), não esta página.
 
 ## Como chegar lá
 
@@ -14,7 +14,7 @@ Procure um link "Kit de Ferramentas do Narrador" na navegação do seu site - es
 
 - **Crônica** - uma lista suspensa com cada crônica a que você pertence, cada uma marcada com o seu papel ali. Escolher outra recarrega as abas abaixo para o seu papel naquela crônica em particular. Se você não pertence a nenhuma crônica, isso é dito em vez de mostrar uma lista.
 - **Abas**, cada uma mostrada só quando você tem o papel correspondente na crônica escolhida no momento:
-  - **Painel** - estatísticas de personagens, mudanças e tramas da crônica inteira. Veja [Painel do Jogo](game-dashboard.md).
+  - **Início** - o que aguarda você, a próxima noite de jogo, quem precisa de atenção e os números da crônica. Veja [Início do Narrador](game-dashboard.md).
   - **Minha Fila** - o trabalho pendente próprio deste Narrador, entre tramas e mudanças. Veja [Minha Fila](my-queue.md).
   - **Fila de Aprovação** - toda mudança de ficha pendente, em uma só lista. Veja [Fila de Aprovação](approval-queue.md).
   - **Personagens** - todo personagem da crônica, com Aplicar XP, atribuir um jogador e **+ Novo Personagem** e **+ Novo NPC** para criar um. Veja [Editor de Personagem](character-editor.md).
@@ -29,6 +29,7 @@ Procure um link "Kit de Ferramentas do Narrador" na navegação do seu site - es
   - **Tempo Livre** - a fila de ações de tempo livre. Veja [Tempo Livre](downtime-queue.md).
   - **Facções** - facções e seus cargos da corte. Veja [Facções](factions.md).
   - **Relacionamentos** - um gráfico dos relacionamentos entre personagens. Veja [Relacionamentos](relationships.md).
+  - **Relatórios** - os relatórios imprimíveis da crônica (listas, a folha de presença, Vínculos e mais), cada um como uma tabela na tela e como PDF. Um Narrador vê todos os relatórios, um Condutor de Trama os de tramas, ações e rumores e os abertos a qualquer membro. Veja [Relatórios](reports.md).
   - **Registro de E-mails** - todo e-mail que a crônica enviou, segurou para um resumo ou decidiu não enviar, e por quê (HST e AST). Veja [Registro de E-mails](email-log.md).
 - Se nenhuma dessas se aplica ao seu papel na crônica escolhida, a página diz "Você não tem um papel de Narrador nesta crônica." em vez de mostrar qualquer aba.
 
@@ -41,7 +42,7 @@ A menos que um administrador do site o tenha desligado em [Identidade Visual](br
 - **O cabeçalho** nomeia o site primeiro, com o logotipo dele, como um link para a página inicial do site, depois **Kit de Ferramentas do Narrador**, o seletor de crônica, um link **Minha Crônica**, **Ajuda** e o seu nome com **Sair**.
 - **O sino de avisos** fica no cabeçalho antes de **Ajuda**, com a contagem do que você não leu. Ele abre uma lista: para um jogador, o que um Narrador fez com as suas mudanças ("Alice: 2 aprovadas, 1 recusada", com cada linha e qualquer nota), uma mudança que um Narrador editou, uma mudança tomada de volta com Desfazer e XP concedido; para um Narrador, "Alice enviou 3 alterações; 2 aguardam você", com link para a [Fila de Aprovação](approval-queue.md). Cada aviso leva ao lugar a que pertence, **Marcar todos como lidos** zera a contagem, e os avisos são guardados por 90 dias. Um Narrador também encontra ali **Alterações aguardando você**, com as escolhas Cada envio, Uma vez por dia e Nunca, e o padrão sendo o que o e-mail da equipe da crônica decidir.
 - **Em um computador** toda aba que o seu papel permite aparece numa linha abaixo do cabeçalho, passando para uma segunda linha quando não cabem.
-- **Em um celular** uma barra na parte de baixo da tela tem **Início** (o Painel), **Aprovações** (a Fila de Aprovação), **Personagens** e **Tramas** (Tramas e Rumores). Um lugar que o seu papel não tem passa para a sua próxima aba, então a barra de um Narrador tem Tramas, Minha Fila, Segredos e Noites de Jogo. **Mais** lista toda outra aba, o link Minha Crônica, a Ajuda e a saída.
+- **Em um celular** uma barra na parte de baixo da tela tem **Início**, **Aprovações** (a Fila de Aprovação), **Personagens** e **Tramas** (Tramas e Rumores). Um lugar que o seu papel não tem passa para a sua próxima aba, então a barra de um Narrador tem Tramas, Minha Fila, Segredos e Noites de Jogo. **Mais** lista toda outra aba, o link Minha Crônica, a Ajuda e a saída.
 - **O rodapé** traz o Desenvolvido por Beyond Elysium, o logotipo da Dark Pack e o aviso da Paradox.
 
 Para manter a página na tela inicial do celular, use **Adicionar à tela inicial** no seu navegador. Ela abre no navegador, com o nome do site.
@@ -66,9 +67,9 @@ Para manter a página na tela inicial do celular, use **Adicionar à tela inicia
 ## O que saber
 
 - **As abas são específicas da crônica.** Trocar para uma crônica em que você tem um papel mais restrito esconde abas que você tinha um instante atrás; a página recua para a primeira aba que ainda está disponível a você ali.
-- **Esta é a página voltada ao Narrador.** Os seus próprios personagens e o seu próprio feed de tramas ficam em [Minha Crônica](my-chronicle.md), mesmo que você também seja HST ou AST - um Narrador que abre a aba Painel de Minha Crônica vê a mesma visão da crônica inteira descrita em [Painel do Jogo](game-dashboard.md), mas toda outra aba de Minha Crônica é a visão de jogador desse Narrador.
-- **Um Condutor de Trama alcança cinco abas aqui** - Minha Fila, Tramas e Rumores, Noites de Jogo, Lançamentos e Tempo Livre - com as mesmas ferramentas de Tramas e Rumores que um Narrador tem (Alocar ações e Gerar rumores inclusive, não só postar respostas e notas), mas não Painel, Fila de Aprovação, Jogadores, Registro de Favores, Itens e Locais nem Facções, e não Catálogo, a menos que o HST o tenha dado a ele.
-- **A Harpia da crônica vê só o Registro de Favores aqui** - não Personagens, Tramas e Rumores nem a Fila de Aprovação, embora uma Harpia possa procurar personagens para ver quem deve a quem.
+- **Esta é a página voltada ao Narrador.** Os seus próprios personagens e o seu próprio feed de tramas ficam em [Minha Crônica](my-chronicle.md), mesmo que você também seja HST ou AST - Minha Crônica abre no seu próprio [Início](player-dashboard.md), sobre os seus próprios personagens, e a visão da crônica inteira é a aba Início daqui, descrita em [Início do Narrador](game-dashboard.md).
+- **Um Condutor de Trama alcança sete abas aqui** - Início, Minha Fila, Tramas e Rumores, Noites de Jogo, Lançamentos, Tempo Livre e Relatórios - com as mesmas ferramentas de Tramas e Rumores que um Narrador tem (Alocar ações e Gerar rumores inclusive, não só postar respostas e notas), mas não a Fila de Aprovação, Jogadores, Registro de Favores, Itens e Locais nem Facções, e não Catálogo, a menos que o HST o tenha dado a ele.
+- **A Harpia da crônica vê Início, Registro de Favores e Relatórios aqui** - não Personagens, Tramas e Rumores nem a Fila de Aprovação, embora uma Harpia possa procurar personagens para ver quem deve a quem.
 
 ## Solução de problemas
 
@@ -80,7 +81,7 @@ Para manter a página na tela inicial do celular, use **Adicionar à tela inicia
 
 ## Relacionados
 
-- [Painel do Jogo](game-dashboard.md)
+- [Início do Narrador](game-dashboard.md)
 - [Minha Fila](my-queue.md)
 - [Fila de Aprovação](approval-queue.md)
 - [Jogadores](chronicle-players.md)
@@ -95,4 +96,4 @@ Para manter a página na tela inicial do celular, use **Adicionar à tela inicia
 - [Relacionamentos](relationships.md)
 - [Minha Crônica](my-chronicle.md)
 - [Papéis](roles.md)
-- [Guia do Narrador](../st-guide.md#7-o-painel-do-jogo)
+- [Guia do Narrador](../st-guide.md#7-o-início-do-narrador)
