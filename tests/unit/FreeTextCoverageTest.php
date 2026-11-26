@@ -82,6 +82,11 @@ class FreeTextCoverageTest extends TestCase {
 		// Only ever read via GET .../players/join-requests, be_manage_characters-gated; GET .../join only ever
 		// returns a waiting row, before a note is ever written.
 		'join_requests.note'                          => self::MANAGER_ONLY,
+		// What the site tells a person in its own header: synthesized names, counts and words, with any Storyteller
+		// note already stripped of its [ST] text for the person it is for.
+		'notices.payload'                             => self::STRUCTURED,
+		// What an approved change did, so it can be undone; the Change model drops it from every row it hands out.
+		'character_changes.undo_state'                => self::STRUCTURED,
 		// Encrypted at rest; returned once, by POST /bot/connect, and never again by any route to anyone.
 		'bot_connections.secret'                      => self::MANAGER_ONLY,
 	];

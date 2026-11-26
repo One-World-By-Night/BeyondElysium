@@ -14,18 +14,21 @@
     "pools": [
       {
         "name": "Honor",
+        "accumulates": true,
         "value_type": "decimal",
         "default_start": 0,
         "step": 0.1
       },
       {
         "name": "Glory",
+        "accumulates": true,
         "value_type": "decimal",
         "default_start": 0,
         "step": 0.1
       },
       {
         "name": "Wisdom",
+        "accumulates": true,
         "value_type": "decimal",
         "default_start": 0,
         "step": 0.1

@@ -533,7 +533,8 @@ class Games_Controller extends Base_Controller {
 
 	/**
 	 * Saves exactly the Chronicle Setup settings an HST may set for their own chronicle: enabled_stacks,
-	 * enabled_factions, require_new_character_approval, accent_color, purchase_scope, starting_xp and secret_passing.
+	 * enabled_factions, require_new_character_approval, accent_color, purchase_scope, starting_xp, secret_passing, and
+	 * the staff email address with how often it hears of changes waiting.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
@@ -551,7 +552,7 @@ class Games_Controller extends Base_Controller {
 		}
 
 		$incoming = [];
-		foreach ( [ 'enabled_stacks', 'enabled_factions', 'require_new_character_approval', 'accent_color', 'purchase_scope', 'starting_xp', 'join_requests', 'secret_passing' ] as $field ) {
+		foreach ( [ 'enabled_stacks', 'enabled_factions', 'require_new_character_approval', 'accent_color', 'purchase_scope', 'starting_xp', 'join_requests', 'secret_passing', 'staff_email', 'staff_email_frequency' ] as $field ) {
 			$value = $request->get_param( $field );
 			if ( $value !== null ) {
 				$incoming[ $field ] = $value;
@@ -559,7 +560,19 @@ class Games_Controller extends Base_Controller {
 		}
 
 		if ( empty( $incoming ) ) {
-			return $this->error( 'invalid_param', __( 'At least one of enabled_stacks, enabled_factions, require_new_character_approval, accent_color, purchase_scope, starting_xp, join_requests, or secret_passing is required.', 'beyond-elysium' ), 400 );
+			return $this->error( 'invalid_param', __( 'At least one of enabled_stacks, enabled_factions, require_new_character_approval, accent_color, purchase_scope, starting_xp, join_requests, secret_passing, staff_email, or staff_email_frequency is required.', 'beyond-elysium' ), 400 );
+		}
+
+		// An empty address clears it, and staff mail goes to each HST and AST again.
+		if ( isset( $incoming['staff_email'] ) ) {
+			$address = sanitize_email( (string) $incoming['staff_email'] );
+			if ( $incoming['staff_email'] !== '' && ( $address === '' || ! is_email( $address ) ) ) {
+				return $this->error( 'invalid_param', __( 'staff_email must be an email address, or empty.', 'beyond-elysium' ), 400 );
+			}
+			$incoming['staff_email'] = $address;
+		}
+		if ( isset( $incoming['staff_email_frequency'] ) && ! in_array( $incoming['staff_email_frequency'], [ 'each', 'daily' ], true ) ) {
+			return $this->error( 'invalid_param', __( 'staff_email_frequency must be each or daily.', 'beyond-elysium' ), 400 );
 		}
 
 		if ( isset( $incoming['secret_passing'] ) && ! in_array( $incoming['secret_passing'], [ 'off', 'approval', 'immediate' ], true ) ) {

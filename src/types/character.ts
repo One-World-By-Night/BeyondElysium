@@ -14,7 +14,8 @@ export type SheetData = Record< string, unknown >;
 /**
  * The lifecycle state of a submitted character change.
  */
-export type ChangeStatus = 'pending' | 'approved' | 'rejected' | 'forwarded';
+export type ChangeStatus =
+	'pending' | 'approved' | 'rejected' | 'forwarded' | 'withdrawn' | 'undone';
 
 // ---------------------------------------------------------------------------
 // Character
@@ -92,6 +93,10 @@ export interface Character {
 	start_date: string | null;
 	xp_earned: number;
 	xp_unspent: number;
+	/**
+	 * XP the character's waiting changes will cost when approved, so it is not free to spend.
+	 */
+	xp_held?: number;
 	biography: string | null;
 	notes: string | null;
 	/**
@@ -315,7 +320,15 @@ export type ChangeType =
 	// A host chronicle's own request to pair a player-submitted character with its real home.
 	| 'visit_pairing'
 	// One permanent point of a pool the books spend permanently, which lowers its rating and costs no XP.
-	| 'pool_permanent_spent';
+	| 'pool_permanent_spent'
+	// What the table writes for itself: a pool spent or regained, a wound, a loss tonight and a night closing.
+	| 'temporary_pool_spend'
+	| 'wound_taken'
+	| 'wound_healed'
+	| 'night_loss_ability'
+	| 'night_loss_trait'
+	| 'night_losses_cleared'
+	| 'session_closed';
 
 /**
  * The data carried by a single character change.
@@ -354,6 +367,21 @@ export interface CharacterChange {
 	 * Ties every change submitted together in one editor submission to each other.
 	 */
 	submission_id?: string | null;
+	/**
+	 * True for a change the chronicle's rules applied by themselves, with no Storyteller's decision.
+	 */
+	auto_approved?: boolean;
+	/**
+	 * Whether a Storyteller can undo this change: it is approved and kept a record of what it did.
+	 */
+	can_undo?: boolean;
+	/**
+	 * For an undone change: who undid it, when, and the note they left for the player.
+	 */
+	undone_by?: number;
+	undone_by_name?: string | null;
+	undone_at?: string | null;
+	undone_note?: string | null;
 	/**
 	 * The host's own visit this arrived on, its chronicle's name, and its free-text note - only set on a change
 	 * forwarded here from a host chronicle.
@@ -492,9 +520,15 @@ export interface MyChangeAcrossGames extends CharacterChange {
 	 */
 	description: string;
 	/**
-	 * `pending`, `approved`, `auto_approved`, or `refused`.
+	 * `pending`, `approved`, `auto_approved`, `refused`, `withdrawn`, or `undone`.
 	 */
-	display_status: 'pending' | 'approved' | 'auto_approved' | 'refused';
+	display_status:
+		| 'pending'
+		| 'approved'
+		| 'auto_approved'
+		| 'refused'
+		| 'withdrawn'
+		| 'undone';
 }
 
 /**
@@ -583,9 +617,29 @@ export interface BatchApproveResponse {
 	 */
 	needs_secret_choice?: number[];
 	/**
+	 * Changes left alone because they cost more than their character has unspent.
+	 */
+	short_of_xp?: number[];
+	/**
 	 * Changes that could be approved but wait with the rest of their set.
 	 */
 	held?: number[];
+}
+
+/**
+ * Response from undoing every undoable approved change of one submission.
+ */
+export interface UndoSetResponse {
+	submission_id: string;
+	undone: number[];
+}
+
+/**
+ * Response from withdrawing every waiting change of one submission.
+ */
+export interface WithdrawSetResponse {
+	submission_id: string;
+	withdrawn: number[];
 }
 
 /**
@@ -633,9 +687,14 @@ export interface ChangePreviewResult {
 export interface PreviewChangesResponse {
 	results: ChangePreviewResult[];
 	/**
-	 * Character's xp_unspent after applying every proposed change's cost.
+	 * What is free to spend after every proposed change's cost: the character's xp_unspent less what its waiting changes
+	 * hold (a waiting change a proposed one replaces holds nothing) less the proposed changes' costs.
 	 */
 	running_xp_unspent: number;
+	/**
+	 * XP the character's waiting changes still hold once the proposed ones are submitted.
+	 */
+	xp_held?: number;
 }
 
 // ---------------------------------------------------------------------------

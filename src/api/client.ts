@@ -76,6 +76,8 @@ import type {
 	MyChangeAcrossGames,
 	BatchApproveResponse,
 	SubmitSetResponse,
+	UndoSetResponse,
+	WithdrawSetResponse,
 	SheetStyle,
 	SheetStyleInput,
 	WpUserSummary,
@@ -127,6 +129,7 @@ import type {
 	ReleaseNowSingleRequest,
 } from '../types/releaseBatch';
 import type { DowntimeQueueRow } from '../types/downtime';
+import type { NoticeList, NoticeSettings } from '../lib/notices';
 import type {
 	StaffQueue,
 	StaffMember,
@@ -2128,6 +2131,53 @@ export const changes = ( gameSlug: string ) => ( {
 		} ),
 
 	/**
+	 * Withdraws one change that is still waiting: nothing is applied and the XP it held is free again.
+	 */
+	withdraw: ( changeId: number ): Promise< CharacterChange > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/changes/${ changeId }/withdraw`,
+			method: 'POST',
+			data: {},
+		} ),
+
+	/**
+	 * Withdraws every change of one submission that is still waiting.
+	 */
+	withdrawSet: (
+		characterId: number,
+		submissionId: string
+	): Promise< WithdrawSetResponse > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/characters/${ characterId }/submissions/${ submissionId }/withdraw`,
+			method: 'POST',
+			data: {},
+		} ),
+
+	/**
+	 * Undoes one approved change: its XP goes back and its sheet changes are put back. A Storyteller's own act.
+	 */
+	undo: ( changeId: number, note = '' ): Promise< CharacterChange > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/changes/${ changeId }/undo`,
+			method: 'POST',
+			data: { note },
+		} ),
+
+	/**
+	 * Undoes every undoable approved change of one submission, together or not at all.
+	 */
+	undoSet: (
+		characterId: number,
+		submissionId: string,
+		note = ''
+	): Promise< UndoSetResponse > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/characters/${ characterId }/submissions/${ submissionId }/undo`,
+			method: 'POST',
+			data: { note },
+		} ),
+
+	/**
 	 * Approves or rejects a pending change by id.
 	 */
 	review: (
@@ -2193,6 +2243,37 @@ export const changes = ( gameSlug: string ) => ( {
 	 */
 	myChanges: (): Promise< QueueChange[] > =>
 		apiFetch( { path: `${ BASE }/${ gameSlug }/my/changes` } ),
+} );
+
+/**
+ * REST client for the notices the site shows a person in its own header, in one chronicle.
+ */
+export const notices = ( gameSlug: string ) => ( {
+	/**
+	 * The person's own unread count and newest notices.
+	 */
+	list: (): Promise< NoticeList > =>
+		apiFetch( { path: `${ BASE }/${ gameSlug }/notices` } ),
+
+	/**
+	 * A Storyteller's own choice of how often to hear of changes waiting; '' clears it.
+	 */
+	saveSettings: ( waitingNotify: string ): Promise< NoticeSettings > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/notices/settings`,
+			method: 'POST',
+			data: { waiting_notify: waitingNotify },
+		} ),
+
+	/**
+	 * Marks the named notices read, or every unread one when none is named. Answers with what is still unread.
+	 */
+	markRead: ( ids?: number[] ): Promise< { unread: number } > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/notices/read`,
+			method: 'POST',
+			data: ids ? { ids } : {},
+		} ),
 } );
 
 /**
@@ -4694,6 +4775,7 @@ const api = {
 	uploadBylaws,
 	characters,
 	changes,
+	notices,
 	myChangesAcrossGames,
 	snapshots,
 	sheetStyle,

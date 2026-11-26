@@ -3,6 +3,7 @@
  */
 import { resolvePoolName } from './resolveCrossBlockRef';
 import { localizedPoolLabel } from './localizeName';
+import { poolCeiling, poolKind, type PoolKind } from './poolKind';
 import type { ResourcePoolDefinition, SchemaBlock } from '../types';
 
 export type WoundType = 'bashing' | 'lethal' | 'aggravated';
@@ -23,6 +24,14 @@ export interface PoolRow {
 	 * Whether the creature type's books spend this pool permanently.
 	 */
 	permanentSpend: boolean;
+	/**
+	 * How this pool's temporary points behave.
+	 */
+	kind: PoolKind;
+	/**
+	 * The most a build-up pool's temporary count reaches; undefined when it has none.
+	 */
+	ceiling?: number;
 }
 
 function isPair(
@@ -70,6 +79,8 @@ export function poolRows(
 				permanent: value.permanent,
 				temporary: value.temporary,
 				permanentSpend: pool.permanent_spend === true,
+				kind: poolKind( pool ),
+				ceiling: poolCeiling( pool ),
 			} );
 		}
 	}
@@ -77,15 +88,40 @@ export function poolRows(
 }
 
 /**
- * The temporary points of a pool can be spent while any remain, and regained up to its permanent rating.
+ * What Play offers for a pool's temporary points: Spend and Regain for the ordinary kind, Lose and Gain for a count
+ * that builds up, nothing for a pool the books give none.
  */
-export function canSpend( row: Pick< PoolRow, 'temporary' > ): boolean {
-	return row.temporary > 0;
+export function temporaryControls(
+	row: Pick< PoolRow, 'kind' >
+): 'spend' | 'build' | 'none' {
+	if ( row.kind === 'rating_only' ) {
+		return 'none';
+	}
+	return row.kind === 'accumulates' ? 'build' : 'spend';
 }
 
-export function canRegain(
-	row: Pick< PoolRow, 'temporary' | 'permanent' >
+/**
+ * The temporary points of a pool can be spent while any remain.
+ */
+export function canSpend(
+	row: Pick< PoolRow, 'temporary' | 'kind' >
 ): boolean {
+	return row.kind !== 'rating_only' && row.temporary > 0;
+}
+
+/**
+ * An ordinary pool regains up to its permanent rating; a build-up pool gains up to its own maximum, with no limit
+ * when it has none.
+ */
+export function canRegain(
+	row: Pick< PoolRow, 'temporary' | 'permanent' | 'kind' | 'ceiling' >
+): boolean {
+	if ( row.kind === 'rating_only' ) {
+		return false;
+	}
+	if ( row.kind === 'accumulates' ) {
+		return row.ceiling === undefined || row.temporary < row.ceiling;
+	}
 	return row.temporary < row.permanent;
 }
 

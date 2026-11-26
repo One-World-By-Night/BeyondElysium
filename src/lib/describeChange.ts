@@ -57,10 +57,17 @@ interface ChangeDataLike {
 	secret_title?: string;
 	from_name?: string;
 	to_name?: string;
-	// `pool_permanent_spent`: the pool, and its permanent rating before and after.
+	// `pool_permanent_spent`, `temporary_pool_spend`: the pool, and its rating before and after.
 	pool_name?: string;
 	from?: number;
 	to?: number;
+	// `wound_taken`, `wound_healed`: the kind of damage and how much moved.
+	type?: string;
+	delta?: number;
+	// `night_loss_ability`: how many levels of an Ability were expended.
+	levels?: number;
+	// `session_closed`: the night that closed.
+	game_date?: string;
 	// `visit_note`: the host chronicle's own note about a visiting character.
 	note?: string | null;
 	// `visit_pairing`: the host chronicle asking to pair with this character, and its site's address.
@@ -76,6 +83,20 @@ interface CatalogRekeyRecord {
 	tradition?: string;
 	level?: number | null;
 	held_level?: number | null;
+}
+
+/**
+ * The kind of damage in a sentence: bashing, lethal or aggravated, in lower case.
+ */
+function woundWord( type: string | undefined ): string {
+	switch ( type ) {
+		case 'bashing':
+			return __( 'Bashing', 'beyond-elysium' ).toLowerCase();
+		case 'lethal':
+			return __( 'Lethal', 'beyond-elysium' ).toLowerCase();
+		default:
+			return __( 'Aggravated', 'beyond-elysium' ).toLowerCase();
+	}
 }
 
 /**
@@ -379,6 +400,63 @@ export function describeChange(
 				changeData.pool_name ?? __( 'Unknown', 'beyond-elysium' ),
 				changeData.from ?? 0,
 				changeData.to ?? 0
+			);
+
+		case 'temporary_pool_spend':
+			return sprintf(
+				/* translators: 1: a pool's name, such as Blood, 2: its temporary points before the change, 3: after it */
+				__( '%1$s: temporary %2$d → %3$d', 'beyond-elysium' ),
+				changeData.pool_name ?? __( 'Unknown', 'beyond-elysium' ),
+				changeData.from ?? 0,
+				changeData.to ?? 0
+			);
+
+		case 'wound_taken':
+			return sprintf(
+				/* translators: 1: how many levels of damage, 2: the kind of damage, such as lethal */
+				__( 'Took %1$d %2$s damage', 'beyond-elysium' ),
+				Math.abs( changeData.delta ?? 0 ),
+				woundWord( changeData.type )
+			);
+
+		case 'wound_healed':
+			return sprintf(
+				/* translators: 1: how many levels of damage, 2: the kind of damage, such as lethal */
+				__( 'Healed %1$d %2$s damage', 'beyond-elysium' ),
+				Math.abs( changeData.delta ?? 0 ),
+				woundWord( changeData.type )
+			);
+
+		case 'night_loss_trait':
+			return sprintf(
+				/* translators: %s: the name of a Trait lost tonight */
+				__( 'Lost %s tonight', 'beyond-elysium' ),
+				changeData.name ?? __( 'Unknown', 'beyond-elysium' )
+			);
+
+		case 'night_loss_ability': {
+			const levels = Math.max( 1, Math.trunc( changeData.levels ?? 1 ) );
+			return sprintf(
+				/* translators: 1: an Ability's name, 2: how many of its levels were expended tonight */
+				_n(
+					'Expended %2$d level of %1$s tonight',
+					'Expended %2$d levels of %1$s tonight',
+					levels,
+					'beyond-elysium'
+				),
+				changeData.name ?? __( 'Unknown', 'beyond-elysium' ),
+				levels
+			);
+		}
+
+		case 'night_losses_cleared':
+			return __( "The night's losses were cleared", 'beyond-elysium' );
+
+		case 'session_closed':
+			return sprintf(
+				/* translators: %s: the session's game date, Y-m-d */
+				__( 'Night closed: %s', 'beyond-elysium' ),
+				changeData.game_date ?? ''
 			);
 
 		case 'visit_note':

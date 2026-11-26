@@ -1,0 +1,155 @@
+/* The meter pinned at the bottom of Edit. */
+.be-cart-meter {
+	position: sticky;
+	bottom: var(--be-bottom-clearance, 0px);
+	z-index: 5;
+	background: var(--be-gray-29);
+	border: 1px solid var(--be-gray-16);
+	border-radius: 4px;
+	padding: 0.5rem 1rem;
+	margin-top: 1.5rem;
+	max-height: 33vh;
+	overflow-y: auto;
+}
+
+.be-cart-meter__bar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+}
+
+.be-cart-meter__line {
+	margin: 0;
+	min-width: 0;
+	font-weight: 600;
+}
+
+.be-cart-meter__over,
+.be-cart-review__over {
+	color: var(--be-red-6);
+}
+
+.be-cart-meter__dropped,
+.be-cart-review__dropped {
+	margin: 0 0 0.5rem;
+	padding: 0.5rem 0.75rem;
+	border: 1px solid var(--be-gold-10);
+	border-radius: 3px;
+	font-size: 0.9rem;
+}
+
+/* The chip in the Character header. */
+.be-cart-chip.be-cart-chip {
+	display: inline-block;
+	margin-left: 0.5rem;
+	padding: 0.2rem 0.7rem;
+	border: 1px solid var(--be-gray-16);
+	border-radius: 999px;
+	background: var(--be-gray-29);
+	font-weight: 600;
+	cursor: pointer;
+}
+
+/* Review: a 640 px dialog on a desktop, the whole screen on a phone. */
+.be-modal.be-cart-review {
+	max-width: 40rem;
+}
+
+.be-cart-review__group h4 {
+	margin: 1rem 0 0.35rem;
+}
+
+.be-cart-review__group ul {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.be-cart-review__line {
+	display: grid;
+	grid-template-columns: 1fr auto auto;
+	align-items: center;
+	gap: 0.25rem 0.75rem;
+	padding: 0.4rem 0;
+	border-bottom: 1px solid var(--be-gray-21);
+}
+
+.be-cart-review__line--refused {
+	color: var(--be-red-1);
+}
+
+.be-cart-review__price {
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.be-cart-review__reason {
+	grid-column: 1 / -1;
+	font-size: 0.85rem;
+	color: var(--be-gray-10);
+}
+
+.be-cart-review__sums {
+	margin: 1rem 0 0;
+}
+
+.be-cart-review__sums > div {
+	display: flex;
+	justify-content: space-between;
+	padding: 0.15rem 0;
+}
+
+.be-cart-review__sums dt,
+.be-cart-review__sums dd {
+	margin: 0;
+	font-weight: 600;
+}
+
+.be-cart-review__held,
+.be-cart-review__sent {
+	margin: 0.5rem 0;
+	font-weight: 600;
+}
+
+.be-cart-review__error {
+	margin: 0 0 0.5rem;
+	color: var(--be-red-6);
+}
+
+.be-cart-review__note {
+	display: block;
+	margin-top: 1rem;
+}
+
+.be-cart-review__note textarea {
+	display: block;
+	width: 100%;
+	box-sizing: border-box;
+	margin: 0.25rem 0;
+}
+
+.be-cart-review__count {
+	font-size: 0.8rem;
+	color: var(--be-gray-10);
+}
+
+@media ( max-width: 768px ) {
+
+	.be-modal.be-cart-review {
+		max-width: none;
+		width: 100%;
+		height: 100vh;
+		height: 100dvh;
+		max-height: none;
+		border-radius: 0;
+	}
+
+	.be-cart-review__line {
+		grid-template-columns: 1fr auto;
+	}
+
+	.be-cart-review__price {
+		grid-column: 1;
+	}
+}

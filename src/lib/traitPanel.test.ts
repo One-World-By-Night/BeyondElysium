@@ -1,12 +1,16 @@
 import { highlightStMarkers } from './highlightStMarkers';
 import { stripStSections } from './stripStSections';
 import {
+	cartButtonLabel,
+	cartStep,
 	catalogEntry,
 	changesNaming,
 	nextChange,
+	nextRows,
 	priceText,
 	visibleDescription,
 } from './traitPanel';
+import { computeChanges } from './computeChanges';
 import type { SchemaBlock } from '../types';
 import type { CharacterChange } from '../types/character';
 
@@ -144,6 +148,142 @@ describe( 'the change a raise by one would be', () => {
 				[ { name: 'Animalism', power_name: 'Feral Whispers' } ]
 			)
 		).toBeNull();
+	} );
+} );
+
+describe( 'the step Add to cart takes', () => {
+	const held = {
+		blockSlug: 'vampire-abilities',
+		name: 'Occult',
+		sectionType: 'trait_list' as const,
+	};
+
+	it( 'raises the draft by one, not the saved sheet', () => {
+		const saved = [ { name: 'Occult', count: 3 } ];
+		const draft = [ { name: 'Occult', count: 4 } ];
+
+		const step = cartStep( held, abilities, saved, draft );
+
+		expect( step?.rows ).toEqual( [ { name: 'Occult', count: 5 } ] );
+		expect( step?.rating ).toBe( 5 );
+		expect( step?.next.change_data ).toMatchObject( {
+			trait: { name: 'Occult', count: 5 },
+			previous: { name: 'Occult', count: 3 },
+		} );
+		expect( step?.current?.change_data ).toMatchObject( {
+			trait: { name: 'Occult', count: 4 },
+		} );
+		expect( step?.held ).toBe( true );
+	} );
+
+	it( 'has no current line when the draft is the saved sheet', () => {
+		const saved = [ { name: 'Occult', count: 3 } ];
+
+		const step = cartStep( held, abilities, saved, saved );
+
+		expect( step?.current ).toBeNull();
+		expect( step?.rating ).toBe( 4 );
+	} );
+
+	it( 'adds a trait that is not held with its first dot', () => {
+		const saved = [ { name: 'Brawl', count: 2 } ];
+
+		const step = cartStep( held, abilities, saved, saved );
+
+		expect( step?.held ).toBe( false );
+		expect( step?.rating ).toBe( 1 );
+		expect( step?.next.change_type ).toBe( 'add_trait' );
+	} );
+
+	it( 'leaves another line in the same block out of this trait', () => {
+		const saved = [
+			{ name: 'Occult', count: 3 },
+			{ name: 'Brawl', count: 2 },
+		];
+		const draft = [
+			{ name: 'Occult', count: 3 },
+			{ name: 'Brawl', count: 3 },
+		];
+
+		const step = cartStep( held, abilities, saved, draft );
+
+		expect( step?.current ).toBeNull();
+		expect( step?.next.change_data ).toMatchObject( {
+			trait: { name: 'Occult', count: 4 },
+		} );
+	} );
+
+	it( 'is null for a trait that cannot be raised that way', () => {
+		expect(
+			cartStep(
+				{ ...held, name: 'Iron Will', blockSlug: 'vampire-merits' },
+				merits,
+				[],
+				[]
+			)
+		).toBeNull();
+	} );
+
+	it( 'reads the level of a ladder power', () => {
+		const step = cartStep(
+			{
+				blockSlug: 'vampire-disciplines',
+				name: 'Animalism',
+				sectionType: 'tiered_power',
+			},
+			disciplines,
+			[ { name: 'Animalism', level: 1 } ],
+			[ { name: 'Animalism', level: 1 } ]
+		);
+
+		expect( step?.rating ).toBe( 2 );
+	} );
+
+	it( "is the line Edit's own diff makes of the same move", () => {
+		const saved = [ { name: 'Occult', count: 3 } ];
+		const draft = [ { name: 'Occult', count: 4 } ];
+
+		const step = cartStep( held, abilities, saved, draft );
+		const edit = computeChanges(
+			{ [ held.blockSlug ]: saved },
+			{ [ held.blockSlug ]: step?.rows },
+			{ [ held.blockSlug ]: abilities }
+		);
+
+		expect( edit ).toEqual( [ step?.next ] );
+	} );
+
+	it( 'gives the same rows as nextRows on the draft', () => {
+		const draft = [ { name: 'Occult', count: 4 } ];
+		expect( cartStep( held, abilities, draft, draft )?.rows ).toEqual(
+			nextRows( held, abilities, draft )
+		);
+	} );
+} );
+
+describe( 'the words on the Add to cart button', () => {
+	it( 'names a raise with its price', () => {
+		expect(
+			cartButtonLabel( { held: true, rating: 4 }, 'Occult', false, 1 )
+		).toBe( 'Raise to x4 · 1 XP' );
+		expect(
+			cartButtonLabel( { held: true, rating: 3 }, 'Auspex', true, 6 )
+		).toBe( 'Raise to level 3 · 6 XP' );
+	} );
+
+	it( 'names an addition with its first dot or level', () => {
+		expect(
+			cartButtonLabel( { held: false, rating: 1 }, 'Occult', false, 1 )
+		).toBe( 'Add Occult x1 · 1 XP' );
+		expect(
+			cartButtonLabel( { held: false, rating: 1 }, 'Auspex', true, 3 )
+		).toBe( 'Add Auspex level 1 · 3 XP' );
+	} );
+
+	it( 'leaves the price off until there is one', () => {
+		expect(
+			cartButtonLabel( { held: true, rating: 4 }, 'Occult', false, null )
+		).toBe( 'Raise to x4' );
 	} );
 } );
 

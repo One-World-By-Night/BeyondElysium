@@ -57,14 +57,14 @@ Minha Crônica → visualização Editar, dentro de qualquer seção montada com
 - **Um nome personalizado sempre precisa de revisão.** Digitar um nome que não está no catálogo só salva onde esta seção aceita entradas personalizadas, e mesmo assim sempre vai a um Narrador para aprovação, não importa como a sua crônica configurou a aprovação automática.
 - **Remover marca, não apaga** - nada sai de fato da ficha até você enviar as alterações pela visualização Editar, então você pode desfazer uma remoção até esse momento.
 - **Todos os pontos têm o mesmo tamanho** - a exibição da contagem aqui combina exatamente com a ficha e com um PDF assinado.
-- **O preço ao lado de um nome é uma prévia, e nada aqui é salvo por si só.** Toda adição, mudança ou remoção vai para a fila de Alterações Pendentes da visualização Editar até você enviá-la, e essa barra precifica o conjunto inteiro junto. O preço na lista é calculado sobre a ficha como está salva, então uma alteração na fila que o mude (um Clã novo, por exemplo) não entra ali; o total da barra sempre a conta.
+- **O preço ao lado de um nome é uma prévia, e nada aqui é salvo por si só.** Toda adição, mudança ou remoção vai para o carrinho da visualização Editar até você enviá-lo, e o carrinho precifica o conjunto inteiro junto. O preço na lista é calculado sobre a ficha como está salva, então uma alteração no carrinho que o mude (um Clã novo, por exemplo) não entra ali; o total do carrinho sempre a conta.
 
 ## Solução de problemas
 
 - **Salvar não clica.** Escolha um nome primeiro - ele é obrigatório.
 - **Um nome que digitei diz que não está no catálogo.** Confira a grafia. Se é mesmo novo, esta seção pode não aceitar entradas personalizadas - pergunte a um Narrador.
 - **Não vejo + Adicionar nem o botão ✎.** Você está olhando um personagem que não pode editar - veja o [Editor de Personagem](character-editor.md).
-- **A minha remoção sumiu.** Provavelmente você reabriu a entrada e clicou em Desfazer remoção, ou descartou as alterações pendentes antes de enviar.
+- **A minha remoção sumiu.** Provavelmente você reabriu a entrada e clicou em Desfazer remoção, ou esvaziou o carrinho antes de enviá-lo.
 
 ## Relacionados
 

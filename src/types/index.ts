@@ -211,6 +211,14 @@ export interface UpdateChronicleSetupRequest {
 	 * Whether players may log what a character learned and tell another character a secret they know.
 	 */
 	secret_passing?: 'off' | 'approval' | 'immediate';
+	/**
+	 * Where staff mail goes instead of to each HST and AST; '' clears it.
+	 */
+	staff_email?: string;
+	/**
+	 * How often the staff address hears of changes waiting.
+	 */
+	staff_email_frequency?: 'each' | 'daily';
 }
 
 // ---------------------------------------------------------------------------
@@ -950,6 +958,16 @@ export interface ResourcePool {
 	 * The creature type's books spend this pool permanently, so the Play view offers Spend permanent for it.
 	 */
 	permanent_spend?: boolean;
+	/**
+	 * The creature type's books give this pool no temporary points: it shows its rating alone, and Play offers no Spend
+	 * or Regain.
+	 */
+	rating_only?: boolean;
+	/**
+	 * This pool's temporary points build up past its rating, up to its max: Play offers Gain and Lose, and closing a
+	 * night leaves it alone.
+	 */
+	accumulates?: boolean;
 	/**
 	 * A cost that scales with the dot being bought.
 	 */

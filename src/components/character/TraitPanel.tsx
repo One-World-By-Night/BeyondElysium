@@ -6,14 +6,16 @@
 import { useEffect, useMemo, useRef, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
+import useCharacterEditorStore from '../../store/characterEditorStore';
 import { highlightStMarkers } from '../../lib/highlightStMarkers';
 import type { HeldTrait } from '../../lib/heldTraits';
 import { formatStoredTime } from '../../lib/storedTime';
 import { stripStSections } from '../../lib/stripStSections';
 import {
+	cartButtonLabel,
+	cartStep,
 	catalogEntry,
 	changesNaming,
-	nextChange,
 	priceText,
 	visibleDescription,
 	type HistoryLine,
@@ -83,12 +85,34 @@ export function TraitPanel( {
 	const [ quote, setQuote ] = useState< Quote >( { state: 'none' } );
 	const [ history, setHistory ] = useState< HistoryLine[] | null >( null );
 
-	const change = useMemo(
+	// The cart's own sheet is the draft; what the server holds is the cart's baseline.
+	const draftSheet = useCharacterEditorStore( ( state ) =>
+		state.characterId === characterId && state.character
+			? state.sheetData
+			: null
+	);
+	const savedSheet = useCharacterEditorStore( ( state ) =>
+		state.characterId === characterId && state.character
+			? state.originalSheetData
+			: null
+	);
+	const setBlockData = useCharacterEditorStore(
+		( state ) => state.setBlockData
+	);
+	const openReview = useCharacterEditorStore( ( state ) => state.openReview );
+	const inCart = draftSheet !== null && savedSheet !== null;
+
+	const step = useMemo(
 		() =>
 			block && ( canEdit || canManage )
-				? nextChange( trait, block, sheetData[ trait.blockSlug ] )
+				? cartStep(
+						trait,
+						block,
+						( savedSheet ?? sheetData )[ trait.blockSlug ],
+						( draftSheet ?? sheetData )[ trait.blockSlug ]
+					)
 				: null,
-		[ trait, block, sheetData, canEdit, canManage ]
+		[ trait, block, sheetData, savedSheet, draftSheet, canEdit, canManage ]
 	);
 	const entry = useMemo(
 		() => catalogEntry( block, trait ),
@@ -112,21 +136,34 @@ export function TraitPanel( {
 	}, [ onClose ] );
 
 	useEffect( () => {
-		if ( ! change ) {
+		if ( ! step ) {
 			setQuote( { state: 'none' } );
 			return undefined;
 		}
 		let live = true;
 		setQuote( { state: 'loading' } );
+		// What the cart holds for this trait is priced alongside, so one more step is priced as that step alone.
 		api.characters( gameSlug )
-			.previewChanges( characterId, [ change ] )
+			.previewChanges(
+				characterId,
+				step.current ? [ step.next, step.current ] : [ step.next ]
+			)
 			.then( ( response ) => {
 				const result = response.results[ 0 ];
 				if ( live ) {
 					setQuote(
 						! result || result.invalid
 							? { state: 'refused' }
-							: { state: 'ready', result }
+							: {
+									state: 'ready',
+									result: {
+										...result,
+										xp_cost:
+											result.xp_cost -
+											( response.results[ 1 ]?.xp_cost ??
+												0 ),
+									},
+								}
 					);
 				}
 			} )
@@ -134,7 +171,7 @@ export function TraitPanel( {
 		return () => {
 			live = false;
 		};
-	}, [ gameSlug, characterId, change ] );
+	}, [ gameSlug, characterId, step ] );
 
 	useEffect( () => {
 		let live = true;
@@ -225,6 +262,45 @@ export function TraitPanel( {
 									</p>
 								) }
 							</>
+						) }
+						{ inCart && canEdit && step && (
+							<div className="be-trait-panel__cart">
+								<button
+									type="button"
+									className="be-trait-panel__add"
+									disabled={ quote.state !== 'ready' }
+									onClick={ () =>
+										setBlockData(
+											trait.blockSlug,
+											step.rows
+										)
+									}
+								>
+									{ cartButtonLabel(
+										step,
+										label,
+										trait.sectionType === 'tiered_power',
+										quote.state === 'ready'
+											? quote.result.xp_cost
+											: null
+									) }
+								</button>
+								{ step.current && (
+									<button
+										type="button"
+										className="be-trait-panel__link"
+										onClick={ () => {
+											onClose();
+											openReview();
+										} }
+									>
+										{ __(
+											'In your cart · Review',
+											'beyond-elysium'
+										) }
+									</button>
+								) }
+							</div>
 						) }
 					</section>
 				) }

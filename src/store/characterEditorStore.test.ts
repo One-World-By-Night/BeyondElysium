@@ -12,10 +12,24 @@ vi.mock( '../api/client', () => ( {
 
 import type { Mock, Mocked } from 'vitest';
 import api from '../api/client';
-import { loadDraft, saveDraft } from '../lib/draftStorage';
+import { loadCart, saveCart } from '../lib/cartStorage';
+import { loadDraft } from '../lib/draftStorage';
 import { useCharacterEditorStore } from './characterEditorStore';
 
 const mockedApi = api as Mocked< typeof api >;
+
+/**
+ * Writes the whole-sheet draft an older version kept, as a stored value.
+ */
+function saveDraft(
+	characterId: number,
+	sheetData: Record< string, unknown >
+) {
+	window.localStorage.setItem(
+		`be-draft-${ characterId }`,
+		JSON.stringify( { sheetData, savedAt: Date.now() } )
+	);
+}
 
 /**
  * Lets every already-settled promise callback run.
@@ -43,6 +57,9 @@ function resetStore() {
 		saving: false,
 		error: null,
 		restorableDraft: null,
+		droppedBlocks: [],
+		reviewOpen: false,
+		lastSubmit: null,
 	} );
 }
 
@@ -55,6 +72,71 @@ describe( 'characterEditorStore.reset', () => {
 
 		expect( state.sheetData ).toEqual( { disciplines: [] } );
 		expect( state.dirty ).toBe( false );
+	} );
+} );
+
+describe( 'characterEditorStore.removeLine', () => {
+	beforeEach( () => {
+		resetStore();
+		window.localStorage.clear();
+		mockedApi.characters = vi.fn().mockReturnValue( {
+			previewChanges: vi.fn().mockResolvedValue( null ),
+		} ) as never;
+		useCharacterEditorStore.setState( {
+			stack: {
+				stack: {} as never,
+				blocks: {
+					disciplines: {
+						section_type: 'trait_list',
+						definition: { items: [] },
+					} as never,
+					virtues: {
+						section_type: 'trait_list',
+						definition: { items: [] },
+					} as never,
+				},
+			},
+			sheetData: {
+				disciplines: [ { name: 'Celerity', count: 1 } ],
+				virtues: [ { name: 'Conscience', count: 1 } ],
+			},
+			originalSheetData: { disciplines: [], virtues: [] },
+		} );
+		useCharacterEditorStore.getState().computeChanges();
+	} );
+
+	it( 'puts one line back as the sheet holds it and keeps the other', () => {
+		useCharacterEditorStore.getState().removeLine( 0 );
+
+		const state = useCharacterEditorStore.getState();
+		expect( state.sheetData ).toEqual( {
+			disciplines: [],
+			virtues: [ { name: 'Conscience', count: 1 } ],
+		} );
+		expect( state.pendingChanges ).toHaveLength( 1 );
+		expect( state.dirty ).toBe( true );
+		expect( loadCart( 1 )?.blocks ).toHaveProperty( 'virtues' );
+		expect( loadCart( 1 )?.blocks ).not.toHaveProperty( 'disciplines' );
+	} );
+
+	it( 'leaves an empty cart, clean, when the last line goes', () => {
+		useCharacterEditorStore.getState().removeLine( 0 );
+		useCharacterEditorStore.getState().removeLine( 0 );
+
+		const state = useCharacterEditorStore.getState();
+		expect( state.pendingChanges ).toEqual( [] );
+		expect( state.dirty ).toBe( false );
+		expect( loadCart( 1 ) ).toBeNull();
+	} );
+} );
+
+describe( 'characterEditorStore.review', () => {
+	it( 'opens and closes the Review dialog', () => {
+		resetStore();
+		useCharacterEditorStore.getState().openReview();
+		expect( useCharacterEditorStore.getState().reviewOpen ).toBe( true );
+		useCharacterEditorStore.getState().closeReview();
+		expect( useCharacterEditorStore.getState().reviewOpen ).toBe( false );
 	} );
 } );
 
@@ -179,6 +261,159 @@ describe( 'characterEditorStore.submitChanges', () => {
 		expect( state.pendingChanges ).toHaveLength( 2 );
 	} );
 
+	it( 'sends the note to the Storyteller with every change in the set', async () => {
+		const submitSet = vi.fn().mockResolvedValue( {
+			submission_id: 'set-1',
+			changes: [
+				{ id: 1, status: 'pending', xp_cost: 2 },
+				{ id: 2, status: 'pending', xp_cost: 3 },
+			],
+		} );
+		mockedApi.changes = vi.fn().mockReturnValue( { submitSet } ) as never;
+
+		await useCharacterEditorStore
+			.getState()
+			.submitChanges( '  Bought at the last game.  ' );
+
+		const sent = submitSet.mock.calls[ 0 ][ 1 ];
+		expect( sent.map( ( c: { notes?: string } ) => c.notes ) ).toEqual( [
+			'Bought at the last game.',
+			'Bought at the last game.',
+		] );
+	} );
+
+	it( 'sends no note when none was written', async () => {
+		const submitSet = vi.fn().mockResolvedValue( {
+			submission_id: 'set-1',
+			changes: [
+				{ id: 1, status: 'approved' },
+				{ id: 2, status: 'approved' },
+			],
+		} );
+		mockedApi.changes = vi.fn().mockReturnValue( { submitSet } ) as never;
+
+		await useCharacterEditorStore.getState().submitChanges( '   ' );
+
+		const sent = submitSet.mock.calls[ 0 ][ 1 ];
+		expect(
+			sent.every( ( c: { notes?: string } ) => c.notes === undefined )
+		).toBe( true );
+	} );
+
+	it( 'counts what applied at once and what waits with the XP it holds', async () => {
+		const submitSet = vi.fn().mockResolvedValue( {
+			submission_id: 'set-1',
+			changes: [
+				{ id: 1, status: 'approved', xp_cost: 1 },
+				{ id: 2, status: 'pending', xp_cost: 4 },
+			],
+		} );
+		mockedApi.changes = vi.fn().mockReturnValue( { submitSet } ) as never;
+
+		const result = await useCharacterEditorStore.getState().submitChanges();
+
+		expect( [ result.applied, result.waiting, result.held ] ).toEqual( [
+			1, 1, 4,
+		] );
+		expect( useCharacterEditorStore.getState().lastSubmit ).toEqual(
+			result
+		);
+	} );
+
+	describe( 'when the server still has the sheet to read back', () => {
+		const submitSet = vi.fn();
+		const get = vi.fn();
+
+		beforeEach( () => {
+			submitSet.mockReset();
+			get.mockReset();
+			mockedApi.characters = vi.fn().mockReturnValue( {
+				previewChanges: vi.fn().mockResolvedValue( null ),
+				get,
+			} ) as never;
+			mockedApi.changes = vi
+				.fn()
+				.mockReturnValue( { submitSet } ) as never;
+		} );
+
+		it( 'takes the server sheet as the new baseline, so lines that now wait leave the cart', async () => {
+			submitSet.mockResolvedValue( {
+				submission_id: 'set-1',
+				changes: [
+					{ id: 1, status: 'approved', xp_cost: 1 },
+					{ id: 2, status: 'pending', xp_cost: 3 },
+				],
+			} );
+			get.mockResolvedValue( {
+				id: 1,
+				xp_unspent: 5,
+				xp_held: 3,
+				sheet_data: {
+					disciplines: [ { name: 'Celerity', count: 1 } ],
+					virtues: [],
+				},
+			} );
+
+			const result = await useCharacterEditorStore
+				.getState()
+				.submitChanges();
+
+			expect( [ result.applied, result.waiting, result.held ] ).toEqual( [
+				1, 1, 3,
+			] );
+			const state = useCharacterEditorStore.getState();
+			expect( state.sheetData ).toEqual( {
+				disciplines: [ { name: 'Celerity', count: 1 } ],
+				virtues: [],
+			} );
+			expect( state.originalSheetData ).toEqual( state.sheetData );
+			expect( state.pendingChanges ).toEqual( [] );
+			expect( state.dirty ).toBe( false );
+			expect( state.character?.xp_held ).toBe( 3 );
+			expect( loadCart( 1 ) ).toBeNull();
+		} );
+
+		it( 'keeps an edit made while the request was out', async () => {
+			let release: ( created: unknown ) => void = () => undefined;
+			submitSet.mockImplementation(
+				() =>
+					new Promise( ( resolve ) => {
+						release = resolve;
+					} )
+			);
+			get.mockResolvedValue( {
+				id: 1,
+				xp_unspent: 5,
+				xp_held: 3,
+				sheet_data: { disciplines: [], virtues: [] },
+			} );
+
+			const submitting = useCharacterEditorStore
+				.getState()
+				.submitChanges();
+			useCharacterEditorStore
+				.getState()
+				.setBlockData( 'disciplines', [
+					{ name: 'Celerity', count: 2 },
+				] );
+			release( {
+				submission_id: 'set-1',
+				changes: [
+					{ id: 1, status: 'pending', xp_cost: 2 },
+					{ id: 2, status: 'pending', xp_cost: 1 },
+				],
+			} );
+			await submitting;
+
+			const state = useCharacterEditorStore.getState();
+			expect( state.sheetData.disciplines ).toEqual( [
+				{ name: 'Celerity', count: 2 },
+			] );
+			expect( state.sheetData.virtues ).toEqual( [] );
+			expect( state.pendingChanges ).toHaveLength( 1 );
+		} );
+	} );
+
 	it( 'baselines only the categories that were actually approved when a submission batch is mixed', async () => {
 		const submitSet = vi.fn().mockResolvedValue( {
 			submission_id: 'set-1',
@@ -265,9 +500,10 @@ describe( 'characterEditorStore.submitChanges', () => {
 			] );
 			expect( state.dirty ).toBe( true );
 			expect( state.pendingChanges ).toHaveLength( 1 );
-			expect( loadDraft( 1 )?.sheetData.disciplines ).toEqual( [
-				{ name: 'Celerity', count: 2 },
-			] );
+			expect( loadCart( 1 )?.blocks.disciplines ).toEqual( {
+				base: [ { name: 'Celerity', count: 1 } ],
+				edited: [ { name: 'Celerity', count: 2 } ],
+			} );
 		} );
 
 		it( 'ignores a second Submit, so no change is sent twice', async () => {
@@ -438,15 +674,77 @@ describe( 'characterEditorStore draft autosave', () => {
 		} as never;
 	} );
 
-	it( 'saves a draft to localStorage on every setBlockData call', () => {
+	it( 'keeps the cart on this device on every setBlockData call, with the value each block was made from', () => {
 		useCharacterEditorStore
 			.getState()
 			.setBlockData( 'disciplines', [ { name: 'Fortitude', count: 2 } ] );
 
-		const draft = loadDraft( 1 );
-		expect( draft?.sheetData ).toEqual( {
-			disciplines: [ { name: 'Fortitude', count: 2 } ],
+		expect( loadCart( 1 )?.blocks ).toEqual( {
+			disciplines: {
+				base: [],
+				edited: [ { name: 'Fortitude', count: 2 } ],
+			},
 		} );
+	} );
+
+	it( 'brings the cart back on loadCharacter() for a block the server still holds as it was edited from', async () => {
+		saveCart(
+			1,
+			{ disciplines: [] },
+			{ disciplines: [ { name: 'Obfuscate', count: 1 } ] }
+		);
+
+		await useCharacterEditorStore.getState().loadCharacter( 1, 'kony' );
+
+		const state = useCharacterEditorStore.getState();
+		expect( state.sheetData ).toEqual( {
+			disciplines: [ { name: 'Obfuscate', count: 1 } ],
+		} );
+		expect( state.originalSheetData ).toEqual( { disciplines: [] } );
+		expect( state.dirty ).toBe( true );
+		expect( state.droppedBlocks ).toEqual( [] );
+		expect( state.restorableDraft ).toBeNull();
+	} );
+
+	it( 'drops and names a cart block the server changed since, keeping the server value', async () => {
+		saveCart(
+			1,
+			{ disciplines: [ { name: 'Obfuscate', count: 0 } ] },
+			{ disciplines: [ { name: 'Obfuscate', count: 1 } ] }
+		);
+
+		await useCharacterEditorStore.getState().loadCharacter( 1, 'kony' );
+
+		const state = useCharacterEditorStore.getState();
+		expect( state.sheetData ).toEqual( { disciplines: [] } );
+		expect( state.droppedBlocks ).toEqual( [ 'disciplines' ] );
+		expect( state.dirty ).toBe( false );
+		expect( loadCart( 1 ) ).toBeNull();
+	} );
+
+	it( 'does not offer an older draft while a cart is kept', async () => {
+		saveCart(
+			1,
+			{ disciplines: [] },
+			{ disciplines: [ { name: 'Obfuscate', count: 1 } ] }
+		);
+		saveDraft( 1, { disciplines: [ { name: 'Auspex', count: 3 } ] } );
+
+		await useCharacterEditorStore.getState().loadCharacter( 1, 'kony' );
+
+		expect( useCharacterEditorStore.getState().restorableDraft ).toBeNull();
+	} );
+
+	it( 'dismissDropped() stops naming the blocks', () => {
+		useCharacterEditorStore.setState( {
+			droppedBlocks: [ 'disciplines' ],
+		} );
+
+		useCharacterEditorStore.getState().dismissDropped();
+
+		expect( useCharacterEditorStore.getState().droppedBlocks ).toEqual(
+			[]
+		);
 	} );
 
 	it( 'offers a draft on loadCharacter() when it genuinely differs from the server value', async () => {
@@ -495,6 +793,11 @@ describe( 'characterEditorStore draft autosave', () => {
 		} );
 		expect( state.dirty ).toBe( true );
 		expect( state.restorableDraft ).toBeNull();
+		// The draft becomes the cart, and the older copy is removed.
+		expect( loadCart( 1 )?.blocks.disciplines.edited ).toEqual( [
+			{ name: 'Auspex', count: 3 },
+		] );
+		expect( loadDraft( 1 ) ).toBeNull();
 	} );
 
 	it( 'dismissDraft() clears the offer and the underlying stored draft without touching sheetData', () => {
@@ -515,16 +818,27 @@ describe( 'characterEditorStore draft autosave', () => {
 		expect( loadDraft( 1 ) ).toBeNull();
 	} );
 
-	it( 'reset() (Discard) also clears the stored draft, not just live state', () => {
+	it( 'reset() (Empty cart) also clears the stored cart and draft, not just live state', () => {
 		saveDraft( 1, { disciplines: [ { name: 'Auspex', count: 3 } ] } );
+		saveCart(
+			1,
+			{ disciplines: [] },
+			{ disciplines: [ { name: 'Auspex', count: 3 } ] }
+		);
 
 		useCharacterEditorStore.getState().reset();
 
 		expect( loadDraft( 1 ) ).toBeNull();
+		expect( loadCart( 1 ) ).toBeNull();
 	} );
 
-	it( 'clears the stored draft once submitChanges() resolves with nothing left pending', async () => {
+	it( 'clears the stored cart and draft once submitChanges() resolves with nothing left pending', async () => {
 		saveDraft( 1, { disciplines: [ { name: 'Celerity', count: 1 } ] } );
+		saveCart(
+			1,
+			{ disciplines: [] },
+			{ disciplines: [ { name: 'Celerity', count: 1 } ] }
+		);
 		const create = vi
 			.fn()
 			.mockResolvedValue( { id: 1, status: 'approved' } );
@@ -533,5 +847,6 @@ describe( 'characterEditorStore draft autosave', () => {
 		await useCharacterEditorStore.getState().submitChanges();
 
 		expect( loadDraft( 1 ) ).toBeNull();
+		expect( loadCart( 1 ) ).toBeNull();
 	} );
 } );

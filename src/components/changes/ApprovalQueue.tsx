@@ -151,6 +151,17 @@ function requestNote( item: QueueChange ): string | null {
 }
 
 /**
+ * A player's own note to the Storyteller, labelled for the queue.
+ */
+export function playerNote( note: string ): string {
+	return sprintf(
+		/* translators: %s: the note a player left for the Storyteller with what they sent */
+		__( 'Note from the player: %s', 'beyond-elysium' ),
+		note
+	);
+}
+
+/**
  * The note a player put on the trait they are adding or changing, if any.
  */
 export function traitNote( item: QueueChange ): string | null {
@@ -890,6 +901,13 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 														),
 														netXp( group )
 													) }
+													{ group[ 0 ].notes && (
+														<p className="be-approval-queue__player-note">
+															{ playerNote(
+																group[ 0 ].notes
+															) }
+														</p>
+													) }
 													<div className="be-approval-queue__group-actions">
 														<button
 															type="button"
@@ -1085,6 +1103,13 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 													{ item.host_note && (
 														<p className="be-approval-queue__host-note">
 															{ item.host_note }
+														</p>
+													) }
+													{ ! group && item.notes && (
+														<p className="be-approval-queue__player-note">
+															{ playerNote(
+																item.notes
+															) }
 														</p>
 													) }
 													{ note && (

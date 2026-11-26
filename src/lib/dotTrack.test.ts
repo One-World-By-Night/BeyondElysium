@@ -1,6 +1,7 @@
 import {
 	computeDotStates,
 	nextTrackValueOnClick,
+	stepPermanentRating,
 	stepTrackValue,
 } from './dotTrack';
 
@@ -88,5 +89,25 @@ describe( 'stepTrackValue', () => {
 
 	it( 'never increases past max, including a real Willpower-sized max of 20', () => {
 		expect( stepTrackValue( 20, 1, 20 ) ).toBe( 20 );
+	} );
+} );
+
+describe( 'stepPermanentRating', () => {
+	it( 'moves only the rating of an ordinary pool', () => {
+		expect(
+			stepPermanentRating( { permanent: 5, temporary: 2 }, 1, 10, false )
+		).toEqual( { permanent: 6, temporary: 2 } );
+	} );
+
+	it( 'moves both values of a pool with no temporary points', () => {
+		expect(
+			stepPermanentRating( { permanent: 7, temporary: 4 }, -1, 10, true )
+		).toEqual( { permanent: 6, temporary: 6 } );
+	} );
+
+	it( 'stays inside the track', () => {
+		expect(
+			stepPermanentRating( { permanent: 10, temporary: 10 }, 1, 10, true )
+		).toEqual( { permanent: 10, temporary: 10 } );
 	} );
 } );

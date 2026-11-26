@@ -1,6 +1,7 @@
 /**
- * The Play view: what a player needs at the table. Pools with Spend and Regain, the health track with Take and Heal,
- * what was lost tonight, and a search of the character's own traits.
+ * The Play view: what a player needs at the table. Pools with Spend and Regain (Gain and Lose for a count that builds
+ * up, nothing for a pool with no temporary points), the health track with Take and Heal, what was lost tonight, and a
+ * search of the character's own traits.
  */
 import { useEffect, useMemo, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
@@ -10,6 +11,7 @@ import Modal from '../shared/Modal';
 import TraitPanel from './TraitPanel';
 import WithDots from '../shared/Dots';
 import { displayTemper } from '../../lib/displayTemper';
+import { shownPoolValue } from '../../lib/poolKind';
 import { errorMessage } from '../../lib/errorMessage';
 import { heldTraits, searchTraits, type HeldTrait } from '../../lib/heldTraits';
 import { localizedItemName } from '../../lib/localizeName';
@@ -22,6 +24,7 @@ import {
 	healthTrack,
 	nightLossesFrom,
 	poolRows,
+	temporaryControls,
 	waitingSpends,
 	woundsFrom,
 	type PoolRow,
@@ -299,52 +302,140 @@ export function PlayView( {
 											{ row.label }
 										</span>
 										<span className="be-play__dots">
-											<WithDots
-												text={ displayTemper( {
-													permanent: row.permanent,
-													temporary: row.temporary,
-												} ) }
-											/>
+											{ row.kind === 'accumulates' ? (
+												sprintf(
+													/* translators: 1: a pool's temporary points, 2: its rating */
+													__(
+														'Temporary %1$s · Rating %2$s',
+														'beyond-elysium'
+													),
+													String( row.temporary ),
+													String( row.permanent )
+												)
+											) : (
+												<WithDots
+													text={ displayTemper(
+														shownPoolValue(
+															row.kind,
+															{
+																permanent:
+																	row.permanent,
+																temporary:
+																	row.temporary,
+															}
+														)
+													) }
+												/>
+											) }
 										</span>
 									</div>
 									<div className="be-play__buttons">
-										<button
-											type="button"
-											className="be-play__button"
-											disabled={
-												busy !== '' || ! canSpend( row )
-											}
-											aria-label={ sprintf(
-												/* translators: %s: a pool's name, such as Blood */
-												__(
-													'Spend a point of %s',
-													'beyond-elysium'
-												),
-												row.label
-											) }
-											onClick={ () => adjust( row, -1 ) }
-										>
-											{ __( 'Spend', 'beyond-elysium' ) }
-										</button>
-										<button
-											type="button"
-											className="be-play__button"
-											disabled={
-												busy !== '' ||
-												! canRegain( row )
-											}
-											aria-label={ sprintf(
-												/* translators: %s: a pool's name, such as Blood */
-												__(
-													'Regain a point of %s',
-													'beyond-elysium'
-												),
-												row.label
-											) }
-											onClick={ () => adjust( row, 1 ) }
-										>
-											{ __( 'Regain', 'beyond-elysium' ) }
-										</button>
+										{ temporaryControls( row ) ===
+											'spend' && (
+											<>
+												<button
+													type="button"
+													className="be-play__button"
+													disabled={
+														busy !== '' ||
+														! canSpend( row )
+													}
+													aria-label={ sprintf(
+														/* translators: %s: a pool's name, such as Blood */
+														__(
+															'Spend a point of %s',
+															'beyond-elysium'
+														),
+														row.label
+													) }
+													onClick={ () =>
+														adjust( row, -1 )
+													}
+												>
+													{ __(
+														'Spend',
+														'beyond-elysium'
+													) }
+												</button>
+												<button
+													type="button"
+													className="be-play__button"
+													disabled={
+														busy !== '' ||
+														! canRegain( row )
+													}
+													aria-label={ sprintf(
+														/* translators: %s: a pool's name, such as Blood */
+														__(
+															'Regain a point of %s',
+															'beyond-elysium'
+														),
+														row.label
+													) }
+													onClick={ () =>
+														adjust( row, 1 )
+													}
+												>
+													{ __(
+														'Regain',
+														'beyond-elysium'
+													) }
+												</button>
+											</>
+										) }
+										{ temporaryControls( row ) ===
+											'build' && (
+											<>
+												<button
+													type="button"
+													className="be-play__button"
+													disabled={
+														busy !== '' ||
+														! canRegain( row )
+													}
+													aria-label={ sprintf(
+														/* translators: %s: a pool's name, such as Banality */
+														__(
+															'Gain a point of %s',
+															'beyond-elysium'
+														),
+														row.label
+													) }
+													onClick={ () =>
+														adjust( row, 1 )
+													}
+												>
+													{ __(
+														'Gain',
+														'beyond-elysium'
+													) }
+												</button>
+												<button
+													type="button"
+													className="be-play__button"
+													disabled={
+														busy !== '' ||
+														! canSpend( row )
+													}
+													aria-label={ sprintf(
+														/* translators: %s: a pool's name, such as Banality */
+														__(
+															'Lose a point of %s',
+															'beyond-elysium'
+														),
+														row.label
+													) }
+													onClick={ () =>
+														adjust( row, -1 )
+													}
+												>
+													{ __(
+														'Lose',
+														'beyond-elysium'
+													) }
+												</button>
+											</>
+										) }
 										{ canSpendPermanent( row ) && (
 											<button
 												type="button"

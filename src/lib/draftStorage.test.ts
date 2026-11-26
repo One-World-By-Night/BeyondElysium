@@ -1,9 +1,14 @@
-import {
-	clearDraft,
-	draftDiffersFrom,
-	loadDraft,
-	saveDraft,
-} from './draftStorage';
+import { clearDraft, draftDiffersFrom, loadDraft } from './draftStorage';
+
+function saveDraft(
+	characterId: number,
+	sheetData: Record< string, unknown >
+) {
+	window.localStorage.setItem(
+		`be-draft-${ characterId }`,
+		JSON.stringify( { sheetData, savedAt: Date.now() } )
+	);
+}
 
 describe( 'draftStorage', () => {
 	beforeEach( () => {

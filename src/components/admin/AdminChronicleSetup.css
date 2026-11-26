@@ -70,6 +70,22 @@
 	width: 6rem;
 }
 
+.be-chronicle-setup__staff-email {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.be-chronicle-setup__staff-email input[type="email"] {
+	min-width: 16rem;
+}
+
+.be-chronicle-setup__staff-email .description,
+.be-chronicle-setup__staff-email fieldset {
+	flex-basis: 100%;
+}
+
 .be-chronicle-setup__checkbox {
 	display: flex;
 	align-items: center;

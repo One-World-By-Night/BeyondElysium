@@ -449,5 +449,84 @@
         }
       }
     }
+  },
+  {
+    "name": "a permanent spend with the rating before and after",
+    "change_type": "pool_permanent_spent",
+    "change_data": {
+      "pool_name": "Willpower",
+      "from": 6,
+      "to": 5
+    }
+  },
+  {
+    "name": "a pool's temporary points spent",
+    "change_type": "temporary_pool_spend",
+    "change_data": {
+      "block_slug": "vampire-resources",
+      "pool_name": "Blood",
+      "delta": -1,
+      "from": 8,
+      "to": 7
+    }
+  },
+  {
+    "name": "a wound taken",
+    "change_type": "wound_taken",
+    "change_data": {
+      "type": "lethal",
+      "delta": 1,
+      "from": 0,
+      "to": 1
+    }
+  },
+  {
+    "name": "a wound healed",
+    "change_type": "wound_healed",
+    "change_data": {
+      "type": "bashing",
+      "delta": -2,
+      "from": 3,
+      "to": 1
+    }
+  },
+  {
+    "name": "a Trait lost tonight",
+    "change_type": "night_loss_trait",
+    "change_data": {
+      "block_slug": "vampire-merits",
+      "name": "Eagle Eye"
+    }
+  },
+  {
+    "name": "an Ability expended tonight",
+    "change_type": "night_loss_ability",
+    "change_data": {
+      "block_slug": "vampire-abilities",
+      "name": "Brawl",
+      "levels": 2
+    }
+  },
+  {
+    "name": "a single Ability level expended tonight",
+    "change_type": "night_loss_ability",
+    "change_data": {
+      "block_slug": "vampire-abilities",
+      "name": "Brawl",
+      "levels": 1
+    }
+  },
+  {
+    "name": "the night's losses cleared",
+    "change_type": "night_losses_cleared",
+    "change_data": {}
+  },
+  {
+    "name": "a night closed",
+    "change_type": "session_closed",
+    "change_data": {
+      "session_id": 4,
+      "game_date": "2026-11-20"
+    }
   }
 ]

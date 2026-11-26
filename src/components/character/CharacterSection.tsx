@@ -3,10 +3,12 @@
  * Edit), each its own address.
  */
 import { useEffect, useState } from '@wordpress/element';
-import { __, _n, sprintf } from '@wordpress/i18n';
+import { __ } from '@wordpress/i18n';
 import api from '../../api/client';
 import ChangeHistory from '../changes/ChangeHistory';
 import HelpButton from '../shared/HelpButton';
+import CartChip from './CartChip';
+import CartReview from './CartReview';
 import CharacterEditor from './CharacterEditor';
 import CharacterSheet from './CharacterSheet';
 import CharacterStory from './CharacterStory';
@@ -21,6 +23,8 @@ import {
 	type CharacterView,
 } from '../../lib/characterViews';
 import { readNewNpcFromUrl } from '../../lib/pluginPages';
+import { standingLine } from '../../lib/standing';
+import useCharacterEditorStore from '../../store/characterEditorStore';
 import { useCreatureTypeNames } from '../../lib/useCreatureTypeNames';
 import type { MyCapabilities } from '../../types';
 import type { Character } from '../../types/character';
@@ -52,37 +56,6 @@ export interface CharacterSectionProps {
 	onPickCharacter: () => void;
 }
 
-/**
- * What the header says about a character's XP and waiting changes, leaving out whichever is zero.
- */
-export function standingLine( xpUnspent: number, waiting: number ): string {
-	const parts: string[] = [];
-	if ( xpUnspent > 0 ) {
-		parts.push(
-			sprintf(
-				/* translators: %d: experience points the character has not spent */
-				__( '%d XP to spend', 'beyond-elysium' ),
-				xpUnspent
-			)
-		);
-	}
-	if ( waiting > 0 ) {
-		parts.push(
-			sprintf(
-				/* translators: %d: how many of this character's changes wait for a Storyteller */
-				_n(
-					'%d change waiting',
-					'%d changes waiting',
-					waiting,
-					'beyond-elysium'
-				),
-				waiting
-			)
-		);
-	}
-	return parts.join( ' · ' );
-}
-
 function viewLabel( view: CharacterView ): string {
 	switch ( view ) {
 		case 'play':
@@ -110,6 +83,10 @@ export function CharacterSection( {
 	const [ waiting, setWaiting ] = useState( 0 );
 	const [ settled, setSettled ] = useState( false );
 	const creatureTypes = useCreatureTypeNames( characterId ? gameSlug : '' );
+	const cartCharacter = useCharacterEditorStore( ( state ) =>
+		state.characterId === characterId ? state.character : null
+	);
+	const lastSubmit = useCharacterEditorStore( ( state ) => state.lastSubmit );
 
 	useEffect( () => {
 		if ( ! characterId ) {
@@ -130,6 +107,43 @@ export function CharacterSection( {
 			live = false;
 		};
 	}, [ gameSlug, characterId ] );
+
+	// What the header says is read again after a change is sent or withdrawn. The cart's store is read again only
+	// when it has not just rebased on the server's copy, which is what sending does.
+	const refresh = ( reloadStore = true ) => {
+		if ( ! characterId ) {
+			return;
+		}
+		api.characters( gameSlug )
+			.get( characterId )
+			.then( setCharacter )
+			.catch( () => undefined );
+		api.changes( gameSlug )
+			.list( characterId, { status: 'pending', per_page: 100 } )
+			.then( ( rows ) => setWaiting( rows.length ) )
+			.catch( () => undefined );
+		if ( reloadStore && character?.can_edit ) {
+			useCharacterEditorStore
+				.getState()
+				.loadCharacter( characterId, gameSlug );
+		}
+	};
+
+	// The cart lives in the editor's store, kept for every view of a character the person can edit.
+	useEffect( () => {
+		if ( characterId && character?.can_edit ) {
+			useCharacterEditorStore
+				.getState()
+				.loadCharacter( characterId, gameSlug );
+		}
+	}, [ gameSlug, characterId, character?.can_edit ] );
+
+	useEffect( () => {
+		if ( lastSubmit ) {
+			refresh( false );
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [ lastSubmit ] );
 
 	const allowed = viewsFor( !! character?.can_edit ).filter( ( view ) =>
 		DRAWN.includes( view )
@@ -192,7 +206,12 @@ export function CharacterSection( {
 		);
 	}
 
-	const standing = standingLine( Number( character.xp_unspent ), waiting );
+	const standingOf = cartCharacter ?? character;
+	const standing = standingLine(
+		Number( standingOf.xp_unspent ),
+		Number( standingOf.xp_held ?? 0 ),
+		waiting
+	);
 
 	return (
 		<div className="be-character-section">
@@ -218,6 +237,7 @@ export function CharacterSection( {
 						]
 							.filter( Boolean )
 							.join( ' · ' ) }
+						{ character.can_edit && <CartChip /> }
 					</p>
 				</div>
 			</div>
@@ -287,6 +307,10 @@ export function CharacterSection( {
 							key={ `${ gameSlug }-${ characterId }` }
 							characterId={ characterId }
 							gameSlug={ gameSlug }
+							canWithdraw={ !! character.can_edit }
+							canUndo={ !! character.can_manage }
+							characterName={ character.name }
+							onChanged={ () => refresh() }
 						/>
 					</>
 				) }
@@ -300,6 +324,9 @@ export function CharacterSection( {
 					/>
 				) }
 			</div>
+			{ character.can_edit && (
+				<CartReview onSeeHistory={ () => onView( 'history' ) } />
+			) }
 		</div>
 	);
 }

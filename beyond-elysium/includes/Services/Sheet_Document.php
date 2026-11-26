@@ -400,7 +400,7 @@ class Sheet_Document {
 			$temporary = is_array( $value ) && array_key_exists( 'temporary', $value ) ? (int) $value['temporary'] : $permanent;
 
 			$text = 'x' . $permanent;
-			if ( $temporary !== $permanent ) {
+			if ( $temporary !== $permanent && Pool_Markers::kind_of( $pool ) !== Pool_Markers::RATING_ONLY ) {
 				/* translators: %d: the pool's current temporary rating, spent down from its permanent one */
 				$text .= ' ' . sprintf( __( '(%d temporary)', 'beyond-elysium' ), $temporary );
 			}
@@ -754,7 +754,7 @@ class Sheet_Document {
 			$temporary = is_array( $value ) && array_key_exists( 'temporary', $value ) ? (int) $value['temporary'] : $permanent;
 
 			$text = Cross_Block_Ref::resolve_pool_name( $pool, $sheet_data ) . ' x' . $permanent;
-			if ( $temporary !== $permanent ) {
+			if ( $temporary !== $permanent && Pool_Markers::kind_of( $pool ) !== Pool_Markers::RATING_ONLY ) {
 				/* translators: %d: the pool's current temporary rating, spent down from its permanent one */
 				$text .= ' ' . sprintf( __( '(%d temporary)', 'beyond-elysium' ), $temporary );
 			}

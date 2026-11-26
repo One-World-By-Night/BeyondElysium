@@ -35,6 +35,25 @@ class ChangeDescriptionTranslationThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 'Alteração desconhecida', Change_Description::describe( 'something_else', [] ) );
 	}
 
+	public function test_what_the_table_writes_for_itself_reads_in_the_chronicles_own_words(): void {
+		$portuguese = [
+			'Took %1$d %2$s damage' => 'Sofreu dano %2$s (%1$d)',
+			'Lethal'                => 'Letal',
+			'%1$s: temporary %2$d → %3$d' => '%1$s: temporário %2$d → %3$d',
+			'Night closed: %s'      => 'Noite encerrada: %s',
+		];
+		add_filter(
+			'gettext_beyond-elysium',
+			static fn( $translation, $text ) => $portuguese[ $text ] ?? $translation,
+			10,
+			2
+		);
+
+		$this->assertSame( 'Sofreu dano letal (2)', Change_Description::describe( 'wound_taken', [ 'type' => 'lethal', 'delta' => 2 ] ) );
+		$this->assertSame( 'Blood: temporário 8 → 7', Change_Description::describe( 'temporary_pool_spend', [ 'pool_name' => 'Blood', 'from' => 8, 'to' => 7 ] ) );
+		$this->assertSame( 'Noite encerrada: 2026-11-20', Change_Description::describe( 'session_closed', [ 'game_date' => '2026-11-20' ] ) );
+	}
+
 	public function test_a_translated_chronicle_reads_its_own_plural_forms(): void {
 		add_filter(
 			'gettext_beyond-elysium',

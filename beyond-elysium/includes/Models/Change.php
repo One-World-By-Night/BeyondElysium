@@ -157,6 +157,49 @@ class Change {
 	}
 
 	/**
+	 * The changes of one submission that are still waiting, oldest first.
+	 *
+	 * @param int    $character_id
+	 * @param string $submission_id
+	 * @return array<int,object>
+	 */
+	public static function waiting_in_submission( int $character_id, string $submission_id ): array {
+		global $wpdb;
+		$table = Manager::table( 'character_changes' );
+		$rows  = $wpdb->get_results( $wpdb->prepare(
+			"SELECT * FROM {$table} WHERE character_id = %d AND submission_id = %s AND status = 'pending' ORDER BY id ASC",
+			$character_id,
+			$submission_id
+		) ) ?: [];
+		/** @var array<int,object> $decoded */
+		$decoded = array_map( [ self::class, 'decode_change_data' ], $rows );
+		return $decoded;
+	}
+
+	/**
+	 * The XP a character's waiting changes will cost when approved: the sum of their positive prices. A purchase still
+	 * waiting for a Storyteller's price carries none.
+	 *
+	 * @param int      $character_id
+	 * @param int[]    $except_ids   Waiting changes to leave out, such as those a resubmission would replace.
+	 * @return int
+	 */
+	public static function held_xp( int $character_id, array $except_ids = [] ): int {
+		global $wpdb;
+		$table  = Manager::table( 'character_changes' );
+		$sql    = "SELECT COALESCE( SUM( xp_cost ), 0 ) FROM {$table} WHERE character_id = %d AND status = 'pending' AND xp_cost > 0";
+		$values = [ $character_id ];
+
+		$except_ids = array_values( array_filter( array_map( 'intval', $except_ids ) ) );
+		if ( $except_ids !== [] ) {
+			$sql   .= ' AND id NOT IN (' . implode( ',', array_fill( 0, count( $except_ids ), '%d' ) ) . ')';
+			$values = array_merge( $values, $except_ids );
+		}
+
+		return (int) ceil( (float) $wpdb->get_var( $wpdb->prepare( $sql, $values ) ) );
+	}
+
+	/**
 	 * Return change records across every character belonging to a game.
 	 *
 	 * @param string              $game_slug
@@ -358,10 +401,50 @@ class Change {
 			'auto_approved'  => ! empty( $data['auto_approved'] ) ? 1 : 0,
 			'source_visit_id' => $data['source_visit_id'] ?? null,
 			'host_note'       => $data['host_note'] ?? null,
+			'undo_state'      => is_array( $data['undo_state'] ?? null ) ? wp_json_encode( $data['undo_state'] ) : null,
 		];
 
 		$id = Manager::insert( 'character_changes', $insert );
 		return (int) $id;
+	}
+
+	/**
+	 * Keeps what an approved change did, so it can be undone.
+	 *
+	 * @param int                 $id
+	 * @param array<string,mixed> $record
+	 */
+	public static function set_undo_state( int $id, array $record ): bool {
+		return Manager::update( 'character_changes', [ 'undo_state' => wp_json_encode( $record ) ], [ 'id' => $id ] ) !== false;
+	}
+
+	/**
+	 * What an approved change did, or null when it kept no record. Never part of a change as the REST routes return it.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	public static function undo_state( int $id ): ?array {
+		global $wpdb;
+		$raw = $wpdb->get_var( $wpdb->prepare(
+			'SELECT undo_state FROM ' . Manager::table( 'character_changes' ) . ' WHERE id = %d',
+			$id
+		) );
+		$record = is_string( $raw ) && $raw !== '' ? json_decode( $raw, true ) : null;
+		return is_array( $record ) ? $record : null;
+	}
+
+	/**
+	 * Marks an approved change undone and keeps its record with who undid it, when and the note for the player.
+	 *
+	 * @param int                 $id
+	 * @param array<string,mixed> $record The change's record, with its `undone` entry.
+	 */
+	public static function mark_undone( int $id, array $record ): bool {
+		return Manager::update(
+			'character_changes',
+			[ 'status' => 'undone', 'undo_state' => wp_json_encode( $record ) ],
+			[ 'id' => $id ]
+		) !== false;
 	}
 
 	/**
@@ -517,6 +600,29 @@ class Change {
 		if ( $row && isset( $row->auto_approved ) ) {
 			$row->auto_approved = (bool) $row->auto_approved;
 		}
+		if ( $row instanceof \stdClass ) {
+			self::expose_undo( $row );
+		}
 		return $row;
+	}
+
+	/**
+	 * Replaces a row's stored record of what a change did, which no route returns, with whether the change can be undone
+	 * and, for one that was, who undid it, when and with what note.
+	 */
+	private static function expose_undo( \stdClass $row ): void {
+		if ( ! property_exists( $row, 'undo_state' ) ) {
+			return;
+		}
+		$stored         = is_string( $row->undo_state ) ? $row->undo_state : '';
+		$row->can_undo  = ( $row->status ?? '' ) === 'approved' && $stored !== '';
+		if ( ( $row->status ?? '' ) === 'undone' && $stored !== '' ) {
+			$record = json_decode( $stored, true );
+			$undone = is_array( $record ) && is_array( $record['undone'] ?? null ) ? $record['undone'] : [];
+			$row->undone_by   = (int) ( $undone['by'] ?? 0 );
+			$row->undone_at   = $undone['at'] ?? null;
+			$row->undone_note = $undone['note'] ?? null;
+		}
+		unset( $row->undo_state );
 	}
 }

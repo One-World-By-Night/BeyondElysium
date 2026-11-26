@@ -4,7 +4,12 @@
  * forwarded change arrived from.
  */
 import { isValidElement } from 'react';
-import { forwardedFromLabel, renderReason, traitNote } from './ApprovalQueue';
+import {
+	forwardedFromLabel,
+	playerNote,
+	renderReason,
+	traitNote,
+} from './ApprovalQueue';
 import type { QueueChange } from '../../types/character';
 
 function queueChange( overrides: Partial< QueueChange > = {} ): QueueChange {
@@ -139,5 +144,13 @@ describe( 'traitNote', () => {
 		expect(
 			traitNote( queueChange( { change_data: { amount: 5 } } ) )
 		).toBeNull();
+	} );
+} );
+
+describe( 'playerNote', () => {
+	it( 'labels the note a player left for the Storyteller', () => {
+		expect( playerNote( 'Bought at the last game.' ) ).toBe(
+			'Note from the player: Bought at the last game.'
+		);
 	} );
 } );

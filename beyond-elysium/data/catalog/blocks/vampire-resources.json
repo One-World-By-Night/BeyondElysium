@@ -29,6 +29,7 @@
       },
       {
         "name": "Morality",
+        "rating_only": true,
         "value_type": "integer",
         "default_start": 7,
         "max": 10

@@ -34,6 +34,10 @@ export interface AppFrameProps {
 	placeCount: number;
 	switcher: ReactNode;
 	character?: ReactNode;
+	/**
+	 * The notice bell, shown in the header before Help at every width.
+	 */
+	bell?: ReactNode;
 	otherPage?: { href: string; label: string } | null;
 	children: ReactNode;
 }
@@ -87,6 +91,7 @@ export function AppFrame( {
 	placeCount,
 	switcher,
 	character,
+	bell,
 	otherPage,
 	children,
 }: AppFrameProps ) {
@@ -148,6 +153,9 @@ export function AppFrame( {
 						</a>
 					) }
 					<h1 className="be-app-header__title">{ pageTitle }</h1>
+					{ bell && (
+						<div className="be-app-header__bell">{ bell }</div>
+					) }
 					<div className="be-app-header__tools">
 						{ otherPage && (
 							<a

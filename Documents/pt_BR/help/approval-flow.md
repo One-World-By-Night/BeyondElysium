@@ -20,9 +20,11 @@ Esta não é uma tela própria. Você envia uma mudança pelo [Editor de Persona
 
 **Poderes numerados precificam todo degrau.** Uma compra nova no nível 3 é precificada pelos níveis 1, 2 e 3 juntos, não só pelo nível 3 - vale a mudança acabe aprovada automaticamente ou pendente.
 
-**O XP é cobrado na aprovação, não no envio.** Nada sai da sua experiência não gasta até a mudança de fato se aplicar à ficha - na hora, para algo que se aprova sozinho, ou quando um Narrador clicar em Aprovar. Rejeitar uma mudança não custa nada e deixa a ficha intocada. Os prêmios de XP do próprio Narrador costumam se aplicar na hora, já que carregam a autoridade de um Narrador. Para produção caseira, o valor é o que o Narrador define quando a aprova.
+**O XP é cobrado na aprovação, mas fica retido desde o momento em que você envia.** Nada sai da sua experiência não gasta até a mudança de fato se aplicar à ficha - na hora, para algo que se aprova sozinho, ou quando um Narrador clicar em Aprovar. Enquanto uma mudança aguarda, o custo dela fica retido: ele ainda conta como não gasto, mas não está livre para gastar, então uma segunda compra não pode usá-lo. O medidor no editor, e a linha sob o nome do personagem, mostram o que está livre. O carrinho de um jogador é recusado quando custa mais do que está livre; um Narrador nunca é barrado por isso. Rejeitar ou retirar uma mudança não custa nada, libera a retenção e deixa a ficha intocada. Os prêmios de XP do próprio Narrador costumam se aplicar na hora, já que carregam a autoridade de um Narrador. Para produção caseira, o valor é o que o Narrador define quando a aprova.
 
-**A fila fica presa ao que um Narrador de fato viu.** Se você reenviar uma mudança que ainda está pendente, ou outra pessoa a revisar primeiro, o clique de Aprovar ou Rejeitar de um Narrador na versão antiga é recusado e a fila dele recarrega com o que realmente está lá - um Narrador nunca pode aprovar algo diferente do que viu.
+**Você pode tomar de volta uma mudança que aguarda.** Abra o **Histórico** do personagem e clique em **Retirar** numa linha que ainda aguarda, ou em **Retirar todas as aguardando** num pedido. Ela sai da Fila de Aprovação e o XP dela é liberado. Um Narrador pode tomar de volta uma que já foi aprovada com **Desfazer**, que devolve o XP e põe a ficha de volta; veja [Histórico de Alterações](sheet-history.md).
+
+**A fila fica presa ao que um Narrador de fato viu.** Se você reenviar ou retirar uma mudança que ainda está pendente, ou outra pessoa a revisar primeiro, o clique de Aprovar ou Rejeitar de um Narrador na versão antiga é recusado e a fila dele recarrega com o que realmente está lá - um Narrador nunca pode aprovar algo diferente do que viu.
 
 ## Tarefas comuns
 
@@ -60,7 +62,7 @@ Esta não é uma tela própria. Você envia uma mudança pelo [Editor de Persona
 ## Solução de problemas
 
 - **A minha mudança não apareceu na ficha.** Provavelmente está pendente da revisão do Narrador - confira [Minha Crônica](my-chronicle.md) → Painel → Minhas Alterações, ou o [Histórico de Alterações](sheet-history.md) do personagem.
-- **Enviar Alterações não clica.** Como jogador, enviar deixaria você com XP negativo - reduza o que está comprando, ou peça mais a um Narrador, primeiro.
+- **Enviar não clica.** Como jogador, o carrinho custa mais do que você tem livre para gastar (o XP retido para mudanças ainda aguardando não está livre) - reduza o que está comprando, retire uma mudança que aguarda para liberar o XP dela, ou peça mais a um Narrador.
 - **Um Narrador diz que nada aconteceu quando clicou em Aprovar.** Outra pessoa já a revisou, ou você a mudou depois que a fila carregou - a fila recarrega com o que realmente está lá agora.
 - **Uma regra parece não estar se aplicando.** Confira se ela trata o valor que de fato está sendo alcançado (nunca uma mudança de antes) e se nada mais específico a sobrepõe.
 

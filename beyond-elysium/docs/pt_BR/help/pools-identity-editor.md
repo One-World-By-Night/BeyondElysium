@@ -38,14 +38,14 @@ Cada campo aparece como um destes, conforme como o modelo da crônica o montou:
 1. Abra o personagem na visualização **Editar**.
 2. Ache a linha da reserva.
 3. Clique em **+** ao lado de **P** para subir a classificação permanente, ou ao lado de **T** para gastar ou recuperar pontos em jogo.
-4. Clique em **Revisar** na barra no pé da tela para conferir o custo e depois em **Enviar Alterações**.
+4. Clique em **Revisar** no medidor no pé da tela para conferir o custo e depois em **Enviar**.
 
 ### Mudar um campo de identidade
 
 1. Abra o personagem na visualização **Editar**.
 2. Ache o campo.
 3. Escolha um valor novo, ou digite um onde o campo permitir.
-4. Clique em **Revisar** na barra no pé da tela e depois em **Enviar Alterações**.
+4. Clique em **Revisar** no medidor no pé da tela e depois em **Enviar**.
 
 ### Escolher mais de uma opção num campo de seleção múltipla
 
@@ -54,9 +54,11 @@ Cada campo aparece como um destes, conforme como o modelo da crônica o montou:
 
 ## O que saber
 
-- **Mudanças permanentes são precificadas; as temporárias não.** Subir a classificação Permanente de uma reserva põe um custo de XP na fila em Alterações Pendentes, igual a qualquer outra compra. Mover a trilha Temporária - gastar ou recuperar pontos em jogo - não custa nada e não precisa de revisão.
+- **Mudanças permanentes são precificadas; as temporárias não.** Subir a classificação Permanente de uma reserva põe um custo de XP no seu carrinho, igual a qualquer outra compra. Mover a trilha Temporária - gastar ou recuperar pontos em jogo - não custa nada e não precisa de revisão.
 - **Algumas reservas não são compradas.** Uma reserva que a sua crônica concede em vez de vender (Renome é o exemplo clássico) não tem custo de XP, e só um Narrador pode definir a classificação Permanente dela. Você ainda pode mover a trilha Temporária livremente, mas enviar uma mudança que sobe o lado Permanente por conta própria é recusado.
-- **Os campos de identidade são livres para definir.** Mudar um não custa XP. A sua crônica ainda pode exigir a revisão de um Narrador para um campo específico, ou para uma opção nele - escolher "Antediluviano", por exemplo, enquanto toda outra escolha de Clã é automática - e isso aparece em Alterações Pendentes como precisando de aprovação do Narrador, igual a qualquer outra mudança revisada.
+- **Algumas reservas não têm pontos temporários.** Uma reserva que é só uma classificação - uma Virtude, Moralidade ou Trilha, Arete, Equilíbrio, Hun, Po e Dharma - não tem trilha Temporária nenhuma: a Edição mostra o único controle da classificação, e o Jogo mostra a classificação sem nada para gastar ou recuperar. Ela só muda como uma compra.
+- **Algumas reservas crescem e diminuem.** Uma reserva que conta uma pontuação em vez de um estoque - Banalidade, Tormento, Angústia, Paradoxo, Convicção de um Caçador, e a Glória, a Honra e a Sabedoria de um Garou - tem **Ganhar** e **Perder** no Jogo no lugar de Gastar e Recuperar, e o número é mantido como está, até fração. Onde o livro lhe dá um teto (Paradoxo 20, Banalidade 10) Ganhar para ali; Renome não tem. Ela nunca desce abaixo de 0.
+- **Os campos de identidade são livres para definir.** Mudar um não custa XP. A sua crônica ainda pode exigir a revisão de um Narrador para um campo específico, ou para uma opção nele - escolher "Antediluviano", por exemplo, enquanto toda outra escolha de Clã é automática - e isso aparece na Revisão em **Aguarda um Narrador**, igual a qualquer outra mudança revisada.
 - **Alguns campos não podem ser limpos por um jogador.** Um campo pelo qual a sua crônica precifica outros traços - Clã é o caso usual - pode ser mudado para outro valor, mas não esvaziado. Pergunte a um Narrador se ele realmente precisa ficar vazio.
 - **Todo ponto tem o mesmo tamanho** - os pontos de uma reserva aqui, a classificação de um traço no resto da ficha e um PDF assinado desenham todos o mesmo ponto de 14 pixels.
 

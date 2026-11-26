@@ -5,6 +5,7 @@
 import { displayTemper, type ResourcePoolValue } from '../../lib/displayTemper';
 import { resolvePoolName } from '../../lib/resolveCrossBlockRef';
 import { localizedPoolLabel } from '../../lib/localizeName';
+import { poolKind, shownPoolValue } from '../../lib/poolKind';
 import WithDots from '../shared/Dots';
 import type { ResourcePoolDefinition } from '../../types';
 import './ResourcePoolRenderer.css';
@@ -48,7 +49,11 @@ export function ResourcePoolRenderer( {
 							{ label }
 						</span>
 						<span className="be-resource-pool__glyphs">
-							<WithDots text={ displayTemper( value ) } />
+							<WithDots
+								text={ displayTemper(
+									shownPoolValue( poolKind( pool ), value )
+								) }
+							/>
 						</span>
 					</div>
 				);

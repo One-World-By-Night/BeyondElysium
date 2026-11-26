@@ -37,6 +37,7 @@ import {
 import type { Tab } from '../shared/TabStrip';
 import HelpButton from '../shared/HelpButton';
 import { AppFrame } from '../app/AppFrame';
+import { NoticeBell } from '../app/NoticeBell';
 import { isAppLayout, otherPage } from '../../lib/appNav';
 import './StorytellerToolkitPage.css';
 
@@ -382,6 +383,11 @@ export function StorytellerToolkitPage() {
 						},
 					] }
 					placeCount={ 4 }
+					bell={
+						ready && gameSlug ? (
+							<NoticeBell gameSlug={ gameSlug } section={ tab } />
+						) : null
+					}
 					switcher={ switcher }
 					otherPage={ otherPage(
 						'storyteller',
@@ -399,6 +405,9 @@ export function StorytellerToolkitPage() {
 		<div className="be-storyteller-toolkit-page" style={ accentStyle }>
 			<div className="be-help-heading">
 				<h1>{ __( 'Storyteller Toolkit', 'beyond-elysium' ) }</h1>
+				{ ready && gameSlug && (
+					<NoticeBell gameSlug={ gameSlug } section={ tab } />
+				) }
 				<HelpButton helpKey="storyteller-toolkit" />
 			</div>
 			{ switcher }

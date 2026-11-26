@@ -4,6 +4,7 @@
 import { __ } from '@wordpress/i18n';
 import {
 	computeDotStates,
+	stepPermanentRating,
 	stepTrackValue,
 	type DotState,
 } from '../../lib/dotTrack';
@@ -20,6 +21,10 @@ export interface DotTrackerProps {
 	max: number;
 	onChange: ( next: DotTrackerValue ) => void;
 	readOnly?: boolean;
+	/**
+	 * A pool with no temporary points shows its rating alone: one row, and a change to the rating moves both values.
+	 */
+	ratingOnly?: boolean;
 }
 
 const STATE_CLASS: Record< DotState, string > = {
@@ -38,18 +43,27 @@ export function DotTracker( {
 	max,
 	onChange,
 	readOnly,
+	ratingOnly,
 }: DotTrackerProps ) {
-	const states = computeDotStates( permanent, temporary, max );
+	const states = computeDotStates(
+		permanent,
+		ratingOnly ? permanent : temporary,
+		max
+	);
 
 	const step = ( track: 'permanent' | 'temporary', delta: 1 | -1 ) => {
 		if ( readOnly ) {
 			return;
 		}
 		if ( track === 'permanent' ) {
-			onChange( {
-				permanent: stepTrackValue( permanent, delta, max ),
-				temporary,
-			} );
+			onChange(
+				stepPermanentRating(
+					{ permanent, temporary },
+					delta,
+					max,
+					!! ratingOnly
+				)
+			);
 		} else {
 			onChange( {
 				permanent,
@@ -103,46 +117,53 @@ export function DotTracker( {
 					</button>
 				</div>
 			</div>
-			<div className="be-dot-tracker__row be-dot-tracker__row--temporary">
-				<span className="be-dot-tracker__row-label" aria-hidden="true">
-					{ __( 'T', 'beyond-elysium' ) }
-				</span>
-				<div className="be-dot-tracker__dots" aria-hidden="true">
-					{ states.map( ( state, i ) => (
-						<span
-							key={ `temp-${ i }` }
-							className={ `be-dot-tracker__dot be-dot-tracker__dot--temp ${ STATE_CLASS[ state ] }` }
-						/>
-					) ) }
-				</div>
-				<div className="be-dot-tracker__stepper">
-					<button
-						type="button"
-						className="be-dot-tracker__stepper-button"
-						disabled={ readOnly || temporary <= 0 }
-						aria-label={ __(
-							'Decrease temporary',
-							'beyond-elysium'
-						) }
-						onClick={ () => step( 'temporary', -1 ) }
+			{ ! ratingOnly && (
+				<div className="be-dot-tracker__row be-dot-tracker__row--temporary">
+					<span
+						className="be-dot-tracker__row-label"
+						aria-hidden="true"
 					>
-						−
-					</button>
-					<span className="be-dot-tracker__value">{ temporary }</span>
-					<button
-						type="button"
-						className="be-dot-tracker__stepper-button"
-						disabled={ readOnly || temporary >= max }
-						aria-label={ __(
-							'Increase temporary',
-							'beyond-elysium'
-						) }
-						onClick={ () => step( 'temporary', 1 ) }
-					>
-						+
-					</button>
+						{ __( 'T', 'beyond-elysium' ) }
+					</span>
+					<div className="be-dot-tracker__dots" aria-hidden="true">
+						{ states.map( ( state, i ) => (
+							<span
+								key={ `temp-${ i }` }
+								className={ `be-dot-tracker__dot be-dot-tracker__dot--temp ${ STATE_CLASS[ state ] }` }
+							/>
+						) ) }
+					</div>
+					<div className="be-dot-tracker__stepper">
+						<button
+							type="button"
+							className="be-dot-tracker__stepper-button"
+							disabled={ readOnly || temporary <= 0 }
+							aria-label={ __(
+								'Decrease temporary',
+								'beyond-elysium'
+							) }
+							onClick={ () => step( 'temporary', -1 ) }
+						>
+							−
+						</button>
+						<span className="be-dot-tracker__value">
+							{ temporary }
+						</span>
+						<button
+							type="button"
+							className="be-dot-tracker__stepper-button"
+							disabled={ readOnly || temporary >= max }
+							aria-label={ __(
+								'Increase temporary',
+								'beyond-elysium'
+							) }
+							onClick={ () => step( 'temporary', 1 ) }
+						>
+							+
+						</button>
+					</div>
 				</div>
-			</div>
+			) }
 		</div>
 	);
 }

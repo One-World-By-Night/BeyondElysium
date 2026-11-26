@@ -18,6 +18,7 @@
     "pools": [
       {
         "name": "Hun",
+        "rating_only": true,
         "value_type": "integer",
         "default_start": 1,
         "max": 10,
@@ -25,6 +26,7 @@
       },
       {
         "name": "Po",
+        "rating_only": true,
         "value_type": "integer",
         "default_start": 3,
         "max": 10,
@@ -46,6 +48,7 @@
       },
       {
         "name": "Dharma",
+        "rating_only": true,
         "value_type": "integer",
         "default_start": 1,
         "max": 6

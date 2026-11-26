@@ -475,7 +475,7 @@ class Demo_Chronicle {
 
 			$review = $change_id ? ( $change['review'] ?? null ) : null;
 			if ( $review === 'approve' || $review === 'auto' ) {
-				Change_Engine::approve( $change_id, $storyteller_id, null );
+				Change_Engine::approve( $change_id, $storyteller_id, null, null, null, null, false );
 				if ( $review === 'auto' ) {
 					Manager::update( 'character_changes', [ 'auto_approved' => 1 ], [ 'id' => $change_id ] );
 				}

@@ -427,6 +427,9 @@ class Characters_Controller extends Base_Controller {
 
 		St_Visibility::filter_character( $character, $game, $can_manage );
 
+		// What the character's waiting changes will cost when approved.
+		$character->xp_held = \BeyondElysium\Models\Change::held_xp( (int) $character->id );
+
 		// Computed permission flags.
 		$character->can_edit   = $this->can_edit_character( $character );
 		$character->can_manage = $can_manage;

@@ -132,6 +132,7 @@ export function AdminChronicleSetup() {
 		{}
 	);
 	const [ startingXpDraft, setStartingXpDraft ] = useState( '' );
+	const [ staffEmailDraft, setStaffEmailDraft ] = useState( '' );
 
 	function copySendFileLink( url: string, inputEl: HTMLInputElement | null ) {
 		const done = () => {
@@ -185,6 +186,12 @@ export function AdminChronicleSetup() {
 		const xp = currentGame?.settings?.starting_xp as number | undefined;
 		setStartingXpDraft( xp ? String( xp ) : '' );
 	}, [ gameSlug, currentGame?.settings?.starting_xp ] );
+
+	useEffect( () => {
+		setStaffEmailDraft(
+			( currentGame?.settings?.staff_email as string | undefined ) ?? ''
+		);
+	}, [ gameSlug, currentGame?.settings?.staff_email ] );
 
 	/**
 	 * Keeps this page's copy of a chronicle current with what the server just saved.
@@ -254,6 +261,18 @@ export function AdminChronicleSetup() {
 				starting_xp:
 					startingXpDraft.trim() === '' ? '' : startingXpDraft,
 			} )
+			.then( applySaved )
+			.catch( saveFailed );
+	}
+
+	function saveStaffEmail( fields: {
+		staff_email?: string;
+		staff_email_frequency?: 'each' | 'daily';
+	} ) {
+		setSavingRow( 'staff_email' );
+		setSaveError( null );
+		api.games
+			.updateChronicleSetup( gameSlug, fields )
 			.then( applySaved )
 			.catch( saveFailed );
 	}
@@ -419,6 +438,69 @@ export function AdminChronicleSetup() {
 						{ label }
 					</label>
 				) ) }
+			</div>
+		),
+		staff_email: (
+			<div className="be-chronicle-setup__staff-email">
+				<label htmlFor="be-chronicle-setup-staff-email">
+					{ __( 'Staff email', 'beyond-elysium' ) }
+				</label>
+				<input
+					id="be-chronicle-setup-staff-email"
+					type="email"
+					value={ staffEmailDraft }
+					onChange={ ( e ) => setStaffEmailDraft( e.target.value ) }
+					disabled={ savingRow === 'staff_email' }
+				/>
+				<button
+					type="button"
+					className="button button-primary"
+					onClick={ () =>
+						saveStaffEmail( {
+							staff_email: staffEmailDraft.trim(),
+						} )
+					}
+					disabled={ savingRow === 'staff_email' }
+				>
+					{ __( 'Save', 'beyond-elysium' ) }
+				</button>
+				<p className="description">
+					{ __(
+						'Mail sent because of a position, such as sheets to review, join requests and changes waiting, goes here instead of to each HST and AST. Leave it empty to send it to each of them.',
+						'beyond-elysium'
+					) }
+				</p>
+				<fieldset className="be-chronicle-setup__approval-toggle">
+					<legend>{ __( 'How often', 'beyond-elysium' ) }</legend>
+					{ (
+						[
+							[
+								'each',
+								__( 'Each submission', 'beyond-elysium' ),
+							],
+							[ 'daily', __( 'Once a day', 'beyond-elysium' ) ],
+						] as const
+					 ).map( ( [ value, label ] ) => (
+						<label key={ value }>
+							<input
+								type="radio"
+								name="staff_email_frequency"
+								checked={
+									( ( settings?.staff_email_frequency as
+										'each' | 'daily' | undefined ) ??
+										'each' ) === value
+								}
+								onChange={ () =>
+									saveStaffEmail( {
+										staff_email_frequency: value,
+									} )
+								}
+								disabled={ savingRow === 'staff_email' }
+							/>
+							{ label }
+						</label>
+					) ) }
+				</fieldset>
 			</div>
 		),
 		starting_xp: (

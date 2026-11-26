@@ -197,6 +197,71 @@ class Change_Description {
 					$change_data['secret_title'] ?? __( 'a secret', 'beyond-elysium' )
 				);
 
+			case 'pool_permanent_spent':
+				/* translators: 1: a pool's name, such as Willpower, 2: its permanent rating before the spend, 3: after it */
+				return sprintf(
+					__( 'Spent 1 permanent %1$s (%2$d → %3$d)', 'beyond-elysium' ),
+					$change_data['pool_name'] ?? __( 'Unknown', 'beyond-elysium' ),
+					(int) ( $change_data['from'] ?? 0 ),
+					(int) ( $change_data['to'] ?? 0 )
+				);
+
+			case 'temporary_pool_spend':
+				/* translators: 1: a pool's name, such as Blood, 2: its temporary points before the change, 3: after it */
+				return sprintf(
+					__( '%1$s: temporary %2$d → %3$d', 'beyond-elysium' ),
+					$change_data['pool_name'] ?? __( 'Unknown', 'beyond-elysium' ),
+					(int) ( $change_data['from'] ?? 0 ),
+					(int) ( $change_data['to'] ?? 0 )
+				);
+
+			case 'wound_taken':
+				/* translators: 1: how many levels of damage, 2: the kind of damage, such as lethal */
+				return sprintf(
+					__( 'Took %1$d %2$s damage', 'beyond-elysium' ),
+					abs( (int) ( $change_data['delta'] ?? 0 ) ),
+					self::wound_word( $change_data['type'] ?? null )
+				);
+
+			case 'wound_healed':
+				/* translators: 1: how many levels of damage, 2: the kind of damage, such as lethal */
+				return sprintf(
+					__( 'Healed %1$d %2$s damage', 'beyond-elysium' ),
+					abs( (int) ( $change_data['delta'] ?? 0 ) ),
+					self::wound_word( $change_data['type'] ?? null )
+				);
+
+			case 'night_loss_trait':
+				/* translators: %s: the name of a Trait lost tonight */
+				return sprintf(
+					__( 'Lost %s tonight', 'beyond-elysium' ),
+					$change_data['name'] ?? __( 'Unknown', 'beyond-elysium' )
+				);
+
+			case 'night_loss_ability':
+				$levels = max( 1, (int) ( $change_data['levels'] ?? 1 ) );
+				/* translators: 1: an Ability's name, 2: how many of its levels were expended tonight */
+				return sprintf(
+					_n(
+						'Expended %2$d level of %1$s tonight',
+						'Expended %2$d levels of %1$s tonight',
+						$levels,
+						'beyond-elysium'
+					),
+					$change_data['name'] ?? __( 'Unknown', 'beyond-elysium' ),
+					$levels
+				);
+
+			case 'night_losses_cleared':
+				return __( "The night's losses were cleared", 'beyond-elysium' );
+
+			case 'session_closed':
+				/* translators: %s: the session's game date, Y-m-d */
+				return sprintf(
+					__( 'Night closed: %s', 'beyond-elysium' ),
+					(string) ( $change_data['game_date'] ?? '' )
+				);
+
 			case 'visit_note':
 				/* translators: %s: the host chronicle's note about a visiting character */
 				return sprintf(
@@ -237,6 +302,22 @@ class Change_Description {
 
 			default:
 				return __( 'Unknown change', 'beyond-elysium' );
+		}
+	}
+
+	/**
+	 * The kind of damage in a sentence: bashing, lethal or aggravated, in lower case.
+	 *
+	 * @param mixed $type
+	 */
+	private static function wound_word( $type ): string {
+		switch ( $type ) {
+			case 'bashing':
+				return mb_strtolower( __( 'Bashing', 'beyond-elysium' ) );
+			case 'lethal':
+				return mb_strtolower( __( 'Lethal', 'beyond-elysium' ) );
+			default:
+				return mb_strtolower( __( 'Aggravated', 'beyond-elysium' ) );
 		}
 	}
 

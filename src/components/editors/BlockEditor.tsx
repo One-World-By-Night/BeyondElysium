@@ -54,6 +54,10 @@ export interface BlockEditorProps {
 	 * This block's saved data. A player's add pickers show each option's price from it.
 	 */
 	savedData?: unknown;
+	/**
+	 * Opens a trait or power family in the trait panel from the editor's rows.
+	 */
+	onAbout?: ( name: string ) => void;
 }
 
 /**
@@ -74,6 +78,7 @@ export function BlockEditor( {
 	isManager,
 	creating,
 	savedData,
+	onAbout,
 }: BlockEditorProps ) {
 	const pricing = pricingEnabled( {
 		gameSlug,
@@ -104,6 +109,7 @@ export function BlockEditor( {
 					characterId={ characterId }
 					sheetData={ sheetData }
 					pricing={ pricing }
+					onAbout={ onAbout }
 				/>
 			);
 
@@ -124,6 +130,7 @@ export function BlockEditor( {
 					gameSlug={ gameSlug }
 					characterId={ characterId }
 					pricing={ pricing }
+					onAbout={ onAbout }
 				/>
 			);
 

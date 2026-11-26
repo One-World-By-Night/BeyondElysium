@@ -38,14 +38,14 @@ Each field renders as one of these, depending on how the chronicle's template bu
 1. Open the character in the **Edit** view.
 2. Find the pool's row.
 3. Click **+** next to **P** to raise its permanent rating, or next to **T** to spend or regain points in play.
-4. Click **Review** in the bar at the bottom to check its cost, then click **Submit Changes**.
+4. Click **Review** in the meter at the bottom to check its cost, then click **Submit**.
 
 ### Change an identity field
 
 1. Open the character in the **Edit** view.
 2. Find the field.
 3. Pick a new value, or type one where the field allows it.
-4. Click **Review** in the bar at the bottom, then click **Submit Changes**.
+4. Click **Review** in the meter at the bottom, then click **Submit**.
 
 ### Pick more than one option on a multiselect field
 
@@ -54,9 +54,11 @@ Each field renders as one of these, depending on how the chronicle's template bu
 
 ## Things to know
 
-- **Permanent changes are priced; temporary ones aren't.** Raising a pool's Permanent rating queues an XP cost in Pending Changes, the same as any other purchase. Moving its Temporary track - spending or regaining points in play - costs nothing and needs no review.
+- **Permanent changes are priced; temporary ones aren't.** Raising a pool's Permanent rating puts an XP cost in your cart, the same as any other purchase. Moving its Temporary track - spending or regaining points in play - costs nothing and needs no review.
 - **Some pools aren't purchased at all.** A pool your chronicle awards rather than sells (Renown is the classic example) has no XP cost, and only a Storyteller can set its Permanent rating. You can still move its Temporary track freely, but submitting a change that raises the Permanent side yourself is refused.
-- **Identity fields are free to set.** Changing one costs no XP. Your chronicle can still require Storyteller review for a specific field, or for one option on it - picking "Antediluvian," for example, while every other Clan choice is automatic - and that shows up in Pending Changes as needing Storyteller approval, the same as any other reviewed change.
+- **Some pools have no temporary points.** A pool that is only a rating - a Virtue, Morality or Path, Arete, Balance, Hun, Po and Dharma - has no Temporary track at all: Edit shows the one control for its rating, and Play shows the rating with nothing to spend or regain. It can only change as a purchase.
+- **Some pools build up and wear down.** A pool that counts a score rather than a supply - Banality, Torment, Angst, Paradox, Conviction for a Hunter, and a Garou's Glory, Honor and Wisdom - has **Gain** and **Lose** in Play instead of Spend and Regain, and the number is kept as it is, even a fraction. Where the book gives it a top (Paradox 20, Banality 10) Gain stops there; Renown has none. It never goes below 0.
+- **Identity fields are free to set.** Changing one costs no XP. Your chronicle can still require Storyteller review for a specific field, or for one option on it - picking "Antediluvian," for example, while every other Clan choice is automatic - and that shows in Review under **Waits for a Storyteller**, the same as any other reviewed change.
 - **A few fields can't be cleared by a player.** A field your chronicle prices other traits by - Clan is the usual case - can be changed to a different value but not blanked out. Ask a Storyteller if it genuinely needs to be empty.
 - **Every dot is the same size** - a pool's dots here, a trait's rating on the rest of the sheet, and a signed PDF all draw the same 14-pixel dot.
 

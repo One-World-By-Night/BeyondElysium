@@ -4,11 +4,12 @@
 import { create, type StoreApi } from 'zustand';
 import api from '../api/client';
 import { computeChanges as computeChangesPure } from '../lib/computeChanges';
+import { removeLine } from '../lib/cartRemove';
+import { clearCart, loadCart, restoreCart, saveCart } from '../lib/cartStorage';
 import {
 	clearDraft,
 	draftDiffersFrom,
 	loadDraft,
-	saveDraft,
 	type StoredDraft,
 } from '../lib/draftStorage';
 import { errorMessage } from '../lib/errorMessage';
@@ -40,6 +41,15 @@ export interface SubmitResult {
 	 * Submitted successfully but landed pending review.
 	 */
 	pending: ChangeRequest[];
+	/**
+	 * How many of the submitted changes the server applied at once.
+	 */
+	applied: number;
+	/**
+	 * How many wait for a Storyteller, and the XP they hold.
+	 */
+	waiting: number;
+	held: number;
 }
 
 /**
@@ -71,14 +81,30 @@ interface CharacterEditorState {
 	saving: boolean;
 	error: string | null;
 	/**
-	 * A locally saved draft that differs from the server's data, offered to the player to restore or dismiss.
+	 * An older whole-sheet draft that differs from the server's data, offered to the player once to restore or dismiss.
 	 */
 	restorableDraft: StoredDraft | null;
+	/**
+	 * Blocks the cart held that the server changed since they were edited, named so the player can add them again.
+	 */
+	droppedBlocks: string[];
+	/**
+	 * Whether the Review dialog is open, from the meter, the header chip or the trait panel.
+	 */
+	reviewOpen: boolean;
+	/**
+	 * What the last Submit did, for the confirmation Review shows; null until one is sent.
+	 */
+	lastSubmit: SubmitResult | null;
 
 	/**
 	 * Loads a character and its resolved stack, and checks for a restorable local draft.
 	 */
 	loadCharacter: ( id: number, gameSlug: string ) => Promise< void >;
+	/**
+	 * The load itself, which loadCharacter() shares between callers asking for the same character.
+	 */
+	loadCharacterNow: ( id: number, gameSlug: string ) => Promise< void >;
 	/**
 	 * Stages an edit to one sheet block and saves it to the local autosave draft.
 	 */
@@ -92,9 +118,16 @@ interface CharacterEditorState {
 	 */
 	computeChanges: () => ChangeRequest[];
 	/**
-	 * Submits every pending change to the server and updates local state with the outcome.
+	 * Submits every pending change to the server and updates local state with the outcome. A note for the Storyteller
+	 * goes with every change in the set.
 	 */
-	submitChanges: () => Promise< SubmitResult >;
+	submitChanges: ( note?: string ) => Promise< SubmitResult >;
+	/**
+	 * Takes one line out of the cart, putting the rows it changed back as the sheet holds them.
+	 */
+	removeLine: ( index: number ) => void;
+	openReview: () => void;
+	closeReview: () => void;
 	/**
 	 * Discards unsaved edits, reverting sheetData back to originalSheetData.
 	 */
@@ -107,9 +140,18 @@ interface CharacterEditorState {
 	 * Discards the restorable draft without applying it.
 	 */
 	dismissDraft: () => void;
+	/**
+	 * Stops naming the blocks the server changed since the cart held them.
+	 */
+	dismissDropped: () => void;
 }
 
 let debounceTimer: ReturnType< typeof setTimeout > | null = null;
+
+/**
+ * The load that is under way, so a second request for the same character shares it.
+ */
+let loading: { key: string; promise: Promise< void > } | null = null;
 
 /**
  * Counts cost-preview requests.
@@ -167,12 +209,32 @@ export const useCharacterEditorStore = create< CharacterEditorState >(
 		saving: false,
 		error: null,
 		restorableDraft: null,
+		droppedBlocks: [],
+		reviewOpen: false,
+		lastSubmit: null,
 
 		/**
-		 * Loads a character and its resolved creature stack, resets every editing field back to a clean baseline, and checks
-		 * for a local draft worth offering the player to restore.
+		 * Loads a character and its resolved creature stack, resets every editing field back to a clean baseline, brings
+		 * back the cart kept on this device for every block the server still holds as it was edited from, and checks for an
+		 * older whole-sheet draft worth offering the player to restore.
 		 */
-		loadCharacter: async ( id, gameSlug ) => {
+		loadCharacter: ( id, gameSlug ) => {
+			const key = `${ gameSlug }:${ id }`;
+			if ( loading?.key === key ) {
+				return loading.promise;
+			}
+			const promise = get()
+				.loadCharacterNow( id, gameSlug )
+				.finally( () => {
+					if ( loading?.promise === promise ) {
+						loading = null;
+					}
+				} );
+			loading = { key, promise };
+			return promise;
+		},
+
+		loadCharacterNow: async ( id, gameSlug ) => {
 			// A cost preview still on its way belongs to the sheet being replaced.
 			previewRequest++;
 			set( { loading: true, error: null } );
@@ -187,7 +249,12 @@ export const useCharacterEditorStore = create< CharacterEditorState >(
 				// Cloned separately so sheetData and originalSheetData never share references.
 				const sheet = deepClone( character.sheet_data );
 
-				const draft = loadDraft( id );
+				const cart = loadCart( id );
+				const kept = cart
+					? restoreCart( cart, sheet )
+					: { sheet: deepClone( sheet ), restored: [], dropped: [] };
+
+				const draft = cart ? null : loadDraft( id );
 				const restorableDraft =
 					draft && draftDiffersFrom( draft.sheetData, sheet )
 						? draft
@@ -199,16 +266,27 @@ export const useCharacterEditorStore = create< CharacterEditorState >(
 					stackSlug: character.stack_slug,
 					stack,
 					character,
-					sheetData: sheet,
+					sheetData: kept.sheet,
 					originalSheetData: deepClone( sheet ),
 					addedBlocks: [],
 					pendingChanges: [],
 					previewCosts: null,
 					submittedChanges: [],
-					dirty: false,
+					dirty: kept.restored.length > 0,
 					loading: false,
 					restorableDraft,
+					droppedBlocks: kept.dropped,
+					reviewOpen: false,
+					lastSubmit: null,
 				} );
+
+				if ( kept.restored.length > 0 ) {
+					get().computeChanges();
+					refreshPreview( get, set );
+				}
+				if ( kept.dropped.length > 0 ) {
+					saveCart( id, sheet, kept.sheet );
+				}
 			} catch ( error ) {
 				set( {
 					loading: false,
@@ -227,11 +305,12 @@ export const useCharacterEditorStore = create< CharacterEditorState >(
 				dirty: true,
 			} ) );
 
-			// Saved on every edit, not debounced.
-			const { characterId, sheetData } = get();
+			// Saved and diffed on every edit, not debounced; only the server's pricing waits.
+			const { characterId, originalSheetData, sheetData } = get();
 			if ( characterId ) {
-				saveDraft( characterId, sheetData );
+				saveCart( characterId, originalSheetData, sheetData );
 			}
+			get().computeChanges();
 
 			if ( debounceTimer ) {
 				clearTimeout( debounceTimer );
@@ -281,16 +360,27 @@ export const useCharacterEditorStore = create< CharacterEditorState >(
 		 * Submits every currently pending change to the server together, in one call, under one shared submission id - a
 		 * chronicle with the removal/lowering switch on needs the whole set to wait together when any of it is caught.
 		 */
-		submitChanges: async () => {
+		submitChanges: async ( note ) => {
+			const nothing = { applied: 0, waiting: 0, held: 0 };
 			if ( get().saving ) {
-				return { submitted: [], failed: [], pending: [] };
+				return { submitted: [], failed: [], pending: [], ...nothing };
 			}
 
-			const changes = get().computeChanges();
+			const written = ( note ?? '' ).trim();
+			const changes = get()
+				.computeChanges()
+				.map( ( change ) =>
+					written === '' ? change : { ...change, notes: written }
+				);
 			const { characterId, gameSlug, sheetData } = get();
 
 			if ( ! characterId || ! gameSlug ) {
-				return { submitted: [], failed: changes, pending: [] };
+				return {
+					submitted: [],
+					failed: changes,
+					pending: [],
+					...nothing,
+				};
 			}
 
 			// The sheet stays editable while the request is out.
@@ -311,6 +401,8 @@ export const useCharacterEditorStore = create< CharacterEditorState >(
 			const failed: ChangeRequest[] = [];
 			const pending: ChangeRequest[] = [];
 			let lastError: unknown = null;
+			let applied = 0;
+			let held = 0;
 			if ( changes.length > 0 ) {
 				try {
 					const result = await api
@@ -322,11 +414,27 @@ export const useCharacterEditorStore = create< CharacterEditorState >(
 						// A created change only reaches sheet_data once approved.
 						if ( ! created || created.status !== 'approved' ) {
 							pending.push( change );
+							held += Math.max(
+								0,
+								Number( created?.xp_cost ?? 0 )
+							);
+						} else {
+							applied++;
 						}
 					} );
 				} catch ( error ) {
 					failed.push( ...changes );
 					lastError = error;
+				}
+			}
+
+			// What the server holds now: a change that waits is an order, not an edit, so the cart rebases on it.
+			let fresh: Character | null = null;
+			if ( submitted.length > 0 && failed.length === 0 ) {
+				try {
+					fresh = await api.characters( gameSlug ).get( characterId );
+				} catch {
+					fresh = null;
 				}
 			}
 
@@ -347,19 +455,57 @@ export const useCharacterEditorStore = create< CharacterEditorState >(
 					)
 			);
 
+			const outcome: SubmitResult = {
+				submitted,
+				failed,
+				pending,
+				applied,
+				waiting: pending.length,
+				held,
+			};
+
 			// Another character opened meanwhile: nothing here describes its sheet.
 			if ( get().characterId !== characterId ) {
 				set( { saving: false } );
-				return { submitted, failed, pending };
+				return outcome;
 			}
 
 			set( ( state ) => {
-				const nextOriginal = { ...state.originalSheetData };
-				for ( const category of succeededCategories ) {
-					nextOriginal[ category ] = deepClone( sent[ category ] );
+				let nextOriginal = { ...state.originalSheetData };
+				let nextSheet = state.sheetData;
+				if ( fresh ) {
+					// Each block sent and not edited since takes the server's value; one edited meanwhile stays edited.
+					nextOriginal = deepClone( fresh.sheet_data );
+					nextSheet = { ...state.sheetData };
+					for ( const category of Object.keys( sent ) ) {
+						if (
+							draftDiffersFrom(
+								{ v: state.sheetData[ category ] },
+								{ v: sent[ category ] }
+							)
+						) {
+							continue;
+						}
+						if ( fresh.sheet_data[ category ] === undefined ) {
+							delete nextSheet[ category ];
+						} else {
+							nextSheet[ category ] = deepClone(
+								fresh.sheet_data[ category ]
+							);
+						}
+					}
+				} else {
+					for ( const category of succeededCategories ) {
+						nextOriginal[ category ] = deepClone(
+							sent[ category ]
+						);
+					}
 				}
 				return {
 					saving: false,
+					lastSubmit: outcome,
+					...( fresh ? { character: fresh } : {} ),
+					sheetData: nextSheet,
 					error:
 						failed.length > 0
 							? errorMessage( lastError, 'Something went wrong.' )
@@ -373,21 +519,53 @@ export const useCharacterEditorStore = create< CharacterEditorState >(
 				};
 			} );
 
-			// Still-pending categories stay live in the diff, so they keep showing as unsaved.
+			// Without the server's copy, still-pending categories stay live in the diff and keep showing as unsaved.
 			const stillPending = get().computeChanges();
 			const isDirty = stillPending.length > 0;
 			set( { dirty: isDirty } );
 
+			if ( characterId ) {
+				if ( isDirty ) {
+					// What is left in the cart stays kept.
+					const { originalSheetData, sheetData: left } = get();
+					saveCart( characterId, originalSheetData, left );
+				} else {
+					clearCart( characterId );
+					clearDraft( characterId );
+				}
+			}
 			if ( isDirty ) {
 				// What is left - a failed or pending change, or an edit made while sending - is priced afresh.
 				refreshPreview( get, set );
-			} else if ( characterId ) {
-				// The draft is only cleared once nothing is left unresolved.
-				clearDraft( characterId );
 			}
 
-			return { submitted, failed, pending };
+			return outcome;
 		},
+
+		/**
+		 * Takes one line out of the cart: the rows it changed go back as the sheet holds them, and the rest of the cart
+		 * is kept and priced again.
+		 */
+		removeLine: ( index ) => {
+			const { originalSheetData, sheetData, stack, characterId } = get();
+			const { sheet } = removeLine(
+				originalSheetData,
+				sheetData,
+				stack?.blocks ?? {},
+				index
+			);
+			set( { sheetData: sheet } );
+			if ( characterId ) {
+				saveCart( characterId, originalSheetData, sheet );
+			}
+			const left = get().computeChanges();
+			set( { dirty: left.length > 0 } );
+			refreshPreview( get, set );
+		},
+
+		openReview: () => set( { reviewOpen: true } ),
+
+		closeReview: () => set( { reviewOpen: false, lastSubmit: null } ),
 
 		/**
 		 * Discards all unsaved edits, reverting sheetData back to originalSheetData, clearing the pending diff and preview
@@ -396,6 +574,7 @@ export const useCharacterEditorStore = create< CharacterEditorState >(
 		reset: () => {
 			const { characterId } = get();
 			if ( characterId ) {
+				clearCart( characterId );
 				clearDraft( characterId );
 			}
 			set( ( state ) => ( {
@@ -404,6 +583,8 @@ export const useCharacterEditorStore = create< CharacterEditorState >(
 				previewCosts: null,
 				dirty: false,
 				restorableDraft: null,
+				droppedBlocks: [],
+				reviewOpen: false,
 			} ) );
 		},
 
@@ -421,7 +602,13 @@ export const useCharacterEditorStore = create< CharacterEditorState >(
 				dirty: true,
 				restorableDraft: null,
 			} );
+			const { characterId, originalSheetData, sheetData } = get();
+			if ( characterId ) {
+				saveCart( characterId, originalSheetData, sheetData );
+				clearDraft( characterId );
+			}
 			get().computeChanges();
+			refreshPreview( get, set );
 		},
 
 		/**
@@ -433,6 +620,13 @@ export const useCharacterEditorStore = create< CharacterEditorState >(
 				clearDraft( characterId );
 			}
 			set( { restorableDraft: null } );
+		},
+
+		/**
+		 * Stops naming the blocks the server changed since the cart held them.
+		 */
+		dismissDropped: () => {
+			set( { droppedBlocks: [] } );
 		},
 	} )
 );

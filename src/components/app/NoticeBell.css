@@ -1,0 +1,138 @@
+.be-notice-bell.be-notice-bell {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 2.25rem;
+	min-height: 2.25rem;
+	padding: 0.25rem;
+	border: 0;
+	background: transparent;
+	color: inherit;
+	cursor: pointer;
+}
+
+@media ( max-width: 768px ), ( pointer: coarse ) {
+
+	.be-notice-bell.be-notice-bell {
+		min-width: var(--be-tap);
+		min-height: var(--be-tap);
+	}
+}
+
+.be-notice-bell__count {
+	position: absolute;
+	top: 0;
+	right: 0;
+	min-width: 1.1rem;
+	padding: 0 0.25rem;
+	border-radius: 999px;
+	background: var(--be-red-6);
+	color: var(--be-gray-29);
+	font-size: 0.7rem;
+	font-weight: 700;
+	line-height: 1.5;
+	text-align: center;
+}
+
+.be-notice-panel__backdrop {
+	position: fixed;
+	inset: 0;
+	z-index: 100000;
+	display: flex;
+	justify-content: flex-end;
+	align-items: stretch;
+	background: var(--be-shadow-5);
+}
+
+.be-notice-panel {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	max-width: 26rem;
+	padding: 1rem;
+	overflow-y: auto;
+	background: var(--be-gray-29);
+	box-shadow: -4px 0 24px var(--be-shadow-3);
+}
+
+.be-notice-panel__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+}
+
+.be-notice-panel__header h3 {
+	margin: 0;
+}
+
+.be-notice-panel__actions {
+	display: flex;
+	gap: 0.5rem;
+}
+
+.be-notice-panel__setting {
+	display: block;
+	margin-top: 0.75rem;
+}
+
+.be-notice-panel__setting select {
+	display: block;
+	width: 100%;
+	margin-top: 0.25rem;
+}
+
+.be-notice-panel__list {
+	margin: 1rem 0 0;
+	padding: 0;
+	list-style: none;
+}
+
+.be-notice-panel__item {
+	border-bottom: 1px solid var(--be-gray-21);
+}
+
+.be-notice-panel__item a {
+	display: block;
+	padding: 0.6rem 0.25rem;
+	color: inherit;
+	text-decoration: none;
+}
+
+.be-notice-panel__item--unread {
+	border-left: 3px solid var(--be-st-accent, var(--be-blue-4));
+	padding-left: 0.5rem;
+}
+
+.be-notice-panel__title {
+	display: block;
+	font-weight: 600;
+}
+
+.be-notice-panel__line {
+	display: block;
+	font-size: 0.85rem;
+}
+
+.be-notice-panel__when {
+	display: block;
+	font-size: 0.75rem;
+	color: var(--be-gray-10);
+}
+
+/* On a phone the panel rises from the bottom as a sheet. */
+@media ( max-width: 768px ) {
+
+	.be-notice-panel__backdrop {
+		align-items: flex-end;
+	}
+
+	.be-notice-panel {
+		max-width: none;
+		max-height: 85vh;
+		max-height: 85dvh;
+		border-radius: 12px 12px 0 0;
+		box-shadow: 0 -4px 24px var(--be-shadow-3);
+	}
+}

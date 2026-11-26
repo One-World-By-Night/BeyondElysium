@@ -25,6 +25,7 @@ class Setup_Status {
 		$rows = [
 			self::row_creature_types( $game ),
 			self::row_storytellers( $game ),
+			self::row_staff_email( $game ),
 			self::row_new_character_approval( $game ),
 			self::row_starting_xp( $game ),
 			self::row_front_end_pages( $game ),
@@ -194,6 +195,29 @@ class Setup_Status {
 				? sprintf( __( 'Connected to %s.', 'beyond-elysium' ), $connection->guild_name )
 				: __( 'Not connected. Connecting lets your players read their sheets and link their accounts from Discord.', 'beyond-elysium' ),
 			'fix'    => [ 'kind' => 'inline', 'capability' => 'be_manage_characters' ],
+		];
+	}
+
+	/**
+	 * @return array<string,mixed>
+	 */
+	private static function row_staff_email( object $game ): array {
+		$address = \BeyondElysium\Core\Notifications::staff_address_of( $game );
+		$daily   = \BeyondElysium\Core\Notifications::staff_pace_of( $game ) === 'daily';
+
+		return [
+			'id'     => 'staff_email',
+			'status' => $address !== '' ? 'ok' : 'info',
+			'title'  => __( 'Staff email', 'beyond-elysium' ),
+			'detail' => $address !== ''
+				? sprintf(
+					/* translators: 1: the staff address, 2: how often it hears of changes waiting */
+					__( 'Staff mail goes to %1$s, which hears of changes waiting %2$s.', 'beyond-elysium' ),
+					$address,
+					$daily ? __( 'once a day', 'beyond-elysium' ) : __( 'at each submission', 'beyond-elysium' )
+				)
+				: __( 'Staff mail goes to each HST and AST. Name one address, such as a position address, and it goes there instead, so a successor inherits it.', 'beyond-elysium' ),
+			'fix'    => [ 'kind' => 'inline', 'capability' => 'be_manage_chronicle_setup' ],
 		];
 	}
 

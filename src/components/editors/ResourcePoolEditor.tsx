@@ -5,6 +5,7 @@ import { __ } from '@wordpress/i18n';
 import DotTracker, { type DotTrackerValue } from '../shared/DotTracker';
 import { resolvePoolName } from '../../lib/resolveCrossBlockRef';
 import { trackerMax } from '../../lib/poolMax';
+import { poolKind } from '../../lib/poolKind';
 import {
 	raiseButtonLabel,
 	raisedByLocked,
@@ -80,6 +81,7 @@ export function ResourcePoolEditor( {
 								value
 							) }
 							onChange={ ( next ) => setPool( pool.name, next ) }
+							ratingOnly={ poolKind( pool ) === 'rating_only' }
 							readOnly={
 								readOnly ||
 								raisedByLocked(

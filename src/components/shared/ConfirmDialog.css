@@ -6,8 +6,8 @@
 	align-items: center;
 	justify-content: center;
 
-	/* Matches Modal.css's z-index exactly. */
-	z-index: 100000;
+	/* One above Modal.css's z-index, so a confirmation asked from inside a modal shows over it. */
+	z-index: 100001;
 }
 
 .be-confirm-dialog {

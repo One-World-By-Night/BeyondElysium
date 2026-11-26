@@ -59,3 +59,17 @@ export function stepTrackValue(
 ): number {
 	return Math.max( 0, Math.min( max, current + delta ) );
 }
+
+/**
+ * A pool's values after one step of its permanent rating. A pool with no temporary points moves both values together,
+ * so what it stores never disagrees with the one row it shows.
+ */
+export function stepPermanentRating(
+	value: { permanent: number; temporary: number },
+	delta: 1 | -1,
+	max: number,
+	ratingOnly: boolean
+): { permanent: number; temporary: number } {
+	const permanent = stepTrackValue( value.permanent, delta, max );
+	return { permanent, temporary: ratingOnly ? permanent : value.temporary };
+}

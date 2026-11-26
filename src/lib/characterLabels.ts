@@ -37,6 +37,8 @@ export function changeStatusLabel( status: string ): string {
 			return __( 'Refused', 'beyond-elysium' );
 		case 'forwarded':
 			return __( 'Forwarded', 'beyond-elysium' );
+		case 'withdrawn':
+			return __( 'Withdrawn', 'beyond-elysium' );
 		default:
 			return status;
 	}

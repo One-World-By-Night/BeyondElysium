@@ -38,6 +38,7 @@ import {
 } from '../../lib/characterViews';
 import HelpButton from '../shared/HelpButton';
 import { AppFrame } from '../app/AppFrame';
+import { NoticeBell } from '../app/NoticeBell';
 import { AppCharacterPicker } from '../app/AppCharacterPicker';
 import { characterHref, isAppLayout, otherPage } from '../../lib/appNav';
 import { creatureTypeName } from '../../lib/characterLabels';
@@ -443,6 +444,11 @@ export function MyChroniclePage() {
 						},
 					] }
 					placeCount={ 3 }
+					bell={
+						ready && gameSlug ? (
+							<NoticeBell gameSlug={ gameSlug } section={ tab } />
+						) : null
+					}
 					switcher={ switcher }
 					character={
 						ready && (
@@ -476,6 +482,9 @@ export function MyChroniclePage() {
 		<div className="be-my-chronicle-page" style={ accentStyle }>
 			<div className="be-help-heading">
 				<h1>{ __( 'My Chronicle', 'beyond-elysium' ) }</h1>
+				{ ready && gameSlug && (
+					<NoticeBell gameSlug={ gameSlug } section={ tab } />
+				) }
 				<HelpButton helpKey="my-chronicle" />
 			</div>
 			{ switcher }

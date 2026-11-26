@@ -11,12 +11,22 @@ export interface ModalProps {
 	onClose: () => void;
 	children: ReactNode;
 	footer?: ReactNode;
+	/**
+	 * An extra class for the dialog, so one dialog can be sized on its own.
+	 */
+	className?: string;
 }
 
 /**
  * Renders `children` and an optional `footer` inside a titled dialog, portaled to `document.body`.
  */
-export function Modal( { title, onClose, children, footer }: ModalProps ) {
+export function Modal( {
+	title,
+	onClose,
+	children,
+	footer,
+	className,
+}: ModalProps ) {
 	const dialogRef = useRef< HTMLDivElement >( null );
 
 	useEffect( () => {
@@ -45,7 +55,7 @@ export function Modal( { title, onClose, children, footer }: ModalProps ) {
 		>
 			{ /* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions */ }
 			<div
-				className="be-modal"
+				className={ className ? `be-modal ${ className }` : 'be-modal' }
 				role="dialog"
 				aria-modal="true"
 				aria-label={ title }

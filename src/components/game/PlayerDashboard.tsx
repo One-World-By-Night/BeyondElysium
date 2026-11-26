@@ -33,6 +33,10 @@ export function statusLabel(
 			return __( 'Auto-approved', 'beyond-elysium' );
 		case 'refused':
 			return __( 'Refused', 'beyond-elysium' );
+		case 'withdrawn':
+			return __( 'Withdrawn', 'beyond-elysium' );
+		case 'undone':
+			return __( 'Undone', 'beyond-elysium' );
 	}
 }
 

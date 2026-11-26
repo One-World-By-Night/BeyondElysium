@@ -10,6 +10,7 @@ use BeyondElysium\Models\Bot_Notice;
 use BeyondElysium\Models\Change;
 use BeyondElysium\Models\Discord_Link;
 use BeyondElysium\Models\Mail_Log;
+use BeyondElysium\Models\Notice;
 use BeyondElysium\Models\Release_Batch;
 use BeyondElysium\Models\Submission;
 use BeyondElysium\Models\Transfer;
@@ -114,6 +115,7 @@ class Maintenance {
 		Bot_Audit::prune();
 
 		Bot_Notice::prune();
+		Notice::prune();
 	}
 
 	/**

@@ -13,7 +13,7 @@ My Chronicle → Dashboard tab. It's the first tab, and where the page opens by 
 ## The screen
 
 - **My Characters** - every character you have in this chronicle, each name linking to its Sheet, with its creature type and status. "You have no characters in this chronicle yet." when there are none.
-- **My Changes** - your own changes across every chronicle on the site where you have a character, not just this one: anything still pending, plus anything decided in roughly the last month. Each line names the character, describes the change in plain language, and carries a status badge - **Pending**, **Approved**, **Auto-approved**, or **Refused**. A change from a chronicle other than the one you're currently viewing is grouped under that chronicle's own name; this chronicle's own changes are listed first, without a heading. "Nothing pending or recently reviewed." when there's nothing to show.
+- **My Changes** - your own changes across every chronicle on the site where you have a character, not just this one: anything still pending, plus anything decided in roughly the last month. Each line names the character, describes the change in plain language, and carries a status badge - **Pending**, **Approved**, **Auto-approved**, **Refused**, **Withdrawn** (you took it back) or **Undone** (a Storyteller took an approved change back). A change from a chronicle other than the one you're currently viewing is grouped under that chronicle's own name; this chronicle's own changes are listed first, without a heading. "Nothing pending or recently reviewed." when there's nothing to show.
 - **My Castings**, shown only when a Storyteller has cast you to play an NPC for an upcoming session - "You're playing {NPC} on {date}." Click it to open the [casting brief](npc-casting.md).
 - **My Plots** - the same feed as the My Plots & Rumors tab: every plot thread you're connected to and any rumor that's reached you.
 
@@ -22,7 +22,7 @@ My Chronicle → Dashboard tab. It's the first tab, and where the page opens by 
 ### Check whether a change is still waiting
 
 1. Open **My Chronicle** → **Dashboard**.
-2. Look under **My Changes** for the **Pending** badge. A change still shows here for a while after it's decided, so you don't have to go hunting for the outcome - look for **Approved**, **Auto-approved**, or **Refused** instead.
+2. Look under **My Changes** for the **Pending** badge. A change still shows here for a while after it's decided, so you don't have to go hunting for the outcome - look for **Approved**, **Auto-approved**, **Refused**, **Withdrawn** or **Undone** instead.
 
 ### See what happened to a change in a different chronicle
 
@@ -39,6 +39,7 @@ My Chronicle → Dashboard tab. It's the first tab, and where the page opens by 
 - **My Changes** looks across every chronicle you have a character in, not just the one selected at the top of the page - it's the one place that does. Nothing else on this page crosses chronicles.
 - A decided change stays listed here for about a month, then drops off - it isn't a running log. For the full history on one character, open it and click **History**.
 - **Auto-approved** means the chronicle's own rules cleared it without a Storyteller looking at it individually - not that no one could ever review it.
+- **Withdrawn** and **Undone** stay listed like any decided change. To withdraw a change that is still pending, open the character and click **History**; see [Change History](sheet-history.md).
 - This view doesn't say why a change needed Storyteller review - only its current status.
 
 ## Troubleshooting

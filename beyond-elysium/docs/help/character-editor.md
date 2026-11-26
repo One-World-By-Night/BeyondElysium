@@ -62,7 +62,7 @@ Shown only to a player, on their own character, on the **Story** view - not to a
 - **Where you earned it** - required, up to 200 characters.
 - **Date played** - optional; can't be after today.
 - **Details** - optional, up to 2,000 characters.
-- **Send request** - sends it right away, separately from anything queued in **Pending Changes** below, which stays queued. The panel then reads "Sent. Your Storytellers will review it." and clears.
+- **Send request** - sends it right away, separately from anything in your cart, which stays there. The panel then reads "Sent. Your Storytellers will review it." and clears.
 
 A request always waits for a Storyteller, whatever this chronicle's approval settings are, and shows in the Approval Queue with what you typed. See [Player Guide](../player-guide.md#2-editing-your-sheet) and [Approval Queue](approval-queue.md).
 
@@ -89,23 +89,20 @@ An NPC's Storyteller-only roleplaying-notes section (voice, mannerisms, motivati
 
 A trait list or powers section a chronicle has set to let players choose their own order (see [Schema Blocks](schema-blocks.md)) shows flat, in whatever order you last left it, with no grouping - and a **Reorder** button above the list. Click it to drag rows into place, or use the **▲**/**▼** buttons beside each one; **Save order** sends the new order right away, with no approval and no XP cost, since nothing about what you hold is changing. **Cancel** leaves the order exactly as it was. A chronicle that turns this off for a section goes back to the normal grouped display, and the Reorder button disappears.
 
-### Pending Changes
+### The cart
 
-Everything you change in the sections above queues here instead of touching the sheet immediately. A bar at the bottom of the screen shows what's queued, and it's only there while something is:
+Everything you change in the sections above goes into your cart instead of touching the sheet. The cart is the set of changes you have made and not yet sent, kept on this device for each character, so a closed tab does not lose it.
 
-- **The one line.** Closed, the bar reads something like "3 changes · +6 XP · 4 XP left": how many changes are queued, what they cost in all, and what you'd have left. As a player, "4 XP left" turns into "2 XP over" in red if the changes cost more than you have. A Storyteller sees the count alone. The cost and what's left show once the prices load.
-- **Review** - opens the full list under that line, and **Close** puts it away. The bar opens itself when a queued change can't be submitted as written, or a submit fails, so you can see why.
-- A running list, one line per change, naming what changed and, once its price loads, its XP cost and whether it needs Storyteller review. A trait or power that isn't in the catalog reads "Price set by a Storyteller on approval" instead of a cost: it has no price yet, and the total leaves it out until a Storyteller sets one.
-- **Total** XP across everything queued, and **Unspent after** - what your XP would be once it's all applied. As a player, this turns into a warning if it would go negative.
-- **Submit Changes** - sends everything queued to the server together, in one request. As a player, this is disabled if it would leave you with negative XP.
-- **Discard** - opens a confirmation ("Discard unsaved changes?") before reverting every field to what's on the sheet now and returning you to the character's Sheet.
+- **The meter.** A bar pinned at the bottom of Edit always shows what you can spend: "10 XP to spend". With changes in the cart it reads "Cart: 3 · 6 XP · 4 left", and "2 XP over" in red when the cart costs more than you have free. XP held for changes still waiting for a Storyteller is not free to spend, so it is already taken off. A Storyteller sees the count and price with no limit. The same "Cart: 3 · 6 XP" appears as a chip in the character's header in every view, and either one opens Review.
+- **Review** opens a dialog (the whole screen on a phone). Its lines come in two groups, **Applies now** and **Waits for a Storyteller**, each with its price and, for a line that waits, the reason. **Remove** takes one line out and puts that part of the sheet back as it was. Under the lines are the **Total**, what is **Spent now**, what is **Left after**, and "6 XP held until a Storyteller decides" for the lines that wait. A **Note to your Storyteller** (up to 1,000 characters) shows when something waits and goes with every change you send; Storytellers read it in the Approval Queue as "Note from the player".
+- **Submit** sends the whole cart in one request. Review then reads like an order confirmation: "Sent. 2 applied now. 3 are waiting for a Storyteller, with 6 XP held." with **See it in History**. Submit is off while a line cannot be submitted (Review names it) or the cart costs more than you have free to spend. If the server refuses the set, the cart stays as it was.
+- **Empty cart** puts every line back as the sheet has it, after asking first, and keeps you where you are.
+- **Changed since you added it.** If a Storyteller changes a part of the sheet that your cart also changed, that part comes back from the sheet, not from the cart, and the cart says "The sheet changed since you added this: Occult. Add it again if you still want it."
+- Changes you send leave the cart. Those that wait become an order in **History**, and their XP is held for them.
 
-After submitting, you may see one or both of these. Once nothing is left queued the bar goes away, and they show on the page by themselves:
+You can also add to the cart without opening Edit: the panel that opens when you tap a trait (see [Character Sheet](character-sheet.md)) has **Add to cart**, for example "Raise to x4 · 1 XP", and Edit's own trait rows, power rows and Add dialog have an **About** button that opens the same panel.
 
-- A note that the submission failed - nothing in it was saved, since the whole set succeeds or fails together. Review it and click **Submit Changes** again to retry.
-- A note that some changes were submitted and are awaiting Storyteller approval - they won't appear on the sheet until then. If your chronicle always waits on a removal, a lower rating, a relabel or a rename (Approval Rules), anything caught by that switch waits together with whatever else you submitted alongside it, even an addition that would otherwise go straight through.
-
-If you leave with anything queued and unsubmitted, your browser warns you before you navigate away, and your edits are saved to this browser automatically. Next time you open the same character here, a banner offers **Restore** or **Discard** for that saved draft.
+If you leave with anything in the cart, your browser warns you before you navigate away, and the cart is saved on this device as you go.
 
 ## Common tasks
 
@@ -121,24 +118,25 @@ If you leave with anything queued and unsubmitted, your browser warns you before
 
 1. Open the character and click **Edit** in the row of views.
 2. Use each section's own control to add, change, or remove a trait, power, pool value, or identity field.
-3. Click **Review** in the bar at the bottom, and check each change, the running **Total** and **Unspent after**.
-4. Click **Submit Changes**.
+3. Click **Review** in the meter at the bottom (or the cart chip in the header), and check each line and the totals.
+4. If something waits for a Storyteller, you can write a **Note to your Storyteller**. Then click **Submit**.
 
 ### Update Background or Notes
 
 1. Open the character and click **Story**.
 2. Type into **Background** or **Notes**.
-3. There is nothing to click: it saves a moment after you stop typing, and the line under the fields reads **Saved**. This is independent of anything queued in Pending Changes.
+3. There is nothing to click: it saves a moment after you stop typing, and the line under the fields reads **Saved**. This is independent of your cart.
 
-### Restore a draft from a previous session
+### Come back to your cart
 
-1. Open the character's **Edit** view. If you left unsaved changes here before, a banner tells you so and names when they were saved.
-2. Click **Restore** to bring them back, or **Discard** to drop them for good.
+1. Open the character. The cart chip in the header, and the meter in Edit, show what you left in it.
+2. A part of the sheet that a Storyteller changed in the meantime is not brought back; the cart names it so you can add it again.
+3. A whole-sheet draft saved by an earlier version appears once in Edit with **Restore** or **Discard**; restoring it turns it into your cart.
 
-### Discard changes before submitting
+### Empty the cart
 
-1. In the bar at the bottom, click **Review**, then **Discard**.
-2. Confirm "Discard unsaved changes?" - this reverts every field and returns you to the character's Sheet.
+1. Click **Review**, then **Empty cart**.
+2. Confirm "Empty the cart?" - every line goes back as the sheet has it, and you stay where you are.
 
 ## Things to know
 
@@ -153,18 +151,18 @@ If you leave with anything queued and unsubmitted, your browser warns you before
 - **A rating above the book's maximum waits for a Storyteller.** A few pools can reach further than the book allows (a Mummy's Balance goes to 10, the book stops at 5). Asking for a rating above the book's maximum sends the change to a Storyteller with the reason, and a new character can't start above it.
 - **A custom name always needs review.** Typing a name that isn't in the catalog only saves at all where that section allows it, and even then it always goes to a Storyteller for approval, no matter how your chronicle has auto-approval configured.
 - **Dots are all one size** - on this screen, on the sheet, and on a signed PDF. A pool's points and a trait's rating use the same dot.
-- **Drafts are per-device.** Your in-progress edits autosave to this browser as you make them, so a closed tab or a crash doesn't lose your work - but that draft lives only on the device you typed it on, and only until you submit or discard it.
+- **The cart is per device.** Your cart is saved to this browser as you edit, so a closed tab or a crash doesn't lose your work - but it lives only on the device you used, until you send it or empty it.
 - **A kept-current visiting copy can't be edited here.** While this character has an open, agreed kept-current visit elsewhere, editing or submitting a change is refused until the visit ends - "Kept current from [chronicle]. Make changes there." Edit it at its real home instead. See [Send Sheet](transfer.md).
 
 ## Troubleshooting
 
-- **My changes disappeared after I submitted.** They're most likely pending Storyteller review, not lost - check the **History** view or your Dashboard's pending changes.
-- **I can't see the bar.** It only shows while something is queued. Change something and it appears at the bottom of the screen.
-- **Submit Changes won't click.** As a player, submitting would leave you with negative XP - reduce what you're buying, or ask a Storyteller for more.
+- **My changes disappeared after I submitted.** Sent lines leave the cart. Those that wait for a Storyteller show as an order in the **History** view, where you can withdraw them, and on your Dashboard.
+- **I can't see the cart.** The meter sits at the bottom of Edit, and the cart chip in the header shows once the cart has something in it.
+- **Submit won't click.** The cart costs more than you have free to spend (the meter reads "XP over"), or a line cannot be submitted as written - Review names it. Remove it, reduce what you're buying, or ask a Storyteller for more XP.
 - **A name I typed says it isn't in the catalog.** Check the spelling first. If it's genuinely new, this section may not accept custom entries at all - ask a Storyteller.
 - **"Your character is already waiting for this chronicle's Storytellers to approve it."** You already have a join request pending here - wait for a Storyteller to review it before starting another.
 - **I can't open a character I know exists.** Either it isn't linked to your account yet, or it belongs to someone else and you're not a Storyteller here - ask a Storyteller to assign it to you.
-- **Nothing I submitted saved.** The whole set is submitted together and fails together - review the error, fix what's wrong, and click **Submit Changes** again.
+- **Nothing I submitted saved.** The whole set is submitted together and fails together, and the cart is left as it was - read the error in Review, fix what's wrong, and click **Submit** again.
 - **"Kept current from [chronicle]. Make changes there."** This character is a kept-current visiting copy - edit it at the chronicle named instead; it reaches here on its own.
 
 ## Related

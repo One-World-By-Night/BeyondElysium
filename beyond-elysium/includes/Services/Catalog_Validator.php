@@ -15,6 +15,12 @@ class Catalog_Validator {
 	private const SECTION_TYPES = [ 'trait_list', 'tiered_power', 'identity_field', 'resource_pool' ];
 
 	/**
+	 * The markers a pool carries when its temporary points are not the ordinary kind: `rating_only` where the books
+	 * give it none, `accumulates` where they build up past the rating.
+	 */
+	private const POOL_MARKERS = [ 'rating_only', 'accumulates' ];
+
+	/**
 	 * Envelope `format` versions this validator understands (format).
 	 */
 	private const FORMATS = [ 1 ];
@@ -584,6 +590,12 @@ class Catalog_Validator {
 			return $errors;
 		}
 
+		foreach ( self::POOL_MARKERS as $marker ) {
+			if ( array_key_exists( $marker, $definition ) ) {
+				$errors[] = sprintf( '`%s` belongs on a pool inside a resource_pool block, not on the block\'s own definition', $marker );
+			}
+		}
+
 		if ( $section_type === 'trait_list' ) {
 			$errors = array_merge( $errors, self::validate_trait_list( $definition ) );
 		} elseif ( $section_type === 'tiered_power' ) {
@@ -656,6 +668,15 @@ class Catalog_Validator {
 
 			if ( array_key_exists( 'permanent_spend', $pool ) && $pool['permanent_spend'] !== true ) {
 				$errors[] = sprintf( 'pool "%s" `permanent_spend` must be true - or left out, since a pool the books do not spend permanently carries nothing', $name );
+			}
+
+			foreach ( self::POOL_MARKERS as $marker ) {
+				if ( array_key_exists( $marker, $pool ) && $pool[ $marker ] !== true ) {
+					$errors[] = sprintf( 'pool "%s" `%s` must be true - or left out, since a pool the books treat in the ordinary way carries nothing', $name, $marker );
+				}
+			}
+			if ( ( $pool['rating_only'] ?? null ) === true && ( $pool['accumulates'] ?? null ) === true ) {
+				$errors[] = sprintf( 'pool "%s" is both `rating_only` and `accumulates` - its temporary points either do not exist or build up, never both', $name );
 			}
 
 			if ( array_key_exists( 'book_max', $pool ) ) {

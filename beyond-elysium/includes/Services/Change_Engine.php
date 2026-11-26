@@ -32,6 +32,23 @@ class Change_Engine {
 	const SNAPSHOT_THRESHOLD = 25;
 
 	/**
+	 * The change types that alter a sheet or XP and so can be undone.
+	 *
+	 * @var string[]
+	 */
+	public const UNDOABLE_TYPES = [
+		'add_trait',
+		'remove_trait',
+		'modify_trait',
+		'modify_resource',
+		'modify_identity',
+		'pool_spend',
+		'pool_permanent_spent',
+		'xp_earn',
+		'xp_adjust',
+	];
+
+	/**
 	 * Submits a change for a character.
 	 *
 	 * @param int                 $character_id
@@ -94,10 +111,174 @@ class Change_Engine {
 
 		// Auto-approve immediately if eligible.
 		if ( $level === 'auto' ) {
-			self::approve( $change_id, $submitted_by, null );
+			self::approve( $change_id, $submitted_by, null, null, null, null, false );
 		}
 
 		return $change_id;
+	}
+
+	/**
+	 * Submits one change, and for a player refuses it - writing nothing - when its cost is more than the character
+	 * has free to spend: unspent XP less what the character's other waiting changes hold.
+	 *
+	 * @param int                 $character_id
+	 * @param array<string,mixed> $change        As submit()'s `$change_data`.
+	 * @param int                 $submitted_by
+	 * @param bool                $guard_xp      True for a player; a Storyteller's own change is never refused for its cost.
+	 * @return array{change_id:int,refused:?array{cost:int,free:int,held:int}} A `change_id` of 0 with no `refused` is a failed write.
+	 */
+	public static function submit_checked( int $character_id, array $change, int $submitted_by, bool $guard_xp ): array {
+		$written = self::within_budget(
+			$character_id,
+			[ $change ],
+			$guard_xp,
+			static function () use ( $character_id, $change, $submitted_by ): array {
+				$change_id = self::submit( $character_id, $change, $submitted_by );
+				return [ 'ok' => $change_id > 0, 'ids' => [ $change_id ] ];
+			}
+		);
+		return [ 'change_id' => $written['ok'] ? (int) $written['ids'][0] : 0, 'refused' => $written['refused'] ];
+	}
+
+	/**
+	 * Runs a write of changes under the character's row lock, and rolls every write back when `$guard_xp` is set and
+	 * the writes leave the character with less than nothing free to spend (unspent XP less what waiting changes hold),
+	 * having made it worse. A set that costs nothing is never refused.
+	 *
+	 * @param int                              $character_id
+	 * @param array<int,array<string,mixed>>   $changes  The proposed changes, as submit()'s `$change_data`.
+	 * @param bool                             $guard_xp
+	 * @param callable():array{ok:bool,ids:int[]} $write
+	 * @return array{ok:bool,ids:int[],refused:?array{cost:int,free:int,held:int}}
+	 */
+	private static function within_budget( int $character_id, array $changes, bool $guard_xp, callable $write ): array {
+		$unit = Transaction::begin( 'be_changes_within_budget' );
+		Character::lock( $character_id );
+		$before = self::xp_position( $character_id );
+
+		$result = $write();
+		if ( ! $result['ok'] ) {
+			Transaction::rollback( $unit );
+			return [ 'ok' => false, 'ids' => [], 'refused' => null ];
+		}
+
+		$refused = $guard_xp ? self::budget_refusal( $character_id, $before, $changes ) : null;
+		if ( $refused !== null ) {
+			Transaction::rollback( $unit );
+			return [ 'ok' => false, 'ids' => [], 'refused' => $refused ];
+		}
+
+		Transaction::commit( $unit );
+		return [ 'ok' => true, 'ids' => $result['ids'], 'refused' => null ];
+	}
+
+	/**
+	 * A character's unspent XP and the XP its waiting changes hold.
+	 *
+	 * @return array{unspent:int,held:int}
+	 */
+	private static function xp_position( int $character_id ): array {
+		$character = Character::find( $character_id );
+		return [
+			'unspent' => (int) ( $character->xp_unspent ?? 0 ),
+			'held'    => Change::held_xp( $character_id ),
+		];
+	}
+
+	/**
+	 * What a set of just-written changes costs and what was free before it, when it left the character worse off than
+	 * nothing free to spend; null when it is within budget.
+	 *
+	 * @param array{unspent:int,held:int}    $before  The position before the writes.
+	 * @param array<int,array<string,mixed>> $changes The proposed changes.
+	 * @return array{cost:int,free:int,held:int}|null
+	 */
+	private static function budget_refusal( int $character_id, array $before, array $changes ): ?array {
+		$cost = 0.0;
+		foreach ( $changes as $change ) {
+			$price = (float) ( $change['xp_cost'] ?? 0 );
+			if ( $price > 0 ) {
+				$cost += $price;
+			}
+		}
+		if ( $cost <= 0 ) {
+			return null;
+		}
+
+		$after       = self::xp_position( $character_id );
+		$free_before = $before['unspent'] - $before['held'];
+		$free_after  = $after['unspent'] - $after['held'];
+		if ( $free_after >= 0 || $free_after >= $free_before ) {
+			return null;
+		}
+
+		return [ 'cost' => (int) ceil( $cost ), 'free' => max( 0, $free_before ), 'held' => $before['held'] ];
+	}
+
+	/**
+	 * The XP a character's waiting changes hold once a set of proposed changes is submitted: a proposed change that
+	 * names a still-waiting change's own holding replaces it, so what that one held is released.
+	 *
+	 * @param object                         $character
+	 * @param array<int,array<string,mixed>> $changes   Each with `change_type` and `change_data`.
+	 */
+	public static function held_xp_after( object $character, array $changes ): int {
+		$owner_slug = (string) ( $character->owner_slug ?? '' );
+		$replaced   = [];
+		foreach ( $changes as $change ) {
+			$type = (string) ( $change['change_type'] ?? '' );
+			$key  = self::pending_duplicate_key( $type, (array) ( $change['change_data'] ?? [] ), $owner_slug );
+			if ( $key === null ) {
+				continue;
+			}
+			$existing = self::find_pending_duplicate( (int) $character->id, $type, $key, $owner_slug );
+			if ( $existing !== null ) {
+				$replaced[] = $existing;
+			}
+		}
+		return Change::held_xp( (int) $character->id, $replaced );
+	}
+
+	/**
+	 * What approving a waiting change would charge beyond the XP its character has unspent, or null when the charge
+	 * can be paid or is not known yet.
+	 *
+	 * @param object   $change    A change row.
+	 * @param int|null $set_cost  The Storyteller's price for a purchase that was waiting for one.
+	 * @return array{cost:int,unspent:int,name:string}|null
+	 */
+	public static function approval_shortfall( object $change, ?int $set_cost = null ): ?array {
+		$character = Character::find( (int) $change->character_id );
+		if ( ! $character || in_array( $change->change_type, [ 'xp_earn', 'xp_adjust' ], true ) ) {
+			return null;
+		}
+
+		$cost = (float) ( $change->xp_cost ?? 0 );
+		if ( ! empty( $change->change_data['cost_pending'] ) ) {
+			if ( $set_cost === null ) {
+				return null;
+			}
+			$priced = self::price_pending( $character, $change, $set_cost );
+			$cost   = $priced === null ? 0.0 : (float) $priced['xp'];
+		}
+
+		if ( ! self::exceeds_unspent( $character, $change->change_type, $cost ) ) {
+			return null;
+		}
+		return [ 'cost' => (int) ceil( $cost ), 'unspent' => (int) $character->xp_unspent, 'name' => (string) $character->name ];
+	}
+
+	/**
+	 * Whether charging a change's cost would take more than the character has unspent. XP awards and adjustments are
+	 * never a charge.
+	 *
+	 * @param object $character
+	 */
+	private static function exceeds_unspent( $character, string $change_type, float $cost ): bool {
+		if ( $cost <= 0 || in_array( $change_type, [ 'xp_earn', 'xp_adjust' ], true ) ) {
+			return false;
+		}
+		return $cost > (float) ( $character->xp_unspent ?? 0 );
 	}
 
 	/**
@@ -108,17 +289,19 @@ class Change_Engine {
 	 * @param int                      $character_id
 	 * @param array<int,array<string,mixed>> $changes Each shaped as submit()'s own `$change_data`.
 	 * @param int                      $submitted_by
-	 * @return array{submission_id:?string,change_ids:int[]} An empty `change_ids` means the whole set failed and nothing
-	 *                                                        was written.
+	 * @param bool                     $guard_xp True for a player: a set whose cost is more than the character has free
+	 *                                          to spend is refused whole, with `refused` naming the figures.
+	 * @return array{submission_id:?string,change_ids:int[],refused:?array{cost:int,free:int,held:int}} An empty
+	 *                                           `change_ids` means the whole set failed and nothing was written.
 	 */
-	public static function submit_set( int $character_id, array $changes, int $submitted_by ): array {
+	public static function submit_set( int $character_id, array $changes, int $submitted_by, bool $guard_xp = false ): array {
 		if ( $changes === [] ) {
-			return [ 'submission_id' => null, 'change_ids' => [] ];
+			return [ 'submission_id' => null, 'change_ids' => [], 'refused' => null ];
 		}
 
 		$character = Character::find( $character_id );
 		if ( ! $character ) {
-			return [ 'submission_id' => null, 'change_ids' => [] ];
+			return [ 'submission_id' => null, 'change_ids' => [], 'refused' => null ];
 		}
 
 		$game      = Game::find_by_slug( (string) ( $character->owner_slug ?? '' ) );
@@ -135,25 +318,32 @@ class Change_Engine {
 		}
 
 		$submission_id = wp_generate_uuid4();
-		$unit          = Transaction::begin( 'be_changes_submit_set' );
-		$change_ids    = [];
+		$written       = self::within_budget(
+			$character_id,
+			$changes,
+			$guard_xp,
+			static function () use ( $character_id, $changes, $submitted_by, $submission_id, $any_caught ): array {
+				$change_ids = [];
+				foreach ( $changes as $change ) {
+					$change['submission_id'] = $submission_id;
+					if ( $any_caught ) {
+						$change['force_level']  = 'st';
+						$change['force_reason'] = __( 'Part of a change that removes, lowers or renames something.', 'beyond-elysium' );
+					}
+					$change_id = self::submit( $character_id, $change, $submitted_by );
+					if ( ! $change_id ) {
+						return [ 'ok' => false, 'ids' => [] ];
+					}
+					$change_ids[] = $change_id;
+				}
+				return [ 'ok' => true, 'ids' => $change_ids ];
+			}
+		);
 
-		foreach ( $changes as $change ) {
-			$change['submission_id'] = $submission_id;
-			if ( $any_caught ) {
-				$change['force_level']  = 'st';
-				$change['force_reason'] = __( 'Part of a change that removes, lowers or renames something.', 'beyond-elysium' );
-			}
-			$change_id = self::submit( $character_id, $change, $submitted_by );
-			if ( ! $change_id ) {
-				Transaction::rollback( $unit );
-				return [ 'submission_id' => null, 'change_ids' => [] ];
-			}
-			$change_ids[] = $change_id;
+		if ( ! $written['ok'] ) {
+			return [ 'submission_id' => null, 'change_ids' => [], 'refused' => $written['refused'] ];
 		}
-
-		Transaction::commit( $unit );
-		return [ 'submission_id' => $submission_id, 'change_ids' => $change_ids ];
+		return [ 'submission_id' => $submission_id, 'change_ids' => $written['ids'], 'refused' => null ];
 	}
 
 	/**
@@ -375,9 +565,10 @@ class Change_Engine {
 	 * @param array<string,mixed>|null $secret_choice Required for a `log_knowledge` change: either `{secret_id}` to
 	 *                                    tie it to an existing secret, or `{entity_type, entity_id, title?, content?}`
 	 *                                    to create one. Read for no other change type.
-	 * @return bool False when the change is missing, no longer pending, changed since the token was taken, could not be written, or is waiting for a price and was given none.
+	 * @param bool        $enforce_floor  Whether a charge above the character's unspent XP refuses the approval.
+	 * @return bool False when the change is missing, no longer pending, changed since the token was taken, could not be written, is waiting for a price and was given none, or costs more than the character has unspent.
 	 */
-	public static function approve( int $change_id, int $reviewed_by, $notes, ?string $expected_token = null, ?int $set_cost = null, ?array $secret_choice = null ): bool {
+	public static function approve( int $change_id, int $reviewed_by, $notes, ?string $expected_token = null, ?int $set_cost = null, ?array $secret_choice = null, bool $enforce_floor = true ): bool {
 		$savepoint = Transaction::begin( 'be_change_approve' );
 
 		$change = Change::find_for_update( $change_id );
@@ -459,6 +650,7 @@ class Change_Engine {
 				Transaction::rollback( $savepoint );
 				return false;
 			}
+			self::keep_undo_record( $change_id, $character, 0, 0 );
 			Transaction::commit( $savepoint );
 			return true;
 		}
@@ -549,6 +741,12 @@ class Change_Engine {
 			$priced_xp           = $priced['xp'];
 		}
 
+		// A charge the character cannot pay is never approved: unspent XP does not go below zero.
+		if ( $enforce_floor && self::exceeds_unspent( $character, (string) $change->change_type, (float) ( $priced_xp ?? $change->xp_cost ?? 0 ) ) ) {
+			Transaction::rollback( $savepoint );
+			return false;
+		}
+
 		// A homebrew entry a Storyteller ticked joins the chronicle's catalog, and lands on the sheet as that entry.
 		$tick = is_array( $change->change_data['st_catalog'] ?? null ) ? $change->change_data['st_catalog'] : null;
 		if ( $tick !== null && $change->change_type === 'add_trait' ) {
@@ -566,20 +764,26 @@ class Change_Engine {
 
 		// Handle XP adjustments.
 		$xp_cost = (float) ( $priced_xp ?? $change->xp_cost ?? 0 );
-		if ( $change->change_type === 'xp_earn' ) {
-			$amount  = (int) ( $change->change_data['amount'] ?? 0 );
-			$written = $written && Character::update_xp( (int) $character->id, $amount, $amount );
-		} elseif ( $change->change_type === 'xp_adjust' ) {
-			$amount  = (int) ( $change->change_data['amount'] ?? 0 );
-			$written = $written && Character::update_xp( (int) $character->id, $amount, $amount );
+		$earned  = 0;
+		$unspent = 0;
+		if ( $change->change_type === 'xp_earn' || $change->change_type === 'xp_adjust' ) {
+			$earned  = (int) ( $change->change_data['amount'] ?? 0 );
+			$unspent = $earned;
+			$written = $written && Character::update_xp( (int) $character->id, $earned, $unspent );
 		} elseif ( $xp_cost > 0 ) {
-			$written = $written && Character::update_xp( (int) $character->id, 0, -(int) $xp_cost );
+			$unspent = -(int) $xp_cost;
+			$written = $written && Character::update_xp( (int) $character->id, 0, $unspent );
 		}
 
 		// The sheet, XP and status change together or not at all.
 		if ( ! $written || ! Change::update_status( $change_id, 'approved', $reviewed_by, $notes ) ) {
 			Transaction::rollback( $savepoint );
 			return false;
+		}
+
+		// What the change did is kept, so a Storyteller can undo it.
+		if ( in_array( (string) $change->change_type, self::UNDOABLE_TYPES, true ) ) {
+			self::keep_undo_record( $change_id, $character, $earned, $unspent );
 		}
 
 		// Auto-snapshot every N approved changes.
@@ -681,14 +885,7 @@ class Change_Engine {
 			return false;
 		}
 
-		// An Immediate-mode secret pass already wrote an unapproved reveal at submit time; refusing removes it.
-		if ( $change->change_type === 'pass_secret' ) {
-			$data     = is_array( $change->change_data ) ? $change->change_data : [];
-			$existing = Secret_Reveal::find_for( (int) ( $data['secret_id'] ?? 0 ), (int) ( $data['to_character_id'] ?? 0 ) );
-			if ( $existing && empty( $existing->approved ) ) {
-				Secret_Reveal::delete( (int) $existing->id );
-			}
-		}
+		self::discard_waiting_effects( $change );
 
 		$ok = Change::update_status( $change_id, 'rejected', $reviewed_by, $notes );
 		if ( ! $ok ) {
@@ -698,6 +895,74 @@ class Change_Engine {
 
 		Transaction::commit( $savepoint );
 		return true;
+	}
+
+	/**
+	 * Withdraws a change that is still waiting: nothing is applied, and the XP it held is free again.
+	 *
+	 * @param int $change_id
+	 * @param int $withdrawn_by
+	 * @return bool False when the change is missing or no longer waiting.
+	 */
+	public static function withdraw( int $change_id, int $withdrawn_by ): bool {
+		$savepoint = Transaction::begin( 'be_change_withdraw' );
+
+		$change = Change::find_for_update( $change_id );
+		if ( ! self::reviewable( $change, null ) ) {
+			Transaction::rollback( $savepoint );
+			return false;
+		}
+
+		self::discard_waiting_effects( $change );
+
+		if ( ! Change::update_status( $change_id, 'withdrawn', $withdrawn_by, null ) ) {
+			Transaction::rollback( $savepoint );
+			return false;
+		}
+
+		Transaction::commit( $savepoint );
+		return true;
+	}
+
+	/**
+	 * Withdraws every change of one submission that is still waiting, together or not at all.
+	 *
+	 * @param int    $character_id
+	 * @param string $submission_id
+	 * @param int    $withdrawn_by
+	 * @return int[] The ids withdrawn; empty when none was waiting.
+	 */
+	public static function withdraw_waiting( int $character_id, string $submission_id, int $withdrawn_by ): array {
+		$unit = Transaction::begin( 'be_change_withdraw_set' );
+
+		$ids = [];
+		foreach ( Change::waiting_in_submission( $character_id, $submission_id ) as $change ) {
+			if ( ! self::withdraw( (int) $change->id, $withdrawn_by ) ) {
+				Transaction::rollback( $unit );
+				return [];
+			}
+			$ids[] = (int) $change->id;
+		}
+
+		Transaction::commit( $unit );
+		return $ids;
+	}
+
+	/**
+	 * Undoes what a change wrote when it was submitted, for one that will never be applied: an Immediate-mode secret
+	 * pass already wrote an unapproved reveal, which leaving the change unapplied removes.
+	 *
+	 * @param object $change
+	 */
+	private static function discard_waiting_effects( $change ): void {
+		if ( $change->change_type !== 'pass_secret' ) {
+			return;
+		}
+		$data     = is_array( $change->change_data ) ? $change->change_data : [];
+		$existing = Secret_Reveal::find_for( (int) ( $data['secret_id'] ?? 0 ), (int) ( $data['to_character_id'] ?? 0 ) );
+		if ( $existing && empty( $existing->approved ) ) {
+			Secret_Reveal::delete( (int) $existing->id );
+		}
 	}
 
 	/**
@@ -1453,7 +1718,8 @@ class Change_Engine {
 		$count = 0;
 		foreach ( $character_ids as $character_id ) {
 			$character_id = (int) $character_id;
-			if ( ! Character::find( $character_id ) ) {
+			$character    = Character::find( $character_id );
+			if ( ! $character ) {
 				continue;
 			}
 
@@ -1471,6 +1737,7 @@ class Change_Engine {
 				'status'       => $visit !== null ? 'forwarded' : 'approved',
 				'submitted_by' => $awarded_by,
 				'notes'        => $reason,
+				'undo_state'   => $visit === null ? Undo_Record::build( [], [], $amount, $amount ) : null,
 			] );
 
 			if ( ! $change_id ) {
@@ -1486,6 +1753,8 @@ class Change_Engine {
 			Transaction::commit( $savepoint );
 			if ( $visit !== null ) {
 				Keep_Current::forward_change( $visit, Change::find( $change_id ) );
+			} else {
+				Notices::xp_awarded( $character, $amount, $reason, $awarded_by );
 			}
 			$count++;
 		}
@@ -1539,6 +1808,7 @@ class Change_Engine {
 			'status'       => $visit !== null ? 'forwarded' : 'approved',
 			'submitted_by' => $applied_by,
 			'notes'        => $reason,
+			'undo_state'   => $visit === null ? Undo_Record::build( [], [], $amount, $amount ) : null,
 		] );
 
 		if ( ! $change_id || ( $visit === null && ! Character::update_xp( $character_id, $amount, $amount ) ) ) {
@@ -1551,6 +1821,10 @@ class Change_Engine {
 		}
 
 		Transaction::commit( $savepoint );
+
+		if ( $visit === null ) {
+			Notices::xp_awarded( $character, $amount, $reason, $applied_by );
+		}
 
 		if ( $visit !== null ) {
 			Keep_Current::forward_change( $visit, Change::find( $change_id ) );
@@ -1575,7 +1849,9 @@ class Change_Engine {
 	/**
 	 * Spends or regains a point of one held resource pool's temporary rating, right now, with no approval - logged
 	 * the same way an XP award is: an already-approved Change naming who did it and why, in the same transaction as
-	 * the write. The new value is clamped to `[0, permanent]` rather than refused for landing outside it.
+	 * the write. The new value is clamped to `[0, permanent]` rather than refused for landing outside it; a pool whose
+	 * temporary points build up (`accumulates`) is clamped to `[0, max]` instead, with no upper bound when it has no
+	 * `max`, and a pool with no temporary points (`rating_only`) is refused.
 	 *
 	 * @param int    $character_id
 	 * @param string $block_slug
@@ -1583,7 +1859,7 @@ class Change_Engine {
 	 * @param int    $delta  A whole number, positive to regain, negative to spend.
 	 * @param string $reason
 	 * @param int    $by
-	 * @return array{applied: bool, code?: string, message?: string, permanent?: int, temporary?: int}
+	 * @return array{applied: bool, code?: string, message?: string, permanent?: int|float, temporary?: int|float}
 	 */
 	public static function adjust_pool_temporary( int $character_id, string $block_slug, string $pool_name, int $delta, string $reason, int $by ): array {
 		$savepoint = Transaction::begin( 'be_adjust_pool_temporary' );
@@ -1609,9 +1885,25 @@ class Change_Engine {
 			];
 		}
 
-		$permanent = (int) $pool['permanent'];
-		$current   = (int) ( $pool['temporary'] ?? $permanent );
-		$new_value = max( 0, min( $permanent, $current + $delta ) );
+		$marker = Pool_Markers::of( $character, $block_slug, $pool_name );
+		if ( $marker['kind'] === Pool_Markers::RATING_ONLY ) {
+			Transaction::rollback( $savepoint );
+			return [
+				'applied' => false,
+				'code'    => 'rating_only',
+				'message' => sprintf(
+					/* translators: %s: a pool's name, such as Morality */
+					__( '%s has no temporary points.', 'beyond-elysium' ),
+					$pool_name
+				),
+			];
+		}
+
+		$permanent = self::pool_number( $pool['permanent'] );
+		$current   = self::pool_number( $pool['temporary'] ?? $permanent );
+		$ceiling   = $marker['kind'] === Pool_Markers::ACCUMULATES ? $marker['max'] : $permanent;
+		$new_value = $current + $delta;
+		$new_value = $ceiling === null ? max( 0, $new_value ) : max( 0, min( $ceiling, $new_value ) );
 
 		$change_id = Change::create( [
 			'character_id' => $character_id,
@@ -1646,6 +1938,17 @@ class Change_Engine {
 			'permanent' => $permanent,
 			'temporary' => $new_value,
 		];
+	}
+
+	/**
+	 * A stored pool rating as a number, keeping the fraction of a decimal pool and the whole number of any other.
+	 *
+	 * @param mixed $value
+	 * @return int|float
+	 */
+	private static function pool_number( $value ) {
+		$number = is_numeric( $value ) ? $value + 0 : 0;
+		return is_float( $number ) && floor( $number ) === $number ? (int) $number : $number;
 	}
 
 	/**
@@ -1744,8 +2047,221 @@ class Change_Engine {
 			];
 		}
 
+		self::keep_undo_record( (int) $change_id, $character, 0, 0 );
 		Transaction::commit( $savepoint );
 		return [ 'applied' => true, 'waiting' => false, 'permanent' => $permanent - 1, 'temporary' => $temporary ];
+	}
+
+	/**
+	 * Undoes an approved change: its XP goes back, its sheet changes are put back, and it reads `undone` with who did it
+	 * and when. A snapshot of the sheet is taken first. Nothing is undone unless everything the change touched is still
+	 * as it left it, and nothing is repriced.
+	 *
+	 * @param int         $change_id
+	 * @param int         $by
+	 * @param string|null $note A note for the player.
+	 * @return array{undone:bool,ids:int[],code?:string,message?:string}
+	 */
+	public static function undo( int $change_id, int $by, ?string $note ): array {
+		$savepoint = Transaction::begin( 'be_change_undo' );
+
+		$change = Change::find_for_update( $change_id );
+		if ( ! $change ) {
+			Transaction::rollback( $savepoint );
+			return self::undo_refusal( 'not_found', __( 'Change not found.', 'beyond-elysium' ) );
+		}
+
+		Character::lock( (int) $change->character_id );
+		$refusal = self::undo_one( $change, $by, $note );
+		if ( $refusal !== null ) {
+			Transaction::rollback( $savepoint );
+			return $refusal;
+		}
+
+		Transaction::commit( $savepoint );
+		return [ 'undone' => true, 'ids' => [ $change_id ] ];
+	}
+
+	/**
+	 * Undoes every undoable approved change of one submission, newest first, all of them or none.
+	 *
+	 * @param int         $character_id
+	 * @param string      $submission_id
+	 * @param int         $by
+	 * @param string|null $note
+	 * @return array{undone:bool,ids:int[],code?:string,message?:string}
+	 */
+	public static function undo_set( int $character_id, string $submission_id, int $by, ?string $note ): array {
+		$savepoint = Transaction::begin( 'be_change_undo_set' );
+		Character::lock( $character_id );
+
+		/** @var array<int,\stdClass> $lines */
+		$lines = array_values( array_filter(
+			Change::for_character( $character_id, [ 'status' => 'approved', 'order' => 'DESC' ] ),
+			static fn( $change ): bool => ( $change->submission_id ?? null ) === $submission_id && ! empty( $change->can_undo )
+		) );
+		if ( $lines === [] ) {
+			Transaction::rollback( $savepoint );
+			return self::undo_refusal( 'not_undoable', __( 'Nothing in that set can be undone.', 'beyond-elysium' ) );
+		}
+
+		usort( $lines, static fn( $a, $b ): int => (int) $b->id <=> (int) $a->id );
+		$ids = [];
+		foreach ( $lines as $line ) {
+			$locked  = Change::find_for_update( (int) $line->id );
+			$refusal = $locked ? self::undo_one( $locked, $by, $note ) : self::undo_refusal( 'not_found', __( 'Change not found.', 'beyond-elysium' ) );
+			if ( $refusal !== null ) {
+				Transaction::rollback( $savepoint );
+				return $refusal;
+			}
+			$ids[] = (int) $line->id;
+		}
+
+		Transaction::commit( $savepoint );
+		return [ 'undone' => true, 'ids' => $ids ];
+	}
+
+	/**
+	 * The checks and the writes of one undo, inside the caller's transaction and character lock.
+	 *
+	 * @param object $change A change row, locked.
+	 * @return array{undone:bool,ids:int[],code:string,message:string}|null The refusal, or null once it is undone.
+	 */
+	private static function undo_one( $change, int $by, ?string $note ): ?array {
+		$record = Change::undo_state( (int) $change->id );
+		if ( $change->status !== 'approved' || $record === null ) {
+			return self::undo_refusal( 'not_undoable', __( 'This change cannot be undone.', 'beyond-elysium' ) );
+		}
+
+		$character = Character::find( (int) $change->character_id );
+		if ( ! $character ) {
+			return self::undo_refusal( 'not_found', __( 'That character no longer exists.', 'beyond-elysium' ) );
+		}
+
+		if ( Keep_Current::inbound_kept_current_visit( (int) $character->id ) !== null ) {
+			return self::undo_refusal( 'kept_current', __( "This sheet is kept current from the character's home chronicle. Change the kept-current copy there too.", 'beyond-elysium' ) );
+		}
+
+		$sheet     = is_array( $character->sheet_data ) ? $character->sheet_data : [];
+		$conflicts = Undo_Record::conflicts( $record, $sheet );
+		if ( $conflicts !== [] ) {
+			return self::undo_refusal( 'changed_since', self::conflict_message( $conflicts[0], $change ) );
+		}
+
+		$xp = Undo_Record::xp( $record );
+		if ( $xp['unspent'] > 0 && (int) $character->xp_unspent - $xp['unspent'] < 0 ) {
+			return self::undo_refusal( 'xp_spent', __( 'That XP has been spent. Undo what it bought first.', 'beyond-elysium' ) );
+		}
+
+		Snapshot::create( (int) $character->id, (int) $change->id );
+
+		$restored = Undo_Record::reverse( $record, $sheet, Pool_Markers::for_character( $character ) );
+		$written  = Character::update_sheet_data( (int) $character->id, $restored );
+		if ( $xp['earned'] !== 0 || $xp['unspent'] !== 0 ) {
+			$written = $written && Character::update_xp( (int) $character->id, -$xp['earned'], -$xp['unspent'] );
+		}
+
+		$record['undone'] = [
+			'by'   => $by,
+			'at'   => current_time( 'mysql' ),
+			'note' => $note,
+		];
+		if ( ! $written || ! Change::mark_undone( (int) $change->id, $record ) ) {
+			return self::undo_refusal( 'write_failed', __( 'The change could not be undone.', 'beyond-elysium' ) );
+		}
+		return null;
+	}
+
+	/**
+	 * @return array{undone:bool,ids:int[],code:string,message:string}
+	 */
+	private static function undo_refusal( string $code, string $message ): array {
+		return [ 'undone' => false, 'ids' => [], 'code' => $code, 'message' => $message ];
+	}
+
+	/**
+	 * What stops an undo, in a sentence naming what the sheet holds now and, when a later change did it, that change.
+	 *
+	 * @param array{block:string,name:string,now:mixed,kind:string} $conflict
+	 * @param object                                               $change   The change being undone.
+	 */
+	private static function conflict_message( array $conflict, $change ): string {
+		$name = $conflict['name'];
+		$now  = $conflict['now'];
+
+		if ( $conflict['kind'] === 'back' ) {
+			/* translators: %s: the name of a trait that is on the sheet again */
+			$text = sprintf( __( '%s is back on the sheet.', 'beyond-elysium' ), $name );
+		} elseif ( $now === null ) {
+			/* translators: %s: the name of a trait that is no longer on the sheet */
+			$text = sprintf( __( '%s is no longer on the sheet.', 'beyond-elysium' ), $name );
+		} elseif ( is_array( $now ) && isset( $now['count'] ) ) {
+			/* translators: 1: the name of a trait, 2: its dots now */
+			$text = sprintf( __( '%1$s is x%2$s now.', 'beyond-elysium' ), $name, $now['count'] );
+		} elseif ( is_array( $now ) && isset( $now['level'] ) ) {
+			/* translators: 1: the name of a power, 2: its level now */
+			$text = sprintf( __( '%1$s is level %2$s now.', 'beyond-elysium' ), $name, $now['level'] );
+		} elseif ( is_array( $now ) && isset( $now['permanent'] ) ) {
+			/* translators: 1: the name of a pool, 2: its rating now */
+			$text = sprintf( __( '%1$s is %2$s now.', 'beyond-elysium' ), $name, $now['permanent'] );
+		} elseif ( is_scalar( $now ) ) {
+			/* translators: 1: the name of a field, 2: its value now */
+			$text = sprintf( __( '%1$s is %2$s now.', 'beyond-elysium' ), $name, (string) $now );
+		} else {
+			/* translators: %s: the name of a trait or field */
+			$text = sprintf( __( '%s has changed since.', 'beyond-elysium' ), $name );
+		}
+
+		$later = self::later_change_naming( (int) $change->character_id, (int) $change->id, $conflict['block'], $name );
+		return $later === null
+			? $text . ' ' . __( 'Undo the later change first.', 'beyond-elysium' )
+			: $text . ' ' . sprintf(
+				/* translators: %s: what the later change did, such as "Occult 4 -> 5" */
+				__( 'Undo the later change first: %s.', 'beyond-elysium' ),
+				$later
+			);
+	}
+
+	/**
+	 * What the most recent approved change after another that names a trait, pool or field of a block did, or null when
+	 * none does.
+	 */
+	private static function later_change_naming( int $character_id, int $after_id, string $block_slug, string $name ): ?string {
+		foreach ( Change::for_character( $character_id, [ 'status' => 'approved', 'order' => 'DESC' ] ) as $change ) {
+			if ( (int) $change->id <= $after_id ) {
+				continue;
+			}
+			$data = is_array( $change->change_data ) ? $change->change_data : [];
+			if ( ( $data['block_slug'] ?? null ) !== $block_slug ) {
+				continue;
+			}
+			$trait = is_array( $data['trait'] ?? null ) ? $data['trait'] : [];
+			if ( ( $trait['name'] ?? null ) === $name || isset( $data['values'][ $name ] ) || isset( $data['fields'][ $name ] ) ) {
+				return \BeyondElysium\Services\Display\Change_Description::describe( (string) $change->change_type, $data );
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Keeps what an approved change did: the sheet as it was before, as it is now, and the XP it moved.
+	 *
+	 * @param int    $change_id
+	 * @param object $before    The character as it was before the change was applied.
+	 * @param int    $earned    The change to XP earned.
+	 * @param int    $unspent   The change to XP unspent.
+	 */
+	private static function keep_undo_record( int $change_id, $before, int $earned, int $unspent ): void {
+		$after  = Character::find( (int) $before->id );
+		$record = Undo_Record::build(
+			is_array( $before->sheet_data ) ? $before->sheet_data : [],
+			$after !== null && is_array( $after->sheet_data ) ? $after->sheet_data : [],
+			$earned,
+			$unspent
+		);
+		if ( $record !== null ) {
+			Change::set_undo_state( $change_id, $record );
+		}
 	}
 
 	/**

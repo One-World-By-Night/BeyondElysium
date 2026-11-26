@@ -33,7 +33,7 @@ A table (stacked into cards on a narrow screen) with a checkbox per row, then:
 | Column | Shows |
 | --- | --- |
 | Character | Who the change is on |
-| Change | A plain description, such as a trait's old and new value. A player's own [XP request](character-editor.md#request-xp) reads "+N XP (Requested: where, date)," with any details they added shown underneath. A change forwarded here from a host chronicle shows **"From Boston"** (or whichever chronicle sent it) above the description, and the host's own free-text note, if any, beneath it - see [A change forwarded from a host chronicle](#a-change-forwarded-from-a-host-chronicle). Beneath that: the note the player put on a trait ("Note: R1 Necromancy ( 4 xp)"), the section the entry is headed for ("In Rituals"), and, once a Storyteller has edited it, "Edited by" and their name |
+| Change | A plain description, such as a trait's old and new value. When the player left a note with the set they sent, it reads "Note from the player: ..." under the change. A player's own [XP request](character-editor.md#request-xp) reads "+N XP (Requested: where, date)," with any details they added shown underneath. A change forwarded here from a host chronicle shows **"From Boston"** (or whichever chronicle sent it) above the description, and the host's own free-text note, if any, beneath it - see [A change forwarded from a host chronicle](#a-change-forwarded-from-a-host-chronicle). Beneath that: the note the player put on a trait ("Note: R1 Necromancy ( 4 xp)"), the section the entry is headed for ("In Rituals"), and, once a Storyteller has edited it, "Edited by" and their name |
 | XP | The cost, positive or negative. A homebrew purchase shows **Needs a price** until you set one |
 | Level | Automatic or Needs a Storyteller |
 | Approval Reason | Why it landed at that level, when there is one. A bylaw-sourced reason ends with a clickable clause citation, e.g. `[OWBN Character Bylaws 10.e.v, clause 7838]`, opening the real clause on council.owbn.net; several reasons on one change each sit on their own line |
@@ -45,7 +45,7 @@ On a phone, Level, Submitted by, and When sit behind a **Details** disclosure on
 
 ### Actions
 
-- **Approve** - applies the change immediately.
+- **Approve** - applies the change immediately. It is refused when the change costs more XP than the character has unspent: "This costs 6 XP; Alice has 2 unspent." Award the XP first, or **Edit** the change and price it lower. A Storyteller's own award or correction is never held to this.
 - **Edit** - opens a pop-up where you change the entry, price it, file it in a different section and leave the player a note. See [Edit a change](#edit-a-change). It never approves anything.
 - **A price box**, on a lone change that needs one - see [A change that needs a price](#a-change-that-needs-a-price).
 - **Reject** - opens a text box ("Reason (required)") with **Confirm Reject** and **Cancel**. A reason is required; approving needs none.
@@ -178,6 +178,8 @@ A change that needs a price can't be checked. Price and approve it on its own ro
 1. Click **Edit** and type in **Note to the player**.
 2. Click **Save**. The player sees it in their change history, and it stays there when you approve the change.
 
+The other way round, a player can leave you a note when they send a set (up to 1,000 characters). It shows on each change of the set as "Note from the player: ...", and in the email that tells you changes are waiting.
+
 ### Find one character's pending changes
 
 1. Pick that character from the **Character** filter.
@@ -190,17 +192,20 @@ A change that needs a price can't be checked. Price and approve it on its own ro
 
 - **Two approval levels only: Automatic and Needs a Storyteller.** Beyond Elysium has no separate coordinator step. A rule's reason may tell you to get a coordinator's sign-off before you approve it, but the approving click here is always a Storyteller's.
 - **Approve Selected is a shortcut, not a different mechanism.** It applies the same approval, individually, to every change you've checked - not a bulk override.
-- **The queue is tied to what you were shown.** If a player resubmits a pending change, or someone else reviews it first, your click is refused and the queue reloads with what's actually there now - you never approve something different from what you saw.
+- **The queue is tied to what you were shown.** If a player resubmits or withdraws a pending change, or someone else reviews it first, your click is refused and the queue reloads with what's actually there now - you never approve something different from what you saw.
 - **A checked row stays checked across a page turn**, and Approve Selected acts on everything you've checked, not only what's on screen - each one as you saw it when you checked it. A change edited after you checked it is skipped, whichever page it's on. Changing a filter clears the checks.
 - **An edit is not a decision.** Saving leaves the change waiting. Approving after an edit keeps the note you saved, and a rejection replaces it with the reason you give.
 - **Numbered powers add up.** A fresh purchase at level 3 is priced for levels 1, 2, and 3 together, not level 3 alone - the XP column reflects that.
+- **Waiting changes hold the player's XP.** A change that costs XP sets that XP aside while it waits, so a player cannot spend it twice; it is released when you refuse the change or the player withdraws it. Approving checks the character's unspent XP, not what is free after the hold, since the hold is for this very change.
+- **A withdrawn change leaves the queue.** The player took it back before you decided; History keeps it as Withdrawn. A decided change you want back is undone from [History](sheet-history.md), not here.
 - **Not everything lands here.** Some XP awards and anything your chronicle's rules mark auto-approved apply the moment they're submitted and never appear in this queue.
 
 ## Troubleshooting
 
-- **Nothing happened when I clicked Approve, and the row is gone.** Someone else already reviewed it, or the player changed it after the queue loaded. The queue reloads on its own - check the character's current state before reviewing it again.
+- **Nothing happened when I clicked Approve, and the row is gone.** Someone else already reviewed it, or the player changed or withdrew it after the queue loaded. The queue reloads on its own - check the character's current state before reviewing it again.
 - **Confirm Reject won't click.** Type a reason first - rejecting needs one.
 - **A batch approval skipped some changes.** Those were already reviewed, or edited, since the queue loaded. Reload and review them individually.
+- **A batch said some changes cost more than the character has unspent.** "1 change costs more than its character has unspent. Award the XP first, or open it and price it lower." Those were skipped and the rest went through.
 - **A batch said some changes need a price.** Those are homebrew with no price yet. Open each one, type what it costs, and approve it on its own.
 - **Approve is greyed out on one row.** It needs a price. Type a whole number from 0 to 500 in the box beside it.
 - **Approve all is greyed out.** A change in the set still needs a price. Click **Edit** on each change marked **Needs a price**, type what it costs, and Save.

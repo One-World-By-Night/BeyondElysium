@@ -189,6 +189,27 @@ describe( 'batchNotices', () => {
 		);
 	} );
 
+	it( 'names the changes a character cannot pay for apart from the rest it skipped', () => {
+		const notices = batchNotices( {
+			approved: [],
+			skipped: [ 1, 2, 3 ],
+			short_of_xp: [ 2, 3 ],
+		} );
+
+		expect( notices ).toEqual( [
+			'1 change(s) were not approved - they were already reviewed or edited after the queue loaded. The queue has been reloaded.',
+			'2 changes cost more than their characters have unspent. Award the XP first, or open each one and price it lower.',
+		] );
+	} );
+
+	it( 'says a single change the character cannot pay for in the singular, with nothing else skipped', () => {
+		expect(
+			batchNotices( { approved: [], skipped: [ 4 ], short_of_xp: [ 4 ] } )
+		).toEqual( [
+			'1 change costs more than its character has unspent. Award the XP first, or open it and price it lower.',
+		] );
+	} );
+
 	it( 'says a single held change in the singular', () => {
 		expect(
 			batchNotices( { approved: [], skipped: [], held: [ 9 ] } )

@@ -20,9 +20,11 @@ This isn't a screen of its own. You submit a change from the [Character Editor](
 
 **Numbered powers price every rung.** A fresh purchase at level 3 is priced for levels 1, 2, and 3 together, not level 3 alone - true whether the change ends up auto-approved or pending.
 
-**XP is charged on approval, not on submission.** Nothing comes out of your unspent experience until the change actually applies to the sheet - immediately, for something that auto-approves, or whenever a Storyteller clicks Approve. Rejecting a change costs nothing and leaves the sheet untouched. A Storyteller's own XP awards usually apply immediately, since they already carry a Storyteller's authority. For homebrew, the amount is whatever the Storyteller sets when they approve it.
+**XP is charged on approval, but held from the moment you send it.** Nothing comes out of your unspent experience until the change actually applies to the sheet - immediately, for something that auto-approves, or whenever a Storyteller clicks Approve. While a change waits, its cost is held: it still counts as unspent, but it is not free to spend, so a second purchase cannot use it. The meter in the editor, and the line under the character's name, show what is free. A player's cart is refused when it costs more than what is free; a Storyteller is never held to that. Rejecting or withdrawing a change costs nothing, releases the hold and leaves the sheet untouched. A Storyteller's own XP awards usually apply immediately, since they already carry a Storyteller's authority. For homebrew, the amount is whatever the Storyteller sets when they approve it.
 
-**The queue is tied to what a Storyteller was actually shown.** If you resubmit a change that's still pending, or someone else reviews it first, a Storyteller's Approve or Reject click on the old version is refused and their queue reloads with what's really there - a Storyteller can never approve something different from what they saw.
+**You can take a waiting change back.** Open the character's **History** and click **Withdraw** on a line that is still waiting, or **Withdraw all waiting** on one order. It leaves the Approval Queue and its XP is released. A Storyteller can take back one that was already approved with **Undo**, which returns its XP and puts the sheet back; see [Change History](sheet-history.md).
+
+**The queue is tied to what a Storyteller was actually shown.** If you resubmit or withdraw a change that's still pending, or someone else reviews it first, a Storyteller's Approve or Reject click on the old version is refused and their queue reloads with what's really there - a Storyteller can never approve something different from what they saw.
 
 ## Common tasks
 
@@ -60,7 +62,7 @@ This isn't a screen of its own. You submit a change from the [Character Editor](
 ## Troubleshooting
 
 - **My change didn't show up on my sheet.** It's most likely pending Storyteller review - check [My Chronicle](my-chronicle.md) → Dashboard → My Changes, or the character's [Change History](sheet-history.md).
-- **Submit Changes won't click.** As a player, submitting would leave you with negative XP - reduce what you're buying, or ask a Storyteller for more, first.
+- **Submit won't click.** As a player, the cart costs more than you have free to spend (XP held for changes still waiting is not free) - reduce what you're buying, withdraw a waiting change to release its XP, or ask a Storyteller for more.
 - **A Storyteller says nothing happened when they clicked Approve.** Someone else already reviewed it, or you changed it after the queue loaded - the queue reloads with whatever's actually there now.
 - **A rule doesn't seem to be applying.** Check it addresses the value actually being reached (never a change from before), and that nothing more specific overrides it.
 

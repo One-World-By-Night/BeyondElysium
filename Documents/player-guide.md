@@ -18,29 +18,31 @@ Your new character's **Health** section comes pre-filled - this isn't something 
 
 ## 2. Editing Your Sheet
 
-Open your character from **Characters** (or go straight to the **Edit** view of the Character tab). Every section of the sheet - traits, powers, resource pools, identity fields - is editable from the same page. Changes aren't written to your sheet the instant you make them locally; they're queued until you click **Submit Changes**.
+Open your character from **Characters** (or go straight to the **Edit** view of the Character tab). Every section of the sheet - traits, powers, resource pools, identity fields - is editable from the same page. Changes aren't written to your sheet the instant you make them; they go into your **cart** until you send it. A meter at the bottom of Edit always shows the XP you can spend, and with changes in the cart, what they come to: "Cart: 3 · 6 XP · 4 left". Tap a trait on the sheet and its panel has **Add to cart** too. Click **Review** to check every line, write a note to your Storyteller if you like, and click **Submit**. See [Character Editor](help/character-editor.md#the-cart).
 
 If this character is visiting another chronicle and both sides have agreed to keep it current there, editing is turned off here until the visit ends - "Kept current from [chronicle]. Make changes there." Edit it at home instead; the update reaches the host on its own.
 
 ### What happens when you submit
 
-Most changes need a Storyteller's review before they take effect - this is normal, not a bug. When you submit:
+Most changes need a Storyteller's review before they take effect - this is normal, not a bug. Review sorts your cart into **Applies now** and **Waits for a Storyteller**, with the reason for each line that waits, before you send anything. When you submit:
 
-- If a change is **approved automatically** (some XP awards, or anything your chronicle has configured to auto-approve), it appears on your sheet immediately.
-- If a change needs **Storyteller review**, you'll see a notice: "N changes were submitted and are awaiting Storyteller approval." Your edit is safely recorded - it just hasn't reached your sheet yet. It will not show up if you reload the page before a Storyteller approves it; that's expected, not a lost edit.
-- Once a Storyteller approves it, it's really on your sheet, and (unless your chronicle or you have turned this off) you'll get an email saying so - see below.
+- A change that is **approved automatically** (some XP awards, or anything your chronicle has configured to auto-approve) appears on your sheet immediately.
+- A change that needs **Storyteller review** waits. Review then says, for example, "Sent. 2 applied now. 3 are waiting for a Storyteller, with 6 XP held." Your edit is safely recorded - it just hasn't reached your sheet yet. It will not show up if you reload the page before a Storyteller approves it; that's expected, not a lost edit. The note you wrote goes with it, and the Storyteller reads it as "Note from the player".
+- Once a Storyteller approves it, it's really on your sheet, and (unless your chronicle or you have turned this off) you'll get an email and a notice in the bell saying so - see below.
 
-Don't resubmit the same change while it's still pending - it queues a second, separate request instead of replacing the first. If you're not sure whether something already went through, check with a Storyteller before submitting it again.
+Sent lines leave the cart and become an order in the character's **History**, with a status on each line: Waiting for a Storyteller, Applied, Approved, Refused, Withdrawn or Undone. If you change your mind while a line is still waiting, click **Withdraw** on it there (or **Withdraw all waiting** on the order): it leaves the Storytellers' queue and the XP held for it is free again. You never need to send a change twice.
 
 ### Experience
 
-Your unspent and total experience show on the editor. Spending it on a trait, power, or pool increase reduces what's left to spend, following your chronicle's own point costs. Powers are bought level by level: raising a Discipline (or an Art, Arcanos, Hekau path, or Numina) from 1 to 3 costs level 2 plus level 3, and a brand-new power at level 3 costs all three levels. A Storyteller can award you experience directly (session attendance, plot participation) - awards like this usually apply immediately, without needing your own submission.
+Your unspent and total experience show on the editor, with the XP you can spend now in the meter at the bottom. A change that is waiting for a Storyteller holds its cost: it still counts in your unspent total, but it is set aside, so a second purchase cannot use it, and the line under your character's name shows it ("10 XP to spend · 6 XP held · 3 changes waiting"). Review will not send a cart that costs more than you have free. A Storyteller who approves a change takes the XP then; one who refuses it, or you withdrawing it, releases the hold. A Storyteller can also undo an approved change, which gives its XP back. Spending it on a trait, power, or pool increase reduces what's left to spend, following your chronicle's own point costs. Powers are bought level by level: raising a Discipline (or an Art, Arcanos, Hekau path, or Numina) from 1 to 3 costs level 2 plus level 3, and a brand-new power at level 3 costs all three levels. A Storyteller can award you experience directly (session attendance, plot participation) - awards like this usually apply immediately, without needing your own submission.
 
 Earned experience somewhere this chronicle wouldn't otherwise know about - a game or event that doesn't run Beyond Elysium - open **Request XP** on your character's Story view, tell your Storytellers where and when, and send it. It always waits for a Storyteller to approve, however your chronicle handles other changes, and you'll get the usual email once they do. See [Character Editor](help/character-editor.md#request-xp).
 
 ## 3. Notifications
 
-When a Storyteller approves or rejects a change you submitted, you get one email - even if several of your changes were reviewed together, you get a single summary, not one email per change. If you'd rather not receive these, open your WordPress profile page and check "Do not email me when a storyteller approves or rejects one of my submitted character changes," next to the sheet-customization option. This is your own personal setting; a Storyteller doesn't need to be involved. Your Storytellers can see in their Email Log that an email went to you, or why it didn't (that you opted out, for instance), but never what it said.
+The bell in the header of My Chronicle shows a count of notices you have not read: what a Storyteller did with your changes (with each line and any note they left), a request of yours that a Storyteller edited, a change taken back with Undo, and XP awarded to you. Each links to the character's History; **Mark all read** clears the count; notices are kept for 90 days.
+
+When a Storyteller approves or rejects a change you submitted, you also get one email - even if several of your changes were reviewed together, you get a single summary, not one email per change. If you'd rather not receive these, open your WordPress profile page and check "Do not email me when a storyteller approves or rejects one of my submitted character changes," next to the sheet-customization option. This is your own personal setting; a Storyteller doesn't need to be involved. Your Storytellers can see in their Email Log that an email went to you, or why it didn't (that you opted out, for instance), but never what it said.
 
 Separately, your profile also has **Plot posts and new things your characters can see** - three choices (Immediately, Daily digest, or Off) covering a new post on a plot you can already see, and a plot, item, or location becoming newly visible to one of your characters (a Storyteller connects your character to it, or widens who can see it). Immediately sends one email per request, as soon as it happens; Daily digest rolls everything up into one email a day, posts and new things listed apart; Off sends nothing. The email never carries the content itself - only what changed, and a link to your own view of it.
 
@@ -48,7 +50,7 @@ Separately, your profile also has **Plot posts and new things your characters ca
 
 **My Chronicle**'s **Dashboard** tab (the first one, and where you land by default) shows a player-facing summary: your own characters, your own plots, and **My Changes** - never anyone else's data.
 
-**My Changes** looks across every chronicle you belong to, not just the one you're currently viewing: anything still pending, plus anything decided in roughly the last month, each marked **Pending**, **Approved**, **Auto-approved**, or **Refused**. A change in a chronicle other than the one you're on is grouped under that chronicle's own name; the **Chronicle** dropdown at the top of the page also shows how many of your changes are pending in any chronicle you aren't currently looking at.
+**My Changes** looks across every chronicle you belong to, not just the one you're currently viewing: anything still pending, plus anything decided in roughly the last month, each marked **Pending**, **Approved**, **Auto-approved**, **Refused**, **Withdrawn** or **Undone**. A change in a chronicle other than the one you're on is grouped under that chronicle's own name; the **Chronicle** dropdown at the top of the page also shows how many of your changes are pending in any chronicle you aren't currently looking at.
 
 ## 5. Plots and Rumors
 

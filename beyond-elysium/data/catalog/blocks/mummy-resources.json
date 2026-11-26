@@ -27,6 +27,7 @@
       },
       {
         "name": "Balance",
+        "rating_only": true,
         "permanent_spend": true,
         "value_type": "integer",
         "default_start": 1,

@@ -57,14 +57,14 @@ My Chronicle → Edit view, inside any section built as a trait list (Abilities,
 - **A custom name always needs review.** Typing a name that isn't in the catalog only saves where this section allows custom entries at all, and even then it always goes to a Storyteller for approval, no matter how your chronicle has auto-approval configured.
 - **Removing marks, it doesn't delete** - nothing actually leaves the sheet until you submit changes from the Edit view, so you can undo a removal right up until then.
 - **Every dot is the same size** - the count display here matches the sheet and a signed PDF exactly.
-- **The price beside a name is a preview, and nothing here is saved on its own.** Every add, change, or removal queues in the Edit view's Pending Changes until you submit it, and that bar prices the whole set together. A price in the dropdown is worked out against the sheet as it's saved, so a queued change that moves it (a new Clan, say) isn't counted there; the bar's total always is.
+- **The price beside a name is a preview, and nothing here is saved on its own.** Every add, change, or removal goes into the Edit view's cart until you send it, and the cart prices the whole set together. A price in the dropdown is worked out against the sheet as it's saved, so a change in the cart that moves it (a new Clan, say) isn't counted there; the cart's total always is.
 
 ## Troubleshooting
 
 - **Save won't click.** Choose a name first - it's required.
 - **A name I typed says it isn't in the catalog.** Check the spelling. If it's genuinely new, this section may not accept custom entries at all - ask a Storyteller.
 - **I don't see + Add or the ✎ button.** You're viewing a character you can't edit - see [Character Editor](character-editor.md).
-- **My removal disappeared.** You likely reopened the entry and clicked Undo removal, or discarded your pending changes before submitting.
+- **My removal disappeared.** You likely reopened the entry and clicked Undo removal, or emptied your cart before sending it.
 
 ## Related
 

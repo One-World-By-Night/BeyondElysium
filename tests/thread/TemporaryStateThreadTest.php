@@ -76,6 +76,31 @@ class TemporaryStateThreadTest extends WP_UnitTestCase {
 		return $request;
 	}
 
+	/**
+	 * A character of the given creature type holding the given sheet data, owned by the fixture player.
+	 *
+	 * @param array<string,mixed> $sheet_data
+	 */
+	private function character_of( string $stack, array $sheet_data ): int {
+		return (int) Character::create( [
+			'name'       => 'Fixture ' . $stack,
+			'stack_slug' => $stack,
+			'owner_type' => 'chronicle',
+			'owner_slug' => $this->slug,
+			'wp_user_id' => $this->player,
+			'sheet_data' => $sheet_data,
+		] );
+	}
+
+	private function pool_request_on( int $character_id, string $block_slug, string $pool_name, int $delta ): WP_REST_Request {
+		wp_set_current_user( $this->player );
+		$request = new WP_REST_Request( 'POST', "/be/v1/{$this->slug}/characters/{$character_id}/temporary/pool" );
+		$request->set_param( 'block_slug', $block_slug );
+		$request->set_param( 'pool_name', $pool_name );
+		$request->set_param( 'delta', $delta );
+		return $request;
+	}
+
 	// -------------------------------------------------------------------------
 	// Pool spend/regain
 	// -------------------------------------------------------------------------
@@ -398,6 +423,89 @@ class TemporaryStateThreadTest extends WP_UnitTestCase {
 	}
 
 	// -------------------------------------------------------------------------
+	// Pools the books give no temporary points, and pools whose temporary points build up
+	// -------------------------------------------------------------------------
+
+	public function test_a_rating_only_pool_refuses_both_spend_and_regain(): void {
+		$id = $this->character_of( 'vampire', [ 'vampire-resources' => [ 'Morality' => [ 'permanent' => 7, 'temporary' => 7 ] ] ] );
+
+		foreach ( [ -1, 1 ] as $delta ) {
+			$response = $this->dispatch( $this->pool_request_on( $id, 'vampire-resources', 'Morality', $delta ) );
+			$this->assertSame( 400, $response->get_status() );
+			$this->assertSame( 'rating_only', $response->as_error()->get_error_code() );
+			$this->assertSame( 'Morality has no temporary points.', $response->as_error()->get_error_message() );
+		}
+
+		$this->assertSame( [ 'permanent' => 7, 'temporary' => 7 ], Character::find( $id )->sheet_data['vampire-resources']['Morality'] );
+
+		global $wpdb;
+		$this->assertSame( 0, (int) $wpdb->get_var( $wpdb->prepare(
+			"SELECT COUNT(*) FROM {$wpdb->prefix}be_character_changes WHERE character_id = %d AND change_type = 'temporary_pool_spend'",
+			$id
+		) ) );
+	}
+
+	public function test_a_build_up_pool_gains_past_its_rating_up_to_its_maximum_and_loses_down_to_zero(): void {
+		$id = $this->character_of( 'changeling', [ 'changeling-resources' => [ 'Banality' => [ 'permanent' => 2, 'temporary' => 2 ] ] ] );
+
+		$response = $this->dispatch( $this->pool_request_on( $id, 'changeling-resources', 'Banality', 5 ) );
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( 7, $response->get_data()['temporary'], 'past the rating of 2' );
+		$this->assertSame( 2, $response->get_data()['permanent'] );
+
+		$response = $this->dispatch( $this->pool_request_on( $id, 'changeling-resources', 'Banality', 100 ) );
+		$this->assertSame( 10, $response->get_data()['temporary'], "stops at the pool's own maximum" );
+
+		$response = $this->dispatch( $this->pool_request_on( $id, 'changeling-resources', 'Banality', -100 ) );
+		$this->assertSame( 0, $response->get_data()['temporary'] );
+		$this->assertSame( 0, Character::find( $id )->sheet_data['changeling-resources']['Banality']['temporary'] );
+	}
+
+	public function test_a_build_up_pool_with_no_maximum_has_no_ceiling_and_keeps_its_fraction(): void {
+		$id = $this->character_of( 'werewolf', [ 'werewolf-renown' => [ 'Honor' => [ 'permanent' => 4.5, 'temporary' => 3.5 ] ] ] );
+
+		$response = $this->dispatch( $this->pool_request_on( $id, 'werewolf-renown', 'Honor', 1 ) );
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( 4.5, (float) $response->get_data()['temporary'] );
+
+		$response = $this->dispatch( $this->pool_request_on( $id, 'werewolf-renown', 'Honor', 50 ) );
+		$this->assertSame( 54.5, (float) $response->get_data()['temporary'] );
+		$this->assertSame( 4.5, (float) $response->get_data()['permanent'] );
+	}
+
+	public function test_an_ordinary_pool_is_still_held_to_its_rating(): void {
+		$response = $this->dispatch( $this->pool_request( $this->player, 100 ) );
+		$this->assertSame( 10, $response->get_data()['temporary'] );
+
+		$id       = $this->character_of( 'changeling', [ 'changeling-resources' => [ 'Glamour' => [ 'permanent' => 4, 'temporary' => 1 ] ] ] );
+		$response = $this->dispatch( $this->pool_request_on( $id, 'changeling-resources', 'Glamour', 100 ) );
+		$this->assertSame( 4, $response->get_data()['temporary'] );
+	}
+
+	public function test_a_rating_only_pool_shows_its_rating_alone_in_the_sheet_document(): void {
+		$id = $this->character_of( 'vampire', [ 'vampire-resources' => [
+			'Blood'    => [ 'permanent' => 10, 'temporary' => 6 ],
+			'Morality' => [ 'permanent' => 7, 'temporary' => 4 ],
+		] ] );
+
+		wp_set_current_user( $this->hst );
+		$response = $this->dispatch( new WP_REST_Request( 'GET', "/be/v1/{$this->slug}/characters/{$id}/sheet-document" ) );
+		$data     = $response->get_data();
+
+		$this->assertSame( 'x7', $this->header_pair( $data, 'Morality' )[1] );
+		$this->assertSame( 'x10 (6 temporary)', $this->header_pair( $data, 'Blood' )[1], 'an ordinary pool still shows what is spent' );
+	}
+
+	public function test_a_build_up_pool_shows_its_temporary_count_in_the_sheet_document(): void {
+		$id = $this->character_of( 'changeling', [ 'changeling-resources' => [ 'Banality' => [ 'permanent' => 2, 'temporary' => 7 ] ] ] );
+
+		wp_set_current_user( $this->hst );
+		$response = $this->dispatch( new WP_REST_Request( 'GET', "/be/v1/{$this->slug}/characters/{$id}/sheet-document" ) );
+
+		$this->assertSame( 'x2 (7 temporary)', $this->header_pair( $response->get_data(), 'Banality' )[1] );
+	}
+
+	// -------------------------------------------------------------------------
 	// Session close
 	// -------------------------------------------------------------------------
 
@@ -424,6 +532,33 @@ class TemporaryStateThreadTest extends WP_UnitTestCase {
 
 		$session = Game_Session::find( $session_id );
 		$this->assertNotEmpty( $session->closed_at );
+	}
+
+	public function test_closing_a_session_resets_ordinary_pools_and_leaves_build_up_and_rating_only_pools_alone(): void {
+		$changeling = $this->character_of( 'changeling', [ 'changeling-resources' => [
+			'Glamour'  => [ 'permanent' => 5, 'temporary' => 1 ],
+			'Banality' => [ 'permanent' => 2, 'temporary' => 7 ],
+		] ] );
+		$vampire    = $this->character_of( 'vampire', [ 'vampire-resources' => [
+			'Blood'    => [ 'permanent' => 10, 'temporary' => 3 ],
+			'Morality' => [ 'permanent' => 7, 'temporary' => 4 ],
+		] ] );
+
+		$session_id = $this->make_session();
+		Attendance::record( $session_id, $this->game_id, [ 'character_id' => $changeling, 'recorded_by' => $this->hst ] );
+		Attendance::record( $session_id, $this->game_id, [ 'character_id' => $vampire, 'recorded_by' => $this->hst ] );
+
+		wp_set_current_user( $this->hst );
+		$response = $this->dispatch( new WP_REST_Request( 'POST', "/be/v1/{$this->slug}/sessions/{$session_id}/close" ) );
+		$this->assertSame( 200, $response->get_status() );
+
+		$sheet = Character::find( $changeling )->sheet_data['changeling-resources'];
+		$this->assertSame( 5, $sheet['Glamour']['temporary'], 'an ordinary pool goes back to its rating' );
+		$this->assertSame( 7, $sheet['Banality']['temporary'], 'what built up stays built up' );
+
+		$sheet = Character::find( $vampire )->sheet_data['vampire-resources'];
+		$this->assertSame( 10, $sheet['Blood']['temporary'] );
+		$this->assertSame( [ 'permanent' => 7, 'temporary' => 4 ], $sheet['Morality'], 'a rating-only pool is not touched' );
 	}
 
 	public function test_closing_a_session_never_touches_a_character_who_did_not_attend(): void {

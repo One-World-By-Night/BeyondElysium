@@ -5,8 +5,8 @@ namespace BeyondElysium\Tests\Unit;
 use PHPUnit\Framework\TestCase;
 
 /**
- * The shipped catalog marks the pools the books spend permanently and each creature type's health track, and nothing
- * else.
+ * The shipped catalog marks the pools the books spend permanently, the pools whose temporary points do not exist or
+ * build up past the rating, and each creature type's health track, and nothing else.
  */
 class ShippedCatalogMarkersTest extends TestCase {
 
@@ -27,6 +27,61 @@ class ShippedCatalogMarkersTest extends TestCase {
 		'werewolf-resources'   => [ 'Gnosis', 'Willpower' ],
 		'wraith-resources'     => [ 'Willpower' ],
 	];
+
+	/**
+	 * The pools the books give no temporary points, by block.
+	 *
+	 * @var array<string,string[]>
+	 */
+	private const RATING_ONLY = [
+		'demon-virtues'      => [ 'Conscience', 'Conviction', 'Courage' ],
+		'hunter-virtues'     => [ 'Mercy', 'Vision', 'Zeal' ],
+		'kueijin-resources'  => [ 'Dharma', 'Hun', 'Po' ],
+		'mage-resources'     => [ 'Arete' ],
+		'mummy-resources'    => [ 'Balance' ],
+		'vampire-resources'  => [ 'Morality' ],
+	];
+
+	/**
+	 * The pools whose temporary points build up past the rating, by block.
+	 *
+	 * @var array<string,string[]>
+	 */
+	private const ACCUMULATES = [
+		'changeling-resources' => [ 'Banality' ],
+		'demon-resources'      => [ 'Torment' ],
+		'hunter-resources'     => [ 'Conviction' ],
+		'mage-resources'       => [ 'Paradox' ],
+		'werewolf-renown'      => [ 'Glory', 'Honor', 'Wisdom' ],
+		'wraith-resources'     => [ 'Angst' ],
+	];
+
+	/**
+	 * Every block's pools carrying a marker, by block.
+	 *
+	 * @return array<string,string[]>
+	 */
+	private function marked( string $marker ): array {
+		$marked = [];
+		foreach ( glob( BE_PLUGIN_PATH . '/data/catalog/blocks/*.json' ) ?: [] as $file ) {
+			$data = $this->read( $file );
+			if ( ( $data['section_type'] ?? '' ) !== 'resource_pool' ) {
+				continue;
+			}
+			foreach ( (array) ( $data['definition']['pools'] ?? [] ) as $pool ) {
+				if ( array_key_exists( $marker, $pool ) ) {
+					$this->assertTrue( $pool[ $marker ], $data['slug'] . ' ' . $pool['name'] );
+					$marked[ (string) $data['slug'] ][] = (string) $pool['name'];
+				}
+			}
+		}
+		foreach ( $marked as &$names ) {
+			sort( $names );
+		}
+		unset( $names );
+		ksort( $marked );
+		return $marked;
+	}
 
 	/**
 	 * @return array<string,mixed>
@@ -60,6 +115,24 @@ class ShippedCatalogMarkersTest extends TestCase {
 		$expected = self::PERMANENT_SPENDS;
 		ksort( $expected );
 		$this->assertSame( $expected, $marked );
+	}
+
+	public function test_only_the_pools_the_books_give_no_temporary_points_are_marked_rating_only(): void {
+		$expected = self::RATING_ONLY;
+		ksort( $expected );
+		$this->assertSame( $expected, $this->marked( 'rating_only' ) );
+	}
+
+	public function test_only_the_pools_whose_temporary_points_build_up_are_marked_accumulating(): void {
+		$expected = self::ACCUMULATES;
+		ksort( $expected );
+		$this->assertSame( $expected, $this->marked( 'accumulates' ) );
+	}
+
+	public function test_no_pool_is_marked_both_ways(): void {
+		foreach ( self::RATING_ONLY as $block => $names ) {
+			$this->assertSame( [], array_intersect( $names, self::ACCUMULATES[ $block ] ?? [] ), $block );
+		}
 	}
 
 	public function test_each_creature_type_marks_its_health_levels_and_wraith_has_none(): void {

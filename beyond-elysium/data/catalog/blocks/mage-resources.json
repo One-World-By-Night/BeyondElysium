@@ -16,6 +16,7 @@
     "pools": [
       {
         "name": "Arete",
+        "rating_only": true,
         "value_type": "integer",
         "default_start": 1,
         "max": 10,
@@ -30,6 +31,7 @@
       },
       {
         "name": "Paradox",
+        "accumulates": true,
         "value_type": "integer",
         "default_start": 0,
         "max": 20

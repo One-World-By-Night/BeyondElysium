@@ -17,6 +17,7 @@ export const PLAYER_TABS = {
 	characters: 'characters',
 	sheet: 'sheet',
 	edit: 'edit',
+	history: 'history',
 	plots: 'plots',
 	reports: 'reports',
 	sendFile: 'send-file',

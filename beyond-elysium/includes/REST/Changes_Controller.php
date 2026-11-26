@@ -16,6 +16,7 @@ use BeyondElysium\Services\Change_Engine;
 use BeyondElysium\Services\Change_Validator;
 use BeyondElysium\Services\Cost_Engine;
 use BeyondElysium\Services\Display\Change_Description;
+use BeyondElysium\Services\Notices;
 use BeyondElysium\Services\St_Visibility;
 
 defined( 'ABSPATH' ) || exit;
@@ -26,6 +27,11 @@ defined( 'ABSPATH' ) || exit;
 class Changes_Controller extends Base_Controller {
 
 	protected $rest_base = 'changes';
+
+	/**
+	 * The most characters of a note a player may leave for the Storyteller with what they send.
+	 */
+	private const NOTE_LIMIT = 1000;
 
 	/**
 	 * Registers the game-scoped change routes.
@@ -101,6 +107,38 @@ class Changes_Controller extends Base_Controller {
 			],
 		] );
 
+		// Withdraws one change that is still waiting, or every waiting change of one submission.
+		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/changes/(?P<id>\d+)/withdraw', [
+			[
+				'methods'             => 'POST',
+				'callback'            => [ $this, 'withdraw_item' ],
+				'permission_callback' => $this->permission( 'be_edit_own_characters' ),
+			],
+		] );
+		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/characters/(?P<character_id>\d+)/submissions/(?P<submission_id>[0-9a-fA-F\-]{36})/withdraw', [
+			[
+				'methods'             => 'POST',
+				'callback'            => [ $this, 'withdraw_set' ],
+				'permission_callback' => $this->permission( 'be_edit_own_characters' ),
+			],
+		] );
+
+		// Undoes an approved change, or every undoable approved change of one submission. Storytellers only.
+		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/changes/(?P<id>\d+)/undo', [
+			[
+				'methods'             => 'POST',
+				'callback'            => [ $this, 'undo_item' ],
+				'permission_callback' => $this->permission( 'be_manage_characters' ),
+			],
+		] );
+		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/characters/(?P<character_id>\d+)/submissions/(?P<submission_id>[0-9a-fA-F\-]{36})/undo', [
+			[
+				'methods'             => 'POST',
+				'callback'            => [ $this, 'undo_set' ],
+				'permission_callback' => $this->permission( 'be_manage_characters' ),
+			],
+		] );
+
 		// The sections an added entry could be filed in instead.
 		register_rest_route( $this->namespace, '/(?P<game_slug>[a-z0-9\-]+)/changes/(?P<id>\d+)/sections', [
 			[
@@ -159,6 +197,7 @@ class Changes_Controller extends Base_Controller {
 		$items    = Change::for_character( (int) $request['character_id'], $args );
 		$total    = Change::count_for_character( (int) $request['character_id'], $args );
 		$this->redact_changes( $items, $game );
+		$this->name_undoers( $items );
 		$response = $this->success( $items );
 		return $this->paginate( $response, $total, $pagination['per_page'], $pagination['page'] );
 	}
@@ -211,7 +250,11 @@ class Changes_Controller extends Base_Controller {
 			$prepared['force_reason'] = __( 'Part of a change that removes, lowers or renames something.', 'beyond-elysium' );
 		}
 
-		$change_id = Change_Engine::submit( (int) $request['character_id'], $prepared, get_current_user_id() );
+		$submitted = Change_Engine::submit_checked( (int) $request['character_id'], $prepared, get_current_user_id(), ! $is_manager );
+		if ( $submitted['refused'] !== null ) {
+			return $this->insufficient_xp_error( $submitted['refused'], 1 );
+		}
+		$change_id = $submitted['change_id'];
 
 		if ( ! $change_id ) {
 			return $this->error( 'submit_failed', __( 'Failed to submit change.', 'beyond-elysium' ), 500 );
@@ -222,6 +265,8 @@ class Changes_Controller extends Base_Controller {
 			Bot_Notice::add( (int) $game->id, null, 'change_waiting', [
 				'character_name' => (string) ( $character->name ?? '' ),
 			] );
+			Notices::waiting( $game, $character, 1, 1, get_current_user_id() );
+			Notifications::changes_waiting( $game, $character, [ $change ], get_current_user_id() );
 		}
 		if ( $change ) {
 			$this->redact_changes( [ $change ], $game );
@@ -282,7 +327,10 @@ class Changes_Controller extends Base_Controller {
 			$prepared[] = $result;
 		}
 
-		$outcome = Change_Engine::submit_set( (int) $request['character_id'], $prepared, get_current_user_id() );
+		$outcome = Change_Engine::submit_set( (int) $request['character_id'], $prepared, get_current_user_id(), ! $is_manager );
+		if ( $outcome['refused'] !== null ) {
+			return $this->insufficient_xp_error( $outcome['refused'], count( $prepared ) );
+		}
 		if ( empty( $outcome['change_ids'] ) ) {
 			return $this->error( 'submit_failed', __( 'Failed to submit the change set. Nothing was changed.', 'beyond-elysium' ), 500 );
 		}
@@ -290,11 +338,18 @@ class Changes_Controller extends Base_Controller {
 		$results = array_map( static fn( $id ) => Change::find( $id ), $outcome['change_ids'] );
 		$results = array_values( array_filter( $results ) );
 
-		$has_pending = (bool) array_filter( $results, static fn( $c ) => $c->status === 'pending' );
-		if ( $has_pending ) {
+		$waiting = count( array_filter( $results, static fn( $c ) => $c->status === 'pending' ) );
+		if ( $waiting > 0 ) {
 			Bot_Notice::add( (int) $game->id, null, 'change_waiting', [
 				'character_name' => (string) ( $character->name ?? '' ),
 			] );
+			Notices::waiting( $game, $character, $waiting, count( $results ), get_current_user_id() );
+			Notifications::changes_waiting(
+				$game,
+				$character,
+				array_values( array_filter( $results, static fn( $c ) => $c->status === 'pending' ) ),
+				get_current_user_id()
+			);
 		}
 
 		$this->redact_changes( $results, $game );
@@ -318,6 +373,66 @@ class Changes_Controller extends Base_Controller {
 		}
 		$named = array_filter( $requested, static fn( $slug ): bool => is_string( $slug ) && $slug !== '' );
 		return array_values( array_unique( array_merge( $held, $named ) ) );
+	}
+
+	/**
+	 * The refusal for a player's change or set that costs more than the character has free to spend.
+	 *
+	 * @param array{cost:int,free:int,held:int} $refused
+	 * @param int                               $count   How many changes were proposed.
+	 */
+	private function insufficient_xp_error( array $refused, int $count ): \WP_Error {
+		if ( $refused['held'] > 0 ) {
+			$message = sprintf(
+				/* translators: 1: XP the proposed changes cost, 2: XP free to spend, 3: XP held for changes still waiting */
+				_n(
+					'This costs %1$d XP; %2$d is free to spend (%3$d is held for changes still waiting).',
+					'These cost %1$d XP; %2$d is free to spend (%3$d is held for changes still waiting).',
+					$count,
+					'beyond-elysium'
+				),
+				$refused['cost'],
+				$refused['free'],
+				$refused['held']
+			);
+		} else {
+			$message = sprintf(
+				/* translators: 1: XP the proposed changes cost, 2: XP free to spend */
+				_n(
+					'This costs %1$d XP; %2$d is free to spend.',
+					'These cost %1$d XP; %2$d is free to spend.',
+					$count,
+					'beyond-elysium'
+				),
+				$refused['cost'],
+				$refused['free']
+			);
+		}
+		return $this->error( 'insufficient_xp', $message, 400 );
+	}
+
+	/**
+	 * The refusal for approving a change that costs more than its character has unspent, or null when it can be paid.
+	 *
+	 * @param object   $change
+	 * @param int|null $set_cost The price a Storyteller names for a purchase that was waiting for one.
+	 */
+	private function approval_shortfall_error( object $change, ?int $set_cost = null ): ?\WP_Error {
+		$shortfall = Change_Engine::approval_shortfall( $change, $set_cost );
+		if ( $shortfall === null ) {
+			return null;
+		}
+		return $this->error(
+			'insufficient_xp',
+			sprintf(
+				/* translators: 1: XP the change costs, 2: the character's name, 3: XP the character has unspent */
+				__( 'This costs %1$d XP; %2$s has %3$d unspent.', 'beyond-elysium' ),
+				$shortfall['cost'],
+				$shortfall['name'],
+				$shortfall['unspent']
+			),
+			400
+		);
 	}
 
 	/**
@@ -370,21 +485,210 @@ class Changes_Controller extends Base_Controller {
 		if ( ! $quote['priced'] ) {
 			$change_data['cost_pending'] = true;
 		}
-		if ( ! $is_manager && $xp_cost > (int) $character->xp_unspent ) {
-			return $this->error(
-				'insufficient_xp',
-				sprintf( __( 'This costs %d XP; only %d is unspent.', 'beyond-elysium' ), $xp_cost, (int) $character->xp_unspent ),
-				400
-			);
-		}
 
 		return [
 			'change_type' => $change_type,
 			'category'    => $category,
 			'change_data' => $change_data,
 			'xp_cost'     => $xp_cost,
-			'notes'       => $notes,
+			'notes'       => $this->submitter_note( $notes ),
 		];
+	}
+
+	/**
+	 * The note a person leaves for the Storyteller with what they send: plain text, trimmed, at most NOTE_LIMIT
+	 * characters, or null when there is none.
+	 *
+	 * @param mixed $note
+	 */
+	private function submitter_note( $note ): ?string {
+		if ( ! is_string( $note ) ) {
+			return null;
+		}
+		$note = trim( sanitize_textarea_field( $note ) );
+		return $note === '' ? null : mb_substr( $note, 0, self::NOTE_LIMIT );
+	}
+
+	/**
+	 * Withdraws one change that is still waiting. Its own player or a Storyteller may.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function withdraw_item( $request ) {
+		$game = $this->resolve_game( $request['game_slug'] );
+		if ( is_wp_error( $game ) ) {
+			return $game;
+		}
+
+		$change = $this->resolve_change( (int) $request['id'], $request['game_slug'] );
+		if ( is_wp_error( $change ) ) {
+			return $change;
+		}
+
+		$character = Character::find( (int) $change->character_id );
+		$denied    = $character ? $this->withdraw_denied( $character ) : null;
+		if ( $denied !== null ) {
+			return $denied;
+		}
+
+		if ( $change->status !== 'pending' || ! Change_Engine::withdraw( (int) $change->id, get_current_user_id() ) ) {
+			return $this->not_waiting_error();
+		}
+
+		$withdrawn = Change::find( (int) $change->id );
+		if ( $withdrawn ) {
+			$this->redact_changes( [ $withdrawn ], $game );
+		}
+		return $this->success( $withdrawn );
+	}
+
+	/**
+	 * Withdraws every change of one submission that is still waiting.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function withdraw_set( $request ) {
+		$game = $this->resolve_game( $request['game_slug'] );
+		if ( is_wp_error( $game ) ) {
+			return $game;
+		}
+
+		$character = $this->resolve_character( (int) $request['character_id'], $request['game_slug'] );
+		if ( is_wp_error( $character ) ) {
+			return $character;
+		}
+
+		$denied = $this->withdraw_denied( $character );
+		if ( $denied !== null ) {
+			return $denied;
+		}
+
+		$submission_id = strtolower( (string) $request['submission_id'] );
+		$ids           = Change_Engine::withdraw_waiting( (int) $character->id, $submission_id, get_current_user_id() );
+		if ( $ids === [] ) {
+			return $this->not_waiting_error();
+		}
+
+		return $this->success( [ 'submission_id' => $submission_id, 'withdrawn' => $ids ] );
+	}
+
+	/**
+	 * Undoes one approved change: its XP goes back and its sheet changes are put back, or nothing happens and the
+	 * refusal says why.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function undo_item( $request ) {
+		$game = $this->resolve_game( $request['game_slug'] );
+		if ( is_wp_error( $game ) ) {
+			return $game;
+		}
+
+		$change = $this->resolve_change( (int) $request['id'], $request['game_slug'] );
+		if ( is_wp_error( $change ) ) {
+			return $change;
+		}
+
+		$outcome = Change_Engine::undo( (int) $change->id, get_current_user_id(), $this->submitter_note( $request->get_param( 'note' ) ) );
+		if ( ! $outcome['undone'] ) {
+			return $this->undo_error( $outcome );
+		}
+
+		$this->tell_undone( $outcome['ids'] );
+		$undone = Change::find( (int) $change->id );
+		if ( $undone ) {
+			$this->name_undoers( [ $undone ] );
+		}
+		return $this->success( $undone );
+	}
+
+	/**
+	 * Undoes every undoable approved change of one submission, together or not at all.
+	 *
+	 * @param \WP_REST_Request $request
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function undo_set( $request ) {
+		$game = $this->resolve_game( $request['game_slug'] );
+		if ( is_wp_error( $game ) ) {
+			return $game;
+		}
+
+		$character = $this->resolve_character( (int) $request['character_id'], $request['game_slug'] );
+		if ( is_wp_error( $character ) ) {
+			return $character;
+		}
+
+		$submission_id = strtolower( (string) $request['submission_id'] );
+		$outcome       = Change_Engine::undo_set( (int) $character->id, $submission_id, get_current_user_id(), $this->submitter_note( $request->get_param( 'note' ) ) );
+		if ( ! $outcome['undone'] ) {
+			return $this->undo_error( $outcome );
+		}
+
+		$this->tell_undone( $outcome['ids'] );
+		return $this->success( [ 'submission_id' => $submission_id, 'undone' => $outcome['ids'] ] );
+	}
+
+	/**
+	 * The error for a refused undo.
+	 *
+	 * @param array{undone:bool,ids:int[],code?:string,message?:string} $outcome
+	 */
+	private function undo_error( array $outcome ): \WP_Error {
+		$code   = (string) ( $outcome['code'] ?? 'undo_failed' );
+		$status = [ 'not_found' => 404, 'write_failed' => 500 ][ $code ] ?? 409;
+		return $this->error( $code, (string) ( $outcome['message'] ?? __( 'The change could not be undone.', 'beyond-elysium' ) ), $status );
+	}
+
+	/**
+	 * Tells each player whose change was undone, as the outcome of a decision is told.
+	 *
+	 * @param int[] $change_ids
+	 */
+	private function tell_undone( array $change_ids ): void {
+		foreach ( $change_ids as $id ) {
+			$change    = Change::find( (int) $id );
+			$character = $change ? Character::find( (int) $change->character_id ) : null;
+			if ( $change && $character ) {
+				Notifications::enqueue( $change, $character, get_current_user_id() );
+			}
+		}
+		Notifications::flush();
+	}
+
+	/**
+	 * Gives each undone change the name of the person who undid it.
+	 *
+	 * @param array<int,\stdClass|object> $changes
+	 */
+	private function name_undoers( array $changes ): void {
+		/** @var array<int,\stdClass> $changes */
+		foreach ( $changes as $change ) {
+			if ( isset( $change->undone_by ) ) {
+				$user                   = get_userdata( (int) $change->undone_by );
+				$change->undone_by_name = $user ? (string) $user->display_name : null;
+			}
+		}
+	}
+
+	/**
+	 * The refusal for a character's changes the caller may not withdraw, or null when they may: the character's own
+	 * player, or anyone who manages characters.
+	 *
+	 * @param object $character
+	 */
+	private function withdraw_denied( $character ): ?\WP_Error {
+		if ( \BeyondElysium\Core\Authorization::can( 'be_manage_characters' ) || (int) $character->wp_user_id === get_current_user_id() ) {
+			return null;
+		}
+		return $this->error( 'ownership_denied', __( 'You do not have permission to withdraw changes for this character.', 'beyond-elysium' ), 403 );
+	}
+
+	private function not_waiting_error(): \WP_Error {
+		return $this->error( 'change_not_pending', __( 'That change is no longer waiting.', 'beyond-elysium' ), 409 );
 	}
 
 	/**
@@ -421,8 +725,9 @@ class Changes_Controller extends Base_Controller {
 			return $this->change_changed_error();
 		}
 
-		$notes  = Change_Edit::clean_note( $request->get_param( 'notes' ) );
-		$result = false;
+		$notes    = Change_Edit::clean_note( $request->get_param( 'notes' ) );
+		$result   = false;
+		$set_cost = null;
 
 		if ( $new_status === 'approved' ) {
 			$catalog_denied = $this->catalog_capability_denied( $change );
@@ -438,7 +743,6 @@ class Changes_Controller extends Base_Controller {
 				return $secret_denied;
 			}
 			// A purchase waiting for a price is approved at the one the reviewer names, and only then.
-			$set_cost = null;
 			if ( ! empty( $change->change_data['cost_pending'] ) ) {
 				$set_cost = $this->reviewer_price( $request->get_param( 'xp_cost' ) );
 				if ( is_wp_error( $set_cost ) ) {
@@ -453,6 +757,10 @@ class Changes_Controller extends Base_Controller {
 					return $secret_choice;
 				}
 			}
+			$short = $this->approval_shortfall_error( $change, $set_cost );
+			if ( $short !== null ) {
+				return $short;
+			}
 			$result = Change_Engine::approve( (int) $request['id'], get_current_user_id(), $notes, $token, $set_cost, $secret_choice );
 		} else {
 			$result = Change_Engine::reject( (int) $request['id'], get_current_user_id(), $notes, $token );
@@ -466,6 +774,10 @@ class Changes_Controller extends Base_Controller {
 			}
 			if ( $current && $token !== null && ! hash_equals( Change::review_token( $current ), $token ) ) {
 				return $this->change_changed_error();
+			}
+			$short = $current && $new_status === 'approved' ? $this->approval_shortfall_error( $current, $set_cost ) : null;
+			if ( $short !== null ) {
+				return $short;
 			}
 			return $this->error( 'update_failed', __( 'Failed to update change status.', 'beyond-elysium' ), 500 );
 		}
@@ -572,6 +884,11 @@ class Changes_Controller extends Base_Controller {
 		$edited = Change::find( (int) $request['id'] );
 		if ( ! $edited ) {
 			return $this->error( 'not_found', __( 'Change not found.', 'beyond-elysium' ), 404 );
+		}
+
+		$owner = Character::find( (int) $edited->character_id );
+		if ( $owner ) {
+			Notices::edited( $edited, $owner, get_current_user_id(), $notes === null ? null : (string) $notes );
 		}
 		return $this->success( $this->with_review_fields( [ $edited ] )[0] );
 	}
@@ -749,7 +1066,7 @@ class Changes_Controller extends Base_Controller {
 	}
 
 	/**
-	 * One of `pending`, `approved`, `auto_approved`, `refused`, for My changes across chronicles.
+	 * One of `pending`, `approved`, `auto_approved`, `refused`, `withdrawn`, `undone`, for My changes across chronicles.
 	 *
 	 * @param object $item
 	 * @return string
@@ -760,6 +1077,9 @@ class Changes_Controller extends Base_Controller {
 		}
 		if ( $item->status === 'rejected' ) {
 			return 'refused';
+		}
+		if ( $item->status === 'withdrawn' || $item->status === 'undone' ) {
+			return (string) $item->status;
 		}
 		return ! empty( $item->auto_approved ) ? 'auto_approved' : 'approved';
 	}
@@ -913,6 +1233,7 @@ class Changes_Controller extends Base_Controller {
 		$needs_cost = [];
 		$needs_secret_choice = [];
 		$held       = [];
+		$short_of_xp = [];
 		// Optional { change id: review token } for exactly what the reviewer saw.
 		$tokens = (array) ( $request->get_param( 'review_tokens' ) ?? [] );
 
@@ -986,6 +1307,9 @@ class Changes_Controller extends Base_Controller {
 				}
 			}
 			$ok = Change_Engine::approve_group( $ids, get_current_user_id(), $group_tokens );
+			if ( ! $ok && $this->group_short_of_xp( $ids ) ) {
+				$short_of_xp = array_merge( $short_of_xp, $ids );
+			}
 			foreach ( $ids as $id ) {
 				if ( $ok ) {
 					$approved[] = $id;
@@ -1018,6 +1342,9 @@ class Changes_Controller extends Base_Controller {
 				}
 			} else {
 				$skipped[] = $change_id;
+				if ( Change_Engine::approval_shortfall( $change ) !== null ) {
+					$short_of_xp[] = $change_id;
+				}
 			}
 		}
 
@@ -1034,8 +1361,30 @@ class Changes_Controller extends Base_Controller {
 				'needs_cost'          => $needs_cost,
 				'needs_secret_choice' => $needs_secret_choice,
 				'held'                => $held,
+				'short_of_xp'         => $short_of_xp,
 			]
 		);
+	}
+
+	/**
+	 * Whether a set of waiting changes costs more together than their character has unspent.
+	 *
+	 * @param int[] $change_ids Changes of one submission, and so of one character.
+	 */
+	private function group_short_of_xp( array $change_ids ): bool {
+		$total     = 0.0;
+		$character = null;
+		foreach ( $change_ids as $id ) {
+			$change = Change::find( (int) $id );
+			if ( ! $change ) {
+				continue;
+			}
+			$character = $character ?? Character::find( (int) $change->character_id );
+			if ( ! in_array( $change->change_type, [ 'xp_earn', 'xp_adjust' ], true ) && (float) $change->xp_cost > 0 ) {
+				$total += (float) $change->xp_cost;
+			}
+		}
+		return $character !== null && $total > (float) $character->xp_unspent;
 	}
 
 	/**
@@ -1068,8 +1417,9 @@ class Changes_Controller extends Base_Controller {
 		}
 
 		$results             = [];
-		$running_xp_unspent  = (int) $character->xp_unspent;
 		$is_manager          = \BeyondElysium\Core\Authorization::can( 'be_manage_characters' );
+		$xp_held             = $is_manager ? 0 : Change_Engine::held_xp_after( $character, array_map( static fn( $change ): array => is_array( $change ) ? $change : [], $changes ) );
+		$running_xp_unspent  = (int) $character->xp_unspent - $xp_held;
 		$stack               = Creature_Stack::resolve(
 			(string) $character->stack_slug,
 			(string) $character->owner_slug,
@@ -1129,6 +1479,7 @@ class Changes_Controller extends Base_Controller {
 			[
 				'results'            => $results,
 				'running_xp_unspent' => $running_xp_unspent,
+				'xp_held'            => $xp_held,
 			]
 		);
 	}
@@ -1261,7 +1612,7 @@ class Changes_Controller extends Base_Controller {
 			'status'      => [
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_text_field',
-				'enum'              => [ 'pending', 'approved', 'rejected' ],
+				'enum'              => [ 'pending', 'approved', 'rejected', 'withdrawn', 'undone' ],
 			],
 			'change_type' => [
 				'type'              => 'string',

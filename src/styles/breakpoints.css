@@ -6,8 +6,8 @@
 	--be-input-font-min: 16px; /* iOS focus-zoom threshold */
 }
 
-/* Touch-target floor, applied once. */
-@media ( max-width: 768px ) {
+/* Touch-target floor, applied once: on a narrow screen and on any touch screen, a tablet included. */
+@media ( max-width: 768px ), ( pointer: coarse ) {
 
 	[class^="be-"] button,
 	[class*=" be-"] button,

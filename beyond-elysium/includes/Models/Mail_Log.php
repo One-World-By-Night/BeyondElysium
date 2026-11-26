@@ -48,6 +48,8 @@ class Mail_Log {
 			'release'             => __( 'Release batch', 'beyond-elysium' ),
 			'digest'              => __( 'Daily digest', 'beyond-elysium' ),
 			'change_outcome'      => __( 'Change reviewed', 'beyond-elysium' ),
+			'changes_waiting'     => __( 'Changes waiting', 'beyond-elysium' ),
+			'changes_waiting_digest' => __( 'Changes waiting, daily', 'beyond-elysium' ),
 			'transfer_offered'    => __( 'Transfer to review', 'beyond-elysium' ),
 			'join_requested'      => __( 'Request to join', 'beyond-elysium' ),
 			'join_answered'       => __( 'Join request answered', 'beyond-elysium' ),

@@ -34,7 +34,7 @@ Retrato, depois **Nome**, **Tipo**, **Status**, **Jogador**, **XP Ganho** e **XP
 
 ### Tocando em um traço
 
-Toque em qualquer traço ou poder da ficha e um painel se abre, por baixo da tela no celular e pela direita no computador. Ele mostra quanto custaria o próximo ponto ou nível e se um Narrador precisa aprovar, a descrição e a fonte que a própria crônica deu a ele, o que ele exige, e o histórico deste personagem com ele. **Ver tudo no Histórico** e **Alterar em Editar** estão nele. Nada é comprado no painel: um aumento é feito em Editar. **Esc**, **Fechar** ou um toque fora o guarda.
+Toque em qualquer traço ou poder da ficha e um painel se abre, por baixo da tela no celular e pela direita no computador. Ele mostra quanto custaria o próximo ponto ou nível e se um Narrador precisa aprovar, a descrição e a fonte que a própria crônica deu a ele, o que ele exige, e o histórico deste personagem com ele. **Ver tudo no Histórico** e **Alterar em Editar** estão nele. Uma etiqueta do carrinho, como "Carrinho: 3 · 6 XP", aparece no cabeçalho do personagem sempre que o carrinho tem algo, e abre a Revisão. Sob o nome, uma linha diz como está o XP: "10 XP para gastar · 6 XP retidos · 3 mudanças aguardando". Num personagem que você pode editar, o painel também tem um botão **Adicionar ao carrinho** que nomeia o próximo passo e o preço, por exemplo "Subir para x4 · 1 XP" ("Subir para o nível 3" para um poder em níveis, "Adicionar Ocultismo x1" para algo novo). Ele põe essa mudança no seu carrinho e não compra nada; o carrinho é enviado em **Revisar**. Quando o traço já está no carrinho, o painel diz **No seu carrinho · Revisar**. **Esc**, **Fechar** ou um toque fora o guarda.
 
 ### A visualização Jogar
 

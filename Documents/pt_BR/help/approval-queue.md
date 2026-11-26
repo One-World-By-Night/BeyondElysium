@@ -33,7 +33,7 @@ Uma tabela (empilhada em cartões numa tela estreita) com uma caixa de seleção
 | Coluna | Mostra |
 | --- | --- |
 | Personagem | Em quem é a mudança |
-| Alteração | Uma descrição simples, como o valor antigo e o novo de um traço. O [pedido de XP](character-editor.md#solicitar-xp) de um jogador diz "+N XP (Solicitado: onde, data)", com quaisquer detalhes que ele acrescentou mostrados embaixo. Uma mudança encaminhada para cá por uma crônica anfitriã mostra **"De Boston"** (ou a crônica que a enviou) acima da descrição, e a nota de texto livre da própria anfitriã, se houver, embaixo - veja [Uma mudança encaminhada de uma crônica anfitriã](#uma-mudança-encaminhada-de-uma-crônica-anfitriã). Abaixo disso: a nota que o jogador pôs no traço ("Nota: R1 Necromancy ( 4 xp)"), a seção para onde a entrada vai ("Em Rituais") e, depois que um Narrador a edita, "Editada por" e o nome dele |
+| Alteração | Uma descrição simples, como o valor antigo e o novo de um traço. Quando o jogador deixou uma nota com o conjunto que enviou, ela aparece como "Nota do jogador: ..." sob a alteração. O [pedido de XP](character-editor.md#solicitar-xp) de um jogador diz "+N XP (Solicitado: onde, data)", com quaisquer detalhes que ele acrescentou mostrados embaixo. Uma mudança encaminhada para cá por uma crônica anfitriã mostra **"De Boston"** (ou a crônica que a enviou) acima da descrição, e a nota de texto livre da própria anfitriã, se houver, embaixo - veja [Uma mudança encaminhada de uma crônica anfitriã](#uma-mudança-encaminhada-de-uma-crônica-anfitriã). Abaixo disso: a nota que o jogador pôs no traço ("Nota: R1 Necromancy ( 4 xp)"), a seção para onde a entrada vai ("Em Rituais") e, depois que um Narrador a edita, "Editada por" e o nome dele |
 | XP | O custo, positivo ou negativo. Uma compra caseira mostra **Precisa de um preço** até você definir um |
 | Nível | Automático ou Precisa de um Narrador |
 | Motivo da Aprovação | Por que parou nesse nível, quando há um. Um motivo vindo de um estatuto termina com uma citação de cláusula clicável, por exemplo `[OWBN Character Bylaws 10.e.v, clause 7838]`, que abre a cláusula de verdade em council.owbn.net; vários motivos numa mudança ficam cada um na própria linha |
@@ -45,7 +45,7 @@ No celular, Nível, Enviado por e Quando ficam atrás de um **Detalhes** em cada
 
 ### Ações
 
-- **Aprovar** - aplica a mudança na hora.
+- **Aprovar** - aplica a mudança na hora. É recusado quando a mudança custa mais XP do que o personagem tem sem gastar: "Isto custa 6 XP; Alice tem 2 sem gastar." Conceda o XP primeiro, ou use **Editar** na mudança e reduza o preço. O prêmio ou a correção de um Narrador nunca é barrado por isso.
 - **Editar** - abre uma janela onde você altera a entrada, dá um preço, a coloca em outra seção e deixa uma nota para o jogador. Veja [Editar uma mudança](#editar-uma-mudança). Ela nunca aprova nada.
 - **Uma caixa de preço**, numa mudança avulsa que precisa de uma - veja [Uma mudança que precisa de um preço](#uma-mudança-que-precisa-de-um-preço).
 - **Rejeitar** - abre uma caixa de texto ("Motivo (obrigatório)") com **Confirmar Rejeição** e **Cancelar**. Um motivo é obrigatório; aprovar não precisa de nenhum.
@@ -178,6 +178,8 @@ Uma mudança que precisa de um preço não pode ser marcada. Dê o preço e apro
 1. Clique em **Editar** e digite em **Nota para o jogador**.
 2. Clique em **Salvar**. O jogador a vê no histórico de mudanças dele, e ela continua lá quando você aprova a mudança.
 
+No sentido contrário, um jogador pode deixar uma nota para você quando envia um conjunto (até 1.000 caracteres). Ela aparece em cada mudança do conjunto como "Nota do jogador: ...", e no e-mail que avisa que há mudanças aguardando.
+
 ### Achar as mudanças pendentes de um personagem
 
 1. Escolha esse personagem no filtro **Personagem**.
@@ -190,17 +192,20 @@ Uma mudança que precisa de um preço não pode ser marcada. Dê o preço e apro
 
 - **Só dois níveis de aprovação: Automático e Precisa de um Narrador.** O Beyond Elysium não tem uma etapa de coordenador à parte. O motivo de uma regra pode dizer para você obter a aprovação de um coordenador antes de aprovar, mas o clique que aprova aqui é sempre de um Narrador.
 - **Aprovar Selecionados é um atalho, não um mecanismo diferente.** Aplica a mesma aprovação, individualmente, a toda mudança que você marcou - não uma sobreposição em lote.
-- **A fila fica presa ao que lhe foi mostrado.** Se um jogador reenvia uma mudança pendente, ou outra pessoa a revisa primeiro, o seu clique é recusado e a fila recarrega com o que realmente está lá agora - você nunca aprova algo diferente do que viu.
+- **A fila fica presa ao que lhe foi mostrado.** Se um jogador reenvia ou retira uma mudança pendente, ou outra pessoa a revisa primeiro, o seu clique é recusado e a fila recarrega com o que realmente está lá agora - você nunca aprova algo diferente do que viu.
 - **Uma linha marcada continua marcada ao virar a página**, e Aprovar Selecionados age em tudo o que você marcou, não só no que está na tela - cada uma como você a viu quando a marcou. Uma mudança editada depois de você marcá-la é pulada, seja em que página estiver. Mudar um filtro limpa as marcas.
 - **Editar não é decidir.** Salvar deixa a mudança esperando. Aprovar depois de uma edição mantém a nota que você salvou, e uma rejeição a substitui pelo motivo que você der.
 - **Poderes numerados se somam.** Uma compra nova no nível 3 é precificada pelos níveis 1, 2 e 3 juntos, não só pelo nível 3 - a coluna XP reflete isso.
+- **Mudanças aguardando retêm o XP do jogador.** Uma mudança que custa XP separa esse XP enquanto aguarda, para o jogador não gastá-lo duas vezes; ele é liberado quando você recusa a mudança ou o jogador a retira. Aprovar confere o XP sem gastar do personagem, não o que está livre depois da retenção, já que a retenção é para esta mesma mudança.
+- **Uma mudança retirada sai da fila.** O jogador a tomou de volta antes de você decidir; o Histórico a guarda como Retirado. Uma mudança decidida que você quer de volta é desfeita no [Histórico](sheet-history.md), não aqui.
 - **Nem tudo cai aqui.** Alguns prêmios de XP e tudo o que as regras da sua crônica marcam como aprovado automaticamente se aplicam no instante em que são enviados e nunca aparecem nesta fila.
 
 ## Solução de problemas
 
-- **Nada aconteceu quando cliquei em Aprovar, e a linha sumiu.** Outra pessoa já a revisou, ou o jogador a mudou depois que a fila carregou. A fila recarrega sozinha - confira o estado atual do personagem antes de revisar de novo.
+- **Nada aconteceu quando cliquei em Aprovar, e a linha sumiu.** Outra pessoa já a revisou, ou o jogador a mudou ou retirou depois que a fila carregou. A fila recarrega sozinha - confira o estado atual do personagem antes de revisar de novo.
 - **Confirmar Rejeição não clica.** Digite um motivo primeiro - rejeitar exige um.
 - **Uma aprovação em lote pulou algumas mudanças.** Elas já tinham sido revisadas, ou editadas, desde que a fila carregou. Recarregue e revise-as individualmente.
+- **Um lote disse que algumas mudanças custam mais do que o personagem tem sem gastar.** "1 alteração custa mais do que o personagem tem sem gastar. Conceda o XP primeiro, ou abra-a e reduza o preço." Elas foram puladas e o resto passou.
 - **Um lote disse que algumas mudanças precisam de um preço.** São produções caseiras ainda sem preço. Abra cada uma, digite o que custa e aprove-a sozinha.
 - **Aprovar está cinza numa linha.** Ela precisa de um preço. Digite um número inteiro de 0 a 500 na caixa ao lado.
 - **Aprovar tudo está cinza.** Uma mudança do conjunto ainda precisa de um preço. Clique em **Editar** em cada mudança marcada **Precisa de um preço**, digite o que custa e Salve.

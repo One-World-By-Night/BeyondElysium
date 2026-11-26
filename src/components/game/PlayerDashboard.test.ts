@@ -1,6 +1,6 @@
 /**
  * `groupMyChanges()` groups a player's own cross-chronicle changes by chronicle, current one first, pending above
- * recent within each group. `statusLabel()` names each of the four display statuses.
+ * recent within each group. `statusLabel()` names each display status.
  */
 import { groupMyChanges, statusLabel } from './PlayerDashboard';
 import type { MyChangeAcrossGames } from '../../types/character';
@@ -99,10 +99,12 @@ describe( 'groupMyChanges', () => {
 } );
 
 describe( 'statusLabel', () => {
-	it( 'names all four display statuses', () => {
+	it( 'names every display status', () => {
 		expect( statusLabel( 'pending' ) ).toBe( 'Pending' );
 		expect( statusLabel( 'approved' ) ).toBe( 'Approved' );
 		expect( statusLabel( 'auto_approved' ) ).toBe( 'Auto-approved' );
 		expect( statusLabel( 'refused' ) ).toBe( 'Refused' );
+		expect( statusLabel( 'withdrawn' ) ).toBe( 'Withdrawn' );
+		expect( statusLabel( 'undone' ) ).toBe( 'Undone' );
 	} );
 } );

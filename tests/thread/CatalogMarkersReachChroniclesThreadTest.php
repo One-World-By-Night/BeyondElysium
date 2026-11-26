@@ -77,4 +77,31 @@ class CatalogMarkersReachChroniclesThreadTest extends WP_UnitTestCase {
 		$this->assertObjectNotHasProperty( 'permanent_spend', $own->definition->pools[1] );
 		$this->assertSame( 30, $own->definition->pools[1]->max, "the chronicle's own change" );
 	}
+
+	public function test_the_rating_only_and_accumulating_markers_reach_a_chronicles_fork_of_the_block(): void {
+		Schema_Block::create( [
+			'slug' => 'tm-temper', 'name' => 'Resources', 'section_type' => 'resource_pool', 'is_system' => 0,
+			'definition' => [ 'pools' => [
+				[ 'name' => 'Morality', 'value_type' => 'integer', 'default_start' => 7, 'max' => 10 ],
+				[ 'name' => 'Banality', 'value_type' => 'integer', 'default_start' => 3, 'max' => 10 ],
+			] ],
+		] );
+		$fork = Schema_Block::find_or_create_fork_for_game( 'tm-temper', $this->slug );
+		$copy = json_decode( (string) wp_json_encode( $fork->definition ), true );
+		$copy['pools'][1]['max'] = 12;
+		$this->assertTrue( Schema_Block::update( 'tm-temper', [ 'definition' => $copy ], $this->slug ) );
+
+		$book = json_decode( (string) wp_json_encode( Schema_Block::find_by_slug( 'tm-temper' )->definition ), true );
+		$book['pools'][0]['rating_only'] = true;
+		$book['pools'][1]['accumulates'] = true;
+		$this->assertTrue( Schema_Block::update( 'tm-temper', [ 'definition' => $book ] ) );
+		$this->assertGreaterThanOrEqual( 1, Schema_Block::refresh_forks( 'tm-temper' ) );
+
+		$own = Schema_Block::find_for_game( 'tm-temper', $this->slug );
+		$this->assertSame( $this->slug, $own->game_slug );
+		$this->assertTrue( $own->definition->pools[0]->rating_only, "the book's rating-only marker" );
+		$this->assertTrue( $own->definition->pools[1]->accumulates, "the book's accumulating marker" );
+		$this->assertObjectNotHasProperty( 'accumulates', $own->definition->pools[0] );
+		$this->assertSame( 12, $own->definition->pools[1]->max, "the chronicle's own change" );
+	}
 }

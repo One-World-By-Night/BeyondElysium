@@ -68,7 +68,7 @@ On a narrow screen, Tradition and Remove/Undo move behind a **Details** button t
 
 ## Things to know
 
-- **Numbered powers add up.** Buying a fresh power at level 3 costs levels 1, 2, and 3 together, not level 3 alone - reflected in whatever cost the Edit view's Pending Changes shows, not here.
+- **Numbered powers add up.** Buying a fresh power at level 3 costs levels 1, 2, and 3 together, not level 3 alone - reflected in whatever cost the Edit view's cart shows, not here.
 - **List each level / Use stepper is one choice for your whole sheet**, remembered on this device - switching it on any power switches every power, on every sheet you open here, and it stays that way next time.
 - **A custom name always needs review.** Typing a name that isn't in the catalog only saves where this section allows it, and even then it always goes to a Storyteller for approval, no matter how your chronicle has auto-approval configured. Elder-and-above picks are never custom - only real catalog entries.
 - **An Elder-and-above pick is additive**, not a replacement - you keep your family's numbered level, and can hold several distinct Elder-and-above picks in it at once.

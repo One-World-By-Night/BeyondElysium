@@ -68,6 +68,10 @@ export interface TieredPowerEditorProps {
 	 * Present when the add pickers show each option's price; `saved` is this block's saved data.
 	 */
 	pricing?: { saved: unknown };
+	/**
+	 * Present when a power family can be opened in the trait panel from its row.
+	 */
+	onAbout?: ( name: string ) => void;
 }
 
 /**
@@ -379,6 +383,7 @@ export function TieredPowerEditor( {
 	gameSlug,
 	characterId,
 	pricing,
+	onAbout,
 }: TieredPowerEditorProps ) {
 	const emit = ( next: EditableHeldPower[] ) => onChange( blockSlug, next );
 
@@ -1028,6 +1033,30 @@ export function TieredPowerEditor( {
 											) }
 										</span>
 									) }
+									{ onAbout &&
+										! row.power_name &&
+										! row.custom && (
+											<button
+												type="button"
+												className="be-tiered-power-editor__about"
+												aria-label={ sprintf(
+													/* translators: %s: the power family's own name */
+													__(
+														'About %s',
+														'beyond-elysium'
+													),
+													row.name
+												) }
+												onClick={ () =>
+													onAbout( row.name )
+												}
+											>
+												{ __(
+													'About',
+													'beyond-elysium'
+												) }
+											</button>
+										) }
 
 									{ ! readOnly && (
 										<div className="be-tiered-power-editor__row-detail">

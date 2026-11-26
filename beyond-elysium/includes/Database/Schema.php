@@ -12,7 +12,7 @@ class Schema {
 	/**
 	 * The plugin's current database schema version, matching the plugin release version.
 	 */
-	const DB_VERSION = '1.7.4';
+	const DB_VERSION = '1.7.5';
 
 	/**
 	 * Option key holding the installed schema version.
@@ -85,6 +85,7 @@ class Schema {
 		'bot_audit',
 		'bot_notices',
 		'staff_grants',
+		'notices',
 	];
 
 	/**
@@ -243,6 +244,7 @@ class Schema {
 			auto_approved tinyint(1) NOT NULL DEFAULT 0,
 			source_visit_id bigint(20) unsigned DEFAULT NULL,
 			host_note text,
+			undo_state longtext DEFAULT NULL,
 			PRIMARY KEY  (id),
 			KEY idx_character (character_id),
 			KEY idx_status (status),
@@ -971,6 +973,20 @@ class Schema {
 			KEY idx_game_undelivered (game_id, delivered_at)
 		) $charset_collate;" );
 
+		// be_notices: what the site tells a person in its own header - one row for each person it is for.
+		dbDelta( "CREATE TABLE {$prefix}notices (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			game_id bigint(20) unsigned NOT NULL,
+			wp_user_id bigint(20) unsigned NOT NULL,
+			kind varchar(30) NOT NULL,
+			payload longtext,
+			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			read_at datetime DEFAULT NULL,
+			PRIMARY KEY  (id),
+			KEY idx_person (wp_user_id, game_id, read_at),
+			KEY idx_created (created_at)
+		) $charset_collate;" );
+
 		// be_staff_grants: one row per area an HST gave one person in one chronicle; taking it away stamps the row.
 		dbDelta( "CREATE TABLE {$prefix}staff_grants (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
@@ -1166,6 +1182,15 @@ class Schema {
 		$table = self::table( 'character_changes' );
 		self::add_column_if_missing( $table, 'source_visit_id', 'bigint(20) unsigned DEFAULT NULL AFTER auto_approved' );
 		self::add_column_if_missing( $table, 'host_note', 'text DEFAULT NULL AFTER source_visit_id' );
+	}
+
+	/**
+	 * Adds the column that holds what an approved change did, so a Storyteller can undo it. A change approved before it
+	 * existed has none and cannot be undone.
+	 */
+	public static function add_undo_state_to_character_changes(): void {
+		$table = self::table( 'character_changes' );
+		self::add_column_if_missing( $table, 'undo_state', 'longtext DEFAULT NULL AFTER host_note' );
 	}
 
 	/**
@@ -3054,6 +3079,8 @@ class Schema {
 		self::add_closed_at_to_game_sessions();
 
 		self::add_room_channel_id_to_discord_links();
+
+		self::add_undo_state_to_character_changes();
 
 		// Gives system templates the section titles their declared files name.
 		\BeyondElysium\Services\Template_Titles::run();

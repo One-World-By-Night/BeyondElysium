@@ -28,6 +28,14 @@
 	white-space: pre-line;
 }
 
+.be-approval-queue__player-note {
+	max-width: 32rem;
+	margin: 0.25rem 0 0;
+	font-size: 0.85rem;
+	font-weight: 400;
+	white-space: pre-line;
+}
+
 .be-approval-queue__request-note {
 	max-width: 22rem;
 	margin: 0.25rem 0 0;

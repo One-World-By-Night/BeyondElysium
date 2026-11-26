@@ -59,7 +59,7 @@ Numa tela estreita, Tradição e Remover/Desfazer passam para trás de um botão
 
 ## O que saber
 
-- **Poderes numerados se somam.** Comprar um poder novo no nível 3 custa os níveis 1, 2 e 3 juntos, não só o nível 3 - refletido em qualquer custo que as Alterações Pendentes da visualização Editar mostrarem, não aqui.
+- **Poderes numerados se somam.** Comprar um poder novo no nível 3 custa os níveis 1, 2 e 3 juntos, não só o nível 3 - refletido em qualquer custo que o carrinho da visualização Editar mostrar, não aqui.
 - **Listar cada nível / Usar contador é uma escolha para a ficha inteira**, lembrada neste dispositivo - trocar em qualquer poder troca todos os poderes, em toda ficha que você abrir aqui, e continua assim da próxima vez.
 - **Um nome personalizado sempre precisa de revisão.** Digitar um nome que não está no catálogo só salva onde esta seção permite, e mesmo assim sempre vai a um Narrador para aprovação, não importa como a sua crônica configurou a aprovação automática. As escolhas de Ancião ou superior nunca são personalizadas - só entradas reais do catálogo.
 - **Uma escolha de Ancião ou superior é aditiva**, não uma substituição - você mantém o nível numerado da sua família e pode ter várias escolhas distintas de Ancião ou superior nela ao mesmo tempo.

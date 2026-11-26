@@ -6,6 +6,7 @@ import {
 	healthTrack,
 	nightLossesFrom,
 	poolRows,
+	temporaryControls,
 	waitingSpends,
 	woundsFrom,
 } from './play';
@@ -178,7 +179,13 @@ describe( 'the pools', () => {
 		'vampire-resources': block( 'vampire-resources', [
 			{ name: 'Blood', default_start: 10 },
 			{ name: 'Willpower', default_start: 3, permanent_spend: true },
-			{ name: 'Morality', default_start: 7 },
+			{ name: 'Morality', default_start: 7, rating_only: true },
+		] ),
+		'changeling-resources': block( 'changeling-resources', [
+			{ name: 'Banality', default_start: 3, max: 10, accumulates: true },
+		] ),
+		'werewolf-renown': block( 'werewolf-renown', [
+			{ name: 'Honor', default_start: 0, accumulates: true },
 		] ),
 		'vampire-health': {
 			slug: 'vampire-health',
@@ -212,6 +219,31 @@ describe( 'the pools', () => {
 		expect( rows[ 1 ].permanentSpend ).toBe( true );
 	} );
 
+	it( 'carries each pool kind and a build-up pool maximum', () => {
+		const rows = poolRows(
+			{
+				'vampire-resources': {
+					Blood: { permanent: 10, temporary: 8 },
+					Morality: { permanent: 7, temporary: 7 },
+				},
+				'changeling-resources': {
+					Banality: { permanent: 2, temporary: 7 },
+				},
+				'werewolf-renown': { Honor: { permanent: 4, temporary: 3 } },
+			},
+			blocks,
+			[ 'vampire-resources', 'changeling-resources', 'werewolf-renown' ]
+		);
+		expect(
+			rows.map( ( r ) => [ r.poolName, r.kind, r.ceiling ] )
+		).toEqual( [
+			[ 'Blood', 'ordinary', undefined ],
+			[ 'Morality', 'rating_only', undefined ],
+			[ 'Banality', 'accumulates', 10 ],
+			[ 'Honor', 'accumulates', undefined ],
+		] );
+	} );
+
 	it( 'leaves out a pool the sheet holds no pair for and a block that is not in the template', () => {
 		expect(
 			poolRows(
@@ -234,10 +266,40 @@ describe( 'the pools', () => {
 	} );
 
 	it( 'spends while temporary points remain and regains up to the permanent rating', () => {
-		expect( canSpend( { temporary: 1 } ) ).toBe( true );
-		expect( canSpend( { temporary: 0 } ) ).toBe( false );
-		expect( canRegain( { temporary: 5, permanent: 6 } ) ).toBe( true );
-		expect( canRegain( { temporary: 6, permanent: 6 } ) ).toBe( false );
+		const ordinary = { kind: 'ordinary' as const };
+		expect( canSpend( { ...ordinary, temporary: 1 } ) ).toBe( true );
+		expect( canSpend( { ...ordinary, temporary: 0 } ) ).toBe( false );
+		expect( canRegain( { ...ordinary, temporary: 5, permanent: 6 } ) ).toBe(
+			true
+		);
+		expect( canRegain( { ...ordinary, temporary: 6, permanent: 6 } ) ).toBe(
+			false
+		);
+	} );
+
+	it( 'gains past the rating up to the pool maximum, or without limit when it has none', () => {
+		const built = { kind: 'accumulates' as const, permanent: 2 };
+		expect( canRegain( { ...built, temporary: 7, ceiling: 10 } ) ).toBe(
+			true
+		);
+		expect( canRegain( { ...built, temporary: 10, ceiling: 10 } ) ).toBe(
+			false
+		);
+		expect( canRegain( { ...built, temporary: 40 } ) ).toBe( true );
+		expect( canSpend( { ...built, temporary: 7 } ) ).toBe( true );
+		expect( canSpend( { ...built, temporary: 0 } ) ).toBe( false );
+	} );
+
+	it( 'offers neither Spend nor Regain on a pool with no temporary points', () => {
+		const rating = { kind: 'rating_only' as const, permanent: 7 };
+		expect( canSpend( { ...rating, temporary: 4 } ) ).toBe( false );
+		expect( canRegain( { ...rating, temporary: 4 } ) ).toBe( false );
+	} );
+
+	it( 'names the controls each kind of pool gets', () => {
+		expect( temporaryControls( { kind: 'ordinary' } ) ).toBe( 'spend' );
+		expect( temporaryControls( { kind: 'accumulates' } ) ).toBe( 'build' );
+		expect( temporaryControls( { kind: 'rating_only' } ) ).toBe( 'none' );
 	} );
 
 	it( 'spends a permanent point only from a marked pool with a rating left', () => {

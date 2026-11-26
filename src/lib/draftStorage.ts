@@ -1,6 +1,6 @@
 /**
- * Saves, loads, and clears a per-character sheet-data draft in the browser's `localStorage`, keyed by character id,
- * as a local backup of in-progress edits.
+ * Reads, clears and compares the per-character whole-sheet draft kept in the browser's `localStorage`, keyed by
+ * character id.
  */
 
 import type { SheetData } from '../types/character';
@@ -14,22 +14,6 @@ export interface StoredDraft {
 
 function storageKey( characterId: number ): string {
 	return `${ PREFIX }${ characterId }`;
-}
-
-/**
- * Serializes a character's sheet data together with the current timestamp and writes it to `localStorage` under a
- * per-character key.
- */
-export function saveDraft( characterId: number, sheetData: SheetData ): void {
-	try {
-		const payload: StoredDraft = { sheetData, savedAt: Date.now() };
-		window.localStorage.setItem(
-			storageKey( characterId ),
-			JSON.stringify( payload )
-		);
-	} catch {
-		// Autosave is a convenience, never something a real edit should be blocked on.
-	}
 }
 
 /**

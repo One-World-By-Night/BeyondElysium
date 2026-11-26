@@ -7,6 +7,7 @@ use BeyondElysium\Models\Game;
 use BeyondElysium\Models\Game_Member;
 use BeyondElysium\Models\Mail_Log;
 use BeyondElysium\Models\Notification_Queue;
+use BeyondElysium\Services\Notices;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -115,6 +116,8 @@ class Notifications {
 	 * @return void
 	 */
 	public static function enqueue( $change, $character, int $reviewed_by ): void {
+		Notices::decided( $change, $character, $reviewed_by );
+
 		$wp_user_id = (int) ( $character->wp_user_id ?? 0 );
 		if ( ! $wp_user_id || $wp_user_id === $reviewed_by ) {
 			return;
@@ -557,6 +560,8 @@ class Notifications {
 			}
 			Notification_Queue::delete_ids( array_map( static fn( $row ) => (int) $row->id, $rows ) );
 		}
+
+		self::send_waiting_digests();
 	}
 
 	/**
@@ -795,6 +800,8 @@ class Notifications {
 	 * @return void
 	 */
 	public static function flush(): void {
+		Notices::flush_decided();
+
 		foreach ( self::$pending as $wp_user_id => $items ) {
 			$user = get_userdata( (int) $wp_user_id );
 			$meta = [
@@ -1052,7 +1059,12 @@ class Notifications {
 		$link  = self::staff_page_url( 'approval-queue', (string) ( $game->slug ?? '' ) );
 		$about = [ 'kind' => 'secret_told', 'entity_type' => 'secret', 'entity_id' => (int) ( $secret->id ?? 0 ) ];
 
-		foreach ( self::staff_including_narrators( $game, $about ) as $user ) {
+		$address    = self::staff_address_of( $game );
+		$recipients = $address !== ''
+			? ( self::allowed( 0, $game, $about ) ? [ self::address_recipient( $game, $address ) ] : [] )
+			: self::staff_including_narrators( $game, $about );
+
+		foreach ( $recipients as $user ) {
 			$lines = [
 				sprintf(
 					/* translators: %s: display name */
@@ -1091,6 +1103,232 @@ class Notifications {
 			$url .= '&game_slug=' . rawurlencode( $game_slug );
 		}
 		return $url;
+	}
+
+	/**
+	 * Tells the people who asked for it that a player sent changes that wait for a Storyteller: the chronicle's staff
+	 * address when it has one and keeps pace with each submission, and each HST and AST who chose to hear of each
+	 * submission. Each one left out is recorded in the mail log with why.
+	 *
+	 * @param object             $game
+	 * @param object             $character The character the changes are for.
+	 * @param array<int,object>  $changes   The changes of the submission that wait, decoded.
+	 * @param int                $by        Who sent them, who is not told.
+	 * @return void
+	 */
+	public static function changes_waiting( object $game, object $character, array $changes, int $by ): void {
+		if ( $changes === [] ) {
+			return;
+		}
+
+		$about   = [ 'kind' => 'changes_waiting', 'entity_type' => 'character', 'entity_id' => (int) ( $character->id ?? 0 ) ];
+		$count   = count( $changes );
+		$subject = sprintf(
+			/* translators: 1: chronicle name, 2: how many changes, 3: the character's name */
+			_n(
+				'[Beyond Elysium] %1$s: %2$d change from %3$s is waiting',
+				'[Beyond Elysium] %1$s: %2$d changes from %3$s are waiting',
+				$count,
+				'beyond-elysium'
+			),
+			(string) $game->name,
+			$count,
+			(string) $character->name
+		);
+
+		foreach ( self::waiting_recipients( $game, $about, 'each', $by ) as $user ) {
+			$lines = [
+				sprintf(
+					/* translators: %s: display name */
+					__( 'Hi %s,', 'beyond-elysium' ),
+					$user->display_name
+				),
+				'',
+				sprintf(
+					/* translators: 1: the character's name, 2: chronicle name */
+					__( '%1$s sent changes that wait for a Storyteller in %2$s:', 'beyond-elysium' ),
+					(string) $character->name,
+					(string) $game->name
+				),
+				'',
+			];
+			foreach ( $changes as $change ) {
+				$lines[] = '- ' . self::waiting_line( $change );
+			}
+			$note = trim( (string) ( $changes[0]->notes ?? '' ) );
+			if ( $note !== '' ) {
+				$lines[] = '';
+				$lines[] = sprintf(
+					/* translators: %s: the note a player left for the Storyteller */
+					__( 'Note from the player: %s', 'beyond-elysium' ),
+					$note
+				);
+			}
+			$lines[] = '';
+			$lines[] = self::staff_page_url( 'approval-queue', (string) $game->slug );
+
+			Mailer::send( $user->user_email, $subject, implode( "\n", $lines ), self::meta( $game, (int) $user->ID, $about + [ 'subject' => $subject ] ) );
+		}
+	}
+
+	/**
+	 * Once a day, tells the people who asked for a daily summary what is waiting in their chronicle: how many changes
+	 * from how many characters, and a line for each character. Nothing is sent for a chronicle with nothing waiting.
+	 *
+	 * @return void
+	 */
+	public static function send_waiting_digests(): void {
+		foreach ( Game::all() as $game ) {
+			$waiting = \BeyondElysium\Models\Change::for_game( (string) $game->slug, [ 'status' => 'pending' ] );
+			if ( $waiting === [] ) {
+				continue;
+			}
+
+			$by_character = [];
+			foreach ( $waiting as $change ) {
+				$by_character[ (int) $change->character_id ] = ( $by_character[ (int) $change->character_id ] ?? 0 ) + 1;
+			}
+
+			$names = [];
+			foreach ( array_keys( $by_character ) as $character_id ) {
+				$character           = \BeyondElysium\Models\Character::find( $character_id );
+				$names[ $character_id ] = $character ? (string) $character->name : __( 'A character', 'beyond-elysium' );
+			}
+
+			$about   = [ 'kind' => 'changes_waiting_digest' ];
+			$subject = sprintf(
+				/* translators: 1: chronicle name, 2: how many changes wait, 3: how many characters they are for */
+				__( '[Beyond Elysium] Waiting in %1$s: %2$d changes from %3$d characters', 'beyond-elysium' ),
+				(string) $game->name,
+				count( $waiting ),
+				count( $by_character )
+			);
+
+			foreach ( self::waiting_recipients( $game, $about, 'daily', 0 ) as $user ) {
+				$lines = [
+					sprintf(
+						/* translators: %s: display name */
+						__( 'Hi %s,', 'beyond-elysium' ),
+						$user->display_name
+					),
+					'',
+				];
+				foreach ( $by_character as $character_id => $changes ) {
+					$lines[] = sprintf(
+						/* translators: 1: a character's name, 2: how many of its changes wait */
+						_n( '- %1$s: %2$d change', '- %1$s: %2$d changes', $changes, 'beyond-elysium' ),
+						$names[ $character_id ],
+						$changes
+					);
+				}
+				$lines[] = '';
+				$lines[] = self::staff_page_url( 'approval-queue', (string) $game->slug );
+
+				Mailer::send( $user->user_email, $subject, implode( "\n", $lines ), self::meta( $game, (int) $user->ID, $about + [ 'subject' => $subject ] ) );
+			}
+		}
+	}
+
+	/**
+	 * What a waiting change says in an email: what it does, what it costs and why it waits.
+	 *
+	 * @param object $change
+	 */
+	private static function waiting_line( object $change ): string {
+		$data = is_array( $change->change_data ?? null ) ? $change->change_data : [];
+		$line = \BeyondElysium\Services\Display\Change_Description::describe( (string) $change->change_type, $data );
+		$cost = (float) ( $change->xp_cost ?? 0 );
+		if ( $cost > 0 ) {
+			$line .= ' ' . sprintf(
+				/* translators: %d: the XP a change costs */
+				__( '(%d XP)', 'beyond-elysium' ),
+				(int) ceil( $cost )
+			);
+		}
+		$reason = trim( (string) ( $change->reason ?? '' ) );
+		return $reason === '' ? $line : $line . ' - ' . $reason;
+	}
+
+	/**
+	 * Who hears of changes waiting at a given pace: the staff address when the chronicle's pace is that one, and each
+	 * HST and AST whose own choice is it. A Storyteller who has made no choice hears of each submission on a chronicle
+	 * with no staff address, and nothing on one with an address, since the address carries it.
+	 *
+	 * @param object              $game
+	 * @param array<string,mixed> $about  What the email is.
+	 * @param string              $pace   'each' or 'daily'.
+	 * @param int                 $by     Someone to leave out.
+	 * @return array<int,\WP_User|\stdClass>
+	 */
+	private static function waiting_recipients( object $game, array $about, string $pace, int $by ): array {
+		$recipients = [];
+		$address    = self::staff_address_of( $game );
+
+		if ( $address !== '' && self::staff_pace_of( $game ) === $pace && self::allowed( 0, $game, $about ) ) {
+			$recipients[] = self::address_recipient( $game, $address );
+		}
+
+		$told = [];
+		foreach ( Game_Member::for_game( (int) $game->id ) as $member ) {
+			$wp_user_id = (int) $member->wp_user_id;
+			if ( ! in_array( $member->role, [ 'hst', 'ast' ], true ) || $wp_user_id === $by || isset( $told[ $wp_user_id ] ) ) {
+				continue;
+			}
+			$told[ $wp_user_id ] = true;
+			$choice              = self::waiting_preference( $wp_user_id ) ?? ( $address !== '' ? 'never' : 'each' );
+			if ( $choice !== $pace ) {
+				continue;
+			}
+			$user = self::recipient( $wp_user_id, $game, $about );
+			if ( $user ) {
+				$recipients[] = $user;
+			}
+		}
+		return $recipients;
+	}
+
+	/**
+	 * A Storyteller's own choice of how often to hear of changes waiting: 'each', 'daily' or 'never', or null when they
+	 * have made none.
+	 *
+	 * @param int $wp_user_id
+	 */
+	public static function waiting_preference( int $wp_user_id ): ?string {
+		$value = get_user_meta( $wp_user_id, User_Settings::WAITING_NOTIFY_META, true );
+		return in_array( $value, User_Settings::WAITING_NOTIFY_VALUES, true ) ? (string) $value : null;
+	}
+
+	/**
+	 * The chronicle's staff address, or an empty string when it has none.
+	 *
+	 * @param object $game
+	 */
+	public static function staff_address_of( object $game ): string {
+		$address = is_string( $game->settings->staff_email ?? null ) ? trim( $game->settings->staff_email ) : '';
+		return $address !== '' && is_email( $address ) ? $address : '';
+	}
+
+	/**
+	 * How often the staff address hears of changes waiting: 'each' submission or 'daily'.
+	 *
+	 * @param object $game
+	 */
+	public static function staff_pace_of( object $game ): string {
+		return ( $game->settings->staff_email_frequency ?? 'each' ) === 'daily' ? 'daily' : 'each';
+	}
+
+	/**
+	 * The chronicle's staff address as a recipient of an email.
+	 *
+	 * @param object $game
+	 */
+	private static function address_recipient( object $game, string $address ): \stdClass {
+		return (object) [
+			'ID'           => 0,
+			/* translators: %s: chronicle name */
+			'display_name' => sprintf( __( '%s staff', 'beyond-elysium' ), (string) $game->name ),
+			'user_email'   => $address,
+		];
 	}
 
 	/**
@@ -1212,14 +1450,20 @@ class Notifications {
 	}
 
 	/**
-	 * The chronicle's HSTs and ASTs who should get a staff notification: each once, with an email address, not opted out,
-	 * on a chronicle with notifications on. Each one left out is recorded in the mail log with the reason.
+	 * Who should get a staff notification: the chronicle's staff address when it names one, otherwise each HST and AST
+	 * once, with an email address, not opted out, on a chronicle with notifications on. Each one left out is recorded in
+	 * the mail log with the reason.
 	 *
 	 * @param object              $game
 	 * @param array<string,mixed> $about What the email is: kind, and optionally entity_type and entity_id.
-	 * @return array<int,\WP_User>
+	 * @return array<int,\WP_User|\stdClass>
 	 */
 	private static function storytellers( object $game, array $about ): array {
+		$address = self::staff_address_of( $game );
+		if ( $address !== '' ) {
+			return self::allowed( 0, $game, $about ) ? [ self::address_recipient( $game, $address ) ] : [];
+		}
+
 		$users = [];
 		foreach ( Game_Member::for_game( (int) $game->id ) as $member ) {
 			$wp_user_id = (int) $member->wp_user_id;

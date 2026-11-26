@@ -194,5 +194,41 @@
   {
     "name": "raising a raised_by pool (Hunter Virtue via Conviction)",
     "output": "Mercy raised to 4 for 10 Conviction"
+  },
+  {
+    "name": "a permanent spend with the rating before and after",
+    "output": "Spent 1 permanent Willpower (6 \u2192 5)"
+  },
+  {
+    "name": "a pool's temporary points spent",
+    "output": "Blood: temporary 8 \u2192 7"
+  },
+  {
+    "name": "a wound taken",
+    "output": "Took 1 lethal damage"
+  },
+  {
+    "name": "a wound healed",
+    "output": "Healed 2 bashing damage"
+  },
+  {
+    "name": "a Trait lost tonight",
+    "output": "Lost Eagle Eye tonight"
+  },
+  {
+    "name": "an Ability expended tonight",
+    "output": "Expended 2 levels of Brawl tonight"
+  },
+  {
+    "name": "a single Ability level expended tonight",
+    "output": "Expended 1 level of Brawl tonight"
+  },
+  {
+    "name": "the night's losses cleared",
+    "output": "The night's losses were cleared"
+  },
+  {
+    "name": "a night closed",
+    "output": "Night closed: 2026-11-20"
   }
 ]

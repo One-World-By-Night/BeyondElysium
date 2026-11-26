@@ -360,6 +360,42 @@ class CatalogValidatorTest extends TestCase {
 		}
 	}
 
+	public function test_a_pool_may_be_marked_rating_only_or_accumulating(): void {
+		foreach ( [ 'rating_only', 'accumulates' ] as $marker ) {
+			$data = $this->block( 'resource_pool', [ 'pools' => [ $this->pool( [ $marker => true ] ) ] ] );
+			$this->assertSame( [], Catalog_Validator::validate_block( $data, 'test-block' ), $marker );
+		}
+	}
+
+	public function test_a_rating_only_pool_may_also_be_spent_permanently(): void {
+		$data = $this->block( 'resource_pool', [ 'pools' => [ $this->pool( [ 'rating_only' => true, 'permanent_spend' => true ] ) ] ] );
+		$this->assertSame( [], Catalog_Validator::validate_block( $data, 'test-block' ) );
+	}
+
+	public function test_a_pool_marker_is_true_or_absent(): void {
+		foreach ( [ 'rating_only', 'accumulates' ] as $marker ) {
+			foreach ( [ false, 'yes', 1, null ] as $bad ) {
+				$data = $this->block( 'resource_pool', [ 'pools' => [ $this->pool( [ $marker => $bad ] ) ] ] );
+				$this->assertRejects( $data, "`{$marker}` must be true" );
+			}
+		}
+	}
+
+	public function test_a_pool_cannot_be_both_rating_only_and_accumulating(): void {
+		$data = $this->block( 'resource_pool', [ 'pools' => [ $this->pool( [ 'rating_only' => true, 'accumulates' => true ] ) ] ] );
+		$this->assertRejects( $data, 'both `rating_only` and `accumulates`' );
+	}
+
+	public function test_a_pool_marker_off_a_pool_is_rejected(): void {
+		foreach ( [ 'rating_only', 'accumulates' ] as $marker ) {
+			$data = $this->block( 'resource_pool', [ 'pools' => [ $this->pool() ], $marker => true ] );
+			$this->assertRejects( $data, "`{$marker}` belongs on a pool" );
+
+			$data = $this->block( 'trait_list', [ 'items' => [ [ 'name' => 'Brawl' ] ], $marker => true ] );
+			$this->assertRejects( $data, "`{$marker}` belongs on a pool" );
+		}
+	}
+
 	public function test_a_pool_with_a_book_maximum_inside_its_maximum_passes(): void {
 		$data = $this->block( 'resource_pool', [ 'pools' => [ $this->pool( [ 'max' => 10, 'book_max' => 5 ] ) ] ] );
 		$this->assertSame( [], Catalog_Validator::validate_block( $data, 'test-block' ) );

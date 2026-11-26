@@ -235,6 +235,35 @@ class HunterSpentFromAndRaisedByThreadTest extends WP_UnitTestCase {
 	/**
 	 * Run as the character's owning player, not the administrator.
 	 */
+	public function test_conviction_gained_at_the_table_past_its_rating_pays_for_a_raise(): void {
+		[ , $owned_id ] = $this->owned_hunter( 3, 0 );
+
+		$gained = $this->send( 'POST', "/characters/{$owned_id}/temporary/pool", [
+			'block_slug' => 'hunter-resources',
+			'pool_name'  => 'Conviction',
+			'delta'      => 10,
+		] );
+		$this->assertSame( 200, $gained->get_status(), wp_json_encode( $gained->get_data() ) );
+		$this->assertSame( 10, $gained->get_data()['temporary'], 'ten temporary Conviction on a rating of three' );
+		$this->assertSame( 3, $gained->get_data()['permanent'] );
+
+		$submitted = $this->send( 'POST', "/characters/{$owned_id}/changes", [
+			'change_type' => 'modify_resource',
+			'category'    => 'hunter-virtues',
+			'change_data' => [ 'block_slug' => 'hunter-virtues', 'values' => [ 'Mercy' => [ 'permanent' => 4, 'temporary' => 0 ] ] ],
+		] );
+		$this->assertSame( 201, $submitted->get_status(), wp_json_encode( $submitted->get_data() ) );
+
+		$change_id = (int) $submitted->get_data()->id;
+		wp_set_current_user( $this->admin_id );
+		$approved = $this->send( 'PUT', "/changes/{$change_id}", [ 'status' => 'approved' ] );
+		$this->assertSame( 200, $approved->get_status(), wp_json_encode( $approved->get_data() ) );
+
+		$sheet = Character::find( $owned_id )->sheet_data;
+		$this->assertSame( 4, $sheet['hunter-virtues']['Mercy']['permanent'] );
+		$this->assertSame( 0, $sheet['hunter-resources']['Conviction']['temporary'] );
+	}
+
 	public function test_raising_mercy_with_only_9_temporary_conviction_is_refused(): void {
 		[ , $owned_id ] = $this->owned_hunter( 3, 9 );
 

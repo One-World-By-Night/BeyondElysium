@@ -34,7 +34,7 @@ Portrait, then **Name**, **Type**, **Status**, **Player**, **XP Earned**, and **
 
 ### Tapping a trait
 
-Tap any trait or power on the sheet and a panel opens, from the bottom of the screen on a phone and from the right on a computer. It shows what the next dot or level would cost and whether a Storyteller has to approve it, the chronicle's own description and source for it, what it needs, and this character's history with it. **See all in History** and **Change it in Edit** are in it. Nothing is bought in the panel: a raise is made in Edit. **Escape**, **Close**, or a tap outside puts it away.
+Tap any trait or power on the sheet and a panel opens, from the bottom of the screen on a phone and from the right on a computer. It shows what the next dot or level would cost and whether a Storyteller has to approve it, the chronicle's own description and source for it, what it needs, and this character's history with it. **See all in History** and **Change it in Edit** are in it. A cart chip, such as "Cart: 3 · 6 XP", shows in the character's header whenever the cart has something in it, and opens Review. Under the name, a line says where the XP stands: "10 XP to spend · 6 XP held · 3 changes waiting". On a character you can edit, the panel also has an **Add to cart** button that names the next step and its price, for example "Raise to x4 · 1 XP" ("Raise to level 3" for a tiered power, "Add Occult x1" for something new). It puts that change in your cart and buys nothing; the cart is sent from **Review**. Once the trait is in the cart the panel says **In your cart · Review**. **Escape**, **Close**, or a tap outside puts it away.
 
 ### The Play view
 

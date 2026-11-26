@@ -22,6 +22,7 @@
       },
       {
         "name": "Conviction",
+        "accumulates": true,
         "value_type": "integer",
         "default_start": 3,
         "max": 10

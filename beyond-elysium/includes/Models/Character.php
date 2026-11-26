@@ -6,6 +6,7 @@ use BeyondElysium\Core\Notifications;
 use BeyondElysium\Database\Manager;
 use BeyondElysium\Database\Transaction;
 use BeyondElysium\Services\Chronicle_Players;
+use BeyondElysium\Services\Pool_Markers;
 use BeyondElysium\Utils\Uuid;
 
 defined( 'ABSPATH' ) || exit;
@@ -544,10 +545,10 @@ class Character {
 	 * @param int    $id
 	 * @param string $block_slug
 	 * @param string $pool_name
-	 * @param int    $value
+	 * @param int|float $value
 	 * @return bool False when the character does not exist, or does not hold that pool.
 	 */
-	public static function set_pool_temporary( int $id, string $block_slug, string $pool_name, int $value ): bool {
+	public static function set_pool_temporary( int $id, string $block_slug, string $pool_name, int|float $value ): bool {
 		$character = self::find( $id );
 		if ( ! $character ) {
 			return false;
@@ -592,7 +593,8 @@ class Character {
 
 	/**
 	 * Resets every resource pool a character holds back to its permanent rating, found directly on sheet_data - a
-	 * pool is any `{permanent, temporary}` pair, wherever it is held.
+	 * pool is any `{permanent, temporary}` pair, wherever it is held. A pool with no temporary points and a pool
+	 * whose temporary points build up are left as they are.
 	 *
 	 * @param int $id
 	 * @return bool False only when the character itself does not exist.
@@ -603,11 +605,15 @@ class Character {
 			return false;
 		}
 
+		$kept = Pool_Markers::for_character( $character );
 		foreach ( (array) $character->sheet_data as $block_slug => $block ) {
 			if ( ! is_array( $block ) ) {
 				continue;
 			}
 			foreach ( $block as $pool_name => $pool ) {
+				if ( isset( $kept[ $block_slug ][ $pool_name ] ) ) {
+					continue;
+				}
 				if ( is_array( $pool ) && array_key_exists( 'permanent', $pool ) && array_key_exists( 'temporary', $pool ) ) {
 					self::reset_pool_to_permanent( $id, (string) $block_slug, (string) $pool_name );
 				}

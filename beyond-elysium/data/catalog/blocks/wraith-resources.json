@@ -33,6 +33,7 @@
       },
       {
         "name": "Angst",
+        "accumulates": true,
         "value_type": "integer",
         "default_start": 1,
         "max": 10

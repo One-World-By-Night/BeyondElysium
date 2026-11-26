@@ -60,7 +60,7 @@ Mostrado só a um jogador, no próprio personagem, na visualização **História
 - **Onde você ganhou** - obrigatório, até 200 caracteres.
 - **Data da sessão** - opcional; não pode ser depois de hoje.
 - **Detalhes** - opcional, até 2.000 caracteres.
-- **Enviar solicitação** - envia na hora, separado de qualquer coisa na fila em **Alterações Pendentes** abaixo, que continua na fila. O painel então diz "Enviado. Os seus Narradores vão revisar." e se limpa.
+- **Enviar solicitação** - envia na hora, separado de qualquer coisa no seu carrinho, que continua lá. O painel então diz "Enviado. Os seus Narradores vão revisar." e se limpa.
 
 Um pedido sempre espera um Narrador, sejam quais forem as configurações de aprovação desta crônica, e aparece na Fila de Aprovação com o que você digitou. Veja o [Guia do Jogador](../player-guide.md#2-editando-sua-ficha) e a [Fila de Aprovação](approval-queue.md).
 
@@ -87,23 +87,20 @@ A seção de notas de interpretação só para o Narrador de um NPC (voz, trejei
 
 Uma lista de traços ou seção de poderes que a crônica configurou para deixar os jogadores escolherem a própria ordem (veja [Blocos de Esquema](schema-blocks.md)) aparece achatada, na ordem em que você a deixou por último, sem agrupamento - e com um botão **Reordenar** acima da lista. Clique nele para arrastar as linhas ao lugar, ou use os botões **▲**/**▼** ao lado de cada uma; **Salvar ordem** envia a nova ordem na hora, sem aprovação e sem custo de XP, já que nada do que você tem muda. **Cancelar** deixa a ordem exatamente como estava. Uma crônica que desliga isso para uma seção volta à exibição agrupada normal, e o botão Reordenar some.
 
-### Alterações Pendentes
+### O carrinho
 
-Tudo o que você muda nas seções acima fica na fila aqui em vez de tocar a ficha na hora. Uma barra no pé da tela mostra o que está na fila, e ela só aparece enquanto houver algo:
+Tudo o que você muda nas seções acima vai para o seu carrinho em vez de tocar a ficha. O carrinho é o conjunto de alterações que você fez e ainda não enviou, guardado neste dispositivo para cada personagem, então uma aba fechada não o perde.
 
-- **A linha única.** Fechada, a barra diz algo como "3 alterações · +6 XP · 4 XP restantes": quantas alterações estão na fila, quanto custam no total e quanto sobraria para você. Como jogador, "4 XP restantes" vira "2 XP acima do saldo", em vermelho, se as alterações custarem mais do que você tem. Um Narrador vê só a contagem. O custo e o que sobra aparecem quando os preços carregam.
-- **Revisar** - abre a lista completa embaixo dessa linha, e **Fechar** a guarda de volta. A barra se abre sozinha quando uma alteração na fila não pode ser enviada como está, ou quando um envio falha, para você ver o motivo.
-- Uma lista corrida, uma linha por mudança, nomeando o que mudou e, quando o preço carrega, o custo em XP e se precisa de revisão do Narrador. Um traço ou poder que não está no catálogo diz "Preço definido por um Narrador na aprovação" em vez de um custo: ainda não tem preço, e o total o deixa de fora até um Narrador definir um.
-- O **Total** de XP de tudo o que está na fila e **Não gasto após** - como ficaria o seu XP depois que tudo for aplicado. Como jogador, isso vira um aviso se ficar negativo.
-- **Enviar Alterações** - envia tudo o que está na fila ao servidor junto, num só pedido. Como jogador, fica desativado se deixaria você com XP negativo.
-- **Descartar** - abre uma confirmação ("Descartar alterações não salvas?") antes de reverter todo campo ao que está na ficha agora e levar você de volta à Ficha do personagem.
+- **O medidor.** Uma barra fixa no pé da Edição mostra sempre o que você pode gastar: "10 XP para gastar". Com alterações no carrinho ela diz "Carrinho: 3 · 6 XP · 4 restantes", e "2 XP excedidos", em vermelho, quando o carrinho custa mais do que você tem livre. O XP retido para alterações que ainda aguardam um Narrador não está livre para gastar, então já foi descontado. Um Narrador vê a contagem e o preço sem limite. O mesmo "Carrinho: 3 · 6 XP" aparece como uma etiqueta no cabeçalho do personagem em todas as visualizações, e qualquer um dos dois abre a Revisão.
+- **Revisar** abre uma janela (a tela inteira no celular). As linhas vêm em dois grupos, **Aplica agora** e **Aguarda um Narrador**, cada uma com o seu preço e, nas que aguardam, o motivo. **Remover** tira uma linha e devolve aquela parte da ficha ao que era. Sob as linhas ficam o **Total**, o que é **Gasto agora**, o que fica **Restante depois** e "6 XP retidos até um Narrador decidir" para as linhas que aguardam. Uma **Nota para seu Narrador** (até 1.000 caracteres) aparece quando algo aguarda e vai com cada alteração que você enviar; os Narradores a leem na Fila de Aprovação como "Nota do jogador".
+- **Enviar** manda o carrinho inteiro num só pedido. A Revisão então se lê como a confirmação de um pedido: "Enviado. 2 aplicadas agora. 3 aguardam um Narrador, com 6 XP retidos." com **Ver no Histórico**. Enviar fica desativado enquanto uma linha não puder ser enviada (a Revisão a nomeia) ou o carrinho custar mais do que você tem livre. Se o servidor recusar o conjunto, o carrinho continua como estava.
+- **Esvaziar carrinho** devolve cada linha ao que a ficha tem, depois de perguntar, e mantém você onde está.
+- **Mudou desde que você adicionou.** Se um Narrador mudar uma parte da ficha que o seu carrinho também mudou, essa parte volta da ficha, não do carrinho, e o carrinho diz "A ficha mudou desde que você adicionou isto: Ocultismo. Adicione de novo se ainda quiser."
+- As alterações que você envia saem do carrinho. As que aguardam viram um pedido no **Histórico**, e o seu XP fica retido para elas.
 
-Depois de enviar, você pode ver um destes, ou os dois. Quando nada mais resta na fila, a barra some e eles aparecem na própria página:
+Você também pode adicionar ao carrinho sem abrir a Edição: o painel que abre quando você toca num traço (veja [Ficha do Personagem](character-sheet.md)) tem **Adicionar ao carrinho**, por exemplo "Subir para x4 · 1 XP", e as linhas de traços e de poderes da Edição, e o diálogo de Adicionar, têm um botão **Sobre** que abre o mesmo painel.
 
-- Um aviso de que o envio falhou - nada nele foi salvo, já que o conjunto inteiro dá certo ou falha junto. Revise e clique em **Enviar Alterações** de novo para tentar outra vez.
-- Um aviso de que algumas mudanças foram enviadas e aguardam a aprovação do Narrador - não aparecem na ficha até lá. Se a sua crônica sempre espera numa remoção, numa classificação menor, num novo rótulo ou numa troca de nome (Regras de Aprovação), tudo o que essa regra pegar espera junto com o que mais você enviou ao lado, até uma adição que de outro modo passaria direto.
-
-Se você sair com algo na fila sem enviar, o navegador avisa antes de você navegar para fora, e as suas edições são salvas neste navegador automaticamente. Da próxima vez que você abrir o mesmo personagem aqui, um aviso oferece **Restaurar** ou **Descartar** esse rascunho salvo.
+Se você sair com algo no carrinho, o navegador avisa antes de você navegar para fora, e o carrinho é salvo neste dispositivo enquanto você trabalha.
 
 ## Tarefas comuns
 
@@ -119,24 +116,25 @@ Se você sair com algo na fila sem enviar, o navegador avisa antes de você nave
 
 1. Abra o personagem e clique em **Editar** na fileira de visualizações.
 2. Use o controle de cada seção para adicionar, mudar ou remover um traço, poder, valor de reserva ou campo de identidade.
-3. Clique em **Revisar** na barra no pé da tela e confira cada alteração, o **Total** e o **Não gasto após** corridos.
-4. Clique em **Enviar Alterações**.
+3. Clique em **Revisar** no medidor no pé da tela (ou na etiqueta do carrinho no cabeçalho) e confira cada linha e os totais.
+4. Se algo aguardar um Narrador, você pode escrever uma **Nota para seu Narrador**. Depois clique em **Enviar**.
 
 ### Atualizar o Antecedente ou as Notas
 
 1. Abra o personagem e clique em **História**.
 2. Digite em **Antecedentes** ou **Notas**.
-3. Não há nada para clicar: salva um instante depois que você para de digitar, e a linha sob os campos diz **Salvo**. Isso é independente do que está na fila em Alterações Pendentes.
+3. Não há nada para clicar: salva um instante depois que você para de digitar, e a linha sob os campos diz **Salvo**. Isso é independente do seu carrinho.
 
-### Restaurar um rascunho de uma sessão anterior
+### Voltar ao seu carrinho
 
-1. Abra a visualização **Editar** do personagem. Se você deixou alterações não salvas aqui antes, um aviso diz isso e informa quando foram salvas.
-2. Clique em **Restaurar** para trazê-las de volta, ou em **Descartar** para largá-las de vez.
+1. Abra o personagem. A etiqueta do carrinho no cabeçalho, e o medidor na Edição, mostram o que você deixou nele.
+2. Uma parte da ficha que um Narrador mudou nesse meio-tempo não volta; o carrinho a nomeia para você adicioná-la de novo.
+3. Um rascunho da ficha inteira salvo por uma versão anterior aparece uma vez na Edição com **Restaurar** ou **Descartar**; restaurá-lo o transforma no seu carrinho.
 
-### Descartar alterações antes de enviar
+### Esvaziar o carrinho
 
-1. Na barra no pé da tela, clique em **Revisar** e depois em **Descartar**.
-2. Confirme "Descartar alterações não salvas?" - isso reverte todo campo e leva você de volta à Ficha do personagem.
+1. Clique em **Revisar** e depois em **Esvaziar carrinho**.
+2. Confirme "Esvaziar o carrinho?" - cada linha volta ao que a ficha tem, e você continua onde está.
 
 ## O que saber
 
@@ -151,18 +149,18 @@ Se você sair com algo na fila sem enviar, o navegador avisa antes de você nave
 - **Uma classificação acima do máximo do livro espera por um Narrador.** Algumas reservas podem ir além do que o livro permite (o Equilíbrio de uma Múmia vai até 10, e o livro para em 5). Pedir uma classificação acima do máximo do livro envia a alteração a um Narrador com o motivo, e um personagem novo não pode começar acima dele.
 - **Um nome personalizado sempre precisa de revisão.** Digitar um nome que não está no catálogo só salva em seções que permitem isso, e mesmo assim sempre vai a um Narrador para aprovação, não importa como a sua crônica configurou a aprovação automática.
 - **Os pontos são todos do mesmo tamanho** - nesta tela, na ficha e num PDF assinado. Os pontos de uma reserva e a classificação de um traço usam o mesmo ponto.
-- **Os rascunhos são por dispositivo.** As suas edições em andamento são salvas automaticamente neste navegador enquanto você as faz, então uma aba fechada ou uma falha não perde o seu trabalho - mas esse rascunho vive só no dispositivo em que você digitou, e só até você enviar ou descartar.
+- **O carrinho é por dispositivo.** O seu carrinho é salvo neste navegador enquanto você edita, então uma aba fechada ou uma falha não perde o seu trabalho - mas ele vive só no dispositivo que você usou, até você enviá-lo ou esvaziá-lo.
 - **Uma cópia visitante mantida atualizada não pode ser editada aqui.** Enquanto este personagem tem uma visita aberta e combinada, mantida atualizada, em outro lugar, editar ou enviar uma mudança é recusado até a visita terminar - "Mantido atualizado a partir de [crônica]. Faça as mudanças lá." Edite no lar verdadeiro dele. Veja [Enviar Ficha](transfer.md).
 
 ## Solução de problemas
 
-- **As minhas mudanças sumiram depois que enviei.** Provavelmente estão pendentes da revisão do Narrador, não perdidas - confira a visualização **Histórico** ou as mudanças pendentes do seu Painel.
-- **Não vejo a barra.** Ela só aparece enquanto houver algo na fila. Mude alguma coisa e ela aparece no pé da tela.
-- **Enviar Alterações não clica.** Como jogador, enviar deixaria você com XP negativo - reduza o que está comprando, ou peça mais a um Narrador.
+- **As minhas mudanças sumiram depois que enviei.** As linhas enviadas saem do carrinho. As que aguardam um Narrador aparecem como um pedido na visualização **Histórico**, onde você pode retirá-las, e no seu Painel.
+- **Não vejo o carrinho.** O medidor fica no pé da Edição, e a etiqueta do carrinho no cabeçalho aparece quando o carrinho tem algo.
+- **Enviar não clica.** O carrinho custa mais do que você tem livre para gastar (o medidor diz "XP excedidos"), ou uma linha não pode ser enviada como está - a Revisão a nomeia. Remova-a, reduza o que está comprando, ou peça mais XP a um Narrador.
 - **Um nome que digitei diz que não está no catálogo.** Confira a grafia primeiro. Se é mesmo novo, esta seção pode não aceitar entradas personalizadas - pergunte a um Narrador.
 - **"O seu personagem já está esperando os Narradores desta crônica aprovarem."** Você já tem um pedido de entrada pendente aqui - espere um Narrador revisá-lo antes de começar outro.
 - **Não consigo abrir um personagem que sei que existe.** Ou ele não está ligado à sua conta ainda, ou pertence a outra pessoa e você não é Narrador aqui - peça a um Narrador que o atribua a você.
-- **Nada do que enviei foi salvo.** O conjunto inteiro é enviado junto e falha junto - revise o erro, corrija o que está errado e clique em **Enviar Alterações** de novo.
+- **Nada do que enviei foi salvo.** O conjunto inteiro é enviado junto e falha junto, e o carrinho fica como estava - leia o erro na Revisão, corrija o que está errado e clique em **Enviar** de novo.
 - **"Mantido atualizado a partir de [crônica]. Faça as mudanças lá."** Este personagem é uma cópia visitante mantida atualizada - edite na crônica nomeada; a mudança chega aqui sozinha.
 
 ## Relacionados

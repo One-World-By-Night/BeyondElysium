@@ -84,7 +84,11 @@ export function membersNeedingPrice(
  */
 export function batchNotices( result: BatchApproveResponse ): string[] {
 	const notices: string[] = [];
-	if ( result.skipped.length > 0 ) {
+	const short = result.short_of_xp ?? [];
+	const otherwiseSkipped = result.skipped.filter(
+		( id ) => ! short.includes( id )
+	);
+	if ( otherwiseSkipped.length > 0 ) {
 		notices.push(
 			sprintf(
 				// translators: %d: number of changes not approved.
@@ -92,7 +96,21 @@ export function batchNotices( result: BatchApproveResponse ): string[] {
 					'%d change(s) were not approved - they were already reviewed or edited after the queue loaded. The queue has been reloaded.',
 					'beyond-elysium'
 				),
-				result.skipped.length
+				otherwiseSkipped.length
+			)
+		);
+	}
+	if ( short.length > 0 ) {
+		notices.push(
+			sprintf(
+				/* translators: %d: number of changes that cost more XP than their character has unspent */
+				_n(
+					'%d change costs more than its character has unspent. Award the XP first, or open it and price it lower.',
+					'%d changes cost more than their characters have unspent. Award the XP first, or open each one and price it lower.',
+					short.length,
+					'beyond-elysium'
+				),
+				short.length
 			)
 		);
 	}

@@ -67,6 +67,10 @@ export interface TraitListEditorProps {
 	 * Present when the add picker shows each option's price; `saved` is this block's saved data.
 	 */
 	pricing?: { saved: unknown };
+	/**
+	 * Present when a trait can be opened in the trait panel, from its row or from the name chosen to add.
+	 */
+	onAbout?: ( name: string ) => void;
 }
 
 /**
@@ -250,6 +254,7 @@ export function TraitListEditor( {
 	characterId,
 	sheetData,
 	pricing,
+	onAbout,
 }: TraitListEditorProps ) {
 	// Memoized: large catalogs make this expensive to recompute on every keystroke.
 	const itemNames = useMemo(
@@ -494,6 +499,20 @@ export function TraitListEditor( {
 				) }
 			</span>
 
+			{ onAbout && ! row.custom && (
+				<button
+					type="button"
+					className="be-trait-list-editor__about"
+					aria-label={ sprintf(
+						/* translators: %1$s: trait or item name */
+						__( 'About %1$s', 'beyond-elysium' ),
+						row.name
+					) }
+					onClick={ () => onAbout( row.name ) }
+				>
+					{ __( 'About', 'beyond-elysium' ) }
+				</button>
+			) }
 			{ ! readOnly && (
 				<button
 					type="button"
@@ -780,6 +799,22 @@ export function TraitListEditor( {
 											} )
 										}
 									/>
+									{ onAbout &&
+										draft.name !== '' &&
+										! draft.isCustom && (
+											<button
+												type="button"
+												className="be-trait-list-editor__about"
+												onClick={ () =>
+													onAbout( draft.name )
+												}
+											>
+												{ __(
+													'About this entry',
+													'beyond-elysium'
+												) }
+											</button>
+										) }
 								</div>
 							) }
 

@@ -29,6 +29,14 @@ class User_Settings {
 	const PLOT_NOTIFY_VALUES = [ 'immediate', 'daily', 'off' ];
 
 	/**
+	 * User meta key: how often a Storyteller hears of changes waiting for them.
+	 */
+	const WAITING_NOTIFY_META = 'be_waiting_notify';
+
+	/** @var string[] Valid WAITING_NOTIFY_META values. */
+	const WAITING_NOTIFY_VALUES = [ 'each', 'daily', 'never' ];
+
+	/**
 	 * Hooks the profile-screen field rendering and saving onto WordPress, grant_from_meta() onto user_has_cap, and the
 	 * media picker's query restriction.
 	 */
@@ -62,6 +70,9 @@ class User_Settings {
 		if ( ! in_array( $plot_notify, self::PLOT_NOTIFY_VALUES, true ) ) {
 			$plot_notify = 'immediate';
 		}
+		$waiting_notify  = get_user_meta( $user->ID, self::WAITING_NOTIFY_META, true );
+		$waiting_notify  = in_array( $waiting_notify, self::WAITING_NOTIFY_VALUES, true ) ? $waiting_notify : '';
+		$is_storyteller  = $can_set_notifications && self::is_storyteller( (int) $user->ID );
 		?>
 		<h2><?php esc_html_e( 'Beyond Elysium', 'beyond-elysium' ); ?></h2>
 		<table class="form-table" role="presentation">
@@ -151,8 +162,52 @@ class User_Settings {
 				</td>
 			</tr>
 			<?php endif; ?>
+			<?php if ( $is_storyteller ) : ?>
+			<tr>
+				<th scope="row">
+					<?php esc_html_e( 'Changes waiting for you', 'beyond-elysium' ); ?>
+				</th>
+				<td>
+					<fieldset>
+						<?php foreach ( [
+							''      => __( 'Whatever the chronicle sets: each submission, or nothing where it names a staff address', 'beyond-elysium' ),
+							'each'  => __( 'Each submission', 'beyond-elysium' ),
+							'daily' => __( 'Once a day', 'beyond-elysium' ),
+							'never' => __( 'Never', 'beyond-elysium' ),
+						] as $value => $label ) : ?>
+						<label>
+							<input
+								type="radio"
+								name="<?php echo esc_attr( self::WAITING_NOTIFY_META ); ?>"
+								value="<?php echo esc_attr( (string) $value ); ?>"
+								<?php checked( $waiting_notify, (string) $value ); ?>
+							/>
+							<?php echo esc_html( $label ); ?>
+						</label><br />
+						<?php endforeach; ?>
+						<p class="description">
+							<?php esc_html_e( 'When a player sends changes that wait for a Storyteller to approve - who sent them and what they ask for, with a link to the Approval Queue.', 'beyond-elysium' ); ?>
+						</p>
+					</fieldset>
+				</td>
+			</tr>
+			<?php endif; ?>
 		</table>
 		<?php
+	}
+
+	/**
+	 * Whether a user is an HST or AST of any chronicle, the people who hear of changes waiting.
+	 *
+	 * @param int $wp_user_id
+	 */
+	public static function is_storyteller( int $wp_user_id ): bool {
+		foreach ( \BeyondElysium\Models\Game_Member::for_user( $wp_user_id ) as $membership ) {
+			if ( in_array( $membership->role, [ 'hst', 'ast' ], true ) ) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -180,6 +235,15 @@ class User_Settings {
 			$plot_notify = 'immediate';
 		}
 		update_user_meta( $user_id, self::PLOT_NOTIFY_META, $plot_notify );
+
+		if ( isset( $_POST[ self::WAITING_NOTIFY_META ] ) && self::is_storyteller( $user_id ) ) {
+			$waiting = sanitize_text_field( wp_unslash( $_POST[ self::WAITING_NOTIFY_META ] ) );
+			if ( in_array( $waiting, self::WAITING_NOTIFY_VALUES, true ) ) {
+				update_user_meta( $user_id, self::WAITING_NOTIFY_META, $waiting );
+			} else {
+				delete_user_meta( $user_id, self::WAITING_NOTIFY_META );
+			}
+		}
 	}
 
 	/**

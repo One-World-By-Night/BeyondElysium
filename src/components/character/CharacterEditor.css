@@ -85,15 +85,6 @@
 	border-radius: 3px;
 }
 
-.be-character-editor__pending-notice {
-	padding: 0.75rem;
-	margin-bottom: 1rem;
-	border: 1px solid var(--be-gold-8);
-	background: var(--be-gold-16);
-	color: var(--be-gold-5);
-	border-radius: 3px;
-}
-
 .be-character-editor__draft-notice {
 	display: flex;
 	align-items: center;
@@ -121,92 +112,6 @@
 .be-character-editor__readonly-note {
 	color: var(--be-gray-10);
 	font-style: italic;
-}
-
-.be-character-editor__summary {
-	position: sticky;
-	bottom: var(--be-bottom-clearance, 0px);
-	z-index: 5;
-	background: var(--be-gray-29);
-	border: 1px solid var(--be-gray-16);
-	border-radius: 4px;
-	padding: 0.5rem 1rem;
-	margin-top: 1.5rem;
-
-	max-height: 33vh;
-	overflow-y: auto;
-
-	display: flex;
-	flex-direction: column;
-}
-
-/* The bar's one line: the count, the cost and what is left, with the button that opens the list. */
-.be-character-editor__chip {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 1rem;
-}
-
-.be-character-editor__chip-line {
-	margin: 0;
-	min-width: 0;
-	font-weight: 600;
-}
-
-.be-character-editor__review {
-	display: flex;
-	flex-direction: column;
-
-	min-height: 0;
-	flex: 1 1 auto;
-	margin-top: 0.5rem;
-}
-
-/* What a submit reported, shown on its own once nothing is pending. */
-.be-character-editor__result {
-	margin-top: 1.5rem;
-}
-
-/* The unbounded part, and the only scroller. */
-.be-character-editor__pending-list {
-
-	flex: 0 1 auto;
-	min-height: 0;
-	max-height: 18vh;
-	overflow-y: auto;
-	margin: 0.5rem 0;
-}
-
-.be-character-editor__totals,
-.be-character-editor__summary .be-character-editor__actions {
-	flex: 0 0 auto;
-}
-
-.be-character-editor__pending--invalid {
-	color: var(--be-red-1);
-}
-
-/* At phone width every pending row wraps onto two lines. */
-@media ( max-width: 768px ) {
-
-	.be-character-editor__pending-list {
-		max-height: 12vh;
-	}
-}
-
-.be-character-editor__totals {
-	font-weight: 600;
-}
-
-.be-character-editor__over-budget {
-	color: var(--be-red-6);
-}
-
-.be-character-editor__actions {
-	display: flex;
-	gap: 0.5rem;
-	margin-top: 0.75rem;
 }
 
 .be-character-editor__header-text h4 {
