@@ -97,6 +97,31 @@ interface BeyondElysiumGlobal {
 	 * "1", ...) despite the type - read it through `Number()` before comparing.
 	 */
 	currentUserId?: number | string;
+	currentUserName?: string;
+	/**
+	 * Whether this page is on Beyond Elysium's own app shell ("1"), or not ("").
+	 */
+	appLayout?: boolean | string;
+	/**
+	 * The site the app shell's header names first.
+	 */
+	site?: {
+		name: string;
+		homeUrl: string;
+		logoUrl: string;
+	};
+	/**
+	 * Where to sign in; the page adds its own address to come back to.
+	 */
+	loginUrl?: string;
+	/**
+	 * Where to sign out, for a signed-in viewer; empty otherwise.
+	 */
+	logoutUrl?: string;
+	/**
+	 * The plugin's own images, trailing-slashed.
+	 */
+	assetsUrl?: string;
 }
 
 /**

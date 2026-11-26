@@ -386,23 +386,39 @@ export const games = {
 		apiFetch( { path: `${ BASE }/${ slug }/my/capabilities` } ),
 
 	/**
-	 * Fetches the site-wide brand accent default.
+	 * Fetches the site-wide brand accent default and whether the app layout is on.
 	 */
-	getBranding: (): Promise< { accent_color: string } > =>
+	getBranding: (): Promise< Branding > =>
 		apiFetch( { path: `${ BASE }/branding` } ),
 
 	/**
 	 * Sets the site-wide brand accent default.
 	 */
-	updateBranding: (
-		accentColor: string
-	): Promise< { accent_color: string } > =>
+	updateBranding: ( accentColor: string ): Promise< Branding > =>
 		apiFetch( {
 			path: `${ BASE }/branding`,
 			method: 'PUT',
 			data: { accent_color: accentColor },
 		} ),
+
+	/**
+	 * Turns Beyond Elysium's own layout on My Chronicle and the Storyteller Toolkit on or off for the site.
+	 */
+	updateAppLayout: ( on: boolean ): Promise< Branding > =>
+		apiFetch( {
+			path: `${ BASE }/branding`,
+			method: 'PUT',
+			data: { app_layout: on },
+		} ),
 };
+
+/**
+ * The site's branding: the accent default and whether the app layout is on.
+ */
+export interface Branding {
+	accent_color: string;
+	app_layout: boolean;
+}
 
 // ---------------------------------------------------------------------------
 // Schema Blocks

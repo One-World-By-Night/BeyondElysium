@@ -1,0 +1,254 @@
+.be-app-header {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 12px 0;
+	border-bottom: 1px solid var(--be-gray-21);
+}
+
+.be-app-header__row,
+.be-app-header__context,
+.be-app-header__tools {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px 16px;
+	min-width: 0;
+}
+
+.be-app-header .be-app-header__site.be-app-header__site {
+	display: flex;
+	justify-content: flex-start;
+	align-items: center;
+	gap: 8px;
+	min-width: 0;
+	max-width: 100%;
+	font-weight: 700;
+	font-size: 1.15rem;
+	color: inherit;
+	text-decoration: none;
+}
+
+.be-app-header__logo {
+	max-height: 40px;
+	width: auto;
+}
+
+.be-app-header__site-name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.be-app-header__title {
+	margin: 0;
+	font-size: 1.05rem;
+	font-weight: 600;
+	color: var(--be-gray-6);
+}
+
+.be-app-header__tools {
+	margin-left: auto;
+}
+
+.be-app-header__account {
+	display: inline-flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 4px 8px;
+}
+
+.be-app-header__user {
+	color: var(--be-gray-6);
+}
+
+.be-app-character {
+	min-height: var(--be-tap-min, 32px);
+	max-width: 100%;
+	font: inherit;
+}
+
+.be-app-tabs ul {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	margin: 12px 0;
+	padding: 0;
+	list-style: none;
+}
+
+.be-app-tabs__tab.be-app-tabs__tab {
+	display: inline-block;
+	padding: 6px 12px;
+	border: 1px solid var(--be-gray-21);
+	border-radius: 999px;
+	color: inherit;
+	text-decoration: none;
+	white-space: nowrap;
+}
+
+.be-app-tabs__tab.be-app-tabs__tab[aria-current="page"] {
+	border-color: var(--be-st-accent, var(--be-blue-4));
+	background: var(--be-st-accent, var(--be-blue-4));
+	color: var(--be-gray-29);
+}
+
+.be-app-frame__content {
+	min-width: 0;
+}
+
+.be-app-footer {
+	margin-top: 32px;
+	padding-top: 16px;
+	border-top: 1px solid var(--be-gray-21);
+	font-size: 0.85rem;
+	color: var(--be-gray-6);
+}
+
+.be-app-footer__dark-pack {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	gap: 12px;
+	margin-top: 12px;
+}
+
+.be-app-footer__logo {
+	flex: 0 0 auto;
+}
+
+.be-app-footer__notice {
+	flex: 1 1 16rem;
+	min-width: 0;
+}
+
+.be-app-footer__notice p {
+	margin: 0 0 6px;
+}
+
+.be-app-bar {
+	display: none;
+}
+
+.be-app-more {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.be-app-more .be-app-more__item.be-app-more__item {
+	display: flex;
+	align-items: center;
+	justify-content: flex-start;
+	width: 100%;
+	padding: 10px 4px;
+	min-height: 44px;
+	color: inherit;
+	text-decoration: none;
+	border-bottom: 1px solid var(--be-gray-21);
+}
+
+.be-app-more .be-app-more__item.be-app-more__item[aria-current="page"] {
+	font-weight: 700;
+}
+
+.be-app-more__tools {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	padding-top: 8px;
+}
+
+@media (max-width: 768px) {
+
+	.be-app-frame:not(.be-app-frame--no-bar) .be-app-header__tools,
+	.be-app-tabs {
+		display: none;
+	}
+
+	.be-app-header__row {
+		flex-wrap: nowrap;
+	}
+
+	.be-app-frame--no-bar .be-app-header__row {
+		flex-wrap: wrap;
+	}
+
+	.be-app-header__site {
+		flex: 1 1 auto;
+	}
+
+	.be-app-header__title {
+		flex: 0 0 auto;
+		font-size: 0.95rem;
+		white-space: nowrap;
+	}
+
+	.be-app-header__context > * {
+		flex: 1 1 10rem;
+		min-width: 0;
+	}
+
+	.be-app-bar {
+		display: block;
+		position: fixed;
+		right: 0;
+		bottom: 0;
+		left: 0;
+		z-index: 9990;
+		height: var(--be-app-bar-height);
+		max-height: var(--be-app-bar-height);
+		padding-bottom: env(safe-area-inset-bottom, 0);
+		overflow: hidden;
+		background: var(--be-gray-29);
+		border-top: 1px solid var(--be-gray-21);
+	}
+
+	.be-app-bar ul {
+		display: flex;
+		height: 60px;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.be-app-bar li {
+		flex: 1 1 0;
+		min-width: 0;
+	}
+
+	.be-app-bar .be-app-bar__place.be-app-bar__place {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 2px;
+		width: 100%;
+		height: 100%;
+		min-height: 44px;
+		padding: 4px 2px;
+		border: 0;
+		border-radius: 0;
+		background: transparent;
+		color: var(--be-gray-6);
+		font: inherit;
+		font-size: 0.75rem;
+		text-decoration: none;
+		white-space: nowrap;
+		cursor: pointer;
+	}
+
+	.be-app-bar .be-app-bar__place.be-app-bar__place span {
+		max-width: 100%;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	.be-app-bar .be-app-bar__place.be-app-bar__place[aria-current="page"] {
+		color: var(--be-st-accent, var(--be-blue-4));
+		font-weight: 700;
+	}
+}

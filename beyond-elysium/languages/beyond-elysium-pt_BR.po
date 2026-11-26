@@ -16883,3 +16883,64 @@ msgstr "Nada corresponde."
 #: build/353.js:81
 msgid "This is long. Write your chronicle's own short note in your own words, with a page reference, and leave the book's wording out."
 msgstr "Está longo. Escreva a anotação curta da própria crônica com as suas palavras, com uma referência de página, e deixe de fora o texto do livro."
+
+#: includes/REST/App_Manifest_Controller.php:39
+msgid "This site has no such page."
+msgstr "Este site não tem essa página."
+
+#: build/259.js:146
+msgid "Use Beyond Elysium's own layout on My Chronicle and the Storyteller Toolkit"
+msgstr "Usar o layout próprio do Beyond Elysium em Minha Crônica e no Kit de Ferramentas do Narrador"
+
+#: build/259.js:146
+msgid "On, both pages show Beyond Elysium's own header with the site's name, the page's sections and its own footer, in place of the theme's. Off, they sit inside the theme as before. A page rebuilt with Elementor or given another template keeps its own layout either way."
+msgstr "Ligado, as duas páginas mostram o cabeçalho do próprio Beyond Elysium com o nome do site, as seções da página e o seu próprio rodapé, no lugar dos do tema. Desligado, elas ficam dentro do tema como antes. Uma página refeita com o Elementor ou com outro modelo mantém o seu próprio layout em qualquer caso."
+
+#: build/271.js:1 build/704.js:1
+msgid "Beyond Elysium is a non-commercial community project, not official World of Darkness material."
+msgstr "Beyond Elysium é um projeto comunitário sem fins comerciais, não é material oficial de World of Darkness."
+
+#: build/271.js:1 build/704.js:1
+msgid "Dark Pack logo"
+msgstr "Logotipo da Dark Pack"
+
+#: build/271.js:1 build/704.js:1
+msgid "Sign out"
+msgstr "Sair"
+
+#: build/271.js:1 build/704.js:1
+msgid "Sign in"
+msgstr "Entrar"
+
+#: build/271.js:1 build/704.js:1
+msgid "Sections"
+msgstr "Seções"
+
+#: build/271.js:1 build/704.js:1
+msgid "Main"
+msgstr "Principal"
+
+#: build/271.js:1 build/704.js:1
+msgid "More"
+msgstr "Mais"
+
+#: build/271.js:118 build/704.js:109
+msgid "Home"
+msgstr "Início"
+
+#: build/271.js:118
+msgid "Approvals"
+msgstr "Aprovações"
+
+#: build/704.js:108
+msgid "Choose a character"
+msgstr "Escolha um personagem"
+
+#. translators: 1: a character's name, 2: its creature type, such as Vampire
+#: build/704.js:109
+msgid "%1$s · %2$s"
+msgstr "%1$s · %2$s"
+
+#: build/271.js:122 build/704.js:112
+msgid "Sign in to see your chronicles."
+msgstr "Entre para ver as suas crônicas."

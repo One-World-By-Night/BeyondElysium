@@ -6,8 +6,10 @@ import { createRoot } from '@wordpress/element';
 import ErrorBoundary from './components/ErrorBoundary';
 import { markWidgetMount } from './lib/widgetMount';
 import PoweredByFooter from './components/shared/PoweredByFooter';
+import { footerUnderWidget, isAppLayout } from './lib/appNav';
 import './styles/theme.css';
 import './styles/breakpoints.css';
+import './styles/appShell.css';
 
 /**
  * Maps each data-be-widget attribute value to a lazy loader for its React component.
@@ -131,12 +133,11 @@ async function hydrateWidgets(): Promise< void > {
 			const config = parseConfig( el );
 			markWidgetMount( el );
 			const root = createRoot( el );
-			// Admin pages already carry their own PHP-rendered memorial footer (Admin_Menu::render_mount()).
-			const isAdminWidget = widgetName.startsWith( 'admin-' );
+			const withFooter = footerUnderWidget( widgetName, isAppLayout() );
 			root.render(
 				<ErrorBoundary label={ widgetName }>
 					<Component { ...config } />
-					{ ! isAdminWidget && <PoweredByFooter /> }
+					{ withFooter && <PoweredByFooter /> }
 				</ErrorBoundary>
 			);
 		} catch ( err ) {

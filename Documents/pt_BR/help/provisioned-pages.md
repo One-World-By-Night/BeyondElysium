@@ -23,7 +23,7 @@ Para conferir se as quatro ainda existem, ou recriar uma que falta: wp-admin →
 
 Estas não são telas próprias do Beyond Elysium - cada uma é uma página comum do WordPress com uma linha de conteúdo: um único ponto de montagem para uma das ferramentas de front-end do plugin.
 
-- **Minha Crônica** (`be-player`) e **Kit de Ferramentas do Narrador** (`be-storyteller`) trazem, cada uma, uma ferramenta em abas que troca de crônica. Veja [Minha Crônica](my-chronicle.md) e [Kit de Ferramentas do Narrador](storyteller-toolkit.md).
+- **Minha Crônica** (`be-player`) e **Kit de Ferramentas do Narrador** (`be-storyteller`) trazem, cada uma, uma ferramenta em abas que troca de crônica. Veja [Minha Crônica](my-chronicle.md) e [Kit de Ferramentas do Narrador](storyteller-toolkit.md). As duas mostram o layout próprio do Beyond Elysium no lugar do cabeçalho e do rodapé do tema, a menos que um administrador do site o desligue em [Identidade Visual](branding.md); uma página refeita com o Elementor ou com outro modelo mantém o seu próprio layout.
 - **Ficha de Personagem (Impressão)** (`character-sheet-print`) renderiza a ficha de um único personagem sem nada do cabeçalho, rodapé nem barra de administração do seu tema ao redor. Visitada com um personagem e uma crônica nomeados no próprio endereço e `print=1` acrescentado, ela abre o diálogo de impressão do navegador automaticamente depois que a ficha carregou - uma impressão simples do navegador, separada do PDF assinado que a própria ação **Imprimir / Exportar** da tela Ficha abre direto. Veja [Imprimir / Exportar](sheet-print-export.md).
 - **Verificar Personagem** (`be-verify`) é a página pública para a qual o link próprio de um código de verificação aponta. Veja [Verificar Personagem](verify.md).
 

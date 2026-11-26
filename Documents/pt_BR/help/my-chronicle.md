@@ -8,7 +8,7 @@ Qualquer pessoa autenticada. Pertencer a pelo menos uma crônica - como jogador,
 
 ## Como chegar lá
 
-Procure um link "Minha Crônica" na navegação do seu site - este plugin cria a página automaticamente. Se não encontrar, pergunte a um Narrador ou ao administrador do seu site onde ela está ligada.
+Procure um link "Minha Crônica" na navegação do seu site - este plugin cria a página automaticamente. Se não encontrar, pergunte a um Narrador ou ao administrador do seu site onde ela está ligada. No layout próprio do Beyond Elysium o Kit de Ferramentas do Narrador tem um link para ela no topo.
 
 ## A tela
 
@@ -28,6 +28,17 @@ Cada aba mostra o que você pode fazer na crônica escolhida - um Narrador aqui 
   - **Relatórios** - um pequeno seletor entre **Calendário do Jogo**, **Cartões de Local** e **Cartões de Ritual**, aberto a todo membro, Narrador ou não. O Calendário do Jogo lista as noites de jogo desta crônica, ou diz que não há nenhuma. Cartões de Local e Cartões de Ritual mostram um cartão por entrada, com todos os campos - inclusive o texto formatado de Descrição ou Aparência do próprio Narrador - exibidos como foram escritos; uma passagem marcada com `[ST]...[/ST]` continua sendo retirada para você, igual a todo lugar. Um seletor **Restringir a um personagem** acima das abas deixa um mago escolher para qual dos seus personagens ver Cartões de Ritual - a aba só aparece depois que se escolhe um personagem cuja pilha realmente tem rituais. Veja [Relatórios](reports.md).
 
 A página guarda a crônica, a aba e o personagem que você escolheu no endereço web dela, então atualizar ou marcar como favorita leva você de volta à mesma visão.
+
+## O layout próprio do Beyond Elysium
+
+A menos que um administrador do site o tenha desligado em [Identidade Visual](branding.md), esta página mostra o layout próprio do Beyond Elysium no lugar do layout do tema:
+
+- **O cabeçalho** nomeia o site primeiro, com o logotipo dele, como um link para a página inicial do site, depois **Minha Crônica**, o seletor de crônica e um seletor dos seus próprios personagens nessa crônica. Escolher um personagem abre a Ficha dele, ou mantém você na aba Editar quando ela está aberta. Um Narrador também vê um link **Kit de Ferramentas do Narrador**. **Ajuda** e o seu nome com **Sair** (ou **Entrar**) vêm por último.
+- **Em um computador** toda aba aparece numa linha abaixo do cabeçalho, passando para uma segunda linha quando não cabem.
+- **Em um celular** uma barra na parte de baixo da tela tem **Início** (o Painel), **Personagem** (a Ficha do personagem escolhido, ou Personagens quando nenhum está escolhido) e **Tramas** (Minhas Tramas e Rumores). **Mais** lista toda outra aba, o link do Kit de Ferramentas do Narrador, a Ajuda e a saída.
+- **O rodapé** traz o Desenvolvido por Beyond Elysium, o logotipo da Dark Pack e o aviso da Paradox.
+
+Para manter a página na tela inicial do celular, use **Adicionar à tela inicial** no seu navegador. Ela abre no navegador, com o nome do site.
 
 ## Tarefas comuns
 
@@ -58,6 +69,7 @@ A página guarda a crônica, a aba e o personagem que você escolheu no endereç
 
 ## Solução de problemas
 
+- **"Entre para ver as suas crônicas."** Você não está autenticado. Clique em **Entrar**, e você volta para esta página.
 - **"Você ainda não pertence a nenhuma crônica."** Peça para entrar em uma pela lista abaixo, ou [envie um arquivo do Grapevine](send-grapevine-file.md) se você já tem um - veja [Entrar em uma Crônica](joining.md).
 - **"Não foi possível carregar as suas crônicas."** O pedido falhou - clique em **Tentar novamente**.
 - **Uma crônica em que acabei de entrar não está na lista suspensa.** O seu pedido de entrada, ou o personagem que você começou para ela, provavelmente ainda espera um Narrador - ela aparece quando ele aprovar.

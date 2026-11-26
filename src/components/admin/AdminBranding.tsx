@@ -1,5 +1,6 @@
 /**
- * Site-wide brand accent default.
+ * Site-wide brand accent default and the switch for Beyond Elysium's own layout on My Chronicle and the Storyteller
+ * Toolkit.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
@@ -10,6 +11,7 @@ import './Admin.css';
 
 export function AdminBranding() {
 	const [ accentColor, setAccentColor ] = useState( '' );
+	const [ appLayout, setAppLayout ] = useState( true );
 	const [ loading, setLoading ] = useState( true );
 	const [ saving, setSaving ] = useState( false );
 	const [ message, setMessage ] = useState< string | null >( null );
@@ -18,7 +20,10 @@ export function AdminBranding() {
 	useEffect( () => {
 		api.games
 			.getBranding()
-			.then( ( result ) => setAccentColor( result.accent_color ) )
+			.then( ( result ) => {
+				setAccentColor( result.accent_color );
+				setAppLayout( result.app_layout );
+			} )
 			.catch( ( err: unknown ) =>
 				setError(
 					errorMessage(
@@ -38,6 +43,30 @@ export function AdminBranding() {
 			.updateBranding( color )
 			.then( ( result ) => {
 				setAccentColor( result.accent_color );
+				setMessage( __( 'Saved.', 'beyond-elysium' ) );
+			} )
+			.catch( ( err: unknown ) =>
+				setError(
+					errorMessage(
+						err,
+						__(
+							'That change could not be saved.',
+							'beyond-elysium'
+						)
+					)
+				)
+			)
+			.finally( () => setSaving( false ) );
+	}
+
+	function saveLayout( on: boolean ) {
+		setSaving( true );
+		setError( null );
+		setMessage( null );
+		api.games
+			.updateAppLayout( on )
+			.then( ( result ) => {
+				setAppLayout( result.app_layout );
 				setMessage( __( 'Saved.', 'beyond-elysium' ) );
 			} )
 			.catch( ( err: unknown ) =>
@@ -92,6 +121,26 @@ export function AdminBranding() {
 					{ __( 'Reset to plugin default', 'beyond-elysium' ) }
 				</button>
 			</div>
+			<p>
+				<label>
+					<input
+						type="checkbox"
+						checked={ appLayout }
+						disabled={ saving }
+						onChange={ ( e ) => saveLayout( e.target.checked ) }
+					/>{ ' ' }
+					{ __(
+						"Use Beyond Elysium's own layout on My Chronicle and the Storyteller Toolkit",
+						'beyond-elysium'
+					) }
+				</label>
+			</p>
+			<p className="description">
+				{ __(
+					"On, both pages show Beyond Elysium's own header with the site's name, the page's sections and its own footer, in place of the theme's. Off, they sit inside the theme as before. A page rebuilt with Elementor or given another template keeps its own layout either way.",
+					'beyond-elysium'
+				) }
+			</p>
 		</div>
 	);
 }

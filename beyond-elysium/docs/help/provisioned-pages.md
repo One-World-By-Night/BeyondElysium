@@ -23,7 +23,7 @@ To check whether all four still exist, or recreate one that's missing: wp-admin 
 
 These aren't Beyond Elysium screens of their own - each is an ordinary WordPress page holding one line of content: a single mount point for one of the plugin's front-end tools.
 
-- **My Chronicle** (`be-player`) and **Storyteller Toolkit** (`be-storyteller`) each carry a chronicle-switching, tabbed tool. See [My Chronicle](my-chronicle.md) and [Storyteller Toolkit](storyteller-toolkit.md).
+- **My Chronicle** (`be-player`) and **Storyteller Toolkit** (`be-storyteller`) each carry a chronicle-switching, tabbed tool. See [My Chronicle](my-chronicle.md) and [Storyteller Toolkit](storyteller-toolkit.md). Both show Beyond Elysium's own layout in place of the theme's header and footer unless a site administrator turns it off on [Branding](branding.md); a page rebuilt with Elementor or given another template keeps its own layout.
 - **Character Sheet (Print)** (`character-sheet-print`) renders a single character's sheet with none of your theme's header, footer, or admin bar around it. Visited with a character and chronicle named in its own address and `print=1` added, it opens the browser's print dialog automatically once the sheet has loaded - a plain browser print, separate from the signed PDF the Sheet screen's own **Print / Export** action opens directly. See [Print / Export](sheet-print-export.md).
 - **Verify Character** (`be-verify`) is the public page a verification code's own link points at. See [Verify Character](verify.md).
 

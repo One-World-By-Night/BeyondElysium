@@ -2,6 +2,7 @@
 
 namespace BeyondElysium\REST;
 
+use BeyondElysium\Core\App_Layout;
 use BeyondElysium\Core\Authorization;
 use BeyondElysium\Models\Game;
 use BeyondElysium\Models\Game_Member;
@@ -130,22 +131,28 @@ class Games_Controller extends Base_Controller {
 	public function get_branding() {
 		return $this->success( [
 			'accent_color' => (string) get_option( Game::ACCENT_COLOR_OPTION, '' ),
+			'app_layout'   => App_Layout::enabled(),
 		] );
 	}
 
 	/**
-	 * Sets the site-wide brand accent default.
+	 * Sets the site-wide brand accent default and the site's app-shell switch, each only when sent.
 	 *
 	 * @param \WP_REST_Request $request
 	 * @return \WP_REST_Response|\WP_Error
 	 */
 	public function update_branding( $request ) {
-		$value = (string) ( $request->get_param( 'accent_color' ) ?? '' );
-		if ( $value !== '' && ! self::is_valid_hex_color( $value ) ) {
-			return $this->error( 'invalid_param', __( 'accent_color must be a hex color like #1a1a1a.', 'beyond-elysium' ), 400 );
+		if ( $request->has_param( 'accent_color' ) ) {
+			$value = (string) ( $request->get_param( 'accent_color' ) ?? '' );
+			if ( $value !== '' && ! self::is_valid_hex_color( $value ) ) {
+				return $this->error( 'invalid_param', __( 'accent_color must be a hex color like #1a1a1a.', 'beyond-elysium' ), 400 );
+			}
+			update_option( Game::ACCENT_COLOR_OPTION, $value );
 		}
-		update_option( Game::ACCENT_COLOR_OPTION, $value );
-		return $this->success( [ 'accent_color' => $value ] );
+		if ( $request->has_param( 'app_layout' ) ) {
+			App_Layout::set_enabled( wp_validate_boolean( $request->get_param( 'app_layout' ) ) );
+		}
+		return $this->get_branding();
 	}
 
 	/**

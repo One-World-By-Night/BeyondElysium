@@ -26,8 +26,8 @@ Every route below is gated by exactly one WordPress capability (or, where noted,
 | GET | `/{game_slug}/demo` | `be_view_characters` | `{on, reset_hours, next_reset, last_reset: {at, counts} \| null}` - whether this chronicle is a demo, its cadence, when it next resets (`wp_next_scheduled()`), and when it was last reset |
 | GET | `/my/games` | `be_view_characters` | Only the chronicles the caller actually holds a `be_game_members` row in, each with the role held there, whether it's flagged as a demo, and whether the chronicle is linked to accessSchema (`{slug, name, role, demo, asc_linked}`; `asc_linked` is true when the site reads accessSchema and the chronicle names an `asc_role_path`), plus, when accessSchema is on, each chronicle whose `asc_role_path` grants the caller a role, with the highest role held there - the real data source for the My Chronicle / Storyteller Toolkit chronicle switcher |
 | GET | `/{game_slug}/my/capabilities` | logged in (any) | What the caller can actually do *in this one chronicle* - `be_manage_characters`, `be_manage_plots`, `be_manage_schemas`, `be_manage_connections`, `be_manage_boons`, each resolved through the same chronicle-scoped `Authorization::check_request()` every write route uses, not the site-wide snapshot every page load carries. An unresolvable `game_slug` or a caller with no relationship to this chronicle still returns `200` with every flag `false`, never an error - a switcher renders "no access here" rather than failing |
-| GET | `/branding` | `be_manage_games` | The site-wide brand accent default, `{accent_color}` (a hex color, or empty for none) |
-| PUT | `/branding` | `be_manage_games` | Set it: `accent_color`, a hex color such as `#1a1a1a`, or an empty string to clear it. `400 invalid_param` for anything else |
+| GET | `/branding` | `be_manage_games` | The site-wide brand accent default and the app layout switch, `{accent_color, app_layout}` (a hex color, or empty for none; `app_layout` true unless the site turned it off) |
+| PUT | `/branding` | `be_manage_games` | Set either or both: `accent_color`, a hex color such as `#1a1a1a`, or an empty string to clear it (`400 invalid_param` for anything else); `app_layout`, a boolean that puts My Chronicle and the Storyteller Toolkit on Beyond Elysium's own layout or back inside the theme. A field left out is left alone. Returns the same shape as `GET` |
 
 ## Schema Blocks
 
@@ -646,6 +646,12 @@ Site-wide, not game-scoped - lives on the Chronicle Access admin screen.
 | Method | Path | Capability | Notes |
 |---|---|---|---|
 | GET | `/verify/{code}` | none (public by design) | Confirms one exported/printed document's attestation code is real and unaltered - not game-scoped, and deliberately reachable by anyone with the link, not just chronicle members. Backs the `be-verify` page's human-facing check |
+
+## App Manifest
+
+| Method | Path | Capability | Notes |
+|---|---|---|---|
+| GET | `/app-manifest/{page}` | none (public by design) | The home-screen manifest for My Chronicle (`player`) or the Storyteller Toolkit (`storyteller`), as `application/manifest+json`: `name` (the site's name and the page's title), `short_name` (the site's name), `start_url` and `scope` (the page's own address), `display` `browser`, `theme_color` and `background_color` (the site's brand accent, or Beyond Elysium's), and `icons` at 192 and 512 px (the site icon, or Beyond Elysium's). `404 not_found` for any other page, or when the page itself is missing |
 
 ## Reports (the 20 GV301-plus reports, cards, and batch output)
 

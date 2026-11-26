@@ -1,6 +1,7 @@
 import {
 	fetchMemberships,
 	isLinkedToAccessSchema,
+	isSignedIn,
 	readGameSlugFromUrl,
 	writeGameSlugToUrl,
 } from './useChronicleSwitcher';
@@ -88,5 +89,29 @@ describe( 'isLinkedToAccessSchema', () => {
 		expect( isLinkedToAccessSchema( games, 'old' ) ).toBe( false );
 		expect( isLinkedToAccessSchema( games, 'nowhere' ) ).toBe( false );
 		expect( isLinkedToAccessSchema( [], '' ) ).toBe( false );
+	} );
+} );
+
+describe( 'isSignedIn', () => {
+	const before = window.beyondElysium;
+	afterEach( () => {
+		window.beyondElysium = before;
+	} );
+
+	it( 'is true for a signed-in account and false for a visitor', () => {
+		window.beyondElysium = {
+			currentUserId: 7,
+		} as typeof window.beyondElysium;
+		expect( isSignedIn() ).toBe( true );
+		window.beyondElysium = {
+			currentUserId: '12',
+		} as typeof window.beyondElysium;
+		expect( isSignedIn() ).toBe( true );
+		window.beyondElysium = {
+			currentUserId: 0,
+		} as typeof window.beyondElysium;
+		expect( isSignedIn() ).toBe( false );
+		window.beyondElysium = undefined;
+		expect( isSignedIn() ).toBe( false );
 	} );
 } );

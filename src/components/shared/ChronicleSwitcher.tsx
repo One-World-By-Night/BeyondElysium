@@ -3,6 +3,7 @@
  */
 import { __, sprintf } from '@wordpress/i18n';
 import type { MyGame } from '../../types';
+import { returningTo } from '../../lib/appNav';
 import './ChronicleSwitcher.css';
 
 /**
@@ -54,6 +55,14 @@ export interface ChronicleSwitcherProps {
 	 * the one currently selected.
 	 */
 	pendingCounts?: Record< string, number >;
+	/**
+	 * The picker alone, named only for screen readers.
+	 */
+	compact?: boolean;
+	/**
+	 * The viewer is signed in; a visitor is asked to sign in instead.
+	 */
+	signedIn?: boolean;
 }
 
 export function ChronicleSwitcher( {
@@ -64,7 +73,31 @@ export function ChronicleSwitcher( {
 	failed = false,
 	onRetry,
 	pendingCounts = {},
+	compact = false,
+	signedIn = true,
 }: ChronicleSwitcherProps ) {
+	if ( ! signedIn ) {
+		const loginUrl = window.beyondElysium?.loginUrl;
+		return (
+			<p className="be-chronicle-switcher__status">
+				{ __( 'Sign in to see your chronicles.', 'beyond-elysium' ) }
+				{ loginUrl && (
+					<>
+						{ ' ' }
+						<a
+							href={ returningTo(
+								loginUrl,
+								window.location.href
+							) }
+						>
+							{ __( 'Sign in', 'beyond-elysium' ) }
+						</a>
+					</>
+				) }
+			</p>
+		);
+	}
+
 	if ( loading ) {
 		return (
 			<p className="be-chronicle-switcher__status">
@@ -107,7 +140,7 @@ export function ChronicleSwitcher( {
 
 	return (
 		<label className="be-chronicle-switcher">
-			{ __( 'Chronicle', 'beyond-elysium' ) }
+			{ ! compact && __( 'Chronicle', 'beyond-elysium' ) }
 			<select
 				className="be-chronicle-switcher__select"
 				value={ gameSlug }

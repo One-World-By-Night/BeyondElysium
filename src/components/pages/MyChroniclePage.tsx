@@ -34,6 +34,11 @@ import {
 	PLAYER_TABS,
 } from '../../lib/pluginPages';
 import HelpButton from '../shared/HelpButton';
+import { AppFrame } from '../app/AppFrame';
+import { AppCharacterPicker } from '../app/AppCharacterPicker';
+import { characterHref, isAppLayout, otherPage } from '../../lib/appNav';
+import { creatureTypeName } from '../../lib/characterLabels';
+import { useCreatureTypeNames } from '../../lib/useCreatureTypeNames';
 import api from '../../api/client';
 import type { Character } from '../../types/character';
 import './MyChroniclePage.css';
@@ -48,6 +53,7 @@ function readCharacterIdFromUrl(): number | undefined {
 
 export function MyChroniclePage() {
 	const {
+		signedIn,
 		games,
 		gameSlug,
 		setGameSlug,
@@ -69,6 +75,8 @@ export function MyChroniclePage() {
 		readCharacterIdFromUrl
 	);
 	const [ reportKey, setReportKey ] = useState( 'game-calendar' );
+	const [ appLayout ] = useState( isAppLayout );
+	const creatureTypes = useCreatureTypeNames( appLayout ? gameSlug : '' );
 
 	const [ reportCharacters, setReportCharacters ] = useState< Character[] >(
 		[]
@@ -171,33 +179,38 @@ export function MyChroniclePage() {
 				reportAvailability?.[ 'rote-cards' ] === true )
 	);
 
-	return (
-		<div className="be-my-chronicle-page" style={ accentStyle }>
-			<div className="be-help-heading">
-				<h1>{ __( 'My Chronicle', 'beyond-elysium' ) }</h1>
-				<HelpButton helpKey="my-chronicle" />
-			</div>
-			<ChronicleSwitcher
-				games={ games }
-				gameSlug={ gameSlug }
-				onChange={ setGameSlug }
-				loading={ loadingGames }
-				failed={ gamesFailed }
-				onRetry={ retryGames }
-				pendingCounts={ pendingCounts }
-			/>
+	const ready = !! gameSlug && capabilitiesFor === gameSlug;
+
+	const switcher = (
+		<ChronicleSwitcher
+			games={ games }
+			gameSlug={ gameSlug }
+			onChange={ setGameSlug }
+			loading={ loadingGames }
+			failed={ gamesFailed }
+			onRetry={ retryGames }
+			pendingCounts={ pendingCounts }
+			compact={ appLayout }
+			signedIn={ signedIn }
+		/>
+	);
+
+	const content = (
+		<>
 			{ gameSlug && <DemoBanner gameSlug={ gameSlug } /> }
 
 			<DiscordLinkPanel />
 
-			{ ! loadingGames && (
+			{ signedIn && ! loadingGames && (
 				<JoinChronicle hasMemberships={ games.length > 0 } />
 			) }
 
-			{ ! loadingGames &&
+			{ signedIn &&
+				! loadingGames &&
 				games.length === 0 &&
 				tab === PLAYER_TABS.sendFile && <SendGrapevineFile /> }
-			{ ! loadingGames &&
+			{ signedIn &&
+				! loadingGames &&
 				games.length === 0 &&
 				tab !== PLAYER_TABS.sendFile && (
 					<p>
@@ -216,13 +229,15 @@ export function MyChroniclePage() {
 					</p>
 				) }
 
-			{ gameSlug && capabilitiesFor === gameSlug && (
+			{ ready && (
 				<DemoBannerShownContext.Provider value={ true }>
-					<TabStrip
-						tabs={ tabs }
-						active={ tab }
-						onChange={ setTab }
-					/>
+					{ ! appLayout && (
+						<TabStrip
+							tabs={ tabs }
+							active={ tab }
+							onChange={ setTab }
+						/>
+					) }
 
 					{ tab === PLAYER_TABS.sendFile && <SendGrapevineFile /> }
 
@@ -405,6 +420,78 @@ export function MyChroniclePage() {
 					) }
 				</DemoBannerShownContext.Provider>
 			) }
+		</>
+	);
+
+	if ( appLayout ) {
+		const ownCharacterId = reportCharacters.some(
+			( c ) => Number( c.id ) === characterId
+		)
+			? characterId
+			: undefined;
+		const role = games.find( ( g ) => g.slug === gameSlug )?.role;
+		return (
+			<div className="be-my-chronicle-page" style={ accentStyle }>
+				<AppFrame
+					pageTitle={ __( 'My Chronicle', 'beyond-elysium' ) }
+					helpKey="my-chronicle"
+					sections={ ready ? tabs : [] }
+					active={ tab }
+					onSelect={ setTab }
+					places={ [
+						{
+							key: PLAYER_TABS.dashboard,
+							label: __( 'Home', 'beyond-elysium' ),
+						},
+						{
+							key: characterId
+								? PLAYER_TABS.sheet
+								: PLAYER_TABS.characters,
+							label: __( 'Character', 'beyond-elysium' ),
+						},
+						{
+							key: PLAYER_TABS.plots,
+							label: __( 'Plots', 'beyond-elysium' ),
+						},
+					] }
+					placeCount={ 3 }
+					switcher={ switcher }
+					character={
+						ready && (
+							<AppCharacterPicker
+								characters={ reportCharacters }
+								characterId={ ownCharacterId }
+								typeName={ ( slug ) =>
+									creatureTypeName( slug, creatureTypes )
+								}
+								onPick={ ( id ) =>
+									window.location.assign(
+										characterHref(
+											window.location.href,
+											id,
+											tab
+										)
+									)
+								}
+							/>
+						)
+					}
+					otherPage={ otherPage( 'player', role, gameSlug ) }
+				>
+					{ content }
+				</AppFrame>
+			</div>
+		);
+	}
+
+	return (
+		<div className="be-my-chronicle-page" style={ accentStyle }>
+			<div className="be-help-heading">
+				<h1>{ __( 'My Chronicle', 'beyond-elysium' ) }</h1>
+				<HelpButton helpKey="my-chronicle" />
+			</div>
+			{ switcher }
+			{ content }
 		</div>
 	);
 }

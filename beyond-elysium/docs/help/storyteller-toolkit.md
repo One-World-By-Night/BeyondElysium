@@ -8,7 +8,7 @@ The HST sees every tab, including Players on every chronicle. An AST sees the sa
 
 ## How to get there
 
-Look for a "Storyteller Toolkit" link in your site's navigation - this plugin creates the page automatically. If you can't find it, ask a Storyteller or your site admin where it's linked.
+Look for a "Storyteller Toolkit" link in your site's navigation - this plugin creates the page automatically. If you can't find it, ask a Storyteller or your site admin where it's linked. On Beyond Elysium's own layout My Chronicle links to it at the top for anyone with a Storyteller role in the chronicle.
 
 ## The screen
 
@@ -38,6 +38,17 @@ Look for a "Storyteller Toolkit" link in your site's navigation - this plugin cr
 
 The page keeps your chosen chronicle and tab in its web address, so refreshing or bookmarking it returns you to the same view.
 
+## Beyond Elysium's own layout
+
+Unless a site administrator has turned it off on [Branding](branding.md), this page shows Beyond Elysium's own layout in place of the theme's:
+
+- **The header** names the site first, with its logo, as a link to the site's home page, then **Storyteller Toolkit**, the chronicle picker, a **My Chronicle** link, **Help**, and your name with **Sign out**.
+- **On a computer** every tab your role allows shows in one row under the header, wrapping onto a second row when they don't fit.
+- **On a phone** a bar at the bottom of the screen holds **Home** (the Dashboard), **Approvals** (the Approval Queue), **Characters** and **Plots** (Plots & Rumors). A place your role doesn't have goes to your next tab instead, so a Narrator's bar holds Plots, My Queue, Secrets and Game Nights. **More** lists every other tab, the My Chronicle link, Help and signing out.
+- **The footer** carries Powered by Beyond Elysium, the Dark Pack logo and Paradox's notice.
+
+To keep the page on your phone's home screen, use your browser's **Add to Home Screen**. It opens in the browser, named after the site.
+
 ## Common tasks
 
 ### Create a character or an NPC
@@ -64,6 +75,7 @@ The page keeps your chosen chronicle and tab in its web address, so refreshing o
 
 ## Troubleshooting
 
+- **"Sign in to see your chronicles."** You aren't signed in. Click **Sign in**, and you come back to this page.
 - **"You don't hold a Storyteller role in this chronicle."** You're a plain player in the chronicle currently selected, or you're in the wrong chronicle - check the **Chronicle** dropdown, or ask an HST/AST to check your role.
 - **"You don't belong to any chronicle yet."** You have no membership anywhere yet - ask a Storyteller for a join link.
 - **A tab I expect isn't showing.** You hold a narrower role in the chronicle currently selected than you thought - switch chronicles, or ask an HST/AST to check your role there.

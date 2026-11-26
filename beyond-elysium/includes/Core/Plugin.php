@@ -26,6 +26,7 @@ class Plugin {
 		Admin_Menu::register();
 		Page_Provisioner::register();
 		Print_Canvas::register();
+		App_Layout::register();
 		Chronicle_Sync::register();
 		Shortcodes::register();
 		Maintenance::register();
@@ -93,10 +94,25 @@ class Plugin {
 			'locale'   => get_locale(),
 			// 0 for a logged-out visitor.
 			'currentUserId' => get_current_user_id(),
+			// The signed-in viewer's display name; empty for a visitor.
+			'currentUserName' => is_user_logged_in() ? wp_get_current_user()->display_name : '',
 			// The admin Import page URL.
 			'importPageUrl' => admin_url( 'admin.php?page=beyond-elysium-import' ),
 			// The paper sheets print on unless the viewer picks another.
 			'paperSize'     => \BeyondElysium\Services\Pdf_Writer::default_page_size(),
+			// Whether this page is on Beyond Elysium's own app shell.
+			'appLayout'     => null !== App_Layout::current_page(),
+			// The site the shell's header names first.
+			'site'          => [
+				'name'    => wp_specialchars_decode( (string) get_bloginfo( 'name' ), ENT_QUOTES ),
+				'homeUrl' => home_url( '/' ),
+				'logoUrl' => has_custom_logo() ? (string) wp_get_attachment_image_url( (int) get_theme_mod( 'custom_logo' ), 'medium' ) : '',
+			],
+			// Sign-in and sign-out addresses; the page adds its own address to return to.
+			'loginUrl'      => wp_login_url(),
+			'logoutUrl'     => is_user_logged_in() ? wp_logout_url() : '',
+			// The plugin's own images.
+			'assetsUrl'     => BE_PLUGIN_URL . 'assets/',
 			'capabilities' => [
 				'be_manage_plots'         => current_user_can( 'be_manage_plots' ),
 				'be_manage_characters'    => current_user_can( 'be_manage_characters' ),
@@ -157,6 +173,7 @@ class Plugin {
 			new \BeyondElysium\REST\Chronicle_Players_Controller(),
 			new \BeyondElysium\REST\Staff_Grants_Controller(),
 			new \BeyondElysium\REST\Catalog_Controller(),
+			new \BeyondElysium\REST\App_Manifest_Controller(),
 			new \BeyondElysium\REST\Join_Requests_Controller(),
 			new \BeyondElysium\REST\Authorization_Settings_Controller(),
 			new \BeyondElysium\REST\Game_Stats_Controller(),

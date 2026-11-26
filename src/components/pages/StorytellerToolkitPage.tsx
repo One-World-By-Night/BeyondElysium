@@ -36,10 +36,13 @@ import {
 } from '../../lib/pluginPages';
 import type { Tab } from '../shared/TabStrip';
 import HelpButton from '../shared/HelpButton';
+import { AppFrame } from '../app/AppFrame';
+import { isAppLayout, otherPage } from '../../lib/appNav';
 import './StorytellerToolkitPage.css';
 
 export function StorytellerToolkitPage() {
 	const {
+		signedIn,
 		games,
 		gameSlug,
 		setGameSlug,
@@ -58,6 +61,7 @@ export function StorytellerToolkitPage() {
 		readTabFromUrl( STORYTELLER_TABS.dashboard )
 	);
 	const [ showNpcs, setShowNpcs ] = useState( false );
+	const [ appLayout ] = useState( isAppLayout );
 	// The Downtime queue's own "open the plot thread" link arrives as ?open_plot=.
 	const [ openPlotId ] = useState( () => {
 		const raw = new URLSearchParams( window.location.search ).get(
@@ -145,25 +149,27 @@ export function StorytellerToolkitPage() {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [ tabs.map( ( t ) => t.key ).join( ',' ) ] );
 
-	return (
-		<div className="be-storyteller-toolkit-page" style={ accentStyle }>
-			<div className="be-help-heading">
-				<h1>{ __( 'Storyteller Toolkit', 'beyond-elysium' ) }</h1>
-				<HelpButton helpKey="storyteller-toolkit" />
-			</div>
-			<ChronicleSwitcher
-				games={ games }
-				gameSlug={ gameSlug }
-				onChange={ setGameSlug }
-				loading={ loadingGames }
-				failed={ gamesFailed }
-				onRetry={ retryGames }
-				pendingCounts={ pendingCounts }
-			/>
+	const ready = !! gameSlug && capabilitiesFor === gameSlug;
+
+	const switcher = (
+		<ChronicleSwitcher
+			games={ games }
+			gameSlug={ gameSlug }
+			onChange={ setGameSlug }
+			loading={ loadingGames }
+			failed={ gamesFailed }
+			onRetry={ retryGames }
+			pendingCounts={ pendingCounts }
+			compact={ appLayout }
+			signedIn={ signedIn }
+		/>
+	);
+
+	const content = (
+		<>
 			{ gameSlug && <DemoBanner gameSlug={ gameSlug } /> }
 
-			{ gameSlug &&
-				capabilitiesFor === gameSlug &&
+			{ ready &&
 				( tabs.length === 0 ? (
 					<p>
 						{ __(
@@ -173,11 +179,13 @@ export function StorytellerToolkitPage() {
 					</p>
 				) : (
 					<DemoBannerShownContext.Provider value={ true }>
-						<TabStrip
-							tabs={ tabs }
-							active={ tab }
-							onChange={ setTab }
-						/>
+						{ ! appLayout && (
+							<TabStrip
+								tabs={ tabs }
+								active={ tab }
+								onChange={ setTab }
+							/>
+						) }
 
 						{ tab === STORYTELLER_TABS.dashboard && (
 							<GameDashboard
@@ -343,6 +351,58 @@ export function StorytellerToolkitPage() {
 						) }
 					</DemoBannerShownContext.Provider>
 				) ) }
+		</>
+	);
+
+	if ( appLayout ) {
+		return (
+			<div className="be-storyteller-toolkit-page" style={ accentStyle }>
+				<AppFrame
+					pageTitle={ __( 'Storyteller Toolkit', 'beyond-elysium' ) }
+					helpKey="storyteller-toolkit"
+					sections={ ready ? tabs : [] }
+					active={ tab }
+					onSelect={ setTab }
+					places={ [
+						{
+							key: STORYTELLER_TABS.dashboard,
+							label: __( 'Home', 'beyond-elysium' ),
+						},
+						{
+							key: STORYTELLER_TABS.approvalQueue,
+							label: __( 'Approvals', 'beyond-elysium' ),
+						},
+						{
+							key: STORYTELLER_TABS.characters,
+							label: __( 'Characters', 'beyond-elysium' ),
+						},
+						{
+							key: STORYTELLER_TABS.plots,
+							label: __( 'Plots', 'beyond-elysium' ),
+						},
+					] }
+					placeCount={ 4 }
+					switcher={ switcher }
+					otherPage={ otherPage(
+						'storyteller',
+						undefined,
+						gameSlug
+					) }
+				>
+					{ content }
+				</AppFrame>
+			</div>
+		);
+	}
+
+	return (
+		<div className="be-storyteller-toolkit-page" style={ accentStyle }>
+			<div className="be-help-heading">
+				<h1>{ __( 'Storyteller Toolkit', 'beyond-elysium' ) }</h1>
+				<HelpButton helpKey="storyteller-toolkit" />
+			</div>
+			{ switcher }
+			{ content }
 		</div>
 	);
 }

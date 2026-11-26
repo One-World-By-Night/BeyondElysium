@@ -8,7 +8,7 @@ Anyone signed in. Belonging to at least one chronicle - as a player, or as a Sto
 
 ## How to get there
 
-Look for a "My Chronicle" link in your site's navigation - this plugin creates the page automatically. If you can't find it, ask a Storyteller or your site admin where it's linked.
+Look for a "My Chronicle" link in your site's navigation - this plugin creates the page automatically. If you can't find it, ask a Storyteller or your site admin where it's linked. On Beyond Elysium's own layout the Storyteller Toolkit links to it at the top.
 
 ## The screen
 
@@ -44,6 +44,17 @@ Each tab shows what you can do in the chronicle selected - a Storyteller here se
 
 The page keeps your chosen chronicle, tab, and character in its web address, so refreshing or bookmarking it returns you to the same view.
 
+## Beyond Elysium's own layout
+
+Unless a site administrator has turned it off on [Branding](branding.md), this page shows Beyond Elysium's own layout in place of the theme's:
+
+- **The header** names the site first, with its logo, as a link to the site's home page, then **My Chronicle**, the chronicle picker and a picker of your own characters in that chronicle. Choosing a character opens its Sheet, or keeps you on Edit when Edit is open. A Storyteller also sees a **Storyteller Toolkit** link. **Help** and your name with **Sign out** (or **Sign in**) come last.
+- **On a computer** every tab shows in one row under the header, wrapping onto a second row when they don't fit.
+- **On a phone** a bar at the bottom of the screen holds **Home** (the Dashboard), **Character** (the chosen character's Sheet, or Characters when none is chosen) and **Plots** (My Plots & Rumors). **More** lists every other tab, the Storyteller Toolkit link, Help and signing out.
+- **The footer** carries Powered by Beyond Elysium, the Dark Pack logo and Paradox's notice.
+
+To keep the page on your phone's home screen, use your browser's **Add to Home Screen**. It opens in the browser, named after the site.
+
 ## Common tasks
 
 ### Switch to a different chronicle
@@ -73,6 +84,7 @@ The page keeps your chosen chronicle, tab, and character in its web address, so 
 
 ## Troubleshooting
 
+- **"Sign in to see your chronicles."** You aren't signed in. Click **Sign in**, and you come back to this page.
 - **"You don't belong to any chronicle yet."** Ask to join one from the list below it, or [send a Grapevine file](send-grapevine-file.md) if you already have one - see [Joining a Chronicle](joining.md).
 - **"Your chronicles couldn't be loaded."** The request failed - click **Try again**.
 - **A chronicle I just joined isn't in the dropdown.** Your join request, or the character you started for it, is likely still waiting on a Storyteller - it appears once they approve it.

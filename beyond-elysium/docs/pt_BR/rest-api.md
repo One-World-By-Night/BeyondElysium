@@ -26,8 +26,8 @@ Toda rota abaixo é protegida por exatamente uma capacidade do WordPress (ou, on
 | GET | `/{game_slug}/demo` | `be_view_characters` | `{on, reset_hours, next_reset, last_reset: {at, counts} \| null}` - se esta crônica é uma demonstração, a cadência dela, quando se redefine em seguida (`wp_next_scheduled()`) e quando foi redefinida por último |
 | GET | `/my/games` | `be_view_characters` | Só as crônicas em que quem pede de fato tem uma linha de `be_game_members`, cada uma com o papel que tem ali, se está marcada como demonstração e se a crônica está ligada ao accessSchema (`{slug, name, role, demo, asc_linked}`; `asc_linked` é verdadeiro quando o site lê o accessSchema e a crônica nomeia um `asc_role_path`), mais, quando o accessSchema está ligado, cada crônica cujo `asc_role_path` concede um papel a quem pede, com o papel mais alto que tem ali - a fonte de dados de verdade do seletor de crônica de Minha Crônica / Kit de Ferramentas do Narrador |
 | GET | `/{game_slug}/my/capabilities` | autenticado (qualquer) | O que quem pede de fato pode fazer *nesta única crônica* - `be_manage_characters`, `be_manage_plots`, `be_manage_schemas`, `be_manage_connections`, `be_manage_boons`, cada uma resolvida pelo mesmo `Authorization::check_request()` com escopo de crônica que toda rota de escrita usa, não pelo retrato de todo o site que toda carga de página leva. Um `game_slug` que não resolve ou quem pede sem relação com esta crônica ainda devolve `200` com toda opção `false`, nunca um erro - um seletor renderiza "sem acesso aqui" em vez de falhar |
-| GET | `/branding` | `be_manage_games` | O padrão de cor de destaque de marca de todo o site, `{accent_color}` (uma cor hexadecimal, ou vazio para nenhuma) |
-| PUT | `/branding` | `be_manage_games` | Define-o: `accent_color`, uma cor hexadecimal como `#1a1a1a`, ou uma string vazia para limpar. `400 invalid_param` para qualquer outra coisa |
+| GET | `/branding` | `be_manage_games` | O padrão de cor de destaque de marca de todo o site e a chave do layout próprio, `{accent_color, app_layout}` (uma cor hexadecimal, ou vazio para nenhuma; `app_layout` verdadeiro a menos que o site o tenha desligado) |
+| PUT | `/branding` | `be_manage_games` | Define um ou os dois: `accent_color`, uma cor hexadecimal como `#1a1a1a`, ou uma string vazia para limpar (`400 invalid_param` para qualquer outra coisa); `app_layout`, um booleano que põe Minha Crônica e o Kit de Ferramentas do Narrador no layout próprio do Beyond Elysium ou de volta dentro do tema. Um campo deixado de fora fica como está. Devolve o mesmo formato do `GET` |
 
 ## Blocos de Esquema
 
@@ -646,6 +646,12 @@ De todo o site, não restrito a um jogo - vive na tela de administração Acesso
 | Método | Caminho | Capacidade | Notas |
 |---|---|---|---|
 | GET | `/verify/{code}` | nenhuma (pública por desenho) | Confirma que o código de atestação de um documento exportado/impresso é real e inalterado - não restrito a um jogo, e de propósito alcançável por qualquer um com o link, não só membros da crônica. Sustenta a conferência voltada a pessoas da página `be-verify` |
+
+## Manifesto do App
+
+| Método | Caminho | Capacidade | Notas |
+|---|---|---|---|
+| GET | `/app-manifest/{page}` | nenhuma (pública por desenho) | O manifesto de tela inicial de Minha Crônica (`player`) ou do Kit de Ferramentas do Narrador (`storyteller`), como `application/manifest+json`: `name` (o nome do site e o título da página), `short_name` (o nome do site), `start_url` e `scope` (o próprio endereço da página), `display` `browser`, `theme_color` e `background_color` (a cor de destaque de marca do site, ou a do Beyond Elysium) e `icons` em 192 e 512 px (o ícone do site, ou o do Beyond Elysium). `404 not_found` para qualquer outra página, ou quando a própria página falta |
 
 ## Relatórios (os 20 relatórios GV301-plus, cartões e saída em lote)
 

@@ -1,0 +1,44 @@
+/* Beyond Elysium's own app shell on My Chronicle and the Storyteller Toolkit. */
+
+/* The clearance the site itself sets on the root, which the bar's height is added to. */
+:root {
+	--be-site-lift: var(--be-bottom-clearance, 0px);
+}
+
+body.be-app {
+	margin: 0;
+	background: var(--be-gray-29);
+	color: var(--be-gray-1);
+	--be-app-bar-height: 0px;
+}
+
+body.be-app *,
+body.be-app *::before,
+body.be-app *::after {
+	box-sizing: border-box;
+}
+
+.be-app__main {
+	max-width: 1280px;
+	margin: 0 auto;
+	padding: 0 16px 24px;
+}
+
+@media (max-width: 768px) {
+
+	body.be-app.be-app--has-bar {
+		--be-app-bar-height: calc(60px + env(safe-area-inset-bottom, 0px));
+		--be-bottom-clearance: calc(var(--be-app-bar-height) + var(--be-site-lift));
+	}
+
+	body.be-app.be-app--has-bar .be-app__main {
+		padding-bottom: calc(var(--be-app-bar-height) + 16px);
+	}
+
+	body.be-app--has-bar .trp-floating-switcher.trp-switcher-position-bottom,
+	body.be-app--has-bar .wp-dark-mode-floating-switch,
+	body.be-app--has-bar .open-accessibility-widget-wrapper.position-bottom-left,
+	body.be-app--has-bar .open-accessibility-widget-wrapper.position-bottom-right {
+		translate: 0 calc(-1 * var(--be-app-bar-height));
+	}
+}

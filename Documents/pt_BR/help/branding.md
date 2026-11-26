@@ -1,6 +1,6 @@
 # Identidade Visual
 
-A cor de destaque padrão de todo o site, usada na moldura própria do Kit de Ferramentas do Narrador e de Minha Crônica (realces, botões primários) em qualquer crônica que não definiu a sua. Não é um tema completo - as outras cores do Beyond Elysium (erros, avisos, estados de sucesso) continuam fixas seja qual for esta configuração, então a interface do próprio plugin ainda se lê corretamente seja o que for que isto esteja definido.
+A cor de destaque padrão de todo o site, usada na moldura própria do Kit de Ferramentas do Narrador e de Minha Crônica (realces, botões primários) em qualquer crônica que não definiu a sua. Não é um tema completo - as outras cores do Beyond Elysium (erros, avisos, estados de sucesso) continuam fixas seja qual for esta configuração, então a interface do próprio plugin ainda se lê corretamente seja o que for que isto esteja definido. A mesma aba liga ou desliga o layout próprio do Beyond Elysium em Minha Crônica e no Kit de Ferramentas do Narrador para todo o site.
 
 ## Quem pode usar
 
@@ -14,6 +14,7 @@ Barra lateral do wp-admin → Beyond Elysium → Configuração do Sistema → a
 
 - **Cor de destaque** - um seletor de cor. Mudá-la salva na hora.
 - **Redefinir para o padrão do plugin** - limpa o padrão de todo o site, então toda crônica sem substituição própria recua para a cor de destaque embutida do próprio Beyond Elysium.
+- **Usar o layout próprio do Beyond Elysium em Minha Crônica e no Kit de Ferramentas do Narrador** - ligado a menos que você o desligue, e salva na hora. Ligado, as duas páginas mostram o cabeçalho do próprio Beyond Elysium com o nome do site, as seções da página e o seu próprio rodapé no lugar dos do tema; desligado, elas ficam dentro do tema como antes. Uma página refeita com o Elementor ou com outro modelo mantém o seu próprio layout em qualquer caso. Veja [Minha Crônica](my-chronicle.md) e [Kit de Ferramentas do Narrador](storyteller-toolkit.md).
 
 ## Relacionados
 

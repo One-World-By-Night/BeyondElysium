@@ -75,3 +75,35 @@ describe( 'a sticky bottom bar always caps its own height', () => {
 		expect( offenders ).toEqual( [] );
 	} );
 } );
+
+describe( 'a fixed bottom bar caps its height and clears the home indicator', () => {
+	it( 'every `position: fixed` + `bottom: 0` rule with no top carries a height cap and the safe-area inset', () => {
+		const offenders: string[] = [];
+		let bars = 0;
+
+		for ( const file of files ) {
+			const css = withoutComments( readFileSync( file, 'utf8' ) );
+			for ( const { selector, body } of ruleBodies( css ) ) {
+				const fixed = /position\s*:\s*fixed/.test( body );
+				const pinnedToBottom =
+					/(^|[\s;])bottom\s*:\s*0(?:px)?\s*;/.test( body );
+				const overlay = /(^|[\s;])(top|inset)\s*:/.test( body );
+				if ( ! fixed || ! pinnedToBottom || overlay ) {
+					continue;
+				}
+				bars++;
+				const capped =
+					/(^|[\s;])(max-)?height\s*:/.test( body ) &&
+					/env\(\s*safe-area-inset-bottom/.test( body );
+				if ( ! capped ) {
+					offenders.push(
+						`${ file.split( '/src/' ).pop() } :: ${ selector }`
+					);
+				}
+			}
+		}
+
+		expect( bars ).toBeGreaterThan( 0 );
+		expect( offenders ).toEqual( [] );
+	} );
+} );

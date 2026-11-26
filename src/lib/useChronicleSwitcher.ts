@@ -63,7 +63,18 @@ export function isLinkedToAccessSchema(
 	);
 }
 
+/**
+ * Whether the viewer is signed in; a visitor has no memberships to ask for.
+ */
+export function isSignedIn(): boolean {
+	return Number( window.beyondElysium?.currentUserId ?? 0 ) > 0;
+}
+
 export interface ChronicleSwitcherState {
+	/**
+	 * The viewer is signed in.
+	 */
+	signedIn: boolean;
 	games: MyGame[];
 	gameSlug: string;
 	setGameSlug: ( slug: string ) => void;
@@ -93,8 +104,11 @@ export interface ChronicleSwitcherState {
 }
 
 export function useChronicleSwitcher(): ChronicleSwitcherState {
+	const [ signedIn ] = useState( isSignedIn );
 	const [ games, setGames ] = useState< MyGame[] >( [] );
-	const [ gameSlug, setGameSlug ] = useState( readGameSlugFromUrl );
+	const [ gameSlug, setGameSlug ] = useState( () =>
+		signedIn ? readGameSlugFromUrl() : ''
+	);
 	const [ capabilities, setCapabilities ] =
 		useState< MyCapabilities >( EMPTY_CAPABILITIES );
 	const [ accentColor, setAccentColor ] = useState( '' );
@@ -109,6 +123,10 @@ export function useChronicleSwitcher(): ChronicleSwitcherState {
 
 	// Loads the user's real memberships once.
 	useEffect( () => {
+		if ( ! signedIn ) {
+			setLoadingGames( false );
+			return;
+		}
 		setLoadingGames( true );
 		fetchMemberships( () => api.games.mine() ).then(
 			( { games: result, failed } ) => {
@@ -122,10 +140,13 @@ export function useChronicleSwitcher(): ChronicleSwitcherState {
 				setLoadingGames( false );
 			}
 		);
-	}, [ gamesAttempt ] );
+	}, [ gamesAttempt, signedIn ] );
 
 	// Counts the player's own pending changes per chronicle, for the switcher's own badge.
 	useEffect( () => {
+		if ( ! signedIn ) {
+			return;
+		}
 		api.myChangesAcrossGames()
 			.list()
 			.then( ( rows ) => {
@@ -139,7 +160,7 @@ export function useChronicleSwitcher(): ChronicleSwitcherState {
 				setPendingCounts( counts );
 			} )
 			.catch( () => setPendingCounts( {} ) );
-	}, [ gamesAttempt ] );
+	}, [ gamesAttempt, signedIn ] );
 
 	// Re-resolves capabilities every time the selected chronicle changes, and keeps the URL's own game_slug in sync.
 	useEffect( () => {
@@ -177,6 +198,7 @@ export function useChronicleSwitcher(): ChronicleSwitcherState {
 	const retryGames = () => setGamesAttempt( ( attempt ) => attempt + 1 );
 
 	return {
+		signedIn,
 		games,
 		gameSlug,
 		setGameSlug,
