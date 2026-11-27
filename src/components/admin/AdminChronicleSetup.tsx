@@ -13,7 +13,7 @@ import EnabledStacksPicker from './EnabledStacksPicker';
 import FactionRestrictionsPicker from './FactionRestrictionsPicker';
 import PurchaseListsPicker from './PurchaseListsPicker';
 import type { Game, SetupStatus, SetupStatusItem } from '../../types';
-import { isRowOpen } from '../../lib/setupRows';
+import { isRowOpen, rowControl } from '../../lib/setupRows';
 import HelpButton from '../shared/HelpButton';
 import {
 	preselectedChronicle,
@@ -43,45 +43,49 @@ function StatusRow( {
 	note,
 	open,
 	onToggle,
-	children,
+	extra,
 }: {
 	item: SetupStatusItem;
 	panel?: ReactNode;
 	note?: string;
 	open: boolean;
 	onToggle: () => void;
-	children?: ReactNode;
+	extra?: ReactNode;
 } ) {
 	const panelId = `be-setup-panel-${ item.id }`;
-	let action: ReactNode = children ?? null;
-	if ( children === undefined ) {
-		if ( panel !== undefined ) {
-			action = item.actionable ? (
-				<button
-					type="button"
-					className="button"
-					aria-expanded={ open }
-					aria-controls={ panelId }
-					onClick={ onToggle }
-				>
-					{ open && __( 'Close', 'beyond-elysium' ) }
-					{ ! open &&
-						item.status === 'ok' &&
-						__( 'Change', 'beyond-elysium' ) }
-					{ ! open &&
-						item.status !== 'ok' &&
-						__( 'Set up', 'beyond-elysium' ) }
-				</button>
-			) : (
-				( note ?? null )
-			);
-		} else if ( item.fix.kind === 'link' && item.fix.href ) {
-			action = (
-				<a className="button" href={ item.fix.href }>
-					{ __( 'Go', 'beyond-elysium' ) }
-				</a>
-			);
-		}
+	const control = rowControl( item, {
+		hasPanel: panel !== undefined,
+		hasExtra: extra !== undefined,
+	} );
+	let action: ReactNode = null;
+	if ( control === 'extra' ) {
+		action = extra;
+	} else if ( control === 'toggle' ) {
+		action = (
+			<button
+				type="button"
+				className="button"
+				aria-expanded={ open }
+				aria-controls={ panelId }
+				onClick={ onToggle }
+			>
+				{ open && __( 'Close', 'beyond-elysium' ) }
+				{ ! open &&
+					item.status === 'ok' &&
+					__( 'Change', 'beyond-elysium' ) }
+				{ ! open &&
+					item.status !== 'ok' &&
+					__( 'Set up', 'beyond-elysium' ) }
+			</button>
+		);
+	} else if ( control === 'note' ) {
+		action = note ?? null;
+	} else if ( control === 'link' ) {
+		action = (
+			<a className="button" href={ item.fix.href ?? '' }>
+				{ __( 'Go', 'beyond-elysium' ) }
+			</a>
+		);
 	}
 
 	return (
@@ -359,6 +363,41 @@ export function AdminChronicleSetup() {
 	const isOpen = ( row: SetupStatusItem ) => isRowOpen( openRows, row );
 	const toggleRow = ( row: SetupStatusItem ) =>
 		setOpenRows( ( prev ) => ( { ...prev, [ row.id ]: ! isOpen( row ) } ) );
+
+	/**
+	 * The controls a row carries in place of the panel toggle, or undefined when it has none.
+	 */
+	const rowExtra = ( row: SetupStatusItem ): ReactNode => {
+		if ( row.id === 'demo_chronicle' && row.actionable ) {
+			return (
+				<button type="button" className="button" onClick={ deleteDemo }>
+					{ __( 'Delete demo chronicle', 'beyond-elysium' ) }
+				</button>
+			);
+		}
+		if (
+			row.id === 'catalog_customisation' &&
+			row.actionable &&
+			row.fix.href
+		) {
+			return (
+				<>
+					<a className="button" href={ row.fix.href }>
+						{ __( 'Go', 'beyond-elysium' ) }
+					</a>{ ' ' }
+					<a
+						className="button"
+						href={ `${ storytellerTabUrl(
+							STORYTELLER_TABS.catalog
+						) }&game_slug=${ encodeURIComponent( gameSlug ) }` }
+					>
+						{ __( 'Open the Catalog tab', 'beyond-elysium' ) }
+					</a>
+				</>
+			);
+		}
+		return undefined;
+	};
 
 	const settings = currentGame?.settings;
 	const approvalChoice = settings?.require_new_character_approval as
@@ -794,42 +833,8 @@ export function AdminChronicleSetup() {
 							note={ noteFor( row.id ) }
 							open={ isOpen( row ) }
 							onToggle={ () => toggleRow( row ) }
-						>
-							{ row.id === 'demo_chronicle' && row.actionable ? (
-								<button
-									type="button"
-									className="button"
-									onClick={ deleteDemo }
-								>
-									{ __(
-										'Delete demo chronicle',
-										'beyond-elysium'
-									) }
-								</button>
-							) : undefined }
-							{ row.id === 'catalog_customisation' &&
-							row.actionable &&
-							row.fix.href ? (
-								<>
-									<a className="button" href={ row.fix.href }>
-										{ __( 'Go', 'beyond-elysium' ) }
-									</a>{ ' ' }
-									<a
-										className="button"
-										href={ `${ storytellerTabUrl(
-											STORYTELLER_TABS.catalog
-										) }&game_slug=${ encodeURIComponent(
-											gameSlug
-										) }` }
-									>
-										{ __(
-											'Open the Catalog tab',
-											'beyond-elysium'
-										) }
-									</a>
-								</>
-							) : undefined }
-						</StatusRow>
+							extra={ rowExtra( row ) }
+						/>
 					) ) }
 				</table>
 			) }

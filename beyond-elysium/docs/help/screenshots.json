@@ -184,11 +184,10 @@
 				"account": "player",
 				"steps": [
 					{
-						"select": ".be-character-sheet__action-select",
-						"value": "ledger"
-					},
-					{
-						"click": ".be-character-sheet__action-go"
+						"click": {
+							"en": ".be-character-sheet__action-button:has-text(\"Background uses\")",
+							"pt_BR": ".be-character-sheet__action-button:has-text(\"Usos de antecedente\")"
+						}
 					}
 				],
 				"alt": {
@@ -685,11 +684,10 @@
 				"account": "storyteller",
 				"steps": [
 					{
-						"select": ".be-character-sheet__action-select",
-						"value": "audit"
-					},
-					{
-						"click": ".be-character-sheet__action-go"
+						"click": {
+							"en": ".be-character-sheet__action-button:has-text(\"Point audit\")",
+							"pt_BR": ".be-character-sheet__action-button:has-text(\"Auditoria de pontos\")"
+						}
 					}
 				],
 				"alt": {
@@ -717,11 +715,11 @@
 				"account": "storyteller",
 				"steps": [
 					{
-						"select": ".be-tab-strip__select >> nth=1",
+						"select": ".be-tab-strip__select >> nth=0",
 						"value": "positions"
 					},
 					{
-						"click": ".be-tab-strip__go >> nth=1"
+						"click": ".be-tab-strip__go >> nth=0"
 					}
 				],
 				"alt": {
@@ -937,11 +935,10 @@
 				"account": "storyteller",
 				"steps": [
 					{
-						"select": ".be-character-sheet__action-select",
-						"value": "appearance"
-					},
-					{
-						"click": ".be-character-sheet__action-go"
+						"click": {
+							"en": ".be-character-sheet__action-button:has-text(\"Customize appearance\")",
+							"pt_BR": ".be-character-sheet__action-button:has-text(\"Personalizar aparência\")"
+						}
 					}
 				],
 				"alt": {
@@ -953,17 +950,8 @@
 		"sheet-history": [
 			{
 				"heading": "Change History",
-				"path": "/be-player/?game_slug=be-demo&tab=sheet&character_id={character:Isolde Marchetti}",
+				"path": "/be-player/?game_slug=be-demo&tab=history&character_id={character:Isolde Marchetti}",
 				"account": "player",
-				"steps": [
-					{
-						"select": ".be-character-sheet__action-select",
-						"value": "history"
-					},
-					{
-						"click": ".be-character-sheet__action-go"
-					}
-				],
 				"alt": {
 					"en": "The change history of a character: every submitted change, newest first, each with its status.",
 					"pt_BR": "O histórico de mudanças de um personagem: cada mudança enviada, da mais recente para a mais antiga, com seu status."
@@ -978,11 +966,10 @@
 				"height": 520,
 				"steps": [
 					{
-						"select": ".be-character-sheet__action-select",
-						"value": "print"
-					},
-					{
-						"click": ".be-character-sheet__action-go"
+						"click": {
+							"en": ".be-character-sheet__action-button:has-text(\"Print / Export\")",
+							"pt_BR": ".be-character-sheet__action-button:has-text(\"Imprimir / Exportar\")"
+						}
 					}
 				],
 				"alt": {
@@ -1055,11 +1042,10 @@
 				"account": "storyteller",
 				"steps": [
 					{
-						"select": ".be-character-sheet__action-select",
-						"value": "send"
-					},
-					{
-						"click": ".be-character-sheet__action-go"
+						"click": {
+							"en": ".be-character-sheet__action-button:has-text(\"Send Sheet\")",
+							"pt_BR": ".be-character-sheet__action-button:has-text(\"Enviar Ficha\")"
+						}
 					}
 				],
 				"alt": {
