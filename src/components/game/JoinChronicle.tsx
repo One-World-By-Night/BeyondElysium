@@ -11,7 +11,7 @@ import {
 	JOIN_MESSAGE_MAX_LENGTH,
 	validateJoinMessage,
 } from '../../lib/joinChronicleForm';
-import { CharacterEditor } from '../character/CharacterEditor';
+import CharacterBuilder from '../builder/CharacterBuilder';
 import HelpButton from '../shared/HelpButton';
 import type { JoinableChronicle, MyJoinRequest } from '../../types';
 import './JoinChronicle.css';
@@ -273,7 +273,7 @@ export function JoinChronicle( { hasMemberships }: JoinChronicleProps ) {
 							</button>
 						</div>
 					) : startingCharacter ? (
-						<CharacterEditor gameSlug={ target } />
+						<CharacterBuilder gameSlug={ target } />
 					) : (
 						<div className="be-join-chronicle__ask">
 							<label>

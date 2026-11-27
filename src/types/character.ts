@@ -963,6 +963,7 @@ export interface PointAudit {
  */
 export interface CreationTallyPrioritizedSection {
 	section: string;
+	label: string;
 	used: number;
 	allowed: number;
 	over: boolean;
@@ -983,6 +984,7 @@ export interface CreationTallyQuota {
  */
 export interface CreationTallyLimitFlag {
 	target: string;
+	target_label: string;
 	reason: 'max_points' | 'max_rating' | 'min_rating' | 'ceiling';
 	value: number;
 	max?: number;
@@ -1017,6 +1019,7 @@ export type CreationTallyStep =
 			label: string;
 			applies: boolean;
 			section: string;
+			section_label: string;
 			used: number;
 			allowed: number;
 			over: boolean;
@@ -1027,6 +1030,7 @@ export type CreationTallyStep =
 			label: string;
 			applies: boolean;
 			pool: string;
+			pool_label: string;
 			points: number;
 	  }
 	| {
@@ -1034,6 +1038,7 @@ export type CreationTallyStep =
 			label: string;
 			applies: boolean;
 			pool: string;
+			pool_label: string;
 			spent: number;
 	  }
 	| {
@@ -1053,6 +1058,7 @@ export type CreationTallyStep =
 			label: string;
 			applies: boolean;
 			target: string;
+			target_label: string;
 			value: number | null;
 	  };
 
@@ -1060,6 +1066,7 @@ export type CreationTallyStep =
  * One named pool a creation tally tracks: its own points, what it earned, what it spent, and what is left.
  */
 export interface CreationTallyPool {
+	label: string;
 	own: number;
 	earned: number;
 	spent: number;
@@ -1070,6 +1077,21 @@ export interface CreationTallyPool {
  * The creation tally envelope: every declared step's own report, each pool, every limit flag, missing grants, and
  * the XP the build still needs against the chronicle's starting experience.
  */
+export interface CreationTallyNeed {
+	section: string;
+	section_label: string;
+	name: string;
+	reason: string | null;
+}
+
+/**
+ * Whether a new character starts active or pending, and which of three reasons hold it.
+ */
+export interface CreationTallyStarts {
+	status: 'active' | 'pending';
+	reasons: Array< 'chronicle' | 'rules' | 'join' >;
+}
+
 export interface CreationTally {
 	steps: CreationTallyStep[];
 	pools: Record< string, CreationTallyPool >;
@@ -1079,6 +1101,14 @@ export interface CreationTally {
 	 * What no starting experience can buy: a pool only play raises, set past the free dots a new character gets.
 	 */
 	unbuyable: CreationTallyUnbuyable[];
+	/**
+	 * The picks the chronicle's rules hand to a Storyteller.
+	 */
+	needs_storyteller?: CreationTallyNeed[];
+	/**
+	 * Present on a draft's tally only.
+	 */
+	starts?: CreationTallyStarts;
 	xp: {
 		starting: number;
 		needed: number;

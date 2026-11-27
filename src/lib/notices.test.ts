@@ -271,6 +271,30 @@ describe( 'noticeText for the news that used to go only by email', () => {
 		).toBe( 'A Discord link waits for you' );
 	} );
 
+	it( 'says a member made a character that waits, with how many picks need a Storyteller', () => {
+		expect(
+			noticeText(
+				notice( 'character_waiting', {
+					player_name: 'Alice',
+					character_name: 'Isolde Marchetti',
+					picks: 2,
+				} )
+			)
+		).toEqual( {
+			title: 'Alice made Isolde Marchetti',
+			lines: [ '2 picks need a Storyteller' ],
+		} );
+		expect(
+			noticeText(
+				notice( 'character_waiting', {
+					player_name: 'Alice',
+					character_name: 'Isolde Marchetti',
+					picks: 0,
+				} )
+			).lines
+		).toEqual( [] );
+	} );
+
 	it( 'says a Grapevine file arrived and a secret was told', () => {
 		expect(
 			noticeText(
@@ -295,6 +319,11 @@ describe( 'noticeText for the news that used to go only by email', () => {
 describe( 'noticeHref for the news that used to go only by email', () => {
 	const href = ( kind: string, payload: Record< string, unknown > = {} ) =>
 		noticeHref( notice( kind, payload ), 'kony' );
+
+	it( 'opens the characters waiting for a Storyteller', () => {
+		expect( href( 'character_waiting' ) ).toContain( 'tab=characters' );
+		expect( href( 'character_waiting' ) ).toContain( 'status=pending' );
+	} );
 
 	it( "opens a Storyteller's work on the page that holds it", () => {
 		expect( href( 'file_received' ) ).toContain( 'tab=approval-queue' );

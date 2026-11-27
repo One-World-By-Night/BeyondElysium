@@ -59,3 +59,19 @@
 .be-character-section__view {
 	min-width: 0;
 }
+
+.be-character-section__waiting {
+	margin: 8px 0;
+	padding: 8px 12px;
+	border: 1px solid var(--be-gold-10);
+	border-radius: 4px;
+}
+
+.be-character-section__waiting p,
+.be-character-section__waiting ul {
+	margin: 0;
+}
+
+.be-character-section__waiting ul {
+	padding-left: 1.25rem;
+}

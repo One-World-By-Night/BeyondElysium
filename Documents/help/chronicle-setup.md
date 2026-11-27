@@ -57,11 +57,13 @@ wp-admin sidebar → Beyond Elysium → Chronicle Setup. This is the hub's first
 1. Find the **New-character approval** row.
 2. Choose **Require approval**.
 
+With **Active immediately**, a player's new character still starts **pending** when it holds a pick your [Approval Rules](approval-rules.md) mark as needing a Storyteller, such as an item set to a Storyteller or a clause of the OWbN Character Bylaws. The chronicle's own default never does this: a chronicle that reviews every change by default but has no rule for a pick does not hold the character. The [Character Builder](character-builder.md)'s Review step names each such pick and its reason before the player creates the character.
+
 ### Give new characters starting experience
 
 1. Find the **Starting experience** row and click **Set up**.
 2. Type an amount.
-3. Click **Save**. A new character created from now on starts with that much XP, and its own build cost is charged against it automatically.
+3. Click **Save**. A new character created from now on starts with that much XP, and its own build cost is charged against it automatically. A build that costs more than this amount is refused, so set it high enough for the books' own builds.
 
 ### Resolve a book correction
 

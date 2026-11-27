@@ -24,6 +24,26 @@
 	align-self: end;
 }
 
+/* The controls take the full touch floor on a touch screen and a narrow one. */
+@media ( max-width: 768px ), ( pointer: coarse ) {
+
+	.be-compendium__tools select,
+	.be-compendium__tools input[type="search"] {
+		min-height: var(--be-tap);
+	}
+
+	.be-compendium__tools .be-compendium__check {
+		min-height: var(--be-tap);
+		gap: 0.5rem;
+	}
+
+	.be-compendium__tools .be-compendium__check input {
+		width: 1.5rem;
+		height: 1.5rem;
+		flex: none;
+	}
+}
+
 .be-compendium__hint {
 	color: var(--be-gray-6);
 }

@@ -178,7 +178,7 @@ class Templates_Controller extends Base_Controller {
 					'name'          => $template->name,
 					'stack_slug'    => $template->stack_slug,
 					'template_type' => $template->template_type,
-					'layout'        => St_Visibility::filter_layout( $template->layout, \BeyondElysium\Core\Authorization::can( 'be_manage_characters' ), $game->slug ),
+					'layout'        => \BeyondElysium\Services\Catalog_Labels::layout( St_Visibility::filter_layout( $template->layout, \BeyondElysium\Core\Authorization::can( 'be_manage_characters' ), $game->slug ) ),
 				],
 			] );
 		}
@@ -188,7 +188,7 @@ class Templates_Controller extends Base_Controller {
 			return $this->error( 'stack_not_found', __( 'Creature stack not found.', 'beyond-elysium' ), 404 );
 		}
 
-		$layout = St_Visibility::filter_layout( $layout, \BeyondElysium\Core\Authorization::can( 'be_manage_characters' ), $game->slug );
+		$layout = \BeyondElysium\Services\Catalog_Labels::layout( St_Visibility::filter_layout( $layout, \BeyondElysium\Core\Authorization::can( 'be_manage_characters' ), $game->slug ) );
 
 		return $this->success( [
 			'resolved_from' => 'generated',

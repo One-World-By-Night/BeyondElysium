@@ -151,6 +151,24 @@ class Notices {
 	}
 
 	/**
+	 * Tells the chronicle's HSTs and ASTs that a member made a new character that waits for them.
+	 *
+	 * @param object $game
+	 * @param object $character
+	 * @param int    $picks     How many of its picks the chronicle's rules hand to a Storyteller.
+	 * @param int    $by        The player, who is not told.
+	 */
+	public static function character_waiting( $game, $character, int $picks, int $by ): void {
+		$player = get_userdata( (int) ( $character->wp_user_id ?? 0 ) );
+		self::to_staff( $game, 'character_waiting', [
+			'character_id'   => (int) $character->id,
+			'character_name' => (string) $character->name,
+			'player_name'    => $player ? (string) $player->display_name : '',
+			'picks'          => $picks,
+		], $by );
+	}
+
+	/**
 	 * Tells one person something in their own header.
 	 *
 	 * @param object|null          $game

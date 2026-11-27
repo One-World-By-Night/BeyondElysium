@@ -2,7 +2,6 @@
 
 namespace BeyondElysium\REST;
 
-use BeyondElysium\Database\Manager;
 use BeyondElysium\Models\Attachment;
 use BeyondElysium\Models\Change;
 use BeyondElysium\Models\Character;
@@ -16,7 +15,10 @@ use BeyondElysium\Models\Schema_Block;
 use BeyondElysium\Models\Transfer;
 use BeyondElysium\Services\Change_Engine;
 use BeyondElysium\Services\Creation_Limits;
+use BeyondElysium\Services\Creation_Review;
 use BeyondElysium\Services\Creation_Tally;
+use BeyondElysium\Services\Join_Gate;
+use BeyondElysium\Services\Notices;
 use BeyondElysium\Services\St_Visibility;
 
 defined( 'ABSPATH' ) || exit;
@@ -643,26 +645,9 @@ class Characters_Controller extends Base_Controller {
 		$joining       = ! $is_manager && ! \BeyondElysium\Core\Authorization::can( 'be_edit_own_characters' );
 		$join_request  = $joining ? Join_Request::find_waiting( (int) $game->id, get_current_user_id() ) : null;
 		if ( $joining ) {
-			// An open request already carrying a character or file: a second one is refused.
-			if ( $join_request && ( ! empty( $join_request->character_id ) || ! empty( $join_request->submission_id ) ) ) {
-				return $this->error( 'join_already_requested', __( 'Your character is already waiting for this chronicle\'s Storytellers to approve it.', 'beyond-elysium' ), 409 );
-			}
-			// No open request at all: the two checks for a site not using the Join panel.
-			if ( ! $join_request ) {
-				if ( ! Join_Request::open_on( $game ) ) {
-					return $this->error( 'join_requests_off', __( 'This chronicle is not taking join requests right now.', 'beyond-elysium' ), 403 );
-				}
-				$waiting = Manager::get_var(
-					'SELECT COUNT(*) FROM ' . Manager::table( 'characters' ) . " WHERE owner_type = 'chronicle' AND owner_slug = %s AND wp_user_id = %d AND status = 'pending'",
-					$request['game_slug'],
-					get_current_user_id()
-				);
-				if ( (int) $waiting > 0 ) {
-					return $this->error( 'join_already_requested', __( 'Your character is already waiting for this chronicle\'s Storytellers to approve it.', 'beyond-elysium' ), 409 );
-				}
-				if ( \BeyondElysium\Models\Submission::has_waiting( (int) $game->id, get_current_user_id() ) ) {
-					return $this->error( 'join_already_requested', __( 'Your character is already waiting for this chronicle\'s Storytellers to approve it.', 'beyond-elysium' ), 409 );
-				}
+			$gate = Join_Gate::refusal( $game, $join_request, get_current_user_id() );
+			if ( $gate !== null ) {
+				return $this->error( $gate['code'], $gate['message'], $gate['status'] );
 			}
 		}
 
@@ -674,6 +659,7 @@ class Characters_Controller extends Base_Controller {
 			// A non-manager's status is never trusted.
 			$status = ! empty( $game->settings->require_new_character_approval ) ? 'pending' : 'active';
 		}
+		$needs_storyteller = [];
 
 		$start_date = $request->get_param( 'start_date' );
 		if ( $start_date && ! self::is_valid_date( $start_date ) ) {
@@ -751,6 +737,21 @@ class Characters_Controller extends Base_Controller {
 			return $this->error( 'creation_limit', $refusal, 400 );
 		}
 
+		// A build the starting experience can't pay for is refused for everyone but an existing sheet.
+		$over_budget = $tally !== null ? Creation_Limits::over_budget( $tally, $is_manager ) : null;
+		if ( $over_budget !== null ) {
+			return $this->error( 'creation_over_budget', $over_budget, 400 );
+		}
+
+		// A pick the chronicle's rules hand to a Storyteller starts a member's new character pending, whatever the
+		// chronicle's own switch says. A Storyteller's own request stands.
+		if ( ! $is_manager ) {
+			$needs_storyteller = Creation_Review::needs_storyteller( $resolved['stack'], $resolved['blocks'], $sheet_data, $game, $tally );
+			if ( $needs_storyteller !== [] ) {
+				$status = 'pending';
+			}
+		}
+
 		$data = [
 			'name'        => sanitize_text_field( $name ),
 			'stack_slug'  => sanitize_text_field( $stack_slug ),
@@ -805,6 +806,19 @@ class Characters_Controller extends Base_Controller {
 				'status'       => 'approved',
 				'submitted_by' => get_current_user_id(),
 			] );
+		}
+
+		// Tells the chronicle's Storytellers about a member's new character that waits for them.
+		if ( ! $is_manager && ! $joining && $status === 'pending' ) {
+			$waiting_character = Character::find( $id );
+			if ( $waiting_character ) {
+				Notices::character_waiting( $game, $waiting_character, count( $needs_storyteller ), get_current_user_id() );
+			}
+		}
+
+		// Removes the person's own unfinished build in this chronicle.
+		if ( (int) $wp_user_id === get_current_user_id() ) {
+			\BeyondElysium\Models\Character_Draft::delete( (int) $game->id, get_current_user_id() );
 		}
 
 		$character = Character::find( $id );

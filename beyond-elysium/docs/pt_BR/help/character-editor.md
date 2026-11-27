@@ -13,7 +13,7 @@ Você só pode abrir esta tela para um personagem seu, a menos que seja Narrador
 Minha Crônica → aba **Personagem** → visualização **Editar**.
 
 - Com um personagem já escolhido - pela aba Personagens, ou pela visualização **Editar** da seção Personagem - isto abre direto na edição dele.
-- Sem personagem escolhido, abre um formulário em branco para começar um novo.
+- Sem personagem escolhido, um Narrador recebe este formulário de uma página em branco para começar um novo. Qualquer outra pessoa recebe o [Montador de Personagem](character-builder.md).
 
 Um Narrador que cria um personagem pela página Personagens do wp-admin cai nesta mesma tela.
 
@@ -21,15 +21,17 @@ Um Narrador que cria um personagem pela página Personagens do wp-admin cai nest
 
 ### Novo Personagem (nenhum personagem escolhido ainda)
 
+Este formulário de uma página é do Narrador: é onde você faz NPCs, NPCs rápidos, fichas que já existem e personagens com seções extras. Para um personagem de jogador ele oferece **Usar o montador**, que abre o [Montador de Personagem](character-builder.md) na mesma crônica.
+
 - **Nome** - obrigatório.
 - **Tipo de Criatura** - uma lista suspensa com os tipos de criatura permitidos desta crônica. Pulada se você chegou aqui já pronto para montar um tipo específico.
 - **Este é um NPC** - uma caixa de seleção, mostrada só a um Narrador. Marcá-la troca o formulário para o layout de NPC mais rico, que acrescenta uma seção só para o Narrador com voz, trejeitos e ganchos de trama, e revela uma segunda escolha:
   - **Ficha completa** - o layout completo de NPC, igual ao acima.
   - **Somente estatísticas rápidas** - um layout curto com o mínimo (Físico/Social/Mental, Força de Vontade, Health, Habilidades/Poderes/Equipamento principais) para interpretar este NPC em uma cena sem montar um personagem inteiro. Veja **Tornar NPC Completo** abaixo para promover um depois.
 - As seções da própria pilha abaixo, exatamente como as seções da ficha descritas mais adiante - preencha o que você quiser que o personagem tenha ao começar.
-- **Criar Personagem** - grava o personagem. Nada do que você monta aqui é precificado nem revisado como uma mudança posterior: o que você coloca na ficha inicial é o que o personagem recebe.
+- **Criar Personagem** - grava o personagem. Nada do que você monta aqui é precificado nem revisado como uma mudança posterior: o que você coloca na ficha inicial é o que o personagem recebe. A construção precisa caber no que um personagem novo começa tendo: uma construção que custa mais XP do que a **Experiência inicial** da crônica é recusada, com uma mensagem que diz os dois números. Marque **Personagem existente** para registrar uma ficha que já existe, o que não cobra nada.
 
-Se você já é membro desta crônica, o personagem existe na hora (ou começa **pendente**, se a crônica exige aprovação de novos personagens, até um Narrador ativá-lo). Se você ainda não é membro desta crônica, isto é um pedido de entrada: você vê um aviso "Pedido Enviado", o personagem espera sem que ninguém possa abrir a ficha dele, e você só vira jogador aqui quando um Narrador aprova.
+Se você já é membro desta crônica, o personagem existe na hora (ou começa **pendente**, se a crônica exige aprovação de novos personagens ou o personagem tem uma escolha que as suas Regras de Aprovação entregam a um Narrador, até um Narrador ativá-lo; o status pedido por um Narrador vale). Se você ainda não é membro desta crônica, isto é um pedido de entrada: você vê um aviso "Pedido Enviado", o personagem espera sem que ninguém possa abrir a ficha dele, e você só vira jogador aqui quando um Narrador aprova.
 
 ### Cabeçalho (editando um personagem existente)
 

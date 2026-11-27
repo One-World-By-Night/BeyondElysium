@@ -2,7 +2,9 @@ import {
 	characterEditorUrl,
 	characterSheetUrl,
 	isPrintCanvasPath,
+	builderUrl,
 	newCharacterUrl,
+	opensBuilder,
 	readNewNpcFromUrl,
 	playerTabUrl,
 	storytellerTabUrl,
@@ -252,6 +254,32 @@ describe( 'newCharacterUrl', () => {
 		expect( newCharacterUrl( 'a b', { npc: true } ) ).toBe(
 			`${ ORIGIN }/be-player/?tab=edit&game_slug=a%20b&npc=1`
 		);
+	} );
+} );
+
+describe( 'builderUrl and opensBuilder', () => {
+	it( 'opens the builder on a chronicle', () => {
+		expect( builderUrl( 'kony' ) ).toBe(
+			`${ ORIGIN }/be-player/?tab=new&game_slug=kony`
+		);
+		expect( builderUrl( 'a b' ) ).toBe(
+			`${ ORIGIN }/be-player/?tab=new&game_slug=a%20b`
+		);
+	} );
+
+	it( 'opens the builder at tab=new for anyone', () => {
+		expect( opensBuilder( 'new', false ) ).toBe( true );
+		expect( opensBuilder( 'new', true ) ).toBe( true );
+	} );
+
+	it( 'lands the old editor address on the builder for someone who is not a Storyteller', () => {
+		expect( opensBuilder( 'edit', false ) ).toBe( true );
+		expect( opensBuilder( 'edit', true ) ).toBe( false );
+	} );
+
+	it( 'opens nothing for any other tab', () => {
+		expect( opensBuilder( 'sheet', false ) ).toBe( false );
+		expect( opensBuilder( 'characters', false ) ).toBe( false );
 	} );
 } );
 

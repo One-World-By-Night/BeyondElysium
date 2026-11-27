@@ -219,6 +219,17 @@
 				}
 			}
 		],
+		"character-builder": [
+			{
+				"heading": "The screen",
+				"path": "/be-player/?game_slug=be-demo&tab=new",
+				"account": "player",
+				"alt": {
+					"en": "The Character Builder on its Concept step: the budget bar pinned at the top, the row of steps, the name and creature type fields and the identity fields below.",
+					"pt_BR": "O Montador de Personagem na etapa Conceito: a barra de orçamento fixa no topo, a fileira de etapas, os campos de nome e tipo de criatura e os campos de identidade abaixo."
+				}
+			}
+		],
 		"character-editor": [
 			{
 				"heading": "Character Editor",

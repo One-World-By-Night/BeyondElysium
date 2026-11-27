@@ -40,6 +40,9 @@ export function isCharacterTab( key: string ): boolean {
  * The navigation key a tab belongs to: the section's for any of its views, otherwise the tab's own.
  */
 export function navKey( tab: string ): string {
+	if ( tab === 'new' ) {
+		return 'characters';
+	}
 	return isCharacterTab( tab ) ? CHARACTER_SECTION : tab;
 }
 

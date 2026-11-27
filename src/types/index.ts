@@ -1541,4 +1541,9 @@ export interface CreatureStackCollectionParams extends CollectionParams {
 	 * on, not just the ones already on. For the picker that sets enabled_stacks itself.
 	 */
 	include_disabled?: boolean;
+	/**
+	 * Section and rule labels as stored, for an editor that saves a creature type back; otherwise they read in the
+	 * site's language.
+	 */
+	stored?: boolean;
 }

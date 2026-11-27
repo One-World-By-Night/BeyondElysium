@@ -5,6 +5,7 @@ namespace BeyondElysium\REST;
 use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Creature_Stack;
 use BeyondElysium\Models\Game;
+use BeyondElysium\Services\Creation_Review;
 use BeyondElysium\Services\Creation_Tally;
 
 defined( 'ABSPATH' ) || exit;
@@ -67,6 +68,14 @@ class Creation_Tally_Controller extends Base_Controller {
 			(string) $game->slug,
 			(int) ( $game->settings->starting_xp ?? 0 )
 		);
+
+		// What the caller's build would start as: the picks the rules hand to a Storyteller and the status that follows.
+		$is_manager = \BeyondElysium\Core\Authorization::can( 'be_manage_characters' );
+		$joining    = ! $is_manager && ! \BeyondElysium\Core\Authorization::can( 'be_edit_own_characters' );
+		$needs      = Creation_Review::needs_storyteller( $resolved['stack'], $resolved['blocks'], $sheet_data ?: [], $game, $tally );
+
+		$tally['needs_storyteller'] = $needs;
+		$tally['starts']            = Creation_Review::starts( $game, $is_manager, $joining, $needs );
 		return $this->success( $tally );
 	}
 
@@ -99,6 +108,8 @@ class Creation_Tally_Controller extends Base_Controller {
 			(string) $game->slug,
 			(int) ( $game->settings->starting_xp ?? 0 )
 		);
+
+		$tally['needs_storyteller'] = Creation_Review::needs_storyteller( $resolved['stack'], $resolved['blocks'], is_array( $character->sheet_data ?? null ) ? $character->sheet_data : [], $game, $tally );
 		return $this->success( $tally );
 	}
 

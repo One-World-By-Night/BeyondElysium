@@ -5,6 +5,7 @@ namespace BeyondElysium\REST;
 use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Creature_Stack;
 use BeyondElysium\Models\Schema_Block;
+use BeyondElysium\Services\Catalog_Labels;
 use BeyondElysium\Services\St_Visibility;
 
 defined( 'ABSPATH' ) || exit;
@@ -131,6 +132,11 @@ class Creature_Stacks_Controller extends Base_Controller {
 			: Creature_Stack::all( $args );
 		$total = $game_slug !== '' ? count( $items ) : Creature_Stack::count( $args );
 
+		// An editor that saves a creature type back reads the names as stored.
+		if ( ! $request->get_param( 'stored' ) ) {
+			$items = array_map( static fn( $item ) => Catalog_Labels::stack( $item ), $items );
+		}
+
 		$response = $this->success( $items );
 		return $this->paginate( $response, $total, $pagination['per_page'], $pagination['page'] );
 	}
@@ -155,6 +161,7 @@ class Creature_Stacks_Controller extends Base_Controller {
 				$resolved = Creature_Stack::narrow_for_creation( $resolved, $slug, $game_slug );
 			}
 			St_Visibility::filter_catalog_blocks_for_viewer( $resolved['blocks'], $game_slug );
+			$resolved['stack'] = Catalog_Labels::stack( $resolved['stack'] );
 			return $this->success( $resolved );
 		}
 
@@ -418,6 +425,9 @@ class Creature_Stacks_Controller extends Base_Controller {
 			'search' => [
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_text_field',
+			],
+			'stored' => [
+				'type' => 'boolean',
 			],
 			'orderby' => [
 				'type'    => 'string',

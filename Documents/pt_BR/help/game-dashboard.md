@@ -13,7 +13,7 @@ Qualquer pessoa que tenha uma aba no Kit de Ferramentas do Narrador: um HST, um 
 ## A tela
 
 - **Aguardando você** - uma linha para cada coisa que aguarda, deixada de fora quando não há nada. Cada linha abre a lista que ela conta.
-  - **Fila de Aprovação** - "7 aguardando · 2 pedidos de XP · 1 arquivo do Grapevine". Para um HST ou AST.
+  - **Fila de Aprovação** - "7 aguardando · 2 pedidos de XP · 1 arquivo do Grapevine · 1 personagem novo". Para um HST ou AST. Um personagem novo conta quando um membro o criou e ele espera por você, porque a crônica revisa os personagens novos ou porque uma escolha precisa de um Narrador; quem ainda está pedindo para entrar é contado pelo pedido.
   - **Tempo livre** - "3 a responder · 4 que ninguém assumiu". O primeiro número é seu e abre a [Minha Fila](my-queue.md); o resto abre Tempo Livre.
   - **Postagens de trama** - "2 aguardando você · 1 que ninguém assumiu", contadas do mesmo jeito.
   - **Jogadores** - "1 pede para entrar · 2 vínculos do Discord a aprovar". Para um HST ou AST. Abre [Jogadores](chronicle-players.md).

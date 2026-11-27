@@ -162,7 +162,7 @@ class Compendium {
 			if ( self::rows( $block ) === [] ) {
 				continue;
 			}
-			$sections[] = [ 'label' => (string) ( $section->label ?? $block->name ), 'block' => $block ];
+			$sections[] = [ 'label' => Catalog_Labels::word( (string) ( $section->label ?? $block->name ) ), 'block' => $block ];
 		}
 		return [ 'stack' => $resolved['stack'], 'sections' => $sections ];
 	}

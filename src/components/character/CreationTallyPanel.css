@@ -62,3 +62,29 @@
 	padding-left: 1.25rem;
 	color: var(--be-red-6);
 }
+
+.be-creation-tally__needs {
+	margin: 8px 0;
+}
+
+.be-creation-tally__needs h5 {
+	margin: 0 0 4px;
+}
+
+.be-creation-tally__needs ul {
+	margin: 0;
+	padding-left: 1.25rem;
+}
+
+.be-creation-tally__needs {
+	margin: 8px 0;
+}
+
+.be-creation-tally__needs h5 {
+	margin: 0 0 4px;
+}
+
+.be-creation-tally__needs ul {
+	margin: 0;
+	padding-left: 1.25rem;
+}

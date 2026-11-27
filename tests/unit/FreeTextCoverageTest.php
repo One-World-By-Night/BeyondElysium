@@ -37,6 +37,8 @@ class FreeTextCoverageTest extends TestCase {
 		'characters.notes'                          => 'filter_character',
 		'characters.rp_notes'                       => self::MANAGER_ONLY,
 		'player_notes.notes'                        => self::MANAGER_ONLY,
+		// The caller's own unfinished build; only that person's GET /my/character-draft ever returns it.
+		'character_drafts.draft'                    => self::STRUCTURED,
 		'character_changes.notes'                   => 'filter_change',
 		'character_changes.review_notes'            => 'filter_change',
 		'character_changes.reason'                  => 'filter_change',

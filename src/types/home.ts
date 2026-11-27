@@ -102,6 +102,7 @@ export interface StorytellerHomeData {
 			changes: number;
 			xp_requests: number;
 			files: number;
+			new_characters: number;
 		} | null;
 		downtime: { mine: number; unassigned: number } | null;
 		plots: { mine: number; unassigned: number } | null;

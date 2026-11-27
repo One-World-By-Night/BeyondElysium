@@ -115,14 +115,128 @@ class Creation_Tally {
 
 		$needed = self::price_uncovered( $character, $stack, $sections, $blocks, $sheet_data, $resolved, $covered );
 
+		$section_labels = self::section_labels( $sections, $blocks );
+		$reports        = self::label_steps( $reports, $section_labels, $blocks );
+		$limits         = self::label_flags( $limits, $section_labels, $blocks );
+
 		return [
 			'steps'          => $reports,
-			'pools'          => self::pool_report( $pools ),
+			'pools'          => self::label_pools( self::pool_report( $pools ) ),
 			'limits'         => $limits,
 			'grants_missing' => $grants_missing,
 			'unbuyable'      => self::unbuyable( $sections, $blocks, $sheet_data, $resolved, $covered ),
 			'xp'             => [ 'starting' => $starting_xp, 'needed' => $needed, 'left' => $starting_xp - $needed ],
 		];
+	}
+
+	// -------------------------------------------------------------------------
+	// display names
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Each of the stack's section slugs with its label in the site's language.
+	 *
+	 * @param array<int,object>    $sections
+	 * @param array<string,object> $blocks
+	 * @return array<string,string>
+	 */
+	public static function section_labels( array $sections, array $blocks ): array {
+		$labels = [];
+		foreach ( $sections as $section ) {
+			$slug = (string) ( $section->block_slug ?? '' );
+			if ( $slug === '' ) {
+				continue;
+			}
+			$stored         = (string) ( $section->label ?? ( $blocks[ $slug ]->name ?? $slug ) );
+			$labels[ $slug ] = Catalog_Labels::word( $stored );
+		}
+		return $labels;
+	}
+
+	/**
+	 * What a `section.Name` target reads as: the pool, entry or section name in the site's language.
+	 *
+	 * @param array<string,string> $section_labels
+	 * @param array<string,object> $blocks
+	 */
+	private static function target_label( string $target, array $section_labels, array $blocks ): string {
+		if ( ! str_contains( $target, '.' ) ) {
+			return $section_labels[ $target ] ?? Catalog_Labels::word( (string) ( $blocks[ $target ]->name ?? $target ) );
+		}
+		[ $slug, $name ] = explode( '.', $target, 2 );
+		$definition      = $blocks[ $slug ]->definition ?? null;
+		foreach ( (array) ( $definition->pools ?? [] ) as $pool ) {
+			if ( (string) ( $pool->name ?? '' ) === $name ) {
+				return (string) ( $pool->label_pt ?? Catalog_Labels::word( $name ) );
+			}
+		}
+		foreach ( (array) ( $definition->items ?? [] ) as $item ) {
+			if ( (string) ( $item->name ?? '' ) === $name ) {
+				return (string) ( $item->name_pt ?? Catalog_Labels::word( $name ) );
+			}
+		}
+		return Catalog_Labels::word( $name );
+	}
+
+	/**
+	 * @param array<int,array<string,mixed>> $reports
+	 * @param array<string,string>           $section_labels
+	 * @param array<string,object>           $blocks
+	 * @return array<int,array<string,mixed>>
+	 */
+	private static function label_steps( array $reports, array $section_labels, array $blocks ): array {
+		foreach ( $reports as $i => $report ) {
+			$report['label'] = Catalog_Labels::word( (string) ( $report['label'] ?? '' ) );
+			switch ( $report['kind'] ) {
+				case 'prioritized':
+					foreach ( $report['sections'] as $j => $row ) {
+						$report['sections'][ $j ]['label'] = $section_labels[ $row['section'] ] ?? self::target_label( $row['section'], $section_labels, $blocks );
+					}
+					break;
+				case 'budget':
+					$report['section_label'] = self::target_label( (string) $report['section'], $section_labels, $blocks );
+					foreach ( $report['quotas'] as $j => $quota ) {
+						$report['quotas'][ $j ]['label'] = Catalog_Labels::word( (string) $quota['label'] );
+					}
+					break;
+				case 'start':
+					$report['target_label'] = self::target_label( (string) $report['target'], $section_labels, $blocks );
+					break;
+				case 'earned':
+				case 'free':
+					$report['pool_label'] = Catalog_Labels::word( (string) $report['pool'] );
+					break;
+				case 'limit':
+					$report['flags'] = self::label_flags( $report['flags'], $section_labels, $blocks );
+					break;
+			}
+			$reports[ $i ] = $report;
+		}
+		return $reports;
+	}
+
+	/**
+	 * @param array<int,array<string,mixed>> $flags
+	 * @param array<string,string>           $section_labels
+	 * @param array<string,object>           $blocks
+	 * @return array<int,array<string,mixed>>
+	 */
+	private static function label_flags( array $flags, array $section_labels, array $blocks ): array {
+		foreach ( $flags as $i => $flag ) {
+			$flags[ $i ]['target_label'] = self::target_label( (string) $flag['target'], $section_labels, $blocks );
+		}
+		return $flags;
+	}
+
+	/**
+	 * @param array<string,array<string,int>> $pools
+	 * @return array<string,array<string,mixed>>
+	 */
+	private static function label_pools( array $pools ): array {
+		foreach ( $pools as $name => $pool ) {
+			$pools[ $name ]['label'] = Catalog_Labels::word( (string) $name );
+		}
+		return $pools;
 	}
 
 	// -------------------------------------------------------------------------

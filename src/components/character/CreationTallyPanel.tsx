@@ -7,9 +7,9 @@ import { useEffect, useRef, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
 import { unbuyableLine } from '../../lib/raisedByPool';
+import { limitFlagText } from '../../lib/tallyText';
 import type {
 	CreationTally as CreationTallyReport,
-	CreationTallyLimitFlag,
 	CreationTallyStep,
 } from '../../types/character';
 import './CreationTallyPanel.css';
@@ -29,45 +29,6 @@ export interface CreationTallyPanelProps {
 	 * Shows a player what the build holds that only play can raise; a Storyteller sets any rating, so never shown to one.
 	 */
 	warnsPlayer?: boolean;
-}
-
-const LIMIT_REASON_LABEL: Record< string, string > = {
-	max_points: __( 'over its point limit', 'beyond-elysium' ),
-	max_rating: __( 'above its maximum rating', 'beyond-elysium' ),
-	min_rating: __( 'below its minimum rating', 'beyond-elysium' ),
-	ceiling: __( 'above what it may not exceed', 'beyond-elysium' ),
-};
-
-function limitFlagText( flag: CreationTallyLimitFlag ): string {
-	const reason = LIMIT_REASON_LABEL[ flag.reason ] ?? flag.reason;
-	if ( flag.reason === 'max_rating' || flag.reason === 'max_points' ) {
-		return sprintf(
-			/* translators: 1: what is flagged, 2: why, 3: its value, 4: the limit it broke */
-			__( '%1$s is %2$s (%3$s, limit %4$s).', 'beyond-elysium' ),
-			flag.target,
-			reason,
-			String( flag.value ),
-			String( flag.max ?? '' )
-		);
-	}
-	if ( flag.reason === 'min_rating' ) {
-		return sprintf(
-			/* translators: 1: what is flagged, 2: why, 3: its value, 4: the minimum it fell below */
-			__( '%1$s is %2$s (%3$s, minimum %4$s).', 'beyond-elysium' ),
-			flag.target,
-			reason,
-			String( flag.value ),
-			String( flag.min ?? '' )
-		);
-	}
-	return sprintf(
-		/* translators: 1: what is flagged, 2: why, 3: its value, 4: the entry it may not exceed */
-		__( '%1$s is %2$s (%3$s, above %4$s).', 'beyond-elysium' ),
-		flag.target,
-		reason,
-		String( flag.value ),
-		String( flag.ceiling ?? '' )
-	);
 }
 
 /**
@@ -97,7 +58,7 @@ function StepLine( { step }: { step: CreationTallyStep } ) {
 							{ sprintf(
 								/* translators: 1: section name, 2: dots used, 3: dots allowed */
 								__( '%1$s: %2$d of %3$d', 'beyond-elysium' ),
-								section.section,
+								section.label,
 								section.used,
 								section.allowed
 							) }
@@ -163,7 +124,7 @@ function StepLine( { step }: { step: CreationTallyStep } ) {
 					__( '%1$s: +%2$d to %3$s', 'beyond-elysium' ),
 					step.label,
 					step.points,
-					step.pool
+					step.pool_label
 				) }
 			</li>
 		);
@@ -177,7 +138,7 @@ function StepLine( { step }: { step: CreationTallyStep } ) {
 					__( '%1$s: %2$d spent from %3$s', 'beyond-elysium' ),
 					step.label,
 					step.spent,
-					step.pool
+					step.pool_label
 				) }
 			</li>
 		);
@@ -193,7 +154,7 @@ function StepLine( { step }: { step: CreationTallyStep } ) {
 					/* translators: 1: step label, 2: what it set, 3: its starting value */
 					__( '%1$s: %2$s starts at %3$s', 'beyond-elysium' ),
 					step.label,
-					step.target,
+					step.target_label,
 					String( step.value )
 				) }
 			</li>
@@ -379,7 +340,7 @@ export function CreationTallyPanel( {
 										'%1$s: %2$d of %3$d left',
 										'beyond-elysium'
 									),
-									name,
+									pool.label,
 									pool.left,
 									pool.own + pool.earned
 								) }
@@ -394,6 +355,24 @@ export function CreationTallyPanel( {
 					<StepLine key={ `${ step.kind }-${ i }` } step={ step } />
 				) ) }
 			</ul>
+
+			{ ( report.needs_storyteller ?? [] ).length > 0 && (
+				<div className="be-creation-tally__needs">
+					<h5>{ __( 'Needs a Storyteller', 'beyond-elysium' ) }</h5>
+					<ul>
+						{ ( report.needs_storyteller ?? [] ).map(
+							( pick, i ) => (
+								<li
+									key={ `${ pick.section }-${ pick.name }-${ i }` }
+								>
+									<strong>{ pick.name }</strong>
+									{ pick.reason ? `: ${ pick.reason }` : '' }
+								</li>
+							)
+						) }
+					</ul>
+				</div>
+			) }
 
 			{ warnsPlayer && ( report.unbuyable ?? [] ).length > 0 && (
 				<ul className="be-creation-tally__unbuyable" role="alert">

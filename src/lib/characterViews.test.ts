@@ -39,6 +39,7 @@ describe( 'the Character section views', () => {
 		expect( isCharacterView( 'character' ) ).toBe( false );
 		expect( isCharacterTab( 'plots' ) ).toBe( false );
 		expect( navKey( 'plots' ) ).toBe( 'plots' );
+		expect( navKey( 'new' ) ).toBe( 'characters' );
 	} );
 } );
 

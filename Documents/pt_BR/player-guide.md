@@ -6,7 +6,7 @@ Tudo o que um jogador faz fica em uma só página, **Minha Crônica**, com um se
 
 ## 1. Seus Personagens
 
-A aba **Personagens** lista os seus personagens na crônica. Use **+ Novo Personagem** para criar um - escolha um tipo de criatura, preencha os campos de identidade e gaste a sua construção inicial do mesmo jeito que vai gastar experiência depois.
+A aba **Personagens** lista os seus personagens na crônica. Use **+ Novo personagem**, aqui ou na **Home**, para abrir o [Montador de Personagem](help/character-builder.md): um caminho guiado pelas etapas do próprio tipo de criatura, com uma barra no topo que mostra o que cada etapa custa enquanto você avança. Sua montagem inacabada fica guardada na sua conta, então você pode parar no celular e **Continuar** no computador. Revisar lista cada escolha, o que precisa ser corrigido e qualquer escolha que as regras da sua crônica mandem um Narrador olhar; um personagem com uma escolha assim começa **pendente** até que ele olhe. Uma construção nunca pode custar mais XP do que um personagem novo começa tendo.
 
 **Entrar em uma nova crônica.** **Minha Crônica** lista, em **Crônicas que você pode pedir para entrar**, todas as crônicas do site que ainda aceitam pedidos, ou você pode seguir um link de convite que um Narrador compartilhou com você. Dali, peça com uma mensagem curta, ou comece um personagem, ou envie um arquivo do Grapevine - cada um dos três é um jeito próprio de pedir. Seja qual for o que você escolher, você ainda não é jogador ali até que um dos Narradores da crônica aprove; eles recebem um e-mail quando você pede, e você também recebe um quando eles responderem. Você pode ter um pedido só de mensagem aguardando por crônica. Veja [Entrar em uma Crônica](help/joining.md).
 

@@ -472,6 +472,7 @@ class Game {
 			Manager::delete( 'notices', [ 'game_id' => $game_id ] ),
 			Manager::delete( 'bot_notices', [ 'game_id' => $game_id ] ),
 			Manager::delete( 'player_notes', [ 'game_id' => $game_id ] ),
+			Manager::delete( 'character_drafts', [ 'game_id' => $game_id ] ),
 		];
 
 		if ( ! $ok || in_array( false, $deletes, true ) ) {
@@ -508,7 +509,7 @@ class Game {
 	 * Counts everything stored under a chronicle that deleting its row alone would leave behind.
 	 *
 	 * @param object $game A games row.
-	 * @return array{characters:int,plots:int,world_objects:int,templates:int,schema_blocks:int,creature_stacks:int,saved_queries:int,attestations:int,transfers:int,factions:int,positions:int,secrets:int,game_sessions:int,attendance:int,release_batches:int,notification_queue:int,npc_castings:int,after_game_reports:int,join_requests:int,player_notes:int}
+	 * @return array{characters:int,plots:int,world_objects:int,templates:int,schema_blocks:int,creature_stacks:int,saved_queries:int,attestations:int,transfers:int,factions:int,positions:int,secrets:int,game_sessions:int,attendance:int,release_batches:int,notification_queue:int,npc_castings:int,after_game_reports:int,join_requests:int,player_notes:int,character_drafts:int}
 	 */
 	public static function content_counts( object $game ): array {
 		$id   = (int) $game->id;
@@ -535,6 +536,7 @@ class Game {
 			'after_game_reports' => self::count_rows( 'after_game_reports', 'game_id = %d', $id ),
 			'join_requests' => self::count_rows( 'join_requests', 'game_id = %d', $id ),
 			'player_notes' => self::count_rows( 'player_notes', 'game_id = %d', $id ),
+			'character_drafts' => self::count_rows( 'character_drafts', 'game_id = %d', $id ),
 		];
 	}
 

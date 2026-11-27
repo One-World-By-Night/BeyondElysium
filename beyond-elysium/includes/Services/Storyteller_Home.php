@@ -2,6 +2,7 @@
 
 namespace BeyondElysium\Services;
 
+use BeyondElysium\Database\Manager;
 use BeyondElysium\Models\After_Game_Report;
 use BeyondElysium\Models\Attendance;
 use BeyondElysium\Models\Change;
@@ -53,15 +54,29 @@ class Storyteller_Home {
 	/**
 	 * What waits in the Approval Queue.
 	 *
-	 * @return array{changes:int,xp_requests:int,files:int}
+	 * @return array{changes:int,xp_requests:int,files:int,new_characters:int}
 	 */
 	private static function approvals( object $game ): array {
 		$slug = (string) $game->slug;
 		return [
-			'changes'     => Change::count_for_game( $slug, [ 'status' => 'pending' ] ),
-			'xp_requests' => Change::count_for_game( $slug, [ 'status' => 'pending', 'change_type' => 'xp_adjust' ] ),
-			'files'       => Submission::count_waiting( (int) $game->id ),
+			'changes'        => Change::count_for_game( $slug, [ 'status' => 'pending' ] ),
+			'xp_requests'    => Change::count_for_game( $slug, [ 'status' => 'pending', 'change_type' => 'xp_adjust' ] ),
+			'files'          => Submission::count_waiting( (int) $game->id ),
+			'new_characters' => self::new_characters_waiting( $game ),
 		];
+	}
+
+	/**
+	 * Pending player characters made by members of the chronicle; someone still asking to join is counted by their request.
+	 */
+	private static function new_characters_waiting( object $game ): int {
+		return (int) Manager::get_var(
+			'SELECT COUNT(*) FROM ' . Manager::table( 'characters' ) . ' c'
+			. " WHERE c.owner_type = 'chronicle' AND c.owner_slug = %s AND c.status = 'pending' AND c.is_npc = 0"
+			. ' AND c.wp_user_id IN ( SELECT m.wp_user_id FROM ' . Manager::table( 'game_members' ) . ' m WHERE m.game_id = %d )',
+			(string) $game->slug,
+			(int) $game->id
+		);
 	}
 
 	/**

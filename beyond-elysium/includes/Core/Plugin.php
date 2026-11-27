@@ -40,6 +40,7 @@ class Plugin {
 		add_action( 'deleted_user', [ '\BeyondElysium\Models\Game_Member', 'remove_user_everywhere' ] );
 		add_action( 'deleted_user', [ '\BeyondElysium\Services\Staff_Grants', 'remove_user_everywhere' ] );
 		add_action( 'deleted_user', [ '\BeyondElysium\Models\Player_Note', 'remove_user_everywhere' ] );
+		add_action( 'deleted_user', [ '\BeyondElysium\Models\Character_Draft', 'remove_user_everywhere' ] );
 
 		// Drops this plugin's tables with a deleted subsite.
 		Multisite::register();
@@ -218,6 +219,7 @@ class Plugin {
 			new \BeyondElysium\REST\Home_Controller(),
 			new \BeyondElysium\REST\Compendium_Controller(),
 			new \BeyondElysium\REST\Player_Notes_Controller(),
+			new \BeyondElysium\REST\Character_Drafts_Controller(),
 		];
 		foreach ( $controllers as $controller ) {
 			$controller->register_routes();

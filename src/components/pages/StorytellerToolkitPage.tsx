@@ -257,6 +257,11 @@ export function StorytellerToolkitPage() {
 									key={ `${ gameSlug }-${ showNpcs }` }
 									gameSlug={ gameSlug }
 									showNpcs={ showNpcs }
+									status={
+										new URLSearchParams(
+											window.location.search
+										).get( 'status' ) ?? undefined
+									}
 									sheetPageUrl={ playerTabUrl(
 										PLAYER_TABS.sheet
 									) }

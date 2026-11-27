@@ -1461,15 +1461,33 @@ class Change_Engine {
 	}
 
 	/**
+	 * What the rules alone decide for a change: 'st' with its reason when an item, level, value, option, block, in- or
+	 * out-of-type rule, a custom entry or a bylaw clause says a Storyteller must approve it, and null otherwise. The
+	 * chronicle's default never applies, so a chronicle that reviews everything by default gives null for a pick no rule
+	 * names.
+	 *
+	 * @param object               $character
+	 * @param object               $change    Plain object with change_type and change_data.
+	 * @param array<string,mixed>  $context   Blocks (`blocks`), the creature stack (`stack`) and the game (`game`) already loaded by the caller; filled in as it goes.
+	 * @return array{level: string, reason: ?string}|null
+	 */
+	public static function explicit_approval( $character, $change, array &$context = [] ): ?array {
+		$resolved = self::resolve_rule_level( $character, $change, false, $context );
+		return $resolved['level'] === 'st' ? [ 'level' => 'st', 'reason' => $resolved['reason'] ] : null;
+	}
+
+	/**
 	 * The level the rules themselves resolve to: checks per-item and block-level approval rules for the affected trait,
 	 * applies any game-level auto-approve setting, and returns the strictest level found, alongside an optional reason
 	 * string.
 	 *
-	 * @param object $character
-	 * @param object $change    Plain object with change_type, change_data['block_slug'].
-	 * @return array{level: string, reason: ?string}
+	 * @param object               $character
+	 * @param object               $change        Plain object with change_type, change_data['block_slug'].
+	 * @param bool                 $apply_default Whether the chronicle's own default fills in a level no rule decided.
+	 * @param array<string,mixed>  $context       Blocks, creature stack and game the caller already loaded.
+	 * @return array{level: ?string, reason: ?string}
 	 */
-	private static function resolve_rule_level( $character, $change ): array {
+	private static function resolve_rule_level( $character, $change, bool $apply_default = true, array &$context = [] ): array {
 		$change_data = is_array( $change->change_data ) ? $change->change_data : [];
 		$block_slug  = $change_data['block_slug'] ?? null;
 
@@ -1501,7 +1519,7 @@ class Change_Engine {
 
 		if ( $block_slug ) {
 			// Prefer this character's chronicle-specific fork of the block, if one exists.
-			$block = Purchase_Scope::widen( Schema_Block::find_for_game( $block_slug, (string) ( $character->owner_slug ?? '' ) ), (string) ( $character->owner_slug ?? '' ) );
+			$block = $context['blocks'][ $block_slug ] ?? Purchase_Scope::widen( Schema_Block::find_for_game( $block_slug, (string) ( $character->owner_slug ?? '' ) ), (string) ( $character->owner_slug ?? '' ) );
 			// $block->definition decodes as a plain object, not an associative array.
 			if ( $block && $block->definition ) {
 				$definition = $block->definition;
@@ -1639,7 +1657,10 @@ class Change_Engine {
 
 					// tiered_power in-type/out-of-type is resolved via Cost_Engine, not client input.
 					if ( $block->section_type === 'tiered_power' && isset( $rules->in_type ) ) {
-						$in_type = $trait_name && Cost_Engine::is_in_type( $character, $block_slug, $trait_name );
+						if ( ! isset( $context['in_type'][ $block_slug ] ) ) {
+							$context['in_type'][ $block_slug ] = Cost_Engine::in_type_check( $character, $block_slug, $context['stack'] ?? null, $context['blocks'] ?? [] );
+						}
+						$in_type = $trait_name && $context['in_type'][ $block_slug ]( $trait_name );
 						$rule    = $in_type ? ( $rules->in_type ?? $rule ) : ( $rules->out_of_type ?? $rule );
 					}
 
@@ -1650,7 +1671,7 @@ class Change_Engine {
 
 		// The chronicle's own reason, if any, comes first; every OWBN Character Bylaw attached to this entry
 		// follows, one per line, on a chronicle with the switch on.
-		$game = \BeyondElysium\Models\Game::find_by_slug( $character->owner_slug );
+		$game = $context['game'] ?? \BeyondElysium\Models\Game::find_by_slug( $character->owner_slug );
 		if ( $block_slug && isset( $trait_name ) && $trait_name && $game && ( $game->settings->owbn_bylaws ?? false ) === true ) {
 			$axis         = ! empty( $character->is_npc ) ? 'npc' : 'pc';
 			$family       = Bylaws::family_of_block( $block_slug );
@@ -1686,8 +1707,10 @@ class Change_Engine {
 		}
 
 		// Falls back to the chronicle's own default approval setting.
-		$chronicle_default = ( $game && ( $game->settings->auto_approve ?? false ) === true ) ? 'auto' : 'st';
-		$level = $level ?? $chronicle_default;
+		if ( $apply_default ) {
+			$chronicle_default = ( $game && ( $game->settings->auto_approve ?? false ) === true ) ? 'auto' : 'st';
+			$level             = $level ?? $chronicle_default;
+		}
 
 		return [ 'level' => $level, 'reason' => $reason ];
 	}

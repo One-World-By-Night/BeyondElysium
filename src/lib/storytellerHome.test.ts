@@ -24,7 +24,12 @@ describe( 'waitingLines', () => {
 		expect(
 			waitingLines(
 				home( {
-					approvals: { changes: 0, xp_requests: 0, files: 0 },
+					approvals: {
+						changes: 0,
+						xp_requests: 0,
+						files: 0,
+						new_characters: 0,
+					},
 					downtime: { mine: 0, unassigned: 0 },
 					plots: { mine: 0, unassigned: 0 },
 					players: { join_requests: 0, links: 0 },
@@ -36,7 +41,14 @@ describe( 'waitingLines', () => {
 
 	it( 'says what waits in the Approval Queue and opens it', () => {
 		const [ line ] = waitingLines(
-			home( { approvals: { changes: 7, xp_requests: 2, files: 1 } } ),
+			home( {
+				approvals: {
+					changes: 7,
+					xp_requests: 2,
+					files: 1,
+					new_characters: 0,
+				},
+			} ),
 			'kony'
 		);
 
@@ -49,11 +61,52 @@ describe( 'waitingLines', () => {
 
 	it( 'leaves out a part that is zero and a file alone still counts', () => {
 		const [ line ] = waitingLines(
-			home( { approvals: { changes: 0, xp_requests: 0, files: 2 } } ),
+			home( {
+				approvals: {
+					changes: 0,
+					xp_requests: 0,
+					files: 2,
+					new_characters: 0,
+				},
+			} ),
 			'kony'
 		);
 
 		expect( line.text ).toBe( 'Approval Queue: 2 Grapevine files' );
+	} );
+
+	it( 'counts a new character that waits beside the changes', () => {
+		const [ line ] = waitingLines(
+			home( {
+				approvals: {
+					changes: 7,
+					xp_requests: 0,
+					files: 0,
+					new_characters: 1,
+				},
+			} ),
+			'kony'
+		);
+
+		expect( line.text ).toBe(
+			'Approval Queue: 7 waiting · 1 new character'
+		);
+	} );
+
+	it( 'shows the line for a new character alone', () => {
+		const [ line ] = waitingLines(
+			home( {
+				approvals: {
+					changes: 0,
+					xp_requests: 0,
+					files: 0,
+					new_characters: 2,
+				},
+			} ),
+			'kony'
+		);
+
+		expect( line.text ).toBe( 'Approval Queue: 2 new characters' );
 	} );
 
 	it( 'splits downtime into what is the persons and what nobody has taken', () => {

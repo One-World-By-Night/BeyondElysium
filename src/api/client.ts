@@ -2034,6 +2034,43 @@ export const creationTally = ( gameSlug: string ) => ( {
 } );
 
 /**
+ * What the caller's unfinished new character holds: the fields the builder keeps.
+ */
+export interface CharacterDraft {
+	name?: string;
+	stack_slug?: string;
+	step?: string;
+	sheet_data?: Record< string, unknown >;
+	biography?: string;
+}
+
+export interface CharacterDraftRecord {
+	draft: CharacterDraft | null;
+	updated_at: string | null;
+}
+
+/**
+ * REST client factory for the caller's own unfinished new character in one chronicle.
+ */
+export const characterDraft = ( gameSlug: string ) => ( {
+	get: (): Promise< CharacterDraftRecord > =>
+		apiFetch( { path: `${ BASE }/${ gameSlug }/my/character-draft` } ),
+
+	save: ( draft: CharacterDraft ): Promise< CharacterDraftRecord > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/my/character-draft`,
+			method: 'PUT',
+			data: { draft },
+		} ),
+
+	discard: (): Promise< CharacterDraftRecord > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/my/character-draft`,
+			method: 'DELETE',
+		} ),
+} );
+
+/**
  * REST client factory for the book variants a chronicle chooses: listing them, previewing the held entries a choice
  * would unmatch, and choosing.
  */
@@ -4928,6 +4965,7 @@ const api = {
 	gameStats,
 	setupStatus,
 	creationTally,
+	characterDraft,
 	catalogCorrections,
 	catalogVariants,
 	docs,

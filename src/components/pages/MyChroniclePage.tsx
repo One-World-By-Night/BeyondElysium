@@ -13,6 +13,7 @@ import { DiscordLinkPanel } from '../game/DiscordLinkPanel';
 import DemoBanner, { DemoBannerShownContext } from '../shared/DemoBanner';
 import { TabStrip } from '../shared/TabStrip';
 import { CharacterList } from '../character/CharacterList';
+import CharacterBuilder from '../builder/CharacterBuilder';
 import { CharacterSection } from '../character/CharacterSection';
 import { MyPlotsFeed } from '../apr/MyPlotsFeed';
 import { PlayerHome } from '../game/PlayerHome';
@@ -27,7 +28,7 @@ import { SendGrapevineFile } from '../character/SendGrapevineFile';
 import ProposeWorldObject from '../world/ProposeWorldObject';
 import ProposeFaction from '../faction/ProposeFaction';
 import {
-	newCharacterUrl,
+	builderUrl,
 	playerTabUrl,
 	readTabFromUrl,
 	writeTabToUrl,
@@ -303,7 +304,7 @@ export function MyChroniclePage() {
 					{ tab === PLAYER_TABS.characters && (
 						<>
 							<p className="be-my-chronicle-page__new-character">
-								<a href={ newCharacterUrl( gameSlug ) }>
+								<a href={ builderUrl( gameSlug ) }>
 									{ __(
 										'+ New Character',
 										'beyond-elysium'
@@ -333,6 +334,14 @@ export function MyChroniclePage() {
 								capabilities={ capabilities }
 							/>
 						</>
+					) }
+
+					{ tab === PLAYER_TABS.newCharacter && (
+						<CharacterBuilder
+							key={ gameSlug }
+							gameSlug={ gameSlug }
+							capabilities={ capabilities }
+						/>
 					) }
 
 					{ isCharacterTab( tab ) && (

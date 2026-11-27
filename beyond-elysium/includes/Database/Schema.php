@@ -12,7 +12,7 @@ class Schema {
 	/**
 	 * The plugin's current database schema version, matching the plugin release version.
 	 */
-	const DB_VERSION = '1.7.6';
+	const DB_VERSION = '1.7.7';
 
 	/**
 	 * Option key holding the installed schema version.
@@ -87,6 +87,7 @@ class Schema {
 		'staff_grants',
 		'notices',
 		'player_notes',
+		'character_drafts',
 	];
 
 	/**
@@ -995,6 +996,17 @@ class Schema {
 			wp_user_id bigint(20) unsigned NOT NULL,
 			notes longtext NOT NULL,
 			updated_by bigint(20) unsigned NOT NULL DEFAULT 0,
+			updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY  (id),
+			UNIQUE KEY game_person (game_id, wp_user_id)
+		) $charset_collate;" );
+
+		// be_character_drafts: one person's unfinished new character in one chronicle, kept on their account.
+		dbDelta( "CREATE TABLE {$prefix}character_drafts (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			game_id bigint(20) unsigned NOT NULL,
+			wp_user_id bigint(20) unsigned NOT NULL,
+			draft longtext NOT NULL,
 			updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY  (id),
 			UNIQUE KEY game_person (game_id, wp_user_id)

@@ -28,6 +28,7 @@ export const PLAYER_TABS = {
 	myGroups: 'my-groups',
 	afterGameReport: 'after-game-report',
 	compendium: 'compendium',
+	newCharacter: 'new',
 } as const;
 
 /**
@@ -117,6 +118,26 @@ export function newCharacterUrl(
 	) }&game_slug=${ encodeURIComponent( gameSlug ) }${
 		options.npc ? '&npc=1' : ''
 	}`;
+}
+
+/**
+ * The address of the character builder for one chronicle.
+ */
+export function builderUrl( gameSlug: string ): string {
+	return `${ playerTabUrl(
+		PLAYER_TABS.newCharacter
+	) }&game_slug=${ encodeURIComponent( gameSlug ) }`;
+}
+
+/**
+ * Whether a tab with no character chosen opens the builder: its own tab for anyone, and the old editor address for
+ * anyone who is not a Storyteller in the chronicle.
+ */
+export function opensBuilder( tab: string, isStoryteller: boolean ): boolean {
+	return (
+		tab === PLAYER_TABS.newCharacter ||
+		( tab === PLAYER_TABS.edit && ! isStoryteller )
+	);
 }
 
 /**

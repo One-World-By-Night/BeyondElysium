@@ -174,10 +174,11 @@ class ResourcePoolBookMaxThreadTest extends WP_UnitTestCase {
 	}
 
 	public function test_a_player_starting_a_mummy_stops_at_the_books_maximum(): void {
-		$create = function ( int $user, int $balance ): \WP_REST_Response {
+		$create = function ( int $user, int $balance, bool $existing = false ): \WP_REST_Response {
 			wp_set_current_user( $user );
 			$request = new WP_REST_Request( 'POST', "/be/v1/{$this->slug}/characters" );
 			$request->set_param( 'name', 'New Mummy ' . $balance );
+			$request->set_param( 'existing_character', $existing );
 			$request->set_param( 'stack_slug', 'mummy' );
 			$request->set_param( 'sheet_data', [ 'mummy-resources' => [ 'Balance' => [ 'permanent' => $balance, 'temporary' => $balance ] ] ] );
 			return rest_get_server()->dispatch( $request );
@@ -188,6 +189,6 @@ class ResourcePoolBookMaxThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 400, $refused->get_status() );
 		$this->assertSame( 'creation_limit', $refused->get_data()['code'] );
 		$this->assertStringContainsString( 'Balance', $refused->get_data()['message'] );
-		$this->assertSame( 201, $create( $this->hst, 7 )->get_status(), 'a Storyteller sets any rating' );
+		$this->assertSame( 201, $create( $this->hst, 7, true )->get_status(), 'a Storyteller sets any rating' );
 	}
 }

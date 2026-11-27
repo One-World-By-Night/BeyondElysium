@@ -5,6 +5,7 @@
 import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import api from '../../api/client';
+import CharacterBuilder from '../builder/CharacterBuilder';
 import ChangeHistory from '../changes/ChangeHistory';
 import HelpButton from '../shared/HelpButton';
 import CartChip from './CartChip';
@@ -22,7 +23,9 @@ import {
 	viewsFor,
 	type CharacterView,
 } from '../../lib/characterViews';
-import { readNewNpcFromUrl } from '../../lib/pluginPages';
+import { canIn } from '../../lib/chronicleCapabilities';
+import { readCreatedReview } from '../../lib/createdReview';
+import { opensBuilder, readNewNpcFromUrl } from '../../lib/pluginPages';
 import { standingLine } from '../../lib/standing';
 import useCharacterEditorStore from '../../store/characterEditorStore';
 import { useCreatureTypeNames } from '../../lib/useCreatureTypeNames';
@@ -162,6 +165,17 @@ export function CharacterSection( {
 	}, [ settled, view, tab, characterId ] );
 
 	if ( ! characterId ) {
+		if (
+			opensBuilder( tab, canIn( 'be_manage_characters', capabilities ) )
+		) {
+			return (
+				<CharacterBuilder
+					key={ `${ gameSlug }-builder` }
+					gameSlug={ gameSlug }
+					capabilities={ capabilities }
+				/>
+			);
+		}
 		if ( tab === 'edit' ) {
 			return (
 				<CharacterEditor
@@ -206,6 +220,10 @@ export function CharacterSection( {
 		);
 	}
 
+	const waitingReasons =
+		character.status === 'pending' && character.can_edit
+			? readCreatedReview( character.id )
+			: [];
 	const standingOf = cartCharacter ?? character;
 	const standing = standingLine(
 		Number( standingOf.xp_unspent ),
@@ -241,6 +259,26 @@ export function CharacterSection( {
 					</p>
 				</div>
 			</div>
+
+			{ character.status === 'pending' && character.can_edit && (
+				<div className="be-character-section__waiting" role="status">
+					<p>
+						{ __( 'Waiting for a Storyteller', 'beyond-elysium' ) }
+					</p>
+					{ waitingReasons.length > 0 && (
+						<ul>
+							{ waitingReasons.map( ( reason, i ) => (
+								<li key={ `${ reason.name }-${ i }` }>
+									<strong>{ reason.name }</strong>
+									{ reason.reason
+										? `: ${ reason.reason }`
+										: '' }
+								</li>
+							) ) }
+						</ul>
+					) }
+				</div>
+			) }
 
 			<nav
 				className="be-character-views"

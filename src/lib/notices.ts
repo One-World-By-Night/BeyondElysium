@@ -301,6 +301,30 @@ export function noticeText( notice: Notice ): NoticeText {
 					),
 				],
 			};
+		case 'character_waiting':
+			return {
+				title: sprintf(
+					/* translators: 1: a player's name, 2: the character they made */
+					__( '%1$s made %2$s', 'beyond-elysium' ),
+					text( p.player_name ),
+					name
+				),
+				lines:
+					count( p.picks ) > 0
+						? [
+								sprintf(
+									/* translators: %d: how many picks the chronicle's rules hand to a Storyteller */
+									_n(
+										'%d pick needs a Storyteller',
+										'%d picks need a Storyteller',
+										count( p.picks ),
+										'beyond-elysium'
+									),
+									count( p.picks )
+								),
+							]
+						: [],
+			};
 		case 'join_requested':
 			return {
 				title: sprintf(
@@ -423,6 +447,8 @@ export function noticeHref( notice: Notice, gameSlug: string ): string {
 		case 'file_received':
 		case 'secret_told':
 			return staff( STORYTELLER_TABS.approvalQueue );
+		case 'character_waiting':
+			return staff( STORYTELLER_TABS.characters, '&status=pending' );
 		case 'post_waiting':
 			return staff( STORYTELLER_TABS.plots, openPlot );
 		case 'join_requested':

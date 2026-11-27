@@ -41,4 +41,33 @@ class Creation_Limits {
 		}
 		return $messages === [] ? null : implode( ' ', $messages );
 	}
+
+	/**
+	 * The reason a build is refused for costing more than a new character starts with, or null when it fits. A
+	 * Storyteller entering a sheet that already exists ticks Existing character, which skips the tally altogether.
+	 *
+	 * @param array<string,mixed> $tally      `Creation_Tally::for_stack()`.
+	 * @param bool                $is_manager Whether the caller is a Storyteller, who is told how to enter an existing sheet.
+	 */
+	public static function over_budget( array $tally, bool $is_manager ): ?string {
+		$needed   = (int) ( $tally['xp']['needed'] ?? 0 );
+		$starting = (int) ( $tally['xp']['starting'] ?? 0 );
+		if ( $needed <= $starting ) {
+			return null;
+		}
+		if ( $is_manager ) {
+			return sprintf(
+				/* translators: 1: the experience the build needs, 2: the experience a new character starts with */
+				__( 'This build needs %1$d XP and a new character here starts with %2$d. Tick Existing character for a sheet that already exists.', 'beyond-elysium' ),
+				$needed,
+				$starting
+			);
+		}
+		return sprintf(
+			/* translators: 1: the experience the build needs, 2: the experience a new character starts with */
+			__( 'This build needs %1$d XP and a new character here starts with %2$d.', 'beyond-elysium' ),
+			$needed,
+			$starting
+		);
+	}
 }

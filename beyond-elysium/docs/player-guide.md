@@ -6,7 +6,7 @@ Everything a player does lives on one page, **My Chronicle**, with a **Chronicle
 
 ## 1. Your Characters
 
-The **Characters** tab lists your own characters in the chronicle. Use **+ New Character** there to create one - pick a creature type, fill in your identity fields, and spend your starting build the same way you'll spend experience later.
+The **Characters** tab lists your own characters in the chronicle. Use **+ New character** there, or on **Home**, to open the [Character Builder](help/character-builder.md): a guided path through your creature type's own steps, with a bar at the top that shows what each step costs as you go. Your unfinished build is kept on your account, so you can stop on your phone and **Continue** on your computer. Review lists every pick, what must be fixed, and any pick your chronicle's rules say a Storyteller must look at; a character with such a pick starts **pending** until they do. A build can never cost more XP than a new character starts with.
 
 **Joining a new chronicle.** **My Chronicle** lists every chronicle on the site still taking join requests under **Chronicles you can ask to join**, or follow a join link a Storyteller shared with you. From there, ask with a short message, or start a character, or send a Grapevine file - any one of the three is its own way to ask. Whichever you pick, you aren't a player there yet until one of the chronicle's Storytellers approves it; they get an email when you ask, and so do you once they answer. You can have one message-only request waiting per chronicle. See [Joining a Chronicle](help/joining.md).
 

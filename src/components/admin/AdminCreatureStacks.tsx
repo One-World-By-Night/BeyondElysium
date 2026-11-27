@@ -70,9 +70,10 @@ export function AdminCreatureStacks() {
 			api.creatureStacks.list( {
 				...( gameSlug ? { game_slug: gameSlug } : {} ),
 				per_page: 100,
+				stored: true,
 			} ),
 			gameSlug
-				? api.creatureStacks.list( { per_page: 100 } )
+				? api.creatureStacks.list( { per_page: 100, stored: true } )
 				: Promise.resolve< CreatureStack[] >( [] ),
 		] )
 			.then( ( [ result, book ] ) => {

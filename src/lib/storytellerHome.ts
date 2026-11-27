@@ -29,7 +29,10 @@ export function waitingLines(
 	const lines: WaitingLine[] = [];
 	const { approvals, downtime, plots, players, castings } = data.waiting;
 
-	if ( approvals && approvals.changes + approvals.files > 0 ) {
+	if (
+		approvals &&
+		approvals.changes + approvals.files + approvals.new_characters > 0
+	) {
 		const parts: string[] = [];
 		if ( approvals.changes > 0 ) {
 			parts.push(
@@ -65,6 +68,20 @@ export function waitingLines(
 						'beyond-elysium'
 					),
 					approvals.files
+				)
+			);
+		}
+		if ( approvals.new_characters > 0 ) {
+			parts.push(
+				sprintf(
+					/* translators: %d: how many new characters wait for a Storyteller */
+					_n(
+						'%d new character',
+						'%d new characters',
+						approvals.new_characters,
+						'beyond-elysium'
+					),
+					approvals.new_characters
 				)
 			);
 		}

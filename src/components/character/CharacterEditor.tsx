@@ -28,6 +28,7 @@ import { resolveSectionTitle } from '../../lib/resolveCrossBlockRef';
 import type { HeldTrait } from '../../lib/heldTraits';
 import { traitLabel } from '../../lib/traitPanel';
 import { canIn } from '../../lib/chronicleCapabilities';
+import { builderUrl } from '../../lib/pluginPages';
 import type {
 	CreatureStack,
 	MyCapabilities,
@@ -483,6 +484,14 @@ export function CharacterEditor( {
 							{ __( 'This is an NPC', 'beyond-elysium' ) }
 						</label>
 					</div>
+				) }
+
+				{ canFlagNpc && ! createIsNpc && (
+					<p className="be-character-editor__field">
+						<a href={ builderUrl( gameSlug ) }>
+							{ __( 'Use the builder', 'beyond-elysium' ) }
+						</a>
+					</p>
 				) }
 
 				{ canFlagNpc && createIsNpc && (

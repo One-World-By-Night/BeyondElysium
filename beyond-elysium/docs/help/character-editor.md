@@ -13,13 +13,15 @@ You can only open this screen for a character you own, unless you're a Storytell
 My Chronicle → **Character** tab → **Edit** view.
 
 - With a character already picked - from the Characters tab, or the **Edit** view of the Character section - this opens straight into editing it.
-- With no character picked yet, this opens a blank form to start a new one.
+- With no character picked yet, a Storyteller gets this blank one-page form to start a new one. Anyone else gets the [Character Builder](character-builder.md) instead.
 
 A Storyteller creating a character from wp-admin's Characters page lands on this same screen.
 
 ## The screen
 
 ### New Character (no character picked yet)
+
+This one-page form is a Storyteller's: it is where you make NPCs, quick NPCs, sheets that already exist and characters with extra sections. For a player character it offers **Use the builder**, which opens the [Character Builder](character-builder.md) on the same chronicle.
 
 - **Name** - required.
 - **Creature Type** - a dropdown of this chronicle's allowed creature types. Skipped if you arrived here already set to build a specific type.
@@ -29,9 +31,9 @@ A Storyteller creating a character from wp-admin's Characters page lands on this
     Willpower, Health, key Abilities/Powers/Equipment) to run this NPC in a scene without
     building out a whole character. See **Make Full NPC** below for upgrading one later.
 - The stack's own sections below, exactly like the sheet sections described below - fill in whatever you want the character to start with.
-- **Create Character** - writes the character. Nothing you build here is priced or reviewed the way a later change is: whatever you put on the starting sheet is what the character gets.
+- **Create Character** - writes the character. Nothing you build here is priced or reviewed the way a later change is: whatever you put on the starting sheet is what the character gets. The build must fit inside what a new character starts with: a build that costs more XP than the chronicle's **Starting experience** is refused, with a message that names both numbers. Tick **Existing character** to enter a sheet that already exists, which charges nothing.
 
-If you're already a member of this chronicle, the character exists right away (or starts **pending**, if the chronicle requires new-character approval, until a Storyteller sets it active). If you aren't a member of this chronicle yet, this is instead a request to join: you see a "Request Sent" notice, the character waits with nobody able to open its sheet, and you become a player here only once a Storyteller approves it.
+If you're already a member of this chronicle, the character exists right away (or starts **pending**, if the chronicle requires new-character approval or the character holds a pick your Approval Rules hand to a Storyteller, until a Storyteller sets it active; a Storyteller's own request for a status stands). If you aren't a member of this chronicle yet, this is instead a request to join: you see a "Request Sent" notice, the character waits with nobody able to open its sheet, and you become a player here only once a Storyteller approves it.
 
 ### Header (editing an existing character)
 

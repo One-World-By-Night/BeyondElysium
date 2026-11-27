@@ -13,11 +13,7 @@ import {
 } from '../../lib/characterLabels';
 import { cardHref, needsYou, nextSessionLines } from '../../lib/playerHome';
 import type { NeedItem } from '../../lib/playerHome';
-import {
-	PLAYER_TABS,
-	newCharacterUrl,
-	playerTabUrl,
-} from '../../lib/pluginPages';
+import { PLAYER_TABS, builderUrl, playerTabUrl } from '../../lib/pluginPages';
 import { relativeDay } from '../../lib/relativeDays';
 import { formatStoredDay } from '../../lib/storedTime';
 import { standingLine } from '../../lib/standing';
@@ -176,7 +172,7 @@ export function PlayerHome( { gameSlug }: PlayerHomeProps ) {
 						<p className="be-home__actions">
 							<a
 								className="be-home__action"
-								href={ newCharacterUrl( gameSlug ) }
+								href={ builderUrl( gameSlug ) }
 							>
 								{ __( '+ New character', 'beyond-elysium' ) }
 							</a>

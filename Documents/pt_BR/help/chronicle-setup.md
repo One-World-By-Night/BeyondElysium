@@ -57,11 +57,13 @@ Barra lateral do wp-admin → Beyond Elysium → Configuração da Crônica. Est
 1. Ache a linha **Aprovação de novo personagem**.
 2. Escolha **Requer aprovação**.
 
+Com **Ativo imediatamente**, o personagem novo de um jogador ainda começa **pendente** quando tem uma escolha que suas [Regras de Aprovação](approval-rules.md) marcam como necessitando de um Narrador, como um item definido para um Narrador ou uma cláusula dos Estatutos de Personagem da OWbN. O padrão da própria crônica nunca faz isso: uma crônica que revisa toda mudança por padrão mas não tem regra para uma escolha não segura o personagem. A etapa Revisar do [Montador de Personagem](character-builder.md) nomeia cada escolha assim e o motivo antes de o jogador criar o personagem.
+
 ### Dar experiência inicial a novos personagens
 
 1. Ache a linha **Experiência inicial** e clique em **Configurar**.
 2. Digite um valor.
-3. Clique em **Salvar**. Um novo personagem criado daí em diante começa com esse tanto de XP, e o custo da própria construção é cobrado dele automaticamente.
+3. Clique em **Salvar**. Um novo personagem criado daí em diante começa com esse tanto de XP, e o custo da própria construção é cobrado dele automaticamente. Uma construção que custa mais do que esse valor é recusada, então defina um valor alto o bastante para as construções dos próprios livros.
 
 ### Resolver uma correção do livro
 

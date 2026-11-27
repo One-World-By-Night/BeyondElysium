@@ -29,7 +29,7 @@ trap 'rm -rf "$SCRATCH"' EXIT
 
 echo "==> check-translations"
 
-"$PHP" "$WP_CLI" i18n make-pot beyond-elysium "$SCRATCH/beyond-elysium.pot" \
+"$PHP" -d memory_limit=1G "$WP_CLI" i18n make-pot beyond-elysium "$SCRATCH/beyond-elysium.pot" \
     --domain=beyond-elysium \
     --exclude=vendor \
     --quiet
