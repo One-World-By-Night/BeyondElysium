@@ -14,17 +14,19 @@ use BeyondElysium\Models\Notice;
 use BeyondElysium\Models\Release_Batch;
 use BeyondElysium\Models\Submission;
 use BeyondElysium\Models\Transfer;
+use BeyondElysium\Services\Coordinator_Reader;
 use BeyondElysium\Services\Demo_Chronicle;
 use BeyondElysium\Services\Downtime_Reminders;
 use BeyondElysium\Services\Keep_Current;
+use BeyondElysium\Services\Pending_Picks;
 use BeyondElysium\Services\Release_Engine;
 use BeyondElysium\Services\Release_Scheduler;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * The plugin's scheduled jobs: a daily sweep that closes what has outlived its time, and a quarter-hour
- * release-batch sweep.
+ * The plugin's scheduled jobs: a daily sweep that closes what has outlived its time, a quarter-hour release-batch
+ * sweep, and an hourly read of requests sent to the Archivist Toolkit.
  */
 class Maintenance {
 
@@ -41,6 +43,11 @@ class Maintenance {
 	const RELEASE_SWEEP_HOOK = 'be_release_sweep';
 
 	/**
+	 * The hourly read of where requests sent to the Archivist Toolkit stand.
+	 */
+	const COORDINATOR_HOOK = 'be_coordinator_check';
+
+	/**
 	 * The fifteen-minute cron interval the release sweep runs on.
 	 */
 	const RELEASE_SWEEP_SCHEDULE = 'be_quarter_hour';
@@ -54,11 +61,16 @@ class Maintenance {
 
 		add_filter( 'cron_schedules', [ self::class, 'add_quarter_hour_schedule' ] );
 		add_action( self::RELEASE_SWEEP_HOOK, [ self::class, 'run_release_sweep' ] );
+		add_action( self::COORDINATOR_HOOK, static function (): void {
+			Coordinator_Reader::run();
+		} );
 		add_action( self::RELEASE_SINGLE_HOOK, static function ( int $batch_id ): void {
 			Release_Engine::release( $batch_id );
 		} );
 
 		add_action( Demo_Chronicle::RESET_HOOK, [ Demo_Chronicle::class, 'handle_cron' ] );
+
+		add_action( 'be_coordinator_answered', [ Pending_Picks::class, 'on_answered' ], 10, 2 );
 
 		add_action( 'be_character_changed', [ Keep_Current::class, 'on_change' ], 10, 2 );
 		add_action( Keep_Current::DELIVER_HOOK, static function ( int $visit_id ): void {
@@ -90,6 +102,9 @@ class Maintenance {
 		if ( ! wp_next_scheduled( self::RELEASE_SWEEP_HOOK ) ) {
 			wp_schedule_event( time() + 15 * MINUTE_IN_SECONDS, self::RELEASE_SWEEP_SCHEDULE, self::RELEASE_SWEEP_HOOK );
 		}
+		if ( ! wp_next_scheduled( self::COORDINATOR_HOOK ) ) {
+			wp_schedule_event( time() + 10 * MINUTE_IN_SECONDS, 'hourly', self::COORDINATOR_HOOK );
+		}
 	}
 
 	/**
@@ -98,6 +113,7 @@ class Maintenance {
 	public static function unschedule(): void {
 		wp_clear_scheduled_hook( self::HOOK );
 		wp_clear_scheduled_hook( self::RELEASE_SWEEP_HOOK );
+		wp_clear_scheduled_hook( self::COORDINATOR_HOOK );
 	}
 
 	/**

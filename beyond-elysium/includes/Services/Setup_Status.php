@@ -43,6 +43,7 @@ class Setup_Status {
 			self::row_join_requests( $game ),
 			self::row_secret_passing( $game ),
 			self::row_discord_bot( $game ),
+			self::row_coordinator_send( $game ),
 		];
 
 		if ( $game->slug === 'be-demo' ) {
@@ -195,6 +196,54 @@ class Setup_Status {
 				? sprintf( __( 'Connected to %s.', 'beyond-elysium' ), $connection->guild_name )
 				: __( 'Not connected. Connecting lets your players read their sheets and link their accounts from Discord.', 'beyond-elysium' ),
 			'fix'    => [ 'kind' => 'inline', 'capability' => 'be_manage_characters' ],
+		];
+	}
+
+	/**
+	 * @return array<string,mixed>
+	 */
+	private static function row_coordinator_send( object $game ): array {
+		$on     = ( $game->settings->coordinator_send ?? false ) === true;
+		$demo   = Demo_Chronicle::is_demo( $game );
+		$status = Oat_Connection::status( $game );
+
+		if ( $demo ) {
+			$detail = $on
+				? __( 'On. A Storyteller can see what sending a Coordinator approval to the Archivist Toolkit would do. The demo sends nothing.', 'beyond-elysium' )
+				: __( 'Off. Turn it on to see what sending a Coordinator approval to the Archivist Toolkit would do. The demo sends nothing.', 'beyond-elysium' );
+		} elseif ( ! $status['available'] ) {
+			$detail = sprintf(
+				/* translators: %s: why this chronicle cannot send to the Archivist Toolkit */
+				__( 'Not available. %s A Coordinator approval stays a Storyteller\'s decision here.', 'beyond-elysium' ),
+				Oat_Connection::reason_text( (string) $status['reason'] )
+			);
+		} elseif ( $on ) {
+			$detail = sprintf(
+				/* translators: %s: the Archivist Toolkit's address */
+				__( 'On. A Storyteller approving a change that needs a Coordinator can send it to the Archivist Toolkit through %s.', 'beyond-elysium' ),
+				(string) $status['host']
+			);
+		} else {
+			$detail = sprintf(
+				/* translators: %s: the Archivist Toolkit's address */
+				__( 'Off. This chronicle can send through %s. Turn it on to offer Storytellers the choice when they approve a change that needs a Coordinator.', 'beyond-elysium' ),
+				(string) $status['host']
+			);
+		}
+
+		return [
+			'id'          => 'coordinator_send',
+			'status'      => $on && ( $demo || $status['available'] ) ? 'ok' : 'info',
+			'title'       => __( 'Coordinator approvals', 'beyond-elysium' ),
+			'detail'      => $detail,
+			'fix'         => [ 'kind' => 'inline', 'capability' => 'be_manage_chronicle_setup' ],
+			'coordinator' => [
+				'available' => $status['available'],
+				'reason'    => $status['reason'],
+				'host'      => $status['host'],
+				'demo'      => $demo,
+				'on'        => $on,
+			],
 		];
 	}
 

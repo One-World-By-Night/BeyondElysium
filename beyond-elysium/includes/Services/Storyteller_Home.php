@@ -7,6 +7,7 @@ use BeyondElysium\Models\After_Game_Report;
 use BeyondElysium\Models\Attendance;
 use BeyondElysium\Models\Change;
 use BeyondElysium\Models\Character;
+use BeyondElysium\Models\Coordinator_Request;
 use BeyondElysium\Models\Discord_Link;
 use BeyondElysium\Models\Game_Session;
 use BeyondElysium\Models\Join_Request;
@@ -54,7 +55,7 @@ class Storyteller_Home {
 	/**
 	 * What waits in the Approval Queue.
 	 *
-	 * @return array{changes:int,xp_requests:int,files:int,new_characters:int}
+	 * @return array{changes:int,xp_requests:int,files:int,new_characters:int,with_coordinators:int}
 	 */
 	private static function approvals( object $game ): array {
 		$slug = (string) $game->slug;
@@ -63,6 +64,7 @@ class Storyteller_Home {
 			'xp_requests'    => Change::count_for_game( $slug, [ 'status' => 'pending', 'change_type' => 'xp_adjust' ] ),
 			'files'          => Submission::count_waiting( (int) $game->id ),
 			'new_characters' => self::new_characters_waiting( $game ),
+			'with_coordinators' => Coordinator_Send::mode( $game ) === null ? 0 : Coordinator_Request::with_coordinator_count( (int) $game->id ),
 		];
 	}
 

@@ -5,6 +5,7 @@ namespace BeyondElysium\REST;
 use BeyondElysium\Core\Notifications;
 use BeyondElysium\Models\Bot_Notice;
 use BeyondElysium\Models\Change;
+use BeyondElysium\Models\Coordinator_Request;
 use BeyondElysium\Models\Character;
 use BeyondElysium\Models\Game;
 use BeyondElysium\Models\Creature_Stack;
@@ -13,6 +14,8 @@ use BeyondElysium\Models\Secret;
 use BeyondElysium\Models\Transfer;
 use BeyondElysium\Services\Change_Edit;
 use BeyondElysium\Services\Change_Engine;
+use BeyondElysium\Services\Coordinator_Send;
+use BeyondElysium\Services\Coordinator_Signal;
 use BeyondElysium\Services\Change_Validator;
 use BeyondElysium\Services\Cost_Engine;
 use BeyondElysium\Services\Display\Change_Description;
@@ -196,6 +199,7 @@ class Changes_Controller extends Base_Controller {
 
 		$items    = Change::for_character( (int) $request['character_id'], $args );
 		$total    = Change::count_for_character( (int) $request['character_id'], $args );
+		$this->add_coordinator_fields( $items, $game, \BeyondElysium\Core\Authorization::can( 'be_manage_characters' ) );
 		$this->redact_changes( $items, $game );
 		$this->name_undoers( $items );
 		$response = $this->success( $items );
@@ -532,6 +536,10 @@ class Changes_Controller extends Base_Controller {
 			return $denied;
 		}
 
+		if ( ! \BeyondElysium\Core\Authorization::can( 'be_manage_characters' ) && $this->is_with_coordinator( (int) $change->id ) ) {
+			return $this->error( 'with_coordinator', __( 'This is with a Coordinator. Ask your Storyteller.', 'beyond-elysium' ), 409 );
+		}
+
 		if ( $change->status !== 'pending' || ! Change_Engine::withdraw( (int) $change->id, get_current_user_id() ) ) {
 			return $this->not_waiting_error();
 		}
@@ -566,6 +574,13 @@ class Changes_Controller extends Base_Controller {
 		}
 
 		$submission_id = strtolower( (string) $request['submission_id'] );
+		if ( ! \BeyondElysium\Core\Authorization::can( 'be_manage_characters' ) ) {
+			foreach ( Change::waiting_in_submission( (int) $character->id, $submission_id ) as $waiting ) {
+				if ( $this->is_with_coordinator( (int) $waiting->id ) ) {
+					return $this->error( 'with_coordinator', __( 'Part of this is with a Coordinator. Ask your Storyteller.', 'beyond-elysium' ), 409 );
+				}
+			}
+		}
 		$ids           = Change_Engine::withdraw_waiting( (int) $character->id, $submission_id, get_current_user_id() );
 		if ( $ids === [] ) {
 			return $this->not_waiting_error();
@@ -685,6 +700,35 @@ class Changes_Controller extends Base_Controller {
 			return null;
 		}
 		return $this->error( 'ownership_denied', __( 'You do not have permission to withdraw changes for this character.', 'beyond-elysium' ), 403 );
+	}
+
+	/**
+	 * Adds to each change what a Coordinator has been asked about it: what its reason says is needed, and the request a
+	 * Storyteller sent to the Archivist Toolkit for it, if any. Nothing is added where the chronicle does not send.
+	 *
+	 * @param object[] $items
+	 */
+	private function add_coordinator_fields( array $items, object $game, bool $manager ): void {
+		if ( $items === [] || Coordinator_Send::mode( $game ) === null ) {
+			return;
+		}
+		$requests = Coordinator_Request::for_changes( array_map( static fn( $item ): int => (int) $item->id, $items ) );
+		foreach ( $items as $item ) {
+			$signal            = Coordinator_Signal::of( isset( $item->reason ) ? (string) $item->reason : null );
+			$row               = $requests[ (int) $item->id ] ?? null;
+			$item->coordinator = [
+				'signal'  => [ 'kind' => $signal['kind'], 'coordinators' => $signal['coordinators'] ],
+				'request' => $row ? Coordinator_Request::view( $row, $manager ) : null,
+			];
+		}
+	}
+
+	/**
+	 * Whether a Storyteller has sent a change to the Toolkit and the Toolkit has not answered.
+	 */
+	private function is_with_coordinator( int $change_id ): bool {
+		$request = Coordinator_Request::for_change( $change_id );
+		return $request !== null && in_array( $request->state, [ 'sending', 'unconfirmed', 'sent' ], true );
 	}
 
 	private function not_waiting_error(): \WP_Error {
@@ -841,6 +885,10 @@ class Changes_Controller extends Base_Controller {
 			return $change;
 		}
 
+		if ( $this->is_with_coordinator( (int) $change->id ) ) {
+			return $this->error( 'with_coordinator', __( 'This was sent to a Coordinator as it is. Approve it or reject it, or ask the player to submit it again.', 'beyond-elysium' ), 409 );
+		}
+
 		$token = $request->get_param( 'review_token' );
 		if ( ! is_string( $token ) || $token === '' ) {
 			return $this->error( 'invalid_param', __( 'Missing required field: review_token.', 'beyond-elysium' ), 400 );
@@ -890,7 +938,7 @@ class Changes_Controller extends Base_Controller {
 		if ( $owner ) {
 			Notices::edited( $edited, $owner, get_current_user_id(), $notes === null ? null : (string) $notes );
 		}
-		return $this->success( $this->with_review_fields( [ $edited ] )[0] );
+		return $this->success( $this->with_review_fields( [ $edited ], $game )[0] );
 	}
 
 	/**
@@ -921,13 +969,13 @@ class Changes_Controller extends Base_Controller {
 		if ( $level ) {
 			unset( $args['per_page'], $args['offset'] );
 			$matching = array_values( array_filter(
-				$this->with_review_fields( Change::for_game( $request['game_slug'], $args ) ),
+				$this->with_review_fields( Change::for_game( $request['game_slug'], $args ), $game ),
 				static fn( $item ) => $item->approval_level === $level
 			) );
 			$total = count( $matching );
 			$items = array_slice( $matching, $pagination['offset'], $pagination['per_page'] );
 		} else {
-			$items = $this->with_review_fields( Change::for_game( $request['game_slug'], $args ) );
+			$items = $this->with_review_fields( Change::for_game( $request['game_slug'], $args ), $game );
 			$total = Change::count_for_game( $request['game_slug'], $args );
 		}
 
@@ -942,7 +990,7 @@ class Changes_Controller extends Base_Controller {
 	 * @param object[] $items
 	 * @return object[]
 	 */
-	private function with_review_fields( array $items ): array {
+	private function with_review_fields( array $items, ?object $game = null ): array {
 		$characters = [];
 		$submitters = [];
 		$visits     = [];
@@ -989,6 +1037,9 @@ class Changes_Controller extends Base_Controller {
 				$item->host_chronicle = $visits[ $visit_id ]->host_chronicle ?? null;
 			}
 		}
+		if ( $game !== null ) {
+			$this->add_coordinator_fields( $items, $game, true );
+		}
 		return $items;
 	}
 
@@ -1029,6 +1080,7 @@ class Changes_Controller extends Base_Controller {
 			$item->approval_level = $resolved['level'];
 		}
 
+		$this->add_coordinator_fields( $items, $game, \BeyondElysium\Core\Authorization::can( 'be_manage_characters' ) );
 		$this->redact_changes( $items, $game );
 		return $this->success( $items );
 	}
@@ -1232,6 +1284,8 @@ class Changes_Controller extends Base_Controller {
 		$skipped    = [];
 		$needs_cost = [];
 		$needs_secret_choice = [];
+		$needs_coordinator   = [];
+		$sends_to_coordinator = Coordinator_Send::mode( $game ) !== null;
 		$held       = [];
 		$short_of_xp = [];
 		// Optional { change id: review token } for exactly what the reviewer saw.
@@ -1263,6 +1317,12 @@ class Changes_Controller extends Base_Controller {
 			// A logged claim needs the reviewer to name which secret it belongs to; a batch can't supply that.
 			if ( $change->change_type === 'log_knowledge' ) {
 				$needs_secret_choice[] = $change_id;
+				$blocked[ (string) ( $change->submission_id ?? '' ) ] = true;
+				continue;
+			}
+			// A Coordinator Approval is decided one at a time, by sending it to the Coordinator or approving it knowingly.
+			if ( $sends_to_coordinator && Coordinator_Signal::of( isset( $change->reason ) ? (string) $change->reason : null )['kind'] === Coordinator_Signal::APPROVAL ) {
+				$needs_coordinator[] = $change_id;
 				$blocked[ (string) ( $change->submission_id ?? '' ) ] = true;
 				continue;
 			}
@@ -1360,6 +1420,7 @@ class Changes_Controller extends Base_Controller {
 				'skipped'             => $skipped,
 				'needs_cost'          => $needs_cost,
 				'needs_secret_choice' => $needs_secret_choice,
+				'needs_coordinator'   => $needs_coordinator,
 				'held'                => $held,
 				'short_of_xp'         => $short_of_xp,
 			]
@@ -1417,6 +1478,7 @@ class Changes_Controller extends Base_Controller {
 		}
 
 		$results             = [];
+		$sends_to_coordinator = Coordinator_Send::mode( $game ) !== null;
 		$is_manager          = \BeyondElysium\Core\Authorization::can( 'be_manage_characters' );
 		$xp_held             = $is_manager ? 0 : Change_Engine::held_xp_after( $character, array_map( static fn( $change ): array => is_array( $change ) ? $change : [], $changes ) );
 		$running_xp_unspent  = (int) $character->xp_unspent - $xp_held;
@@ -1466,13 +1528,18 @@ class Changes_Controller extends Base_Controller {
 
 			$running_xp_unspent -= $cost;
 
-			$results[] = [
+			$result = [
 				'xp_cost'         => $cost,
 				'priced'          => $quote['priced'],
 				'unpriced_reason' => $quote['unpriced_reason'],
 				'approval_level'  => $resolved['level'],
 				'approval_reason' => $resolved['reason'],
 			];
+			if ( $sends_to_coordinator ) {
+				$signal               = Coordinator_Signal::of( $resolved['reason'] );
+				$result['coordinator'] = [ 'kind' => $signal['kind'], 'coordinators' => $signal['coordinators'] ];
+			}
+			$results[] = $result;
 		}
 
 		return $this->success(

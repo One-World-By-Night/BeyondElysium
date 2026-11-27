@@ -394,6 +394,7 @@ export function SheetActions( {
 					{ openPanel === 'tally' && character.can_manage && (
 						<CreationTallyPanel
 							characterId={ characterId }
+							characterName={ character.name }
 							gameSlug={ gameSlug }
 						/>
 					) }

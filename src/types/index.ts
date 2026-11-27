@@ -220,6 +220,10 @@ export interface UpdateChronicleSetupRequest {
 	 * How often the staff address hears of changes waiting.
 	 */
 	staff_email_frequency?: 'each' | 'daily';
+	/**
+	 * Whether a Storyteller approving a change that needs a Coordinator may send it to the Archivist Toolkit.
+	 */
+	coordinator_send?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -511,6 +515,16 @@ export interface SetupStatusItem {
 	detail: string;
 	fix: { kind: 'inline' | 'link'; href?: string; capability: string };
 	actionable: boolean;
+	/**
+	 * The Coordinator approvals row: whether this chronicle can send to the Archivist Toolkit, and why not.
+	 */
+	coordinator?: {
+		available: boolean;
+		reason: 'no_path' | 'no_core' | 'no_connection' | null;
+		host: string | null;
+		demo: boolean;
+		on: boolean;
+	};
 }
 
 export interface SetupStatus {

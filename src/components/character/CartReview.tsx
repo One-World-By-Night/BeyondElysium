@@ -233,6 +233,11 @@ export function CartReview( { onSeeHistory }: CartReviewProps ) {
 												{ line.reason }
 											</span>
 										) }
+										{ line.coordinatorNote && (
+											<span className="be-cart-review__reason">
+												{ line.coordinatorNote }
+											</span>
+										) }
 									</li>
 								) ) }
 							</ul>

@@ -341,6 +341,17 @@
 				}
 			}
 		],
+		"coordinator-approval": [
+			{
+				"heading": "What you see",
+				"path": "/be-storyteller/?game_slug=be-demo&tab=approval-queue",
+				"account": "storyteller",
+				"alt": {
+					"en": "The Approval Queue with a change whose reason reads Coordinator Approval, and Approve, Reject and Edit beside it.",
+					"pt_BR": "A Fila de Aprovação com uma mudança cujo motivo diz Aprovação do Coordenador, e os botões Aprovar, Rejeitar e Editar ao lado."
+				}
+			}
+		],
 		"creature-stacks": [
 			{
 				"heading": "Creature Stacks",

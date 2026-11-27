@@ -220,6 +220,7 @@ class Plugin {
 			new \BeyondElysium\REST\Compendium_Controller(),
 			new \BeyondElysium\REST\Player_Notes_Controller(),
 			new \BeyondElysium\REST\Character_Drafts_Controller(),
+			new \BeyondElysium\REST\Coordinator_Controller(),
 		];
 		foreach ( $controllers as $controller ) {
 			$controller->register_routes();

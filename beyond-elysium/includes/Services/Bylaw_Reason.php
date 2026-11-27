@@ -65,6 +65,26 @@ class Bylaw_Reason {
 	}
 
 	/**
+	 * What a tier asks of a Coordinator: `approval` for a Coordinator Approval, `notify` for a Coordinator Notify, and
+	 * null for every other tier (votes, Disallowed, Storyteller Approval, unregulated, and a bare Approval or Notify that
+	 * names no Coordinator). A tier counts when it begins with the words, so "Coordinator Approval for each level" and
+	 * "Coord Approval" are approvals and "Coordinator Notify or Approval as Appropriate" is a notification.
+	 */
+	public static function tier_kind( string $tier ): ?string {
+		if ( preg_match( '/^(?:s:\s*)?(?:coordinator|coord)\s+(approval|notify)\b/iu', trim( $tier ), $found ) !== 1 ) {
+			return null;
+		}
+		return strtolower( $found[1] );
+	}
+
+	/**
+	 * Whether a tier is a Coordinator Approval.
+	 */
+	public static function is_coordinator_approval( string $tier ): bool {
+		return self::tier_kind( $tier ) === 'approval';
+	}
+
+	/**
 	 * Whether a tier string means no reason is needed on this axis.
 	 */
 	private static function is_unregulated( string $tier ): bool {

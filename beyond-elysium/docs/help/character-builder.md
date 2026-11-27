@@ -43,6 +43,10 @@ My Chronicle → **+ New character**, on Home or on the Characters tab. Someone 
 2. Press **Create character**.
 3. An active character opens on its Sheet. A pending one opens too, with **Waiting for a Storyteller** and the reasons. A request to join shows **Request Sent**.
 
+### A pick that asks for a Coordinator
+
+A pick the bylaws send to a Coordinator makes a new character start pending, as any pick the rules hold. On a chronicle that sends Coordinator approvals to the Archivist Toolkit, a Storyteller sends such picks from the pending character's **Build tally**, and the character becomes active once the Coordinator has approved each one. See [Coordinator Approval](coordinator-approval.md#a-new-character).
+
 ## Things to know
 
 - **The server checks everything again.** Review is your own view of the build. When you press Create, the chronicle recounts it and trusts nothing from the saved build.

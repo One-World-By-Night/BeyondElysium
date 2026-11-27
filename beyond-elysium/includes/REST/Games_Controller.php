@@ -554,7 +554,7 @@ class Games_Controller extends Base_Controller {
 		}
 
 		$incoming = [];
-		foreach ( [ 'enabled_stacks', 'enabled_factions', 'require_new_character_approval', 'accent_color', 'purchase_scope', 'starting_xp', 'join_requests', 'secret_passing', 'staff_email', 'staff_email_frequency' ] as $field ) {
+		foreach ( [ 'enabled_stacks', 'enabled_factions', 'require_new_character_approval', 'accent_color', 'purchase_scope', 'starting_xp', 'join_requests', 'secret_passing', 'staff_email', 'staff_email_frequency', 'coordinator_send' ] as $field ) {
 			$value = $request->get_param( $field );
 			if ( $value !== null ) {
 				$incoming[ $field ] = $value;
@@ -562,7 +562,7 @@ class Games_Controller extends Base_Controller {
 		}
 
 		if ( empty( $incoming ) ) {
-			return $this->error( 'invalid_param', __( 'At least one of enabled_stacks, enabled_factions, require_new_character_approval, accent_color, purchase_scope, starting_xp, join_requests, secret_passing, staff_email, or staff_email_frequency is required.', 'beyond-elysium' ), 400 );
+			return $this->error( 'invalid_param', __( 'At least one of enabled_stacks, enabled_factions, require_new_character_approval, accent_color, purchase_scope, starting_xp, join_requests, secret_passing, staff_email, staff_email_frequency, or coordinator_send is required.', 'beyond-elysium' ), 400 );
 		}
 
 		// An empty address clears it, and staff mail goes to each HST and AST again.
@@ -583,6 +583,23 @@ class Games_Controller extends Base_Controller {
 
 		if ( isset( $incoming['join_requests'] ) ) {
 			$incoming['join_requests'] = (bool) $incoming['join_requests'];
+		}
+
+		// Turning it off is always allowed; turning it on needs a connection to send through, or a demo to preview in.
+		if ( isset( $incoming['coordinator_send'] ) ) {
+			$incoming['coordinator_send'] = (bool) $incoming['coordinator_send'];
+			$unavailable                   = $incoming['coordinator_send'] ? \BeyondElysium\Services\Coordinator_Send::unavailable_reason( $game ) : null;
+			if ( $unavailable !== null ) {
+				return $this->error(
+					'oat_not_connected',
+					sprintf(
+						/* translators: %s: why this chronicle cannot send to the Archivist Toolkit */
+						__( "This chronicle can't send to the Archivist Toolkit. %s", 'beyond-elysium' ),
+						\BeyondElysium\Services\Oat_Connection::reason_text( $unavailable )
+					),
+					409
+				);
+			}
 		}
 
 		if ( isset( $incoming['starting_xp'] ) && ( ! is_numeric( $incoming['starting_xp'] ) || (int) $incoming['starting_xp'] < 0 ) ) {

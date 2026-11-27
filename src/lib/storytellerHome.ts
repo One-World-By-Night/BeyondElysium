@@ -85,6 +85,20 @@ export function waitingLines(
 				)
 			);
 		}
+		if ( ( approvals.with_coordinators ?? 0 ) > 0 ) {
+			parts.push(
+				sprintf(
+					/* translators: %d: how many waiting changes a Storyteller sent to a Coordinator */
+					_n(
+						'%d with a Coordinator',
+						'%d with Coordinators',
+						approvals.with_coordinators ?? 0,
+						'beyond-elysium'
+					),
+					approvals.with_coordinators ?? 0
+				)
+			);
+		}
 		lines.push( {
 			key: 'approvals',
 			text: sprintf(

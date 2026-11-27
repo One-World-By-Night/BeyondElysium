@@ -35,6 +35,18 @@ import { errorMessage } from '../../lib/errorMessage';
 import HelpButton from '../shared/HelpButton';
 import PriceTotal from './PriceTotal';
 import QueueChangeEditor from './QueueChangeEditor';
+import {
+	CoordinatorChoice,
+	CoordinatorRequestLine,
+	CoordinatorSendDialog,
+} from './CoordinatorSend';
+import {
+	activeRequest,
+	choiceFor,
+	lineForChange,
+	sendableIds,
+} from '../../lib/coordinatorSend';
+import type { CoordinatorStatus } from '../../types/coordinator';
 import './ApprovalQueue.css';
 
 export interface ApprovalQueueProps {
@@ -444,6 +456,15 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 	const [ waitingCount, setWaitingCount ] = useState( 0 );
 	// The change being edited in the pop-up.
 	const [ editingId, setEditingId ] = useState< number | null >( null );
+	const [ coordinator, setCoordinator ] =
+		useState< CoordinatorStatus | null >( null );
+	const [ choosingId, setChoosingId ] = useState< number | null >( null );
+	const [ sendDialog, setSendDialog ] = useState< {
+		characterId: number;
+		characterName: string;
+		ids: number[];
+		purpose: 'approval' | 'notify';
+	} | null >( null );
 
 	useEffect( () => {
 		// A player never sees either list (403).
@@ -555,6 +576,45 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 	 */
 	function tokenFor( id: number ): string | undefined {
 		return items.find( ( item ) => item.id === id )?.review_token;
+	}
+
+	/**
+	 * Reads how a send to the Archivist Toolkit goes in this chronicle; nothing is offered where it is off.
+	 */
+	useEffect( () => {
+		api.coordinator( gameSlug )
+			.status()
+			.then( ( status ) => setCoordinator( status.mode ? status : null ) )
+			.catch( () => setCoordinator( null ) );
+	}, [ gameSlug ] );
+
+	/**
+	 * What Approve does: a change that needs a Coordinator, or is already with one, asks first.
+	 */
+	function approveClicked( item: QueueChange ) {
+		if ( coordinator && choiceFor( item ) !== 'none' ) {
+			setChoosingId( choosingId === item.id ? null : item.id );
+			return;
+		}
+		approveOne( item );
+	}
+
+	/**
+	 * Opens the send dialog for some of a character's waiting changes.
+	 */
+	function openSend(
+		forCharacter: number,
+		ids: number[],
+		purpose: 'approval' | 'notify' = 'approval'
+	) {
+		const row = items.find( ( item ) => ids.includes( item.id ) );
+		setChoosingId( null );
+		setSendDialog( {
+			characterId: forCharacter,
+			characterName: row?.character_name ?? '',
+			ids,
+			purpose,
+		} );
 	}
 
 	/**
@@ -870,6 +930,12 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 										) ?? [] )
 									: null;
 								const note = traitNote( item );
+								const request = coordinator
+									? activeRequest( item )
+									: null;
+								const choice = coordinator
+									? choiceFor( item )
+									: 'none';
 								const isFirstOfGroup =
 									submissionId &&
 									groupFirstId.get( submissionId ) ===
@@ -927,6 +993,32 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 																'beyond-elysium'
 															) }
 														</button>
+														{ coordinator &&
+															sendableIds(
+																group,
+																group[ 0 ]
+																	.character_id
+															).length > 0 && (
+																<button
+																	type="button"
+																	onClick={ () =>
+																		openSend(
+																			group[ 0 ]
+																				.character_id,
+																			sendableIds(
+																				group,
+																				group[ 0 ]
+																					.character_id
+																			)
+																		)
+																	}
+																>
+																	{ __(
+																		'Send to the Coordinator',
+																		'beyond-elysium'
+																	) }
+																</button>
+															) }
 														{ membersNeedingPrice(
 															group
 														) > 0 && (
@@ -1289,6 +1381,104 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 												) }
 											>
 												<div className="be-approval-queue__action-buttons">
+													{ request && (
+														<CoordinatorRequestLine
+															gameSlug={
+																gameSlug
+															}
+															request={ request }
+															onChanged={ load }
+															onSendAgain={ () =>
+																openSend(
+																	item.character_id,
+																	[ item.id ]
+																)
+															}
+														/>
+													) }
+													{ choosingId === item.id &&
+														( choice ===
+															'approval' ||
+															choice ===
+																'notify' ) && (
+															<CoordinatorChoice
+																kind={ choice }
+																names={
+																	item
+																		.coordinator
+																		?.signal
+																		.coordinators ??
+																	[]
+																}
+																onSend={ () =>
+																	openSend(
+																		item.character_id,
+																		[
+																			item.id,
+																		],
+																		choice
+																	)
+																}
+																onApproveNow={ () => {
+																	setChoosingId(
+																		null
+																	);
+																	approveOne(
+																		item
+																	);
+																} }
+																onCancel={ () =>
+																	setChoosingId(
+																		null
+																	)
+																}
+															/>
+														) }
+													{ choosingId === item.id &&
+														choice === 'sent' && (
+															<div
+																className="be-coordinator-choice"
+																role="group"
+															>
+																<p className="be-coordinator-choice__text">
+																	{ __(
+																		'The request in the Archivist Toolkit stays open. Answer or cancel it there.',
+																		'beyond-elysium'
+																	) }
+																</p>
+																<div className="be-coordinator-choice__buttons">
+																	<button
+																		type="button"
+																		onClick={ () => {
+																			setChoosingId(
+																				null
+																			);
+																			approveOne(
+																				item
+																			);
+																		} }
+																	>
+																		{ __(
+																			'Approve now',
+																			'beyond-elysium'
+																		) }
+																	</button>
+																	<button
+																		type="button"
+																		onClick={ () =>
+																			setChoosingId(
+																				null
+																			)
+																		}
+																	>
+																		{ __(
+																			'Cancel',
+																			'beyond-elysium'
+																		) }
+																	</button>
+																</div>
+															</div>
+														) }
 													{ group ? (
 														<>
 															<span className="be-approval-queue__group-note">
@@ -1297,19 +1487,23 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 																	'beyond-elysium'
 																) }
 															</span>
-															<button
-																type="button"
-																onClick={ () =>
-																	setEditingId(
-																		item.id
-																	)
-																}
-															>
-																{ __(
-																	'Edit',
-																	'beyond-elysium'
-																) }
-															</button>
+															{ ! activeRequest(
+																item
+															) && (
+																<button
+																	type="button"
+																	onClick={ () =>
+																		setEditingId(
+																			item.id
+																		)
+																	}
+																>
+																	{ __(
+																		'Edit',
+																		'beyond-elysium'
+																	) }
+																</button>
+															) }
 														</>
 													) : (
 														<>
@@ -1392,7 +1586,7 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 																		) )
 																}
 																onClick={ () =>
-																	approveOne(
+																	approveClicked(
 																		item
 																	)
 																}
@@ -1402,6 +1596,26 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 																	'beyond-elysium'
 																) }
 															</button>
+															{ coordinator &&
+																choice ===
+																	'none' && (
+																	<button
+																		type="button"
+																		onClick={ () =>
+																			openSend(
+																				item.character_id,
+																				[
+																					item.id,
+																				]
+																			)
+																		}
+																	>
+																		{ __(
+																			'Send to a Coordinator',
+																			'beyond-elysium'
+																		) }
+																	</button>
+																) }
 															{ rejecting ===
 															item.id ? (
 																<>
@@ -1472,19 +1686,23 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 																	) }
 																</button>
 															) }
-															<button
-																type="button"
-																onClick={ () =>
-																	setEditingId(
-																		item.id
-																	)
-																}
-															>
-																{ __(
-																	'Edit',
-																	'beyond-elysium'
-																) }
-															</button>
+															{ ! activeRequest(
+																item
+															) && (
+																<button
+																	type="button"
+																	onClick={ () =>
+																		setEditingId(
+																			item.id
+																		)
+																	}
+																>
+																	{ __(
+																		'Edit',
+																		'beyond-elysium'
+																	) }
+																</button>
+															) }
 														</>
 													) }
 												</div>
@@ -1496,6 +1714,24 @@ export function ApprovalQueue( { gameSlug }: ApprovalQueueProps ) {
 						</tbody>
 					</table>
 				</div>
+			) }
+
+			{ coordinator && sendDialog && (
+				<CoordinatorSendDialog
+					gameSlug={ gameSlug }
+					status={ coordinator }
+					characterId={ sendDialog.characterId }
+					characterName={ sendDialog.characterName }
+					lines={ items
+						.filter( ( row ) => sendDialog.ids.includes( row.id ) )
+						.map( lineForChange ) }
+					purpose={ sendDialog.purpose }
+					onClose={ () => setSendDialog( null ) }
+					onSent={ () => {
+						setSendDialog( null );
+						load();
+					} }
+				/>
 			) }
 
 			{ editing && (

@@ -235,6 +235,15 @@ export function AdminChronicleSetup() {
 			.catch( saveFailed );
 	}
 
+	function saveCoordinatorSend( on: boolean ) {
+		setSavingRow( 'coordinator_send' );
+		setSaveError( null );
+		api.games
+			.updateChronicleSetup( gameSlug, { coordinator_send: on } )
+			.then( applySaved )
+			.catch( saveFailed );
+	}
+
 	function saveSecretPassing( mode: 'off' | 'approval' | 'immediate' ) {
 		setSavingRow( 'secret_passing' );
 		setSaveError( null );
@@ -361,6 +370,12 @@ export function AdminChronicleSetup() {
 	const catalogRow = status?.items.find(
 		( item ) => item.id === 'catalog_customisation'
 	);
+	const coordinator = status?.items.find(
+		( item ) => item.id === 'coordinator_send'
+	)?.coordinator;
+	const coordinatorSendOn = settings?.coordinator_send === true;
+	const coordinatorCanSend =
+		( coordinator?.available ?? false ) || ( coordinator?.demo ?? false );
 
 	const panels: Record< string, ReactNode > = {
 		...( catalogRow?.status === 'attention'
@@ -386,6 +401,33 @@ export function AdminChronicleSetup() {
 				saving={ savingRow === 'enabled_stacks' }
 				gameSlug={ gameSlug }
 			/>
+		),
+		coordinator_send: (
+			<div className="be-chronicle-setup__approval-toggle">
+				<label>
+					<input
+						type="checkbox"
+						checked={ coordinatorSendOn }
+						onChange={ ( e ) =>
+							saveCoordinatorSend( e.target.checked )
+						}
+						disabled={
+							savingRow === 'coordinator_send' ||
+							( ! coordinatorSendOn && ! coordinatorCanSend )
+						}
+					/>
+					{ __(
+						'Send Coordinator approvals to the Archivist Toolkit',
+						'beyond-elysium'
+					) }
+				</label>
+				<p className="description">
+					{ __(
+						'A Storyteller approving a change that needs a Coordinator chooses to send it to the Archivist Toolkit as an R&U Request, filed as themselves, or to approve it themselves. Nothing stops them approving it.',
+						'beyond-elysium'
+					) }
+				</p>
+			</div>
 		),
 		require_new_character_approval: (
 			<div className="be-chronicle-setup__approval-toggle">

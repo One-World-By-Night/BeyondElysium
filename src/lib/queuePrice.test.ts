@@ -169,6 +169,17 @@ describe( 'batchNotices', () => {
 		);
 	} );
 
+	it( 'says how many Coordinator approvals it left for a Storyteller to decide', () => {
+		const notices = batchNotices( {
+			approved: [ 1 ],
+			skipped: [],
+			needs_coordinator: [ 2, 3 ],
+		} );
+
+		expect( notices ).toHaveLength( 1 );
+		expect( notices[ 0 ] ).toContain( '2 changes need a Coordinator' );
+	} );
+
 	it( 'says one thing for each kind of change it left alone', () => {
 		const notices = batchNotices( {
 			approved: [],

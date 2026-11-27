@@ -109,6 +109,14 @@ return [
 			'xp_cost' => 0, 'notes' => 'Noting the Regent title on my own sheet.',
 			'review' => 'auto',
 		],
+		// A merit the bylaws send to the Assamite Coordinator: the Storyteller chooses to send it or approve it.
+		[
+			'character' => 'Isolde Marchetti', 'account' => 'player',
+			'change_type' => 'add_trait', 'category' => 'vampire-merits',
+			'change_data' => [ 'block_slug' => 'vampire-merits', 'trait' => [ 'name' => 'Marijava Contact', 'count' => 1 ] ],
+			'xp_cost' => 1, 'notes' => 'An Assamite I met during the Sheriff\'s investigation owes me a favor.',
+			'reason' => 'Coordinator Approval — Assamite Coordinator [OWBN Character Bylaws 10.m.v.22, clause 9030]',
+		],
 		// Two homebrew Rituals sent in one save: a set, each waiting for a Storyteller to name its price.
 		[
 			'character' => 'Isolde Marchetti', 'account' => 'player', 'set' => 'chantry-rituals',

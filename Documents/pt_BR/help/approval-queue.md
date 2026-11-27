@@ -49,6 +49,7 @@ No celular, Nível, Enviado por e Quando ficam atrás de um **Detalhes** em cada
 - **Editar** - abre uma janela onde você altera a entrada, dá um preço, a coloca em outra seção e deixa uma nota para o jogador. Veja [Editar uma mudança](#editar-uma-mudança). Ela nunca aprova nada.
 - **Uma caixa de preço**, numa mudança avulsa que precisa de uma - veja [Uma mudança que precisa de um preço](#uma-mudança-que-precisa-de-um-preço).
 - **Rejeitar** - abre uma caixa de texto ("Motivo (obrigatório)") com **Confirmar Rejeição** e **Cancelar**. Um motivo é obrigatório; aprovar não precisa de nenhum.
+- **Enviar ao Coordenador** e **Aprovar agora** - numa crônica que envia aprovações do Coordenador ao Kit de Ferramentas do Arquivista, **Aprovar** numa mudança cujo motivo diz Aprovação do Coordenador pergunta qual dos dois você quer. Veja [Aprovação do Coordenador](coordinator-approval.md).
 
 ### Editar uma mudança
 
@@ -112,6 +113,10 @@ Um personagem com uma visita aberta e combinada, mantida atualizada, em outro lu
 - **`visit_pairing`** - uma anfitriã pedindo para parear um personagem enviado por um jogador com o lar verdadeiro dele, e não uma mudança de ficha. Aprová-lo abre uma visita nova entre as duas crônicas, mantida atualizada desde o início; recusá-lo, ou 60 dias sem resposta, deixa a cópia da própria anfitriã sem par.
 - **`visit_note`** - a nota de texto livre da própria anfitriã sobre a visita, sem efeito na ficha de um jeito ou de outro. Aprová-la arquiva a nota como só para Narradores na trama do próprio personagem; recusá-la não registra nada.
 - Aprovar ou recusar uma mudança encaminhada funciona exatamente como qualquer outra linha - **Aprovar**/**Rejeitar**, ou como parte de um lote onde nada na linha o impede.
+
+### Com o Coordenador
+
+Uma mudança que você enviou ao Kit de Ferramentas do Arquivista continua na fila, ainda retendo o XP dela, com uma linha sob a descrição: **Com o Coordenador · R&U #33012 · Com o Narrador da crônica**, quando foi lida pela última vez, **Verificar agora** e **Abrir no Kit**. Ela não tem **Editar**, porque o Kit a guarda como foi enviada. **Aprovar** pede confirmação e **Rejeitar** funciona como sempre. O Beyond Elysium a aplica quando o Coordenador aprova. **Aprovar Selecionados** e **Aprovar tudo** nunca aprovam uma Aprovação do Coordenador; dizem quantas deixaram de lado. Veja [Aprovação do Coordenador](coordinator-approval.md).
 
 ### Enviadas em conjunto
 
@@ -190,7 +195,7 @@ No sentido contrário, um jogador pode deixar uma nota para você quando envia u
 
 ## O que saber
 
-- **Só dois níveis de aprovação: Automático e Precisa de um Narrador.** O Beyond Elysium não tem uma etapa de coordenador à parte. O motivo de uma regra pode dizer para você obter a aprovação de um coordenador antes de aprovar, mas o clique que aprova aqui é sempre de um Narrador.
+- **Só dois níveis de aprovação: Automático e Precisa de um Narrador.** O Beyond Elysium não tem uma etapa de coordenador à parte. O motivo de uma regra pode dizer para você obter a aprovação de um coordenador antes de aprovar, mas o clique que aprova aqui é sempre de um Narrador. Numa crônica que envia aprovações do Coordenador ao Kit, o Coordenador decide lá, e o Beyond Elysium aplica a mudança quando ele aprova.
 - **Aprovar Selecionados é um atalho, não um mecanismo diferente.** Aplica a mesma aprovação, individualmente, a toda mudança que você marcou - não uma sobreposição em lote.
 - **A fila fica presa ao que lhe foi mostrado.** Se um jogador reenvia ou retira uma mudança pendente, ou outra pessoa a revisa primeiro, o seu clique é recusado e a fila recarrega com o que realmente está lá agora - você nunca aprova algo diferente do que viu.
 - **Uma linha marcada continua marcada ao virar a página**, e Aprovar Selecionados age em tudo o que você marcou, não só no que está na tela - cada uma como você a viu quando a marcou. Uma mudança editada depois de você marcá-la é pulada, seja em que página estiver. Mudar um filtro limpa as marcas.
@@ -222,6 +227,7 @@ No sentido contrário, um jogador pode deixar uma nota para você quando envia u
 - [Editor de Personagem](character-editor.md)
 - [Ficha de Personagem](character-sheet.md)
 - [Regras de Aprovação](approval-rules.md)
+- [Aprovação do Coordenador](coordinator-approval.md)
 - [Como Funciona a Aprovação](approval-flow.md)
 - [Segredos](secrets.md)
 - [Papéis](roles.md)

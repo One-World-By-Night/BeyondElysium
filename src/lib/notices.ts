@@ -75,6 +75,62 @@ function decidedLines( payload: Record< string, unknown > ): string[] {
 	} );
 }
 
+/**
+ * The Coordinators a notice names, as a phrase: "the Assamite Coordinator", or "a Coordinator" when none is named.
+ */
+function offices( value: unknown ): string {
+	const names = Array.isArray( value )
+		? value.map( text ).filter( Boolean )
+		: [];
+	if ( names.length === 0 ) {
+		return __( 'a Coordinator', 'beyond-elysium' );
+	}
+	return names
+		.map( ( office ) =>
+			sprintf(
+				/* translators: %s: a Coordinator's office, such as Assamite */
+				__( 'the %s Coordinator', 'beyond-elysium' ),
+				office
+			)
+		)
+		.join( ` ${ __( 'and', 'beyond-elysium' ) } ` );
+}
+
+/**
+ * What a Coordinator's answer says to the Storyteller who sent the request.
+ */
+function coordinatorAnswer(
+	outcome: string,
+	what: string,
+	name: string
+): string {
+	if ( outcome === 'approved' ) {
+		return sprintf(
+			/* translators: 1: what was approved, 2: a character's name */
+			__( 'The Coordinator approved %1$s for %2$s', 'beyond-elysium' ),
+			what,
+			name
+		);
+	}
+	if ( outcome === 'cancelled' ) {
+		return sprintf(
+			/* translators: 1: what was asked for, 2: a character's name */
+			__(
+				'The request for %1$s for %2$s was cancelled in the Archivist Toolkit',
+				'beyond-elysium'
+			),
+			what,
+			name
+		);
+	}
+	return sprintf(
+		/* translators: 1: what was refused, 2: a character's name */
+		__( 'The Coordinator did not approve %1$s for %2$s', 'beyond-elysium' ),
+		what,
+		name
+	);
+}
+
 export function noticeText( notice: Notice ): NoticeText {
 	const p = notice.payload;
 	const name = text( p.character_name );
@@ -301,6 +357,26 @@ export function noticeText( notice: Notice ): NoticeText {
 					),
 				],
 			};
+		case 'coordinator_sent':
+			return {
+				title: sprintf(
+					/* translators: 1: what was sent, such as a trait, 2: a character's name, 3: who it went to, such as "the Assamite Coordinator" */
+					__( '%1$s for %2$s went to %3$s', 'beyond-elysium' ),
+					text( p.text ),
+					name,
+					offices( p.offices )
+				),
+				lines: [],
+			};
+		case 'coordinator_answered':
+			return {
+				title: coordinatorAnswer(
+					text( p.outcome ),
+					text( p.text ),
+					name
+				),
+				lines: [],
+			};
 		case 'character_waiting':
 			return {
 				title: sprintf(
@@ -446,6 +522,7 @@ export function noticeHref( notice: Notice, gameSlug: string ): string {
 		case 'changes_waiting':
 		case 'file_received':
 		case 'secret_told':
+		case 'coordinator_answered':
 			return staff( STORYTELLER_TABS.approvalQueue );
 		case 'character_waiting':
 			return staff( STORYTELLER_TABS.characters, '&status=pending' );

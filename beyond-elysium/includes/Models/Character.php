@@ -496,6 +496,13 @@ class Character {
 	}
 
 	/**
+	 * Links a character to its record in the Archivist Toolkit by that record's uuid, or unlinks it with null.
+	 */
+	public static function set_oat_link( int $id, ?string $uuid ): bool {
+		return Manager::update( 'characters', [ 'oat_character_uuid' => $uuid ], [ 'id' => $id ] ) !== false;
+	}
+
+	/**
 	 * Replace a character's sheet_data column with a new JSON-encoded payload.
 	 *
 	 * @param int                 $id

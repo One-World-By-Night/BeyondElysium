@@ -1,4 +1,4 @@
-import { barModel, limitsForStep } from './builderBar';
+import { barModel, limitsForStep, showsXp } from './builderBar';
 import type { BuilderStep } from './builderSteps';
 import type { CreationStep } from '../types';
 import type { CreationTally } from '../types/character';
@@ -210,5 +210,16 @@ describe( 'barModel', () => {
 				( line ) => line.key
 			)
 		).not.toContain( 'xp' );
+	} );
+} );
+
+describe( 'showsXp', () => {
+	it( 'is false on a chronicle that starts characters with no XP and a build that needs none', () => {
+		expect( showsXp( { starting: 0, needed: 0 } ) ).toBe( false );
+	} );
+
+	it( 'is true when there is XP to start with or a build that needs some', () => {
+		expect( showsXp( { starting: 30, needed: 0 } ) ).toBe( true );
+		expect( showsXp( { starting: 0, needed: 4 } ) ).toBe( true );
 	} );
 } );

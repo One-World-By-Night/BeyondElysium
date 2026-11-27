@@ -90,6 +90,9 @@ class FreeTextCoverageTest extends TestCase {
 		'notices.payload'                             => self::STRUCTURED,
 		// What an approved change did, so it can be undone; the Change model drops it from every row it hands out.
 		'character_changes.undo_state'                => self::STRUCTURED,
+		// What a Storyteller sent to the Archivist Toolkit, with the notes written for it; only a manager's route returns it.
+		'coordinator_requests.pick'                   => self::STRUCTURED,
+		'coordinator_requests.payload'                => self::MANAGER_ONLY,
 		// Encrypted at rest; returned once, by POST /bot/connect, and never again by any route to anyone.
 		'bot_connections.secret'                      => self::MANAGER_ONLY,
 	];

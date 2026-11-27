@@ -7,6 +7,7 @@ import { useEffect, useMemo, useRef, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
 import useCharacterEditorStore from '../../store/characterEditorStore';
+import { coordinatorNote } from '../../lib/coordinatorSend';
 import { highlightStMarkers } from '../../lib/highlightStMarkers';
 import type { HeldTrait } from '../../lib/heldTraits';
 import { formatStoredTime } from '../../lib/storedTime';
@@ -287,6 +288,13 @@ export function TraitPanel( {
 												) }
 										{ quote.result.approval_reason
 											? ` ${ quote.result.approval_reason }`
+											: '' }
+										{ quote.result.approval_level ===
+											'st' &&
+										coordinatorNote(
+											quote.result.coordinator
+										)
+											? ` ${ coordinatorNote( quote.result.coordinator ) }`
 											: '' }
 									</p>
 								) }

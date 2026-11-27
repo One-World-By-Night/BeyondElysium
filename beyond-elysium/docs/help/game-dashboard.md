@@ -13,7 +13,7 @@ Anyone who has a tab in the Storyteller Toolkit: an HST, an AST, a Narrator or t
 ## The screen
 
 - **Waiting on you** - one line for each thing that waits, left out when there is nothing. Each line opens the list it counts.
-  - **Approval Queue** - "7 waiting · 2 XP requests · 1 Grapevine file · 1 new character". For an HST or AST. A new character counts when a member made it and it waits for you, either because the chronicle reviews new characters or because a pick needs a Storyteller; someone still asking to join is counted by their request instead.
+  - **Approval Queue** - "7 waiting · 2 XP requests · 1 Grapevine file · 1 new character · 2 with a Coordinator". For an HST or AST. **With a Coordinator** counts the changes you sent to the Archivist Toolkit that are waiting for the Coordinator ([Coordinator Approval](coordinator-approval.md)). A new character counts when a member made it and it waits for you, either because the chronicle reviews new characters or because a pick needs a Storyteller; someone still asking to join is counted by their request instead.
   - **Downtime** - "3 to answer · 4 nobody has taken". The first number is yours and opens [My Queue](my-queue.md); the rest opens Downtime.
   - **Plot posts** - "2 waiting on you · 1 nobody has taken", counted the same way.
   - **Players** - "1 asks to join · 2 Discord links to approve". For an HST or AST. It opens [Players](chronicle-players.md).

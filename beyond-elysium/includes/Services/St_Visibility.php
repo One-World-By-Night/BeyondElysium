@@ -16,7 +16,8 @@ defined( 'ABSPATH' ) || exit;
 class St_Visibility {
 
 	/**
-	 * Applies all four ST-only redactions to one character row in place: unsets `rp_notes` entirely, strips
+	 * Applies all four ST-only redactions to one character row in place: unsets `rp_notes` and the Archivist Toolkit
+	 * link entirely, strips
 	 * `[ST]...[/ST]`-marked text from `biography`/`notes`, and removes every Storyteller-only block's stored values from
 	 * `sheet_data`.
 	 *
@@ -31,7 +32,7 @@ class St_Visibility {
 			return;
 		}
 
-		unset( $character->rp_notes );
+		unset( $character->rp_notes, $character->oat_character_uuid );
 		$character->biography = St_Filter::strip_html_for_game( (string) ( $character->biography ?? '' ), $game->settings ?? null );
 		$character->notes     = St_Filter::strip_html_for_game( (string) ( $character->notes ?? '' ), $game->settings ?? null );
 		if ( property_exists( $character, 'public_description' ) && $character->public_description !== null ) {

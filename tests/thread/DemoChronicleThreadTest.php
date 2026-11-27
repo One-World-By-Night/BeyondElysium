@@ -264,6 +264,30 @@ class DemoChronicleThreadTest extends WP_UnitTestCase {
 		$this->assertSame( 'storytellers', $by_name['Detective Rosa Alvarez']->profile_audience, 'left on the default, so hidden from Who\'s Who' );
 	}
 
+	public function test_reset_turns_on_showing_what_a_coordinator_send_would_do_and_seeds_a_change_that_asks_for_one(): void {
+		$this->assertTrue( Demo_Chronicle::reset( $this->game ) );
+
+		$game = Game::find_by_slug( $this->game->slug );
+		$this->assertTrue( $game->settings->coordinator_send );
+		$this->assertSame( \BeyondElysium\Services\Coordinator_Send::PREVIEW, \BeyondElysium\Services\Coordinator_Send::mode( $game ) );
+
+		$asking = array_values( array_filter(
+			Change::for_game( $this->game->slug, [ 'status' => 'pending' ] ),
+			static fn( $change ) => \BeyondElysium\Services\Coordinator_Signal::of( (string) $change->reason )['kind'] === 'approval'
+		) );
+		$this->assertCount( 1, $asking );
+		$this->assertSame( 'Marijava Contact', $asking[0]->change_data['trait']['name'] );
+		$this->assertSame( [ 'Assamite' ], \BeyondElysium\Services\Coordinator_Signal::of( (string) $asking[0]->reason )['coordinators'] );
+	}
+
+	public function test_reset_keeps_a_chronicles_own_choice_about_sending(): void {
+		Game::update( $this->game->slug, [ 'settings' => array_merge( (array) Game::find_by_slug( $this->game->slug )->settings, [ 'coordinator_send' => false ] ) ] );
+
+		$this->assertTrue( Demo_Chronicle::reset( Game::find_by_slug( $this->game->slug ) ) );
+
+		$this->assertFalse( Game::find_by_slug( $this->game->slug )->settings->coordinator_send );
+	}
+
 	public function test_reset_seeds_two_homebrew_rituals_as_one_set_waiting_for_a_price(): void {
 		$this->assertTrue( Demo_Chronicle::reset( $this->game ) );
 
@@ -313,7 +337,7 @@ class DemoChronicleThreadTest extends WP_UnitTestCase {
 		$this->assertTrue( Demo_Chronicle::reset( $this->game ) );
 
 		$pending = Change::for_game( $this->game->slug, [ 'status' => 'pending' ] );
-		$this->assertCount( 5, $pending, 'Isolde\'s Occult, Ezra\'s Natural Leader, Naomi\'s Rank and the two Rituals' );
+		$this->assertCount( 6, $pending, 'Isolde\'s Occult and Marijava Contact, Ezra\'s Natural Leader, Naomi\'s Rank and the two Rituals' );
 
 		foreach ( $pending as $change ) {
 			$data = (array) $change->change_data;

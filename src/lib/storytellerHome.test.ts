@@ -39,6 +39,30 @@ describe( 'waitingLines', () => {
 		).toEqual( [] );
 	} );
 
+	it( 'says how many of the waiting changes are with Coordinators', () => {
+		const line = ( withCoordinators: number ) =>
+			waitingLines(
+				home( {
+					approvals: {
+						changes: 5,
+						xp_requests: 0,
+						files: 0,
+						new_characters: 0,
+						with_coordinators: withCoordinators,
+					},
+				} ),
+				'kony'
+			)[ 0 ].text;
+
+		expect( line( 3 ) ).toBe(
+			'Approval Queue: 5 waiting · 3 with Coordinators'
+		);
+		expect( line( 1 ) ).toBe(
+			'Approval Queue: 5 waiting · 1 with a Coordinator'
+		);
+		expect( line( 0 ) ).toBe( 'Approval Queue: 5 waiting' );
+	} );
+
 	it( 'says what waits in the Approval Queue and opens it', () => {
 		const [ line ] = waitingLines(
 			home( {

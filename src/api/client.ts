@@ -110,6 +110,16 @@ import type {
 } from '../types/plot';
 import type { Attachment, AttachmentEntityType } from '../types/attachment';
 import type {
+	CoordinatorOffice,
+	CoordinatorRequest,
+	CoordinatorSendBody,
+	CoordinatorSendResponse,
+	CoordinatorStatus,
+	PendingPick,
+	ToolkitCharacter,
+	ToolkitRule,
+} from '../types/coordinator';
+import type {
 	GameSession,
 	SessionAttendance,
 	CreateSessionRequest,
@@ -2165,6 +2175,102 @@ export const catalogCorrections = ( gameSlug: string ) => ( {
  * REST client factory for a single chronicle's character changes: submitting, reviewing, and listing edits, plus the
  * game-wide approval queue and the player's own pending changes.
  */
+/**
+ * Sending a waiting change to the Archivist Toolkit for a Coordinator.
+ */
+export const coordinator = ( gameSlug: string ) => ( {
+	/**
+	 * How a send goes in this chronicle, and who it would be made as.
+	 */
+	status: (): Promise< CoordinatorStatus > =>
+		apiFetch( { path: `${ BASE }/${ gameSlug }/coordinator` } ),
+
+	/**
+	 * The Toolkit's regulation rules that match a search.
+	 */
+	rules: ( term: string ): Promise< { results: ToolkitRule[] } > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/coordinator/rules?term=${ encodeURIComponent(
+				term
+			) }`,
+		} ),
+
+	/**
+	 * The Coordinator offices a request can name.
+	 */
+	offices: (): Promise< { offices: CoordinatorOffice[] } > =>
+		apiFetch( { path: `${ BASE }/${ gameSlug }/coordinator/offices` } ),
+
+	/**
+	 * Sends waiting changes to the Toolkit, or in a demo shows what would be sent.
+	 */
+	send: ( body: CoordinatorSendBody ): Promise< CoordinatorSendResponse > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/coordinator/send`,
+			method: 'POST',
+			data: body,
+		} ),
+
+	/**
+	 * Reads one request now and answers where it stands.
+	 */
+	check: (
+		requestId: number
+	): Promise< {
+		request: CoordinatorRequest | null;
+		message: string | null;
+	} > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/coordinator/requests/${ requestId }/check`,
+			method: 'POST',
+		} ),
+
+	/**
+	 * The picks of a pending new character that ask for a Coordinator.
+	 */
+	picks: ( characterId: number ): Promise< { picks: PendingPick[] } > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/characters/${ characterId }/coordinator-picks`,
+		} ),
+
+	/**
+	 * Characters in the Toolkit that could be this one.
+	 */
+	searchCharacters: (
+		characterId: number,
+		term: string
+	): Promise< { results: ToolkitCharacter[] } > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/characters/${ characterId }/toolkit-search?term=${ encodeURIComponent(
+				term
+			) }`,
+		} ),
+
+	/**
+	 * The Toolkit record a character is linked to, or null.
+	 */
+	link: ( characterId: number ): Promise< { uuid: string | null } > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/characters/${ characterId }/toolkit-link`,
+		} ),
+
+	setLink: (
+		characterId: number,
+		uuid: string
+	): Promise< { uuid: string | null } > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/characters/${ characterId }/toolkit-link`,
+			method: 'PUT',
+			data: { uuid },
+		} ),
+
+	clearLink: ( characterId: number ): Promise< { uuid: string | null } > =>
+		apiFetch( {
+			path: `${ BASE }/${ gameSlug }/characters/${ characterId }/toolkit-link`,
+			method: 'DELETE',
+		} ),
+} );
+
 export const changes = ( gameSlug: string ) => ( {
 	/**
 	 * Fetches the changes recorded against a single character.
@@ -4960,6 +5066,7 @@ const api = {
 	catalog,
 	bot,
 	discordLinks,
+	coordinator,
 	authorizationSettings,
 	dataManagement,
 	gameStats,

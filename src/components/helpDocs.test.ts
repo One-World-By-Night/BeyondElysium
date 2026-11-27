@@ -54,6 +54,7 @@ const WAITING_FOR_PILOT_REVIEW = [
 const LINKED_ONLY = [
 	'approval-flow',
 	'chronicles',
+	'coordinator-approval',
 	'grapevine',
 	'roles',
 	'storyteller-only',

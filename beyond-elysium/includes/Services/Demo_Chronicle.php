@@ -237,10 +237,12 @@ class Demo_Chronicle {
 				self::ensure_account_password( $game, $player_id, 'player' );
 			}
 
-			// Demonstrates players logging and passing secrets, on their own default ("Needs a Storyteller").
+			// Demonstrates players logging and passing secrets, on their own default ("Needs a Storyteller"), and a
+			// Storyteller seeing what sending a Coordinator approval to the Archivist Toolkit would do.
 			$existing_settings = (array) ( $game->settings ?? [] );
-			if ( ! isset( $existing_settings['secret_passing'] ) ) {
-				Game::update( (string) $game->slug, [ 'settings' => array_merge( $existing_settings, [ 'secret_passing' => 'approval' ] ) ] );
+			$missing_settings  = array_diff_key( [ 'secret_passing' => 'approval', 'coordinator_send' => true ], $existing_settings );
+			if ( $missing_settings !== [] ) {
+				Game::update( (string) $game->slug, [ 'settings' => array_merge( $existing_settings, $missing_settings ) ] );
 			}
 
 			$companion = self::ensure_companion( $game );
@@ -472,6 +474,11 @@ class Demo_Chronicle {
 				'change_type' => $change['change_type'], 'category' => $change['category'],
 				'change_data' => $change['change_data'], 'xp_cost' => $change['xp_cost'], 'notes' => $change['notes'],
 			], $submitted_by );
+
+			// A reason a chronicle's rule or a bylaw clause would have written on it.
+			if ( $change_id && ! empty( $change['reason'] ) ) {
+				Manager::update( 'character_changes', [ 'reason' => $change['reason'] ], [ 'id' => $change_id ] );
+			}
 
 			$review = $change_id ? ( $change['review'] ?? null ) : null;
 			if ( $review === 'approve' || $review === 'auto' ) {

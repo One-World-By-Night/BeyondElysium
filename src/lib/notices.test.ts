@@ -295,6 +295,50 @@ describe( 'noticeText for the news that used to go only by email', () => {
 		).toEqual( [] );
 	} );
 
+	it( 'tells a player their change went to a Coordinator, naming the office', () => {
+		expect(
+			noticeText(
+				notice( 'coordinator_sent', {
+					character_name: 'Isolde Marchetti',
+					text: 'Dual-Blooded',
+					offices: [ 'Assamite' ],
+				} )
+			).title
+		).toBe(
+			'Dual-Blooded for Isolde Marchetti went to the Assamite Coordinator'
+		);
+		expect(
+			noticeText(
+				notice( 'coordinator_sent', {
+					character_name: 'Isolde Marchetti',
+					text: 'Dual-Blooded',
+					offices: [],
+				} )
+			).title
+		).toBe( 'Dual-Blooded for Isolde Marchetti went to a Coordinator' );
+	} );
+
+	it( 'tells the Storyteller what the Coordinator answered', () => {
+		const answered = ( outcome: string ) =>
+			noticeText(
+				notice( 'coordinator_answered', {
+					character_name: 'Isolde Marchetti',
+					text: 'Dual-Blooded',
+					outcome,
+				} )
+			).title;
+
+		expect( answered( 'approved' ) ).toBe(
+			'The Coordinator approved Dual-Blooded for Isolde Marchetti'
+		);
+		expect( answered( 'denied' ) ).toBe(
+			'The Coordinator did not approve Dual-Blooded for Isolde Marchetti'
+		);
+		expect( answered( 'cancelled' ) ).toBe(
+			'The request for Dual-Blooded for Isolde Marchetti was cancelled in the Archivist Toolkit'
+		);
+	} );
+
 	it( 'says a Grapevine file arrived and a secret was told', () => {
 		expect(
 			noticeText(
@@ -319,6 +363,15 @@ describe( 'noticeText for the news that used to go only by email', () => {
 describe( 'noticeHref for the news that used to go only by email', () => {
 	const href = ( kind: string, payload: Record< string, unknown > = {} ) =>
 		noticeHref( notice( kind, payload ), 'kony' );
+
+	it( "opens a Storyteller's answer on the queue and a player's news on their history", () => {
+		expect( href( 'coordinator_answered' ) ).toContain(
+			'tab=approval-queue'
+		);
+		expect( href( 'coordinator_sent', { character_id: 7 } ) ).toContain(
+			'character_id=7'
+		);
+	} );
 
 	it( 'opens the characters waiting for a Storyteller', () => {
 		expect( href( 'character_waiting' ) ).toContain( 'tab=characters' );

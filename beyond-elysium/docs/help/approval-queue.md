@@ -49,6 +49,7 @@ On a phone, Level, Submitted by, and When sit behind a **Details** disclosure on
 - **Edit** - opens a pop-up where you change the entry, price it, file it in a different section and leave the player a note. See [Edit a change](#edit-a-change). It never approves anything.
 - **A price box**, on a lone change that needs one - see [A change that needs a price](#a-change-that-needs-a-price).
 - **Reject** - opens a text box ("Reason (required)") with **Confirm Reject** and **Cancel**. A reason is required; approving needs none.
+- **Send to the Coordinator** and **Approve now** - on a chronicle that sends Coordinator approvals to the Archivist Toolkit, **Approve** on a change whose reason says Coordinator Approval asks which you mean. See [Coordinator Approval](coordinator-approval.md).
 
 ### Edit a change
 
@@ -112,6 +113,10 @@ A character with an open, agreed kept-current visit elsewhere is editable only a
 - **`visit_pairing`** - a host asking to pair a player-submitted character with its real home, rather than a sheet change. Approving it opens a new visit between the two chronicles, kept current from the start; refusing it, or 60 days with no answer, leaves the host's own copy unpaired.
 - **`visit_note`** - the host's own free-text note about the visit, with no sheet effect either way. Approving it files the note Storytellers-only on the character's own plot; refusing it records nothing.
 - Approving or refusing a forwarded change works exactly like any other row - **Approve**/**Reject**, or as part of a batch where nothing about the row blocks it.
+
+### With a Coordinator
+
+A change you sent to the Archivist Toolkit stays in the queue, still holding its XP, with one line under its description: **With the Coordinator · R&U #33012 · With the chronicle's Storyteller**, when it was last read, **Check now** and **Open in the Toolkit**. It has no **Edit**, because the Toolkit holds it as it was sent. **Approve** asks you to confirm and **Reject** works as always. Beyond Elysium applies it when the Coordinator approves. Approve Selected and **Approve all** never approve a Coordinator Approval; they say how many they left. See [Coordinator Approval](coordinator-approval.md).
 
 ### Submitted together
 
@@ -222,6 +227,7 @@ The other way round, a player can leave you a note when they send a set (up to 1
 - [Character Editor](character-editor.md)
 - [Character Sheet](character-sheet.md)
 - [Approval Rules](approval-rules.md)
+- [Coordinator Approval](coordinator-approval.md)
 - [How Approval Works](approval-flow.md)
 - [Secrets](secrets.md)
 - [Roles](roles.md)

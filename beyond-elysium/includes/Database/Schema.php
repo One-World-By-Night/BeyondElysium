@@ -12,7 +12,7 @@ class Schema {
 	/**
 	 * The plugin's current database schema version, matching the plugin release version.
 	 */
-	const DB_VERSION = '1.7.7';
+	const DB_VERSION = '1.7.8';
 
 	/**
 	 * Option key holding the installed schema version.
@@ -88,6 +88,7 @@ class Schema {
 		'notices',
 		'player_notes',
 		'character_drafts',
+		'coordinator_requests',
 	];
 
 	/**
@@ -1012,6 +1013,35 @@ class Schema {
 			UNIQUE KEY game_person (game_id, wp_user_id)
 		) $charset_collate;" );
 
+		// be_coordinator_requests: one send to the Archivist Toolkit, from the Storyteller who made it, with where the
+		// Toolkit's request stands; uuid is the key that keeps a resend from filing a second request.
+		dbDelta( "CREATE TABLE {$prefix}coordinator_requests (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			uuid char(36) NOT NULL,
+			game_id bigint(20) unsigned NOT NULL,
+			character_id bigint(20) unsigned NOT NULL,
+			change_id bigint(20) unsigned DEFAULT NULL,
+			pick longtext DEFAULT NULL,
+			purpose varchar(10) NOT NULL DEFAULT 'approval',
+			state varchar(20) NOT NULL DEFAULT 'sending',
+			oat_entry_id bigint(20) unsigned DEFAULT NULL,
+			oat_status varchar(30) DEFAULT NULL,
+			oat_step varchar(60) DEFAULT NULL,
+			sent_by bigint(20) unsigned NOT NULL,
+			sent_at datetime DEFAULT NULL,
+			checked_at datetime DEFAULT NULL,
+			check_error varchar(255) DEFAULT NULL,
+			answered_at datetime DEFAULT NULL,
+			payload longtext DEFAULT NULL,
+			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY  (id),
+			UNIQUE KEY uuid (uuid),
+			KEY idx_change (change_id),
+			KEY idx_character (character_id),
+			KEY idx_game (game_id),
+			KEY idx_read_back (state, purpose, checked_at)
+		) $charset_collate;" );
+
 		// be_staff_grants: one row per area an HST gave one person in one chronicle; taking it away stamps the row.
 		dbDelta( "CREATE TABLE {$prefix}staff_grants (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
@@ -1216,6 +1246,13 @@ class Schema {
 	public static function add_undo_state_to_character_changes(): void {
 		$table = self::table( 'character_changes' );
 		self::add_column_if_missing( $table, 'undo_state', 'longtext DEFAULT NULL AFTER host_note' );
+	}
+
+	/**
+	 * Adds the column that links a character to its record in the Archivist Toolkit.
+	 */
+	public static function add_oat_character_uuid_to_characters(): void {
+		self::add_column_if_missing( self::table( 'characters' ), 'oat_character_uuid', 'char(36) DEFAULT NULL' );
 	}
 
 	/**
@@ -3106,6 +3143,8 @@ class Schema {
 		self::add_room_channel_id_to_discord_links();
 
 		self::add_undo_state_to_character_changes();
+
+		self::add_oat_character_uuid_to_characters();
 
 		// Gives system templates the section titles their declared files name.
 		\BeyondElysium\Services\Template_Titles::run();

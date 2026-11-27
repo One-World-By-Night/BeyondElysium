@@ -3,6 +3,7 @@
  * warning, what a Storyteller will look at and how the character starts.
  */
 import { __, sprintf } from '@wordpress/i18n';
+import { showsXp } from '../../lib/builderBar';
 import type { ReviewModel } from '../../lib/builderReview';
 import type { CreationTally } from '../../types/character';
 
@@ -80,14 +81,19 @@ export function BuilderReview( {
 								) }
 							</li>
 						) ) }
-						<li>
-							{ sprintf(
-								/* translators: 1: experience left, 2: experience a new character starts with */
-								__( 'XP %1$d of %2$d left', 'beyond-elysium' ),
-								tally.xp.left,
-								tally.xp.starting
-							) }
-						</li>
+						{ showsXp( tally.xp ) && (
+							<li>
+								{ sprintf(
+									/* translators: 1: experience left, 2: experience a new character starts with */
+									__(
+										'XP %1$d of %2$d left',
+										'beyond-elysium'
+									),
+									tally.xp.left,
+									tally.xp.starting
+								) }
+							</li>
+						) }
 					</ul>
 				</section>
 			) }

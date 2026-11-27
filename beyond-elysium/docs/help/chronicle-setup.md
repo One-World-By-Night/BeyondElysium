@@ -36,6 +36,7 @@ wp-admin sidebar → Beyond Elysium → Chronicle Setup. This is the hub's first
   - **Join requests** - on by default. *Done* once your chronicle has explicitly chosen it one way or the other; *Info* until then. On, anyone signed in can ask to join from My Chronicle, with nothing granted until a Storyteller approves it; off, this chronicle drops off the join list and asking is refused. Review an ask from the Players tab's own Join requests section. See [Joining a Chronicle](joining.md) and [Players](chronicle-players.md).
   - **Players and secrets** - *Done* once your chronicle has explicitly chosen a mode; *Info* until then (reads as **Needs a Storyteller**). Three radio choices: **Off** (players can't log what a character learned or tell a secret to another character), **Needs a Storyteller** (a log or a pass waits for review before it reaches anyone), **Immediate** (a passed secret reaches its recipient right away, with a Storyteller still reviewing it afterward). See [Secrets](secrets.md) and [What I Know](what-i-know.md).
   - **Staff email** - *Info* until you name an address, then *Done* ("Staff mail goes to staff@example.org, which hears of changes waiting at each submission."). Mail sent because of a position, such as sheets to review, join requests, changes waiting for a Storyteller and secrets told, goes to this one address instead of to each HST and AST, so a successor inherits it. Type the address and **Save**, then choose **How often** it hears of changes waiting: **Each submission** (the default) or **Once a day**, a single summary of what is waiting, sent only when something is. Leave the address empty to send to each HST and AST again. Each Storyteller can still choose for themselves: from the bell, or from their own profile.
+  - **Coordinator approvals** - *Info* while it is off, *Done* once an HST has turned it on. Ticking **Send Coordinator approvals to the Archivist Toolkit** lets a Storyteller approving a change that needs a Coordinator send it to the Toolkit instead, as an R&U Request in their own name. The row says why the box can't be ticked on a chronicle with no OWbN chronicle path or on a network with no Toolkit connection. HST only. See [Coordinator Approval](coordinator-approval.md).
   - **Discord** - *Info* until the chronicle connects a Discord server, then *Done*, naming it ("Connected to Kingdom of Night."). Your chronicle's HST clicks **Generate a connect code** and runs the `/connect` command it shows in the server to connect; **Disconnect** ends it. An AST sees the same row with the connection's status but no controls. See [Discord](discord.md).
   - **Demo chronicle** - shown only while the selected chronicle is the seeded demo. Always *Info*. A site administrator gets a **Delete demo chronicle** button here.
 
@@ -161,6 +162,7 @@ With **Active immediately**, a player's new character still starts **pending** w
 - [Branding](branding.md)
 - [AI Assist Settings (Chronicle)](writing-assist-chronicle.md)
 - [Games](games.md)
+- [Coordinator Approval](coordinator-approval.md)
 - [Discord](discord.md)
 - [Admin Characters](admin-characters.md)
 - [Roles](roles.md)

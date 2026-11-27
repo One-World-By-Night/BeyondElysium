@@ -103,6 +103,11 @@ export interface StorytellerHomeData {
 			xp_requests: number;
 			files: number;
 			new_characters: number;
+			/**
+			 * How many of the waiting changes a Storyteller sent to the Archivist Toolkit; absent where the chronicle
+			 * does not send.
+			 */
+			with_coordinators?: number;
 		} | null;
 		downtime: { mine: number; unassigned: number } | null;
 		plots: { mine: number; unassigned: number } | null;

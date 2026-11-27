@@ -64,6 +64,31 @@ describe( 'cartLines', () => {
 		expect( lines[ 2 ].priceNote ).toBe( 'That cannot be bought twice.' );
 	} );
 
+	it( 'tells a line that a Storyteller may send it to a Coordinator, only while it waits', () => {
+		const asked = {
+			xp_cost: 3,
+			approval_level: 'st',
+			approval_reason: 'Coordinator Approval — Assamite Coordinator',
+			coordinator: { kind: 'approval', coordinators: [ 'Assamite' ] },
+		} as unknown as ChangePreviewResult;
+		const applies = {
+			xp_cost: 1,
+			approval_level: 'auto',
+			approval_reason: null,
+			coordinator: { kind: 'approval', coordinators: [ 'Assamite' ] },
+		} as unknown as ChangePreviewResult;
+
+		const lines = cartLines( [ ritual, occult ], [ asked, applies ] );
+
+		expect( lines[ 0 ].coordinatorNote ).toBe(
+			'A Storyteller may send this to the Assamite Coordinator through the Archivist Toolkit.'
+		);
+		expect( lines[ 1 ].coordinatorNote ).toBeNull();
+		expect(
+			cartLines( [ ritual ], results )[ 0 ].coordinatorNote
+		).toBeNull();
+	} );
+
 	it( 'reads a pool with no temporary points as its rating alone', () => {
 		const blocks = {
 			resources: {

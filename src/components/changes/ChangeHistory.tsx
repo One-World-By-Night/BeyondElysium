@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import api from '../../api/client';
 import Modal from '../shared/Modal';
+import { activeRequest, requestParts } from '../../lib/coordinatorSend';
 import { errorMessage } from '../../lib/errorMessage';
 import {
 	describeChange,
@@ -151,6 +152,11 @@ function HistoryLine( {
 			{ item.notes && (
 				<p className="be-change-history__notes">{ item.notes }</p>
 			) }
+			{ item.status === 'pending' && activeRequest( item ) && (
+				<p className="be-change-history__notes">
+					{ requestParts( activeRequest( item )! ).join( ' · ' ) }
+				</p>
+			) }
 			{ item.change_data?.st_edit !== undefined && (
 				<p className="be-change-history__notes">
 					{ __( 'Changed by a Storyteller', 'beyond-elysium' ) }
@@ -179,16 +185,18 @@ function HistoryLine( {
 					{ item.undone_note && ` · ${ item.undone_note }` }
 				</p>
 			) }
-			{ canWithdraw && item.status === 'pending' && (
-				<button
-					type="button"
-					className="be-change-history__withdraw"
-					disabled={ busy }
-					onClick={ () => onWithdraw( item.id ) }
-				>
-					{ __( 'Withdraw', 'beyond-elysium' ) }
-				</button>
-			) }
+			{ canWithdraw &&
+				item.status === 'pending' &&
+				! activeRequest( item ) && (
+					<button
+						type="button"
+						className="be-change-history__withdraw"
+						disabled={ busy }
+						onClick={ () => onWithdraw( item.id ) }
+					>
+						{ __( 'Withdraw', 'beyond-elysium' ) }
+					</button>
+				) }
 			{ canUndo && item.can_undo && (
 				<button
 					type="button"

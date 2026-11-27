@@ -3,6 +3,7 @@
  * Storyteller, the totals, the one-line meter and the sentences after Submit.
  */
 import { __, _n, sprintf } from '@wordpress/i18n';
+import { coordinatorNote } from './coordinatorSend';
 import { describeChange } from './describeChange';
 import { poolKind } from './poolKind';
 import { previewPriceLabel } from './queuePrice';
@@ -39,6 +40,10 @@ export interface CartLine {
 	 * Why the line waits, when the rule that holds it says.
 	 */
 	reason: string | null;
+	/**
+	 * Words telling the player a Storyteller may send the line to a Coordinator; null when it cannot be.
+	 */
+	coordinatorNote: string | null;
 }
 
 /**
@@ -93,6 +98,7 @@ export function cartLines(
 				cost: 0,
 				priceNote: null,
 				reason: null,
+				coordinatorNote: null,
 			};
 		}
 		const group: LineGroup = preview.invalid
@@ -108,6 +114,10 @@ export function cartLines(
 			cost: preview.invalid ? 0 : preview.xp_cost,
 			priceNote: previewPriceLabel( preview ),
 			reason: group === 'waits' ? preview.approval_reason : null,
+			coordinatorNote:
+				group === 'waits'
+					? coordinatorNote( preview.coordinator )
+					: null,
 		};
 	} );
 }

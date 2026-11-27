@@ -12,6 +12,7 @@ import type {
 	CreationTally as CreationTallyReport,
 	CreationTallyStep,
 } from '../../types/character';
+import { PendingCoordinatorPicks } from '../changes/CoordinatorSend';
 import './CreationTallyPanel.css';
 
 export interface CreationTallyPanelProps {
@@ -20,6 +21,10 @@ export interface CreationTallyPanelProps {
 	 * A pending character's own saved sheet, for a Storyteller reviewing it.
 	 */
 	characterId?: number;
+	/**
+	 * The saved character's name, so a pick can be sent to the Archivist Toolkit for it.
+	 */
+	characterName?: string;
 	/**
 	 * A draft build in progress, not yet saved.
 	 */
@@ -219,6 +224,7 @@ function StepLine( { step }: { step: CreationTallyStep } ) {
 export function CreationTallyPanel( {
 	gameSlug,
 	characterId,
+	characterName,
 	stackSlug,
 	sheetData,
 	warnsPlayer,
@@ -372,6 +378,14 @@ export function CreationTallyPanel( {
 						) }
 					</ul>
 				</div>
+			) }
+
+			{ characterId && characterName && (
+				<PendingCoordinatorPicks
+					gameSlug={ gameSlug }
+					characterId={ characterId }
+					characterName={ characterName }
+				/>
 			) }
 
 			{ warnsPlayer && ( report.unbuyable ?? [] ).length > 0 && (

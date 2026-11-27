@@ -2,6 +2,7 @@
  * The Approval Queue's pricing rules for a purchase, and what a batch approval says about the changes it left alone.
  */
 import { __, _n, sprintf } from '@wordpress/i18n';
+import { needsCoordinatorMessage } from './coordinatorSend';
 import type { BatchApproveResponse, PriceScope } from '../types/character';
 
 /**
@@ -117,6 +118,11 @@ export function batchNotices( result: BatchApproveResponse ): string[] {
 	// Waiting for a price is a different thing from skipped: the reviewer has to open each one.
 	if ( ( result.needs_cost ?? [] ).length > 0 ) {
 		notices.push( costNeededMessage( ( result.needs_cost ?? [] ).length ) );
+	}
+	if ( ( result.needs_coordinator ?? [] ).length > 0 ) {
+		notices.push(
+			needsCoordinatorMessage( ( result.needs_coordinator ?? [] ).length )
+		);
 	}
 	if ( ( result.needs_secret_choice ?? [] ).length > 0 ) {
 		const count = ( result.needs_secret_choice ?? [] ).length;

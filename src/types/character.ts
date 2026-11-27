@@ -5,6 +5,7 @@ import type { ApprovalLevel } from './index';
 import type { AudienceRules, AudienceValue } from './plot';
 import type { Visit, VisitingFrom } from './transfer';
 import type { Attachment } from './attachment';
+import type { ChangeCoordinator, CoordinatorSignal } from './coordinator';
 
 /**
  * A character's full set of sheet block values, keyed by block slug.
@@ -364,6 +365,11 @@ export interface CharacterChange {
 	 */
 	reason: string | null;
 	/**
+	 * Present where the chronicle sends Coordinator approvals to the Archivist Toolkit: what the reason asks of a
+	 * Coordinator, and the request sent for this change.
+	 */
+	coordinator?: ChangeCoordinator;
+	/**
 	 * Ties every change submitted together in one editor submission to each other.
 	 */
 	submission_id?: string | null;
@@ -617,6 +623,10 @@ export interface BatchApproveResponse {
 	 */
 	needs_secret_choice?: number[];
 	/**
+	 * Changes left alone because their reason asks for a Coordinator's approval; each is sent or approved by itself.
+	 */
+	needs_coordinator?: number[];
+	/**
 	 * Changes left alone because they cost more than their character has unspent.
 	 */
 	short_of_xp?: number[];
@@ -664,6 +674,10 @@ export interface ChangePreviewResult {
 	 * Citation naming the real-world approval authority, when the matched rule carries one.
 	 */
 	approval_reason: string | null;
+	/**
+	 * Where the chronicle sends Coordinator approvals: what the reason asks of a Coordinator.
+	 */
+	coordinator?: CoordinatorSignal;
 	/**
 	 * False when the purchase has no price yet.
 	 */

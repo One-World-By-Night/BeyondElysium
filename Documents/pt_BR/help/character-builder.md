@@ -43,6 +43,10 @@ Minha Crônica → **+ Novo personagem**, na Home ou na aba Personagens. Quem es
 2. Aperte **Criar personagem**.
 3. Um personagem ativo abre na Ficha. Um pendente abre também, com **Esperando um Narrador** e os motivos. Um pedido para entrar mostra **Pedido Enviado**.
 
+### Uma escolha que pede um Coordenador
+
+Uma escolha que os estatutos mandam a um Coordenador faz o personagem novo começar pendente, como qualquer escolha que as regras seguram. Numa crônica que envia aprovações do Coordenador ao Kit de Ferramentas do Arquivista, um Narrador envia essas escolhas pelo **Cálculo da construção** do personagem pendente, e o personagem fica ativo quando o Coordenador aprovou cada uma. Veja [Aprovação do Coordenador](coordinator-approval.md#um-personagem-novo).
+
 ## O que saber
 
 - **O servidor confere tudo de novo.** Revisar é a sua própria visão da montagem. Quando você aperta Criar, a crônica refaz a conta e não confia em nada da montagem salva.

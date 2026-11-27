@@ -52,6 +52,13 @@ function coveringPools(
 }
 
 /**
+ * Whether the experience line is worth showing: there is some to start with, or the build needs some.
+ */
+export function showsXp( xp: { starting: number; needed: number } ): boolean {
+	return xp.starting > 0 || xp.needed > 0;
+}
+
+/**
  * The limit flags that point into a step's sections.
  */
 export function limitsForStep(
@@ -191,7 +198,7 @@ export function barModel(
 	const over = lines.some( ( line ) => line.state === 'over' );
 	const flagged = limitsForStep( step, tally ).length > 0;
 
-	if ( tally.xp.starting > 0 || tally.xp.needed > 0 ) {
+	if ( showsXp( tally.xp ) ) {
 		lines.push( {
 			key: 'xp',
 			text: sprintf(
